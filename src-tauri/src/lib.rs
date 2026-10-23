@@ -1,4 +1,5 @@
 mod ai;
+mod photo;
 mod transcode;
 
 use std::path::{Path, PathBuf};
@@ -257,7 +258,15 @@ pub fn run() {
             transcode_media,
             cancel_transcode,
             ai_status,
-            ai_install
+            ai_install,
+            photo::photo_scan,
+            photo::photo_thumb,
+            photo::photo_thumbs,
+            photo::photo_info,
+            photo::photo_decode,
+            photo::photo_batch,
+            photo::photo_cancel,
+            photo::photo_capabilities
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
