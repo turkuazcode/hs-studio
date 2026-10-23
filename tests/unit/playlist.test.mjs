@@ -29,9 +29,9 @@ test("hasNextItem: auto-advance only before the last item", () => {
   assert.ok(!hasNextItem(0, 1));
 });
 
-test("itemMetaText: size for browser files, stream label otherwise", () => {
+test("itemMetaText: size for browser and local files, stream label for URLs", () => {
   assert.equal(itemMetaText({ file: { size: 3 * 1048576 } }), "3.0 MB");
-  assert.equal(itemMetaText({ path: "C:\\a.mp4", size: 10 }), "Ağ Akışı");
+  assert.equal(itemMetaText({ path: "C:\\a.mp4", size: 5 * 1048576 }), "5.0 MB"); // was "Ağ Akışı" (bug)
   assert.equal(itemMetaText({ url: "https://x/a.mp4" }), "Ağ Akışı");
 });
 
