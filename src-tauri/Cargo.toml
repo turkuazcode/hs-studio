@@ -27,11 +27,22 @@ serde_json = "1"
 # On-demand AI component downloads (Windows/macOS/Linux native TLS, no extra build tools)
 reqwest = { version = "0.13", default-features = false, features = ["native-tls", "http2", "system-proxy"] }
 sha2 = "0.10"
+# Photo studio backend (src/photo): decode/encode, EXIF, thumbnails. All MIT/Apache/BSD.
+# "avif" = encoder only (ravif + rav1e, pure Rust, no nasm); AVIF/HEIC decoding uses the OS codecs.
+image = { version = "0.25.10", default-features = false, features = ["rayon", "jpeg", "png", "webp", "gif", "bmp", "ico", "tiff", "tga", "pnm", "qoi", "avif"] }
+jpeg-decoder = { version = "0.3", default-features = false }
+kamadak-exif = "0.6"
+fast_image_resize = { version = "6", features = ["image"] }
+rayon = "1.10"
+# Lossy WebP encoding (libwebp, BSD-3-Clause, compiled from source by libwebp-sys)
+webp = { version = "0.3", default-features = false }
+crc32fast = "1"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = ["Win32_System_Power"] }
 windows = { version = "0.62", features = [
   "Win32_Foundation",
+  "Win32_Graphics_Imaging",
   "Win32_Media_MediaFoundation",
   "Win32_System_Com",
   "Win32_System_Com_StructuredStorage",
