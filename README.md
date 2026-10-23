@@ -158,6 +158,7 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 
 - Her çalıştırma ayrı, geçici bir WebView2 profili kullanır (`WEBVIEW2_USER_DATA_FOLDER`): kullanıcının açık VHO'suna ve kaldığı yer kayıtlarına dokunmaz. Testler yalnızca kendi başlattıkları süreci kapatır.
 - Arka plandaki pencere yeniden çizilmeyebilir; bu yüzden testler ekran görüntüsüne değil, DOM ve medya durumuna (`videoWidth`, `getVideoPlaybackQuality()`, metinler) bakar.
+- **Güvenlik:** testler bilgisayarı asla uyku moduna almaz. `vho.exe`, `VHO_DISABLE_SYSTEM_SUSPEND=1` ile başlatılır (`suspend_system` hiçbir şey yapmaz) ve sayfa betikleri çalışmadan önce `__TAURI__.core.invoke` sarmalanır: `suspend_system` ve `set_compat_mode` arka uca hiç gitmez. Koruma her açılışta doğrulanır; doğrulanamazsa testler çalışmaz. Uyku zamanlayıcısı testleri "PC Uyku" kutusunu önce kapatır.
 - `window.confirm` ve indirmeler (ekran görüntüsü) test tarafında taklit edilir; yakalanmamış sayfa hataları toplanır ve her testin sonunda boş olmalıdır.
 - Başka bir derlemeyi denemek için: `$env:VHO_EXE = "C:\yol\vho.exe"; npm run e2e`. Ayrıntılı zamanlama günlüğü: `$env:VHO_E2E_DEBUG = 1`.
 
