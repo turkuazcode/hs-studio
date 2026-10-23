@@ -16,9 +16,9 @@ export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..
 export const FIXTURES = join(REPO_ROOT, "tests", "fixtures");
 export const fixture = (name) => join(FIXTURES, name);
 
-/** CDP ports reserved for VHO tests. */
-const PORT_MIN = 9500;
-const PORT_MAX = 9599;
+/** CDP ports reserved for VHO tests (override with VHO_E2E_PORT_MIN / VHO_E2E_PORT_MAX). */
+const PORT_MIN = Number(process.env.VHO_E2E_PORT_MIN) || 9500;
+const PORT_MAX = Number(process.env.VHO_E2E_PORT_MAX) || PORT_MIN + 99;
 
 export function defaultExe() {
   return process.env.VHO_EXE || join(REPO_ROOT, "src-tauri", "target", "release", process.platform === "win32" ? "vho.exe" : "vho");
@@ -32,7 +32,7 @@ function portFree(port) {
   });
 }
 
-/** A free port in 9500-9599, starting at a random offset (parallel runs by other agents). */
+/** A free port in PORT_MIN-PORT_MAX, starting at a random offset (parallel runs by other agents). */
 export async function findFreePort() {
   const span = PORT_MAX - PORT_MIN + 1;
   const start = Math.floor(Math.random() * span);
@@ -142,7 +142,13 @@ const waitExit = (proc, ms) => new Promise((res) => {
  * connects CDP, installs the error collector + stubs (via one reload) and waits until
  * the app has booted (window.__vho).
  */
-export async function launchApp({ args = [], exe = defaultExe() } = {}) {
+/** Environment that hides the libmpv DLLs from the app: HTML5 fallback engine. */
+export const HTML5_ENGINE = Object.freeze({ VHO_DISABLE_MPV: "1" });
+
+/** True when the libmpv DLL set is staged next to the test executable (npm run stage:mpv). */
+export const mpvStaged = (exe = defaultExe()) => existsSync(join(dirname(exe), "libmpv-2.dll"));
+
+export async function launchApp({ args = [], exe = defaultExe(), env = {} } = {}) {
   if (!existsSync(exe)) {
     throw new Error(`${exe} not found. Build it first: npm run build:release (or set VHO_EXE)`);
   }
@@ -155,6 +161,9 @@ export async function launchApp({ args = [], exe = defaultExe() } = {}) {
       WEBVIEW2_USER_DATA_FOLDER: userData,
       // Backend guard: suspend_system becomes a no-op (never sleep the test machine)
       VHO_DISABLE_SYSTEM_SUSPEND: "1",
+      // libmpv screenshots go to the throw-away profile, never to the user's Pictures folder
+      VHO_SCREENSHOT_DIR: join(userData, "screenshots"),
+      ...env,
     },
     stdio: "ignore",
     windowsHide: false,

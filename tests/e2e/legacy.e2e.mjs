@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { copyFile, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { launchApp, fixture } from "./lib/app.mjs";
+import { HTML5_ENGINE, launchApp, fixture } from "./lib/app.mjs";
 
 const V = `document.getElementById("video-element")`;
 
@@ -14,7 +14,7 @@ test("legacy: WMV9 clip is converted and plays", { timeout: 180000, skip: proces
   const dir = await mkdtemp(join(tmpdir(), "vho-e2e-legacy-"));
   const input = join(dir, "eski klip ğüşİ.wmv");
   await copyFile(fixture("legacy-wmv9.wmv"), input);
-  const app = await launchApp({ args: [input] });
+  const app = await launchApp({ args: [input], env: HTML5_ENGINE });
   let converted = null;
 
   try {
