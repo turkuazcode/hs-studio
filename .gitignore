@@ -28,3 +28,6 @@ dist-ssr
 /WebView2Loader.dll
 src-tauri/target/
 
+
+# Fixture generator build output
+tests/fixtures/gen/target/
