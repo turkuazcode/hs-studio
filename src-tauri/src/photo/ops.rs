@@ -55,6 +55,21 @@ pub enum Op {
         #[serde(default)]
         upscale: bool,
     },
+    /// Colour adjustments, each -100..100 (0 = unchanged). Applied in the order
+    /// temperature, brightness, contrast, saturation; the photo editor's canvas preview
+    /// (src/studio/logic.js `adjustPixels`) uses the same formulas.
+    Adjust {
+        #[serde(default)]
+        brightness: f32,
+        #[serde(default)]
+        contrast: f32,
+        #[serde(default)]
+        saturation: f32,
+        #[serde(default)]
+        temperature: f32,
+    },
+    /// 3x3 Laplacian sharpening, `amount` 0..100 (100 = classic 5/-1 kernel)
+    Sharpen { amount: f32 },
 }
 
 #[derive(Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -269,7 +284,116 @@ pub fn apply_op(img: DynamicImage, op: &Op) -> Result<DynamicImage, String> {
                 decode::resize_exact(img, nw, nh)?
             }
         }
+        Op::Adjust { brightness, contrast, saturation, temperature } => {
+            let a = Adjustments::new(*brightness, *contrast, *saturation, *temperature);
+            if a.is_identity() {
+                img
+            } else {
+                map_pixels(img, |px| a.apply(px))
+            }
+        }
+        Op::Sharpen { amount } => {
+            let k = amount.clamp(0.0, 100.0) / 100.0;
+            if k <= 0.0 { img } else { sharpen(img, k) }
+        }
     })
+}
+
+/// Normalised colour adjustment factors (see `Op::Adjust`).
+#[derive(Clone, Copy, Debug)]
+pub struct Adjustments {
+    warm: f32,
+    bright: f32,
+    contrast: f32,
+    sat: f32,
+}
+
+impl Adjustments {
+    pub fn new(brightness: f32, contrast: f32, saturation: f32, temperature: f32) -> Self {
+        let n = |v: f32| v.clamp(-100.0, 100.0) / 100.0;
+        Adjustments { warm: n(temperature) * 0.15, bright: 1.0 + n(brightness), contrast: 1.0 + n(contrast), sat: 1.0 + n(saturation) }
+    }
+
+    fn is_identity(&self) -> bool {
+        self.warm == 0.0 && self.bright == 1.0 && self.contrast == 1.0 && self.sat == 1.0
+    }
+
+    /// One RGB pixel (0..255).
+    pub fn apply(&self, [r, g, b]: [u8; 3]) -> [u8; 3] {
+        let (mut r, mut g, mut b) = (r as f32, g as f32, b as f32);
+        r *= 1.0 + self.warm;
+        b *= 1.0 - self.warm;
+        r *= self.bright;
+        g *= self.bright;
+        b *= self.bright;
+        r = (r - 127.5) * self.contrast + 127.5;
+        g = (g - 127.5) * self.contrast + 127.5;
+        b = (b - 127.5) * self.contrast + 127.5;
+        if self.sat != 1.0 {
+            let l = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            r = l + (r - l) * self.sat;
+            g = l + (g - l) * self.sat;
+            b = l + (b - l) * self.sat;
+        }
+        let c = |v: f32| v.round().clamp(0.0, 255.0) as u8;
+        [c(r), c(g), c(b)]
+    }
+}
+
+/// Applies `f` to every RGB pixel (alpha kept), in parallel. Works on 8-bit copies.
+fn map_pixels(img: DynamicImage, f: impl Fn([u8; 3]) -> [u8; 3] + Sync) -> DynamicImage {
+    if decode::has_alpha(&img) {
+        let mut buf = img.to_rgba8();
+        buf.par_chunks_mut(4).for_each(|p| {
+            let [r, g, b] = f([p[0], p[1], p[2]]);
+            p[..3].copy_from_slice(&[r, g, b]);
+        });
+        DynamicImage::ImageRgba8(buf)
+    } else {
+        let mut buf = img.to_rgb8();
+        buf.par_chunks_mut(3).for_each(|p| {
+            let [r, g, b] = f([p[0], p[1], p[2]]);
+            p.copy_from_slice(&[r, g, b]);
+        });
+        DynamicImage::ImageRgb8(buf)
+    }
+}
+
+/// out = v + k * (4v - up - down - left - right), edges clamped; alpha untouched.
+fn sharpen(img: DynamicImage, k: f32) -> DynamicImage {
+    fn run(src: &[u8], w: usize, h: usize, ch: usize, k: f32) -> Vec<u8> {
+        let mut out = src.to_vec();
+        let stride = w * ch;
+        out.par_chunks_mut(stride).enumerate().for_each(|(y, row)| {
+            let up = y.saturating_sub(1) * stride;
+            let down = (y + 1).min(h - 1) * stride;
+            let cur = y * stride;
+            for x in 0..w {
+                let l = x.saturating_sub(1) * ch;
+                let r = (x + 1).min(w - 1) * ch;
+                for c in 0..3.min(ch) {
+                    let v = src[cur + x * ch + c] as f32;
+                    let lap = 4.0 * v
+                        - src[up + x * ch + c] as f32
+                        - src[down + x * ch + c] as f32
+                        - src[cur + l + c] as f32
+                        - src[cur + r + c] as f32;
+                    row[x * ch + c] = (v + k * lap).round().clamp(0.0, 255.0) as u8;
+                }
+            }
+        });
+        out
+    }
+    let (w, h) = (img.width(), img.height());
+    if decode::has_alpha(&img) {
+        let buf = img.to_rgba8();
+        let out = run(&buf, w as usize, h as usize, 4, k);
+        DynamicImage::ImageRgba8(image::RgbaImage::from_raw(w, h, out).expect("same size"))
+    } else {
+        let buf = img.to_rgb8();
+        let out = run(&buf, w as usize, h as usize, 3, k);
+        DynamicImage::ImageRgb8(image::RgbImage::from_raw(w, h, out).expect("same size"))
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -1048,5 +1172,64 @@ mod tests {
         assert_eq!(render_name("", p, 0, 1), "IMG_0001");
         assert_eq!(civil_from_days(0), (1970, 1, 1));
         assert_eq!(civil_from_days(19860), (2024, 5, 17));
+    }
+
+    #[test]
+    fn photo_ops_adjust_formulas() {
+        // Reference values shared with tests/unit/studio.test.mjs (adjustPixel)
+        let a = |b, c, s, t, px| Adjustments::new(b, c, s, t).apply(px);
+        assert_eq!(a(0.0, 0.0, 0.0, 0.0, [10, 128, 250]), [10, 128, 250]);
+        assert_eq!(a(50.0, 0.0, 0.0, 0.0, [100, 100, 100]), [150, 150, 150]);
+        assert_eq!(a(-100.0, 0.0, 0.0, 0.0, [200, 50, 9]), [0, 0, 0]);
+        assert_eq!(a(0.0, 100.0, 0.0, 0.0, [100, 200, 128]), [73, 255, 129]);
+        assert_eq!(a(0.0, -100.0, 0.0, 0.0, [0, 255, 30]), [128, 128, 128]);
+        assert_eq!(a(0.0, 0.0, -100.0, 0.0, [255, 0, 0]), [54, 54, 54]);
+        assert_eq!(a(0.0, 0.0, 0.0, 100.0, [100, 100, 100]), [115, 100, 85]);
+        assert_eq!(a(20.0, 10.0, 30.0, -40.0, [120, 80, 40]), [147, 91, 27]);
+    }
+
+    #[test]
+    fn photo_ops_adjust_and_sharpen_in_batch_keep_exif() {
+        let dir = temp_dir("ops_adjust");
+        let src = dir.join("c.jpg");
+        write_exif_jpeg(&src, 64, 48, 1);
+        let before = image::open(&src).unwrap().to_rgb8();
+        let ops = vec![
+            Op::Adjust { brightness: 30.0, contrast: 0.0, saturation: 0.0, temperature: 0.0 },
+            Op::Sharpen { amount: 50.0 },
+        ];
+        let o = OutputOptions { format: OutFormat::Png, ..Default::default() };
+        let s = run(&job(&[&src], ops, o));
+        let r = &s.results[0];
+        assert!(r.ok && !r.lossless, "{r:?}");
+        let out = Path::new(r.output.as_ref().unwrap());
+        let after = image::open(out).unwrap().to_rgb8();
+        assert_eq!(after.dimensions(), (64, 48));
+        // Inside a flat quadrant sharpening is a no-op, so only brightness shows
+        assert!(after.get_pixel(40, 36).0.iter().all(|v| *v >= 250), "white quadrant brightened");
+        let blue_before = before.get_pixel(5, 40).0[2] as f32;
+        let blue_after = after.get_pixel(5, 40).0[2] as f32;
+        assert!(blue_after >= (blue_before * 1.3).min(255.0) - 2.0, "{blue_before} -> {blue_after}");
+        let ex = summarize(&read_path(out));
+        assert_eq!(ex.date_taken.as_deref(), Some("2024-05-17T14:30:05"));
+
+        // Sharpening raises local contrast at the quadrant edge
+        let img = DynamicImage::ImageRgb8(pattern(16, 16));
+        let sharp = apply_op(img.clone(), &Op::Sharpen { amount: 100.0 }).unwrap().to_rgb8();
+        let orig = img.to_rgb8();
+        assert_eq!(sharp.get_pixel(3, 3), orig.get_pixel(3, 3));
+        assert!(sharp.get_pixel(7, 3).0[0] >= orig.get_pixel(7, 3).0[0]);
+        assert!(sharp.get_pixel(8, 3).0[0] <= orig.get_pixel(8, 3).0[0]);
+        assert!(sharp.get_pixel(7, 3).0[1] < orig.get_pixel(7, 3).0[1] || orig.get_pixel(7, 3).0[1] == 0);
+        // Identity ops leave the image untouched; alpha is preserved
+        let rgba = DynamicImage::ImageRgba8(image::RgbaImage::from_pixel(4, 4, image::Rgba([10, 20, 30, 77])));
+        let out = apply_op(rgba.clone(), &Op::Adjust { brightness: 100.0, contrast: 0.0, saturation: 0.0, temperature: 0.0 }).unwrap();
+        assert_eq!(out.to_rgba8().get_pixel(1, 1).0, [20, 40, 60, 77]);
+        let same = apply_op(rgba.clone(), &Op::Sharpen { amount: 0.0 }).unwrap();
+        assert_eq!(same, rgba);
+        // JSON shape the UI sends
+        let j: BatchJob = serde_json::from_str(r#"{"files":[],"ops":[{"op":"adjust","brightness":10,"temperature":-5},{"op":"sharpen","amount":40}]}"#).unwrap();
+        assert!(matches!(j.ops[0], Op::Adjust { brightness, contrast, .. } if brightness == 10.0 && contrast == 0.0));
+        assert!(matches!(j.ops[1], Op::Sharpen { amount } if amount == 40.0));
     }
 }

@@ -271,6 +271,7 @@ pub fn run() {
             photo::photo_decode,
             photo::photo_batch,
             photo::photo_cancel,
+            photo::photo_list_dirs,
             photo::photo_capabilities
         ])
         .run(tauri::generate_context!())

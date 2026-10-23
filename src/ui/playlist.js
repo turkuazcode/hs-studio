@@ -35,9 +35,21 @@ export function createPlaylist(app) {
     playlistCountBadge, playlistTotalText, playlistFileInput,
   } = dom;
   const items = () => state.get("playlist");
+  // What the drawer currently shows: lets navigation only move the "active" mark
+  // instead of rebuilding thousands of entries (photo studio folder sessions)
+  let rendered = { list: null, length: -1 };
+
+  function markActive() {
+    const playlist = items();
+    if (rendered.list !== playlist || rendered.length !== playlist.length) return renderPlaylist();
+    playlistItemsList.querySelector("li.active")?.classList.remove("active");
+    playlistItemsList.querySelector(`li[data-idx="${state.get("currentPlaylistIndex")}"]`)?.classList.add("active");
+    app.photo.updateCounter();
+  }
 
   function renderPlaylist() {
     const playlist = items();
+    rendered = { list: playlist, length: playlist.length };
     const currentIndex = state.get("currentPlaylistIndex");
     playlistCountBadge.textContent = playlist.length;
     playlistTotalText.textContent = `${playlist.length} Medya`;
@@ -85,7 +97,7 @@ export function createPlaylist(app) {
     if (index < 0 || index >= playlist.length) return;
     state.set("currentPlaylistIndex", index);
     app.loader.loadMediaSource(playlist[index]);
-    renderPlaylist();
+    markActive();
   }
 
   function navigatePlaylist(step) {
