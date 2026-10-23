@@ -16,7 +16,7 @@ set -euo pipefail
 
 FFMPEG_TAG="${FFMPEG_TAG:-n8.1.3}"
 MPV_TAG="${MPV_TAG:-v0.41.0}"
-JOBS="${JOBS:-6}"   # other agents share the CPU
+JOBS="${JOBS:-3}"   # other agents share the CPU
 
 if [[ "${MSYSTEM:-}" != "UCRT64" ]]; then
   echo "Run inside MSYS2 with MSYSTEM=UCRT64" >&2; exit 1
@@ -116,7 +116,7 @@ ntldd -R "$PREFIX/bin/libmpv-2.dll" > "$EVID/libmpv-ntldd.txt" 2>&1 || true
 cp "$PREFIX/bin/libmpv-2.dll" "$DIST/"
 grep -oiE '=> [A-Za-z]:[^ ]+\.dll' "$EVID/libmpv-ntldd.txt" | sed 's/^=> //' | sort -u | while read -r dll; do
   case "$(echo "$dll" | tr 'A-Z' 'a-z')" in
-    *windows*system32*|*windows*syswow64*|*windows\\system32*) ;;  # OS DLLs are not shipped
+    [a-z]:\\windows\\*|[a-z]:/windows/*) ;;  # OS DLLs (System32, WinSxS: gdiplus, comctl32) are not shipped
     *) cp "$(cygpath -u "$dll")" "$DIST/" ;;
   esac
 done
