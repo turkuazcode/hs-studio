@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VHO - Video Oynatıcı</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Main Application Container -->
+    <div id="app-container" class="app-container">
+      
+      <!-- Custom Window Titlebar (Cross-Platform Drag Region) -->
+      <header id="titlebar" class="titlebar" data-tauri-drag-region>
+        <!-- macOS Traffic Lights (Visible only on macOS) -->
+        <div class="macos-traffic-lights" id="macos-traffic-lights" style="display:none;">
+          <span class="traffic-dot dot-close" id="mac-btn-close" title="Kapat"></span>
+          <span class="traffic-dot dot-minimize" id="mac-btn-minimize" title="Küçült"></span>
+          <span class="traffic-dot dot-maximize" id="mac-btn-maximize" title="Ekranı Kapla"></span>
+        </div>
+
+        <div class="titlebar-brand" data-tauri-drag-region>
+          <img src="assets/icon-192.png" alt="VHO Logo" class="brand-logo-img" />
+          <div class="brand-text-group">
+            <span class="app-title">VHO</span>
+            <span class="app-edition-tag">STUDIO</span>
+          </div>
+          <span class="titlebar-divider"></span>
+          <span id="current-filename" class="current-filename">Video Bekleniyor</span>
+        </div>
+
+        <div class="titlebar-actions" data-tauri-drag-region="false">
+          <!-- Online Subtitle Search Button -->
+          <button id="btn-search-subtitles" class="titlebar-action-btn" title="İnternetten Altyazı Bul">
+            <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+            <span>Altyazı Bul</span>
+          </button>
+
+          <!-- Sleep Timer Button with Countdown Display -->
+          <button id="btn-sleep-timer" class="titlebar-action-btn" title="Uyku Zamanlayıcısı">
+            <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+            </svg>
+            <span id="sleep-timer-text">Uyku</span>
+            <span id="sleep-badge" class="badge-count" style="display:none;">30m</span>
+          </button>
+
+          <!-- Playlist Toggle Button -->
+          <button id="btn-toggle-playlist" class="titlebar-action-btn" title="Oynatma Listesi (L)">
+            <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+              <path d="M3 4h14v2H3V4zm0 5h14v2H3V9zm0 5h9v2H3v-2z"/>
+            </svg>
+            <span>Liste</span>
+            <span id="playlist-count-badge" class="badge-count">0</span>
+          </button>
+
+          <!-- Video Effects / Filter Settings -->
+          <button id="btn-toggle-effects" class="titlebar-action-btn" title="Görüntü Ayarları">
+            <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+              <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z"/>
+            </svg>
+            <span>Filtreler</span>
+          </button>
+
+          <!-- AI Restoration Button -->
+          <button id="btn-toggle-ai-restore" class="titlebar-action-btn btn-ai-action" title="144p Eski Video & Ses Restorasyonu">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="color: var(--accent-ruby);">
+              <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6.4-4.8-6.4 4.8 2.4-7.2-6-4.8h7.6z"/>
+            </svg>
+            <span>AI Restorasyon</span>
+            <span id="ai-restore-badge" class="badge-count" style="display:none;">AÇIK</span>
+          </button>
+        </div>
+
+        <!-- Windows / Linux Controls -->
+        <div class="titlebar-controls" id="win-linux-controls" data-tauri-drag-region="false">
+          <button id="btn-minimize" class="titlebar-btn" title="Simge Durumuna Küçült" aria-label="Minimize">
+            <svg viewBox="0 0 12 12" width="11" height="11"><rect y="5.5" width="12" height="1.1" fill="currentColor"/></svg>
+          </button>
+          <button id="btn-maximize" class="titlebar-btn" title="Ekranı Kapla" aria-label="Maximize">
+            <svg viewBox="0 0 12 12" width="11" height="11"><rect x="1" y="1" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>
+          </button>
+          <button id="btn-close" class="titlebar-btn btn-close" title="Kapat" aria-label="Close">
+            <svg viewBox="0 0 12 12" width="11" height="11"><path d="M1.5 1.5L10.5 10.5M10.5 1.5L1.5 10.5" stroke="currentColor" stroke-width="1.2"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Video Viewport / Canvas Area -->
+      <main id="viewport" class="viewport">
+        <!-- Split Screen A/B Comparison Badges & Vertical Indicator Line -->
+        <div id="split-screen-banner" class="split-screen-banner" style="display:none;">
+          <span class="split-label left">Orijinal (144p)</span>
+          <div class="split-divider-line"></div>
+          <span class="split-label right">AI Restorasyon</span>
+        </div>
+        <div id="split-screen-line" class="split-divider-indicator" style="display:none;"></div>
+
+        <!-- Native Video Element -->
+        <video id="video-element" class="video-element" playsinline></video>
+
+        <!-- Native Image Element for Photo Studio -->
+        <div id="image-container" class="image-container" style="display:none;">
+          <img id="image-element" class="image-element" alt="Görüntülenen Medya" draggable="false" />
+        </div>
+
+        <!-- Legacy codec conversion progress -->
+        <div id="transcode-overlay" class="transcode-overlay" role="status" aria-live="polite">
+          <div class="transcode-card">
+            <div class="transcode-spinner"></div>
+            <span id="transcode-text" class="transcode-text">Dönüştürülüyor…</span>
+            <div class="transcode-track"><div id="transcode-bar" class="transcode-bar"></div></div>
+          </div>
+        </div>
+
+        <!-- WebGL2 GPU Enhancer Output (AI Restorasyon açıkken video/fotoğrafın yerine çizilir) -->
+        <canvas id="gpu-canvas" class="gpu-canvas" hidden></canvas>
+
+        <!-- Floating Next / Previous Navigation Arrows on Viewport Edge -->
+        <button id="btn-floating-prev" class="floating-nav-btn prev" title="Önceki Görsel (←)" style="display:none;">‹</button>
+        <button id="btn-floating-next" class="floating-nav-btn next" title="Sonraki Görsel (→)" style="display:none;">›</button>
+
+        <!-- Photo Info Overlay Card -->
+        <div id="photo-info-card" class="photo-info-card" style="display:none;">
+          <div class="photo-info-row"><span>Çözünürlük:</span> <strong id="info-res">-</strong></div>
+          <div class="photo-info-row"><span>Boyut:</span> <strong id="info-size">-</strong></div>
+          <div class="photo-info-row"><span>Format:</span> <strong id="info-format">-</strong></div>
+          <div class="photo-info-row"><span>Oran:</span> <strong id="info-ratio">-</strong></div>
+        </div>
+
+        <!-- Hidden Video Element for Generating Hover Thumbnails -->
+        <video id="thumbnail-video" class="thumbnail-video" preload="auto" muted style="display:none;"></video>
+
+        <!-- Custom Subtitle Overlay Container -->
+        <div id="subtitles-container" class="subtitles-container">
+          <span id="subtitle-text" class="subtitle-text"></span>
+        </div>
+
+        <!-- Screen Flash for Snapshot -->
+        <div id="screen-flash" class="screen-flash"></div>
+
+        <!-- Drag & Drop Overlay / Initial Empty State -->
+        <div id="drop-zone" class="drop-zone visible">
+          <div class="drop-card">
+            <div class="drop-brand-glow">
+              <img src="assets/icon-192.png" alt="VHO Brand" class="drop-brand-logo" />
+            </div>
+            <h2 class="drop-title">VHO Media Player</h2>
+            <p class="drop-subtitle">Video, fotoğraf veya altyazı dosyasını buraya sürükleyin</p>
+            <div class="drop-actions">
+              <button id="btn-browse-file" class="btn-primary">
+                <svg viewBox="0 0 20 20" width="15" height="15" fill="currentColor"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+                Dosya Seç
+              </button>
+              <button id="btn-open-url" class="btn-secondary">
+                <svg viewBox="0 0 20 20" width="15" height="15" fill="currentColor"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
+                URL Aç
+              </button>
+            </div>
+            
+            <div class="quick-shortcuts-hint">
+              <span><kbd>Boşluk</kbd> Oynat / Slayt</span>
+              <span><kbd>F</kbd> Tam Ekran</span>
+              <span><kbd>← / →</kbd> Sonraki</span>
+              <span><kbd>Tekerlek</kbd> Zoom</span>
+              <span><kbd>R</kbd> AI Restorasyon / Döndür</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Big Center Play/Pause Ripple Indicator -->
+        <div id="center-ripple" class="center-ripple">
+          <div id="ripple-icon" class="ripple-icon"></div>
+        </div>
+
+        <!-- Resume Playback Toast Notification -->
+        <div id="resume-toast" class="resume-toast">
+          <div class="resume-content">
+            <svg viewBox="0 0 20 20" width="20" height="20" fill="#00f2fe">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+              <div class="resume-title">Kaldığınız Yerden Devam Edin</div>
+              <div id="resume-time-text" class="resume-desc">00:00 süresinde kalmıştınız</div>
+            </div>
+          </div>
+          <div class="resume-actions">
+            <button id="btn-resume-yes" class="btn-toast-primary">Devam Et</button>
+            <button id="btn-resume-no" class="btn-toast-secondary">Baştan Başla</button>
+          </div>
+        </div>
+
+        <!-- Snapshot Toast Notification -->
+        <div id="snapshot-toast" class="snapshot-toast">
+          <svg viewBox="0 0 20 20" width="18" height="18" fill="#10b981">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+          </svg>
+          <span>İşlem başarılı!</span>
+        </div>
+
+        <!-- Modern Floating HUD Controls -->
+        <div id="controls-hud" class="controls-hud">
+          
+          <!-- Progress / Timeline Bar with Live Video Thumbnail Preview -->
+          <div id="timeline-container" class="timeline-container">
+            <!-- YouTube Style Live Thumbnail Tooltip -->
+            <div id="timeline-tooltip" class="timeline-tooltip">
+              <canvas id="timeline-thumb-canvas" class="timeline-thumb-canvas" width="160" height="90"></canvas>
+              <span id="timeline-tooltip-time" class="timeline-tooltip-time">00:00</span>
+            </div>
+            
+            <div id="timeline-track" class="timeline-track">
+              <!-- A/B Repeat Pins on Track -->
+              <div id="ab-marker-a" class="ab-marker marker-a" style="display:none;"></div>
+              <div id="ab-marker-b" class="ab-marker marker-b" style="display:none;"></div>
+              <div id="ab-range" class="ab-range" style="display:none;"></div>
+
+              <div id="timeline-buffer" class="timeline-buffer"></div>
+              <div id="timeline-progress" class="timeline-progress">
+                <div class="timeline-thumb"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Button Row -->
+          <div class="controls-row">
+            
+            <!-- Left Group: Playback & Volume -->
+            <div class="controls-group left">
+              <button id="btn-play-pause" class="hud-btn btn-play" title="Oynat / Durdur (Boşluk)" aria-label="Play/Pause">
+                <svg id="icon-play" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                <svg id="icon-pause" viewBox="0 0 24 24" width="22" height="22" fill="currentColor" style="display:none;">
+                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                </svg>
+              </button>
+
+              <button id="btn-skip-backward" class="hud-btn" title="10 Saniye Geri (←)" aria-label="Seek Backward">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.2 3.16-1.98 5.12-1.98 3.66 0 6.69 2.47 7.6 5.86l2.36-.78C21.19 10.97 17.27 8 12.5 8z"/>
+                </svg>
+              </button>
+
+              <button id="btn-skip-forward" class="hud-btn" title="10 Saniye İleri (→)" aria-label="Seek Forward">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                  <path d="M11.5 8c2.65 0 5.05.99 6.9 2.6L22 7v9h-9l3.62-3.62c-1.39-1.2-3.16-1.98-5.12-1.98-3.66 0-6.69 2.47-7.6 5.86l-2.36-.78C2.81 10.97 6.73 8 11.5 8z"/>
+                </svg>
+              </button>
+
+              <!-- Volume Container with 0% - 200% BOOSTER -->
+              <div class="volume-container">
+                <button id="btn-volume" class="hud-btn" title="Sesi Aç/Kapat (M)" aria-label="Mute/Unmute">
+                  <svg id="icon-volume-high" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                  </svg>
+                  <svg id="icon-volume-boost" viewBox="0 0 24 24" width="20" height="20" fill="#f43f5e" style="display:none;">
+                    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77zM18.5 12c0-3.07-1.77-5.71-4.34-7.01v14.02c2.57-1.3 4.34-3.94 4.34-7.01z"/>
+                  </svg>
+                  <svg id="icon-volume-mute" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="display:none;">
+                    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                  </svg>
+                </button>
+                <div class="volume-slider-wrapper">
+                  <input id="volume-slider" type="range" min="0" max="200" value="100" class="volume-slider" aria-label="Volume">
+                </div>
+                <span id="volume-badge" class="volume-badge">100%</span>
+              </div>
+
+              <!-- Time Display -->
+              <div class="time-display">
+                <span id="time-current">00:00</span>
+                <span class="time-divider">/</span>
+                <span id="time-total">00:00</span>
+              </div>
+            </div>
+
+            <!-- Right Group: Subtitles (CC), A-B Loop, Snapshot, Aspect Ratio, PiP, Fullscreen -->
+            <div class="controls-group right">
+              
+              <!-- Subtitles (CC) Toggle & Menu -->
+              <div class="dropdown-container">
+                <button id="btn-toggle-subtitles" class="hud-badge-btn" title="Altyazı Aç / Kapat (C veya V tuşu)">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="vertical-align: -2px; margin-right: 3px;">
+                    <path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/>
+                  </svg>
+                  <span id="sub-status-label">CC</span>
+                </button>
+                <div id="subtitles-menu" class="dropdown-menu">
+                  <div id="sub-menu-toggle" class="dropdown-item active">
+                    <span id="sub-menu-toggle-text">● Altyazı: Açık</span>
+                  </div>
+                  <div id="sub-menu-search" class="dropdown-item">
+                    <span>🌐 Online Altyazı Bul</span>
+                  </div>
+                  <div id="sub-menu-browse" class="dropdown-item">
+                    <span>📁 Dosyadan Altyazı Seç</span>
+                  </div>
+                  <div id="sub-menu-clear" class="dropdown-item" style="color: #f43f5e;">
+                    <span>✕ Altyazıyı Kaldır</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- A-B Repeat Button -->
+              <button id="btn-ab-loop" class="hud-badge-btn" title="A-B Tekrar Döngüsü: A noktasını seç">
+                <span id="ab-loop-label">A-B Döngü</span>
+              </button>
+
+              <!-- Aspect Ratio Selector -->
+              <div class="dropdown-container">
+                <button id="btn-aspect-ratio" class="hud-badge-btn" title="En-Boy Oranı">
+                  <span id="aspect-label">16:9</span>
+                </button>
+                <div id="aspect-menu" class="dropdown-menu">
+                  <div class="dropdown-item active" data-aspect="contain">Orijinal (Contain)</div>
+                  <div class="dropdown-item" data-aspect="16-9">16:9 Geniş Ekran</div>
+                  <div class="dropdown-item" data-aspect="21-9">21:9 Sinematik</div>
+                  <div class="dropdown-item" data-aspect="4-3">4:3 Klasik TV</div>
+                  <div class="dropdown-item" data-aspect="fill">Ekrana Yay (Fill)</div>
+                </div>
+              </div>
+
+              <!-- Playback Speed Menu -->
+              <div class="dropdown-container">
+                <button id="btn-speed" class="hud-badge-btn" title="Oynatma Hızı">
+                  <span id="speed-label">1.0x</span>
+                </button>
+                <div id="speed-menu" class="dropdown-menu">
+                  <div class="dropdown-item" data-speed="0.5">0.5x (Yavaş)</div>
+                  <div class="dropdown-item" data-speed="0.75">0.75x</div>
+                  <div class="dropdown-item active" data-speed="1.0">1.0x (Normal)</div>
+                  <div class="dropdown-item" data-speed="1.25">1.25x</div>
+                  <div class="dropdown-item" data-speed="1.5">1.5x (Hızlı)</div>
+                  <div class="dropdown-item" data-speed="2.0">2.0x (Çift Hız)</div>
+                </div>
+              </div>
+
+              <!-- Snapshot / Screenshot Button -->
+              <button id="btn-snapshot" class="hud-btn" title="Ekran Görüntüsü Kaydet (S)" aria-label="Snapshot">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M4 4h3l2-2h6l2 2h3a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm8 3a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6z"/>
+                </svg>
+              </button>
+
+              <!-- Picture in Picture (PiP) -->
+              <button id="btn-pip" class="hud-btn" title="Resim İçinde Resim (P)" aria-label="Picture in Picture">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 .02H3V4.97h18v14.05z"/>
+                </svg>
+              </button>
+
+              <!-- Fullscreen Toggle -->
+              <button id="btn-fullscreen" class="hud-btn" title="Tam Ekran (F)" aria-label="Fullscreen">
+                <svg id="icon-fs-enter" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                  <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                </svg>
+                <svg id="icon-fs-exit" viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="display:none;">
+                  <path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Photo Studio HUD Controls (Visible when viewing images) -->
+        <div id="photo-hud" class="photo-hud" style="display:none;">
+          <div class="photo-hud-left">
+            <button id="btn-photo-prev" class="hud-btn" title="Önceki Görsel (←)">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+            </button>
+            <button id="btn-photo-slideshow" class="hud-btn" title="Slayt Gösterisi (Boşluk)">
+              <svg id="icon-slideshow-play" viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
+              <svg id="icon-slideshow-pause" viewBox="0 0 20 20" width="16" height="16" fill="currentColor" style="display:none;"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+            </button>
+            <button id="btn-photo-next" class="hud-btn" title="Sonraki Görsel (→)">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+            </button>
+            <span id="photo-counter-badge" class="photo-counter-badge">1 / 1</span>
+          </div>
+
+          <div class="photo-hud-center">
+            <button id="btn-photo-zoom-out" class="hud-btn" title="Uzaklaştır (-)">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+            </button>
+            <button id="btn-photo-zoom-reset" class="hud-pill-btn" title="Boyutu Sıfırla (0)">
+              <span id="photo-zoom-level">Fit</span>
+            </button>
+            <button id="btn-photo-zoom-in" class="hud-btn" title="Yakınlaştır (+)">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+            </button>
+          </div>
+
+          <div class="photo-hud-right">
+            <button id="btn-photo-rotate-left" class="hud-btn" title="Sola Döndür (L)">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7.11 8.53L5.7 7.11C4.8 8.27 4.24 9.61 4.07 11h2.02c.14-.87.51-1.67 1.02-2.47zM6.09 13H4.07c.17 1.39.73 2.73 1.63 3.89l1.41-1.42c-.51-.8-.88-1.6-1.02-2.47zm1.02 5.47l-1.41 1.41C7.8 21.2 9.14 21.76 10.53 21.93v-2.02c-.87-.14-1.67-.51-2.47-1.02zm11.89-6.47c-.14.87-.51 1.67-1.02 2.47l1.41 1.42c.9-1.16 1.46-2.5 1.63-3.89h-2.02zm-1.02-5.47l1.41-1.41c-.9-1.16-2.24-1.72-3.63-1.89v2.02c.87.14 1.67.51 2.47 1.02zM13 4.07V1L8.45 5.55 13 10V6.09c3.37 0 6.09 2.72 6.09 6.09s-2.72 6.09-6.09 6.09-6.09-2.72-6.09-6.09H5c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+            </button>
+            <button id="btn-photo-rotate-right" class="hud-btn" title="Sağa Döndür (R)">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M15.55 5.55L11 1v3.07C6.58 4.07 3 7.65 3 12.07s3.58 8 8 8 8-3.58 8-8h-1.91c0 3.37-2.72 6.09-6.09 6.09s-6.09-2.72-6.09-6.09 2.72-6.09 6.09-6.09V10l4.55-4.45z"/></svg>
+            </button>
+            <button id="btn-photo-info" class="hud-btn" title="Görsel Detayları (I)">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Slidable Modern Playlist Drawer -->
+        <aside id="playlist-drawer" class="playlist-drawer">
+          <div class="playlist-header">
+            <div class="playlist-title-group">
+              <h3>Oynatma Listesi</h3>
+              <span id="playlist-total-text" class="playlist-subtitle">0 Medya</span>
+            </div>
+            <button id="btn-close-playlist" class="btn-icon-close" title="Kapat">✕</button>
+          </div>
+
+          <div class="playlist-toolbar">
+            <button id="btn-playlist-add" class="btn-secondary btn-sm">
+              <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+              Medya Ekle
+            </button>
+            <button id="btn-playlist-clear" class="btn-ghost btn-sm">Listeyi Temizle</button>
+          </div>
+
+          <ul id="playlist-items" class="playlist-items">
+            <li class="playlist-empty">Listeniz boş.<br>Video veya fotoğraf dosyalarını buraya sürükleyin.</li>
+          </ul>
+        </aside>
+
+        <!-- Video Filter / Effects Modal Panel -->
+        <div id="effects-panel" class="effects-panel">
+          <div class="effects-header">
+            <h4>Görüntü Ayarları & Efektler</h4>
+            <button id="btn-close-effects" class="btn-icon-close">✕</button>
+          </div>
+          
+          <div class="effects-body">
+            <div class="filter-group">
+              <div class="filter-label">
+                <span>Parlaklık (Brightness)</span>
+                <span id="val-brightness">100%</span>
+              </div>
+              <input id="slider-brightness" type="range" min="50" max="200" value="100" class="filter-slider">
+            </div>
+
+            <div class="filter-group">
+              <div class="filter-label">
+                <span>Kontrast (Contrast)</span>
+                <span id="val-contrast">100%</span>
+              </div>
+              <input id="slider-contrast" type="range" min="50" max="200" value="100" class="filter-slider">
+            </div>
+
+            <div class="filter-group">
+              <div class="filter-label">
+                <span>Doygunluk (Saturation)</span>
+                <span id="val-saturate">100%</span>
+              </div>
+              <input id="slider-saturate" type="range" min="0" max="250" value="100" class="filter-slider">
+            </div>
+
+            <div class="filter-group">
+              <div class="filter-label">
+                <span>Altyazı Gecikmesi (Subtitle Sync)</span>
+                <span id="val-sub-delay">0 ms</span>
+              </div>
+              <div class="delay-controls">
+                <button id="btn-sub-minus" class="btn-sm btn-secondary">-100ms</button>
+                <button id="btn-sub-reset" class="btn-sm btn-ghost">Sıfırla</button>
+                <button id="btn-sub-plus" class="btn-sm btn-secondary">+100ms</button>
+              </div>
+            </div>
+
+            <button id="btn-reset-filters" class="btn-primary btn-sm" style="margin-top:12px; width:100%;">
+              Varsayılanlara Sıfırla
+            </button>
+
+            <!-- GPU Compatibility Mode (black video screen workaround) -->
+            <label class="restore-check-row compat-row" title="Uygulama yeniden başlatılır">
+              <input type="checkbox" id="check-compat-mode" />
+              <div class="check-text">
+                <strong>Uyumluluk Modu (yeniden başlatır)</strong>
+                <span>Yalnızca ses gelip görüntü siyah kalıyorsa açın. CPU kullanımı artar.</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- AI Video & Audio Restoration Modal Panel -->
+        <div id="ai-restore-panel" class="effects-panel ai-restore-panel">
+          <div class="effects-header">
+            <div class="ai-header-title">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="color: var(--accent-ruby);">
+                <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6.4-4.8-6.4 4.8 2.4-7.2-6-4.8h7.6z"/>
+              </svg>
+              <h4>AI Restorasyon & Netleştirici</h4>
+            </div>
+            <button id="btn-close-ai-restore" class="btn-icon-close">✕</button>
+          </div>
+          
+          <div class="effects-body">
+            <!-- Master Toggle Switch -->
+            <div class="restore-master-toggle">
+              <div class="toggle-info">
+                <strong>Restorasyon Motoru</strong>
+                <span id="ai-master-status" class="toggle-desc">Kapalı (Orijinal)</span>
+              </div>
+              <label class="switch-toggle">
+                <input type="checkbox" id="check-ai-master" />
+                <span class="slider-round"></span>
+              </label>
+            </div>
+
+            <!-- Presets Grid -->
+            <div class="restore-presets-label">Hazır Restorasyon Modları:</div>
+            <div class="restore-presets-grid">
+              <button class="btn-restore-preset active" data-preset="144p">⚡ 144p Kurtarma</button>
+              <button class="btn-restore-preset" data-preset="voice">🎙️ Konuşma Netleştir</button>
+              <button class="btn-restore-preset" data-preset="cinema">🎬 Canlı Renk & Detay</button>
+              <button class="btn-restore-preset" data-preset="custom">🛠️ Özel Ayar</button>
+            </div>
+
+            <!-- Video Enhancements -->
+            <div class="restore-section-title">Görüntü İyileştirme (GPU Shader):</div>
+            
+            <div class="filter-group">
+              <div class="filter-label">
+                <span>Süper Çözünürlük (FSR Büyütme + Keskinlik + Gürültü Azaltma)</span>
+                <span id="val-ai-sharp">Seviye 2</span>
+              </div>
+              <input id="slider-ai-sharp" type="range" min="0" max="3" value="2" class="filter-slider">
+            </div>
+
+            <div class="filter-group">
+              <div class="filter-label">
+                <span>Ek Kontrast</span>
+                <span id="val-ai-contrast">+8%</span>
+              </div>
+              <input id="slider-ai-contrast" type="range" min="0" max="40" value="8" class="filter-slider">
+            </div>
+
+            <!-- Audio Enhancements -->
+            <div class="restore-section-title">Ses İyileştirme (DSP & Web Audio):</div>
+            
+            <label class="restore-check-row">
+              <input type="checkbox" id="check-ai-voice-clarity" checked />
+              <div class="check-text">
+                <strong>Diyalog & Konuşma Netleştirici (+5dB)</strong>
+                <span>Boğuk sesleri öne çıkarır, ahize etkisini kırar</span>
+              </div>
+            </label>
+
+            <label class="restore-check-row">
+              <input type="checkbox" id="check-ai-denoise" checked />
+              <div class="check-text">
+                <strong>Dip Gürültü & Tıslama Temizleyici</strong>
+                <span>Uğultuları ve yüksek frekans cızırtısını keser</span>
+              </div>
+            </label>
+
+            <label class="restore-check-row">
+              <input type="checkbox" id="check-ai-compressor" checked />
+              <div class="check-text">
+                <strong>Dinamik Ses Dengeleyici (Compressor)</strong>
+                <span>Fısıltıları duyulur yapar, patlamaları sınırlar</span>
+              </div>
+            </label>
+
+            <!-- A/B Comparison / Split View Toggle -->
+            <button id="btn-toggle-split-view" class="btn-secondary btn-sm" style="width:100%; margin-top: 6px;">
+              <span>A/B Karşılaştırma: <strong id="split-view-status">Kapalı</strong></span>
+            </button>
+
+            <!-- Deep AI restoration (neural network models, downloaded on first use) -->
+            <div class="restore-section-title">Derin İyileştirme (Yapay Zeka Modeli):</div>
+            <div class="deep-enhance-box">
+              <button id="btn-deep-enhance" class="btn-primary btn-sm" style="width:100%;">✨ Fotoğrafı İyileştir (4x, E)</button>
+              <label class="restore-check-row">
+                <input type="checkbox" id="check-deep-faces" checked />
+                <div class="check-text">
+                  <strong>Yüzleri de iyileştir (GFPGAN)</strong>
+                  <span>Bulanık yüzlerde göz, ağız ve hatları yeniden oluşturur</span>
+                </div>
+              </label>
+              <div id="deep-progress" class="deep-progress" hidden><div id="deep-progress-bar" class="deep-progress-bar"></div></div>
+              <span id="deep-status" class="deep-status">Eski / düşük çözünürlüklü fotoğrafları yapay zeka ile yeniden oluşturur. İlk kullanımda model indirilir.</span>
+              <div id="deep-result-actions" class="deep-result-actions" hidden>
+                <button id="btn-deep-compare" class="btn-secondary btn-sm">Orijinali Göster</button>
+                <button id="btn-deep-save" class="btn-secondary btn-sm">Kaydet (PNG)</button>
+              </div>
+            </div>
+
+            <button id="btn-open-licenses" class="btn-ghost btn-sm" style="margin-top: 4px;">Lisanslar ve Teşekkürler</button>
+          </div>
+        </div>
+
+        <!-- Sleep Timer Modal -->
+        <div id="sleep-timer-modal" class="modal-overlay">
+          <div class="modal-card">
+            <h3>Uyku Zamanlayıcısı (Sleep Timer)</h3>
+            <p>Süre bittiğinde ses 3 saniye içinde yavaşça kısılarak video duraklatılır.</p>
+            <div class="sleep-presets">
+              <button class="btn-sleep-preset" data-minutes="15">15 Dakika</button>
+              <button class="btn-sleep-preset" data-minutes="30">30 Dakika</button>
+              <button class="btn-sleep-preset" data-minutes="45">45 Dakika</button>
+              <button class="btn-sleep-preset" data-minutes="60">1 Saat</button>
+              <button class="btn-sleep-preset" data-minutes="video-end">Video Bitince</button>
+            </div>
+            
+            <!-- Custom Minutes Input Row -->
+            <div class="custom-sleep-row">
+              <input id="input-custom-sleep" type="number" min="1" max="600" placeholder="Özel süre (dk)" class="modal-input" />
+              <button id="btn-custom-sleep" class="btn-primary btn-sm">Başlat</button>
+            </div>
+
+            <!-- Windows Sleep Checkbox -->
+            <label class="sleep-checkbox-container">
+              <input id="check-pc-sleep" type="checkbox" checked />
+              <span>Süre dolunca bilgisayarı uyku moduna al (Windows Sleep)</span>
+            </label>
+
+            <div class="modal-actions">
+              <button id="btn-cancel-sleep-timer" class="btn-secondary">İptal</button>
+              <button id="btn-disable-sleep-timer" class="btn-ghost" style="display:none;">Zamanlayıcıyı Kapat</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subtitle Search Modal -->
+        <div id="subtitle-search-modal" class="modal-overlay">
+          <div class="modal-card modal-large">
+            <div class="modal-header-row">
+              <h3>Online Altyazı Bul & İndir</h3>
+              <button id="btn-close-sub-modal" class="btn-icon-close">✕</button>
+            </div>
+            <p>Arama OpenSubtitles.org sitesinde tarayıcınızda açılır. İndirdiğiniz .srt / .vtt dosyasını buradan veya sürükle-bırak ile yükleyin.</p>
+            <div class="sub-search-bar">
+              <input id="input-sub-query" type="text" placeholder="Film veya Dizi Adı..." class="modal-input" />
+              <select id="select-sub-lang" class="modal-select">
+                <option value="tr">Türkçe 🇹🇷</option>
+                <option value="en">English 🇬🇧</option>
+                <option value="de">Deutsch 🇩🇪</option>
+                <option value="fr">Français 🇫🇷</option>
+              </select>
+              <button id="btn-do-sub-search" class="btn-primary">Ara</button>
+            </div>
+            <div id="sub-search-results" class="sub-search-results">
+              <div class="sub-empty-state">Altyazı aramak için yukarıdaki butona tıklayın.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Licenses / Credits Modal -->
+        <div id="licenses-modal" class="modal-overlay">
+          <div class="modal-card modal-large">
+            <div class="modal-header-row">
+              <h3>Lisanslar ve Teşekkürler</h3>
+              <button id="btn-close-licenses" class="btn-icon-close">✕</button>
+            </div>
+            <p>VHO, aşağıdaki açık kaynak projeler sayesinde mümkün oldu. Yapay zeka bileşenleri ilk kullanımda indirilir ve lisans dosyalarıyla birlikte saklanır.</p>
+            <pre id="licenses-text" class="licenses-text">Yükleniyor…</pre>
+          </div>
+        </div>
+
+        <!-- Sleep Mode Blackout Overlay -->
+        <div id="sleep-overlay" class="sleep-overlay">
+          <div class="sleep-card">
+            <div class="sleep-icon">🌙</div>
+            <h2>Uyku Modu Aktif</h2>
+            <p>Zamanlayıcı süresi doldu. Video duraklatıldı.</p>
+            <button id="btn-wake-up" class="btn-primary" style="margin-top:16px;">Oynatmaya Devam Et</button>
+          </div>
+        </div>
+
+        <!-- URL Input Modal -->
+        <div id="url-modal" class="modal-overlay">
+          <div class="modal-card">
+            <h3>Ağ Akışı / Video URL Aç</h3>
+            <p>Desteklenen: HTTP / HTTPS üzerinden doğrudan video, ses veya görsel linkleri (MP4, WebM, MP3, JPG...)</p>
+            <input id="input-video-url" type="url" placeholder="https://ornek.com/video.mp4" class="modal-input" />
+            <div class="modal-actions">
+              <button id="btn-cancel-url" class="btn-secondary">İptal</button>
+              <button id="btn-confirm-url" class="btn-primary">Oynat</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hidden Native File Inputs -->
+        <input id="file-input" type="file" multiple accept="video/*,audio/*,image/*,.mkv,.mp4,.m4v,.avi,.mov,.webm,.flv,.ts,.mp3,.m4a,.flac,.wav,.ogg,.opus,.jpg,.jpeg,.png,.webp,.gif,.bmp,.svg,.avif,.srt,.vtt" style="display:none;" />
+        <input id="playlist-file-input" type="file" multiple accept="video/*,audio/*,image/*,.mkv,.mp4,.m4v,.avi,.mov,.webm,.flv,.ts,.mp3,.m4a,.flac,.wav,.ogg,.opus,.jpg,.jpeg,.png,.webp,.gif,.bmp,.svg,.avif,.srt,.vtt" style="display:none;" />
+        <input id="sub-file-input" type="file" accept=".srt,.vtt" style="display:none;" />
+      </main>
+    </div>
+
+    <!-- Application Logic -->
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
