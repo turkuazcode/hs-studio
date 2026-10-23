@@ -52,6 +52,9 @@ export function initShortcuts(app) {
     KeyS: () => app.snapshot.capture(),
     KeyL: () => app.playlist.toggleDrawer(),
     KeyP: () => app.video.clickPip(),
+    Period: () => app.video.frameStep(1),
+    Comma: () => app.video.frameStep(-1),
+    KeyK: () => app.playbackMenus.addBookmark(),
     ...alias(["KeyR", "KeyA"], () => app.panels.toggleAiMaster("AI Restorasyon & Netleştirici Açık ✨", "AI Restorasyon Kapalı")),
     KeyB: () => app.panels.toggleSplitView(),
   };

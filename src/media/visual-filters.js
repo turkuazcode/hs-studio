@@ -4,6 +4,7 @@
 // ==========================================================================
 
 import { createGpuEnhancer } from "./gpu-enhancer.js";
+import { pictureProps } from "./engine/engine.js";
 
 /** Sharpness level (0-3) -> enhancer shader parameters. */
 export function enhancerLevels(level) {
@@ -35,7 +36,7 @@ export function createVisualFilters(app) {
   const { dom, state } = app;
   const {
     video, imageElement, imageContainer, gpuCanvas, sliderBrightness, sliderContrast, sliderSaturate,
-    valBrightness, valContrast, valSaturate,
+    valBrightness, valContrast, valSaturate, sliderGamma, sliderHue, valGamma, valHue,
   } = dom;
 
   let enhancer = null;
@@ -84,6 +85,24 @@ export function createVisualFilters(app) {
     const aiEnabled = state.get("isAiRestoreEnabled");
     const sharpLevel = state.get("aiSharpLevel");
     const contrastBoost = state.get("aiContrastBoost");
+    const gamma = parseInt(sliderGamma?.value ?? "0", 10);
+    const hue = parseInt(sliderHue?.value ?? "0", 10);
+    if (valGamma) valGamma.textContent = String(gamma);
+    if (valHue) valHue.textContent = String(hue);
+
+    // libmpv draws the video itself: the colour controls become mpv properties
+    // (brightness/contrast/saturation/gamma/hue); the AI "restoration" adds its contrast/
+    // saturation boost there (no WebGL access to mpv's frames).
+    if (app.engine?.kind === "mpv" && state.get("currentMediaType") === "video") {
+      disableEnhancerVisuals();
+      video.style.filter = "";
+      const boost = aiEnabled ? contrastBoost + sharpLevel * 6 : 0;
+      app.engine.setPicture(pictureProps({
+        brightness: b, contrast: c, saturate: aiEnabled ? s + sharpLevel * 3 : s, gamma, hue, contrastBoost: boost,
+      }));
+      return;
+    }
+
     const src = currentVisualSource();
     const useGpu = aiEnabled && enhancer && src && !state.get("enhancerBlocked") && !state.get("isTaintedSource");
 

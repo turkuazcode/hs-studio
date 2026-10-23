@@ -163,7 +163,7 @@ export function createPhotoViewer(app) {
   function loadImageSource(item) {
     state.update("loadGen", (g) => g + 1);
     state.set("currentMediaType", "image");
-    app.video.unloadElements();
+    app.video.unloadElements(); // engine.unload(): also hides the libmpv video window
     app.filters.disable();
     state.set("enhancerBlocked", false);
     state.set("isTaintedSource", false);

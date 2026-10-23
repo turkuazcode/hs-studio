@@ -52,7 +52,7 @@ export function createModals(app) {
       app.toast("Geçerli bir http(s) URL girin");
       return;
     }
-    if (isHlsUrl(url) && !video.canPlayType("application/vnd.apple.mpegurl")) {
+    if (isHlsUrl(url) && !app.engine.mpvAvailable && !video.canPlayType("application/vnd.apple.mpegurl")) {
       app.toast("⚠️ HLS (.m3u8) akışları bu sürümde desteklenmiyor");
       return;
     }

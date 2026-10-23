@@ -12,15 +12,23 @@ export function shouldAutoHide({ isPlaying, isSlideshowActive, mediaType, overla
   return (isPlaying || isSlideshowActive || mediaType === "image") && !overlayOpen;
 }
 
-export function createHud({ dom, state }) {
+export function createHud({ dom, state, bus }) {
   const {
     controlsHud, photoHud, btnFloatingPrev, btnFloatingNext, titlebar, dropZone, playlistDrawer,
     effectsPanel, aiRestorePanel, sleepTimerModal, subtitleSearchModal,
   } = dom;
   let hudHideTimeout = null;
+  let hudVisible = true;
+  /** "hud:visibility" lets libmpv lift its subtitles above the HUD. */
+  function setVisible(v) {
+    if (v === hudVisible) return;
+    hudVisible = v;
+    bus?.emit("hud:visibility", { visible: v });
+  }
 
   function showHud() {
     controlsHud.classList.remove("hidden");
+    setVisible(true);
     if (photoHud) photoHud.style.opacity = "1";
     if (btnFloatingPrev) btnFloatingPrev.style.opacity = "0.7";
     if (btnFloatingNext) btnFloatingNext.style.opacity = "0.7";
@@ -48,6 +56,7 @@ export function createHud({ dom, state }) {
         const mediaType = state.get("currentMediaType");
         if (mediaType === "video") {
           controlsHud.classList.add("hidden");
+          setVisible(false);
         } else if (mediaType === "image") {
           if (photoHud) photoHud.style.opacity = "0";
           if (btnFloatingPrev) btnFloatingPrev.style.opacity = "0";
