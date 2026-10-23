@@ -81,47 +81,52 @@ const TEST_STUBS = `
  * the real PC to sleep (the sleep timer's "PC Uyku" box is checked by default);
  * set_compat_mode would restart the app.
  *
- * Tauri v2 IPC calls are HTTP requests to http://ipc.localhost/<command>. CDP Fetch
- * interception answers them in the browser's network stack, so no JS reference (including
- * one captured at import time) can bypass it. The guard is verified on every launch with a
- * harmless command whose real answer is known; launching fails if interception does not work.
+ * Layer 1 (backend): vho.exe gets VHO_DISABLE_SYSTEM_SUSPEND=1, suspend_system is a no-op.
+ * Layer 2 (page): before any page script runs, window.__TAURI__.core is replaced by a copy
+ * whose invoke() answers the blocked commands itself (core is a frozen namespace, but the
+ * property holding it is writable). The app captures invoke at import time, so the guard is
+ * verified after boot by the app's own initial_files call showing up in the guard's log.
  */
 const BLOCKED_COMMANDS = ["suspend_system", "set_compat_mode"];
-const PROBE_COMMAND = "get_compat_mode";
-const PROBE_SENTINEL = "__vho_e2e_guard__";
-const b64 = (s) => Buffer.from(s, "utf8").toString("base64");
 
-async function installSystemGuard(cdp) {
-  const blocked = [];
-  let probing = true;
-  cdp.on("Fetch.requestPaused", ({ requestId, request }) => {
-    const cmd = decodeURIComponent(new URL(request.url).pathname.slice(1));
-    let body = "null";
-    if (cmd === PROBE_COMMAND && probing) body = JSON.stringify(PROBE_SENTINEL);
-    else if (BLOCKED_COMMANDS.includes(cmd)) blocked.push(cmd);
-    else return cdp.send("Fetch.continueRequest", { requestId }).catch(() => {});
-    cdp.send("Fetch.fulfillRequest", {
-      requestId,
-      responseCode: 200,
-      responseHeaders: [
-        { name: "Content-Type", value: "application/json" },
-        { name: "Tauri-Response", value: "ok" },
-        { name: "Access-Control-Allow-Origin", value: "*" },
-        { name: "Access-Control-Expose-Headers", value: "Tauri-Response" },
-      ],
-      body: b64(body),
-    }).catch(() => {});
-  });
-  const patterns = [...BLOCKED_COMMANDS, PROBE_COMMAND].map((c) => ({ urlPattern: `*ipc.localhost/${c}*`, requestStage: "Request" }));
-  await cdp.send("Fetch.enable", { patterns });
-  const seen = await cdp.evaluate(`__TAURI__.core.invoke(${JSON.stringify(PROBE_COMMAND)})`);
-  probing = false;
-  if (seen !== PROBE_SENTINEL) {
-    throw new Error(`SAFETY: IPC interception not effective (got ${JSON.stringify(seen)}); refusing to run tests that could suspend the PC`);
-  }
-  // Only the blocked commands stay intercepted
-  await cdp.send("Fetch.enable", { patterns: BLOCKED_COMMANDS.map((c) => ({ urlPattern: `*ipc.localhost/${c}*`, requestStage: "Request" })) });
-  return blocked;
+const INVOKE_GUARD = `
+  (() => {
+    const BLOCKED = ${JSON.stringify(BLOCKED_COMMANDS)};
+    window.__invokeLog = [];
+    window.__blockedCalls = [];
+    const wrap = (t) => {
+      if (!t || !t.core || !t.core.invoke || t.core.invoke.__vhoGuard) return t;
+      const real = t.core.invoke;
+      const guarded = function (cmd, ...rest) {
+        __invokeLog.push(cmd);
+        if (BLOCKED.includes(cmd)) {
+          __blockedCalls.push(cmd);
+          return Promise.resolve(null);
+        }
+        return real.call(this, cmd, ...rest);
+      };
+      guarded.__vhoGuard = true;
+      t.core = Object.freeze({ ...t.core, invoke: guarded });
+      return t;
+    };
+    if (window.__TAURI__) {
+      wrap(window.__TAURI__);
+    } else {
+      let value;
+      Object.defineProperty(window, "__TAURI__", {
+        configurable: true, enumerable: true,
+        get: () => value,
+        set: (v) => { value = wrap(v); },
+      });
+    }
+  })();
+`;
+
+/** Throws unless every backend call of the app goes through the guard. */
+async function verifyGuard(cdp) {
+  const ok = await cdp.evaluate(`window.__TAURI__.core.invoke.__vhoGuard === true &&
+    Array.isArray(window.__invokeLog) && window.__invokeLog.includes("initial_files")`);
+  if (!ok) throw new Error("SAFETY: invoke guard not effective; refusing to run tests that could suspend the PC");
 }
 
 const debug = (...a) => { if (process.env.VHO_E2E_DEBUG) console.error(`[e2e ${new Date().toISOString().slice(11, 23)}]`, ...a); };
@@ -158,7 +163,6 @@ export async function launchApp({ args = [], exe = defaultExe() } = {}) {
   debug("launch: pid", proc.pid, "port", port, "args", args);
 
   let cdp;
-  let blockedCalls = null;
   try {
     cdp = await Promise.race([
       connectCdp(port, { timeoutMs: 45000 }),
@@ -170,7 +174,7 @@ export async function launchApp({ args = [], exe = defaultExe() } = {}) {
     await cdp.waitFor(appLoaded, { timeoutMs: 30000, message: "app page loaded" });
     debug("launch: app page loaded");
     await cdp.send("Page.enable");
-    await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: ERROR_COLLECTOR + TEST_STUBS });
+    await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: INVOKE_GUARD + ERROR_COLLECTOR + TEST_STUBS });
     // Reload so the collector also sees module loading / boot. initial_files is re-read
     // from the command line, so a media argument is opened again.
     await cdp.evaluate("window.__beforeReload = true");
@@ -180,7 +184,11 @@ export async function launchApp({ args = [], exe = defaultExe() } = {}) {
       timeoutMs: 20000, message: "app boot after reload",
     });
     debug("launch: booted after reload");
-    blockedCalls = await installSystemGuard(cdp);
+    // initial_files is the app's own boot call: wait for it, then prove it went through the guard
+    await cdp.waitFor(`Array.isArray(window.__invokeLog) && window.__invokeLog.includes("initial_files")`, {
+      timeoutMs: 10000, message: "app boot IPC (initial_files)",
+    }).catch(() => {});
+    await verifyGuard(cdp);
     debug("launch: system guard verified");
   } catch (e) {
     cdp?.close();
@@ -196,7 +204,9 @@ export async function launchApp({ args = [], exe = defaultExe() } = {}) {
     cdp,
     userData,
     /** Backend commands the guard answered instead of the app (e.g. ["suspend_system"]). */
-    get blockedCalls() { return [...blockedCalls]; },
+    blockedCalls: () => cdp.evaluate("window.__blockedCalls"),
+    /** Re-checks the invoke guard (throws if a call could reach the backend unseen). */
+    verifyGuard: () => verifyGuard(cdp),
     eval: (expr, opts) => cdp.evaluate(expr, opts),
     waitFor: (expr, opts) => cdp.waitFor(expr, opts),
     /** Keyboard shortcut as the app sees it (keydown bubbling from <body> to window). */

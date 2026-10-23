@@ -236,16 +236,17 @@ test("video: H.264 clip + SRT opened from the command line", { timeout: 180000 }
       assert.equal(await setPcSleep(false), false);
       assert.equal(await app.eval(`document.getElementById("check-pc-sleep").checked`), false);
       await sleepAtVideoEnd();
-      assert.deepEqual(app.blockedCalls, []); // nothing asked to suspend
+      assert.deepEqual(await app.blockedCalls(), []); // nothing asked to suspend
     });
 
     await t.test("sleep timer with 'PC Uyku': suspend request reaches only the test stub", async () => {
-      // The launcher verified the IPC guard (sentinel probe) before any test ran
-      assert.ok(Array.isArray(app.blockedCalls), "SAFETY: IPC guard must be installed");
+      // Re-verify the page guard right before enabling "PC Uyku" (throws if not effective);
+      // the backend guard VHO_DISABLE_SYSTEM_SUSPEND is a second, independent layer.
+      await app.verifyGuard();
       assert.equal(await setPcSleep(true), true);
       await sleepAtVideoEnd();
       assert.equal(await setPcSleep(false), false);
-      assert.deepEqual(app.blockedCalls, ["suspend_system"]); // answered by the stub, never the backend
+      assert.deepEqual(await app.blockedCalls(), ["suspend_system"]); // answered by the stub, never the backend
     });
 
     await t.test("no uncaught page errors", async () => {

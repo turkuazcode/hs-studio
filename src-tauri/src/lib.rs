@@ -184,6 +184,10 @@ fn prune_transcode_cache(app: &AppHandle) {
 
 #[tauri::command]
 async fn suspend_system() -> Result<(), String> {
+    // Automated tests must never put the machine to sleep
+    if std::env::var_os("VHO_DISABLE_SYSTEM_SUSPEND").is_some() {
+        return Ok(());
+    }
     #[cfg(target_os = "windows")]
     {
         use windows_sys::Win32::System::Power::SetSuspendState;
