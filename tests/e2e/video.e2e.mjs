@@ -210,7 +210,12 @@ test("video: H.264 clip + SRT opened from the command line", { timeout: 180000 }
       await pause();
     });
 
-    await t.test("sleep timer 'when the video ends': fade, pause, overlay, wake up", async () => {
+    // SAFETY: "PC Uyku" is checked by default and would suspend the real machine.
+    // The launcher blocks suspend_system (env guard + verified invoke hook); on top of that
+    // the box is unchecked before any timer starts, and the PC-sleep path only ever hits the stub.
+    const setPcSleep = (on) => app.eval(`(() => { const c = document.getElementById("check-pc-sleep");
+      c.checked = ${on}; c.dispatchEvent(new Event("change")); return c.checked; })()`);
+    const sleepAtVideoEnd = async () => {
       await app.click("#btn-sleep-timer");
       await app.click(`.btn-sleep-preset[data-minutes="video-end"]`);
       assert.equal(await app.text("#sleep-badge"), "Bitince");
@@ -225,6 +230,22 @@ test("video: H.264 clip + SRT opened from the command line", { timeout: 180000 }
       await app.waitFor(`!${V}.paused`, { timeoutMs: 5000 }); // playback resumes
       assert.equal(await app.text("#volume-badge"), "150%"); // user's own level restored
       await pause();
+    };
+
+    await t.test("sleep timer 'when the video ends' (PC sleep off): fade, pause, overlay, wake up", async () => {
+      assert.equal(await setPcSleep(false), false);
+      assert.equal(await app.eval(`document.getElementById("check-pc-sleep").checked`), false);
+      await sleepAtVideoEnd();
+      assert.deepEqual(app.blockedCalls, []); // nothing asked to suspend
+    });
+
+    await t.test("sleep timer with 'PC Uyku': suspend request reaches only the test stub", async () => {
+      // The launcher verified the IPC guard (sentinel probe) before any test ran
+      assert.ok(Array.isArray(app.blockedCalls), "SAFETY: IPC guard must be installed");
+      assert.equal(await setPcSleep(true), true);
+      await sleepAtVideoEnd();
+      assert.equal(await setPcSleep(false), false);
+      assert.deepEqual(app.blockedCalls, ["suspend_system"]); // answered by the stub, never the backend
     });
 
     await t.test("no uncaught page errors", async () => {

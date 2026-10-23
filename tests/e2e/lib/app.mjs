@@ -76,6 +76,54 @@ const TEST_STUBS = `
   window.confirm = (msg) => { __confirms.push(String(msg)); return false; };
 `;
 
+/**
+ * SAFETY: commands that must never reach the backend from a test. suspend_system would put
+ * the real PC to sleep (the sleep timer's "PC Uyku" box is checked by default);
+ * set_compat_mode would restart the app.
+ *
+ * Tauri v2 IPC calls are HTTP requests to http://ipc.localhost/<command>. CDP Fetch
+ * interception answers them in the browser's network stack, so no JS reference (including
+ * one captured at import time) can bypass it. The guard is verified on every launch with a
+ * harmless command whose real answer is known; launching fails if interception does not work.
+ */
+const BLOCKED_COMMANDS = ["suspend_system", "set_compat_mode"];
+const PROBE_COMMAND = "get_compat_mode";
+const PROBE_SENTINEL = "__vho_e2e_guard__";
+const b64 = (s) => Buffer.from(s, "utf8").toString("base64");
+
+async function installSystemGuard(cdp) {
+  const blocked = [];
+  let probing = true;
+  cdp.on("Fetch.requestPaused", ({ requestId, request }) => {
+    const cmd = decodeURIComponent(new URL(request.url).pathname.slice(1));
+    let body = "null";
+    if (cmd === PROBE_COMMAND && probing) body = JSON.stringify(PROBE_SENTINEL);
+    else if (BLOCKED_COMMANDS.includes(cmd)) blocked.push(cmd);
+    else return cdp.send("Fetch.continueRequest", { requestId }).catch(() => {});
+    cdp.send("Fetch.fulfillRequest", {
+      requestId,
+      responseCode: 200,
+      responseHeaders: [
+        { name: "Content-Type", value: "application/json" },
+        { name: "Tauri-Response", value: "ok" },
+        { name: "Access-Control-Allow-Origin", value: "*" },
+        { name: "Access-Control-Expose-Headers", value: "Tauri-Response" },
+      ],
+      body: b64(body),
+    }).catch(() => {});
+  });
+  const patterns = [...BLOCKED_COMMANDS, PROBE_COMMAND].map((c) => ({ urlPattern: `*ipc.localhost/${c}*`, requestStage: "Request" }));
+  await cdp.send("Fetch.enable", { patterns });
+  const seen = await cdp.evaluate(`__TAURI__.core.invoke(${JSON.stringify(PROBE_COMMAND)})`);
+  probing = false;
+  if (seen !== PROBE_SENTINEL) {
+    throw new Error(`SAFETY: IPC interception not effective (got ${JSON.stringify(seen)}); refusing to run tests that could suspend the PC`);
+  }
+  // Only the blocked commands stay intercepted
+  await cdp.send("Fetch.enable", { patterns: BLOCKED_COMMANDS.map((c) => ({ urlPattern: `*ipc.localhost/${c}*`, requestStage: "Request" })) });
+  return blocked;
+}
+
 const debug = (...a) => { if (process.env.VHO_E2E_DEBUG) console.error(`[e2e ${new Date().toISOString().slice(11, 23)}]`, ...a); };
 
 const waitExit = (proc, ms) => new Promise((res) => {
@@ -100,6 +148,8 @@ export async function launchApp({ args = [], exe = defaultExe() } = {}) {
       ...process.env,
       WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port}`,
       WEBVIEW2_USER_DATA_FOLDER: userData,
+      // Backend guard: suspend_system becomes a no-op (never sleep the test machine)
+      VHO_DISABLE_SYSTEM_SUSPEND: "1",
     },
     stdio: "ignore",
     windowsHide: false,
@@ -108,6 +158,7 @@ export async function launchApp({ args = [], exe = defaultExe() } = {}) {
   debug("launch: pid", proc.pid, "port", port, "args", args);
 
   let cdp;
+  let blockedCalls = null;
   try {
     cdp = await Promise.race([
       connectCdp(port, { timeoutMs: 45000 }),
@@ -129,6 +180,8 @@ export async function launchApp({ args = [], exe = defaultExe() } = {}) {
       timeoutMs: 20000, message: "app boot after reload",
     });
     debug("launch: booted after reload");
+    blockedCalls = await installSystemGuard(cdp);
+    debug("launch: system guard verified");
   } catch (e) {
     cdp?.close();
     proc.kill();
@@ -142,6 +195,8 @@ export async function launchApp({ args = [], exe = defaultExe() } = {}) {
     port,
     cdp,
     userData,
+    /** Backend commands the guard answered instead of the app (e.g. ["suspend_system"]). */
+    get blockedCalls() { return [...blockedCalls]; },
     eval: (expr, opts) => cdp.evaluate(expr, opts),
     waitFor: (expr, opts) => cdp.waitFor(expr, opts),
     /** Keyboard shortcut as the app sees it (keydown bubbling from <body> to window). */
