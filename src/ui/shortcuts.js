@@ -131,5 +131,7 @@ export function initShortcuts(app) {
     /** Escape priority for overlays: fn() returns true when it closed something. */
     onEscape: (fn) => escapeHandlers.unshift(fn),
     run: (id, e) => actions.find((a) => a.id === id)?.run(e),
+    /** Re-reads the user's overrides (after the settings finished loading). */
+    refresh: rebuild,
   };
 }

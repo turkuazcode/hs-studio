@@ -1,0 +1,172 @@
+{
+  "common": {
+    "close": "Kapat"
+  },
+  "keys": {
+    "space": "Boşluk"
+  },
+  "menu": {
+    "title": "Menü",
+    "play": "Oynat",
+    "pause": "Duraklat",
+    "slideshow": "Slayt gösterisi",
+    "fullscreen": "Tam ekran",
+    "snapshot": "Ekran görüntüsü",
+    "openFile": "Dosya aç…",
+    "openUrl": "URL aç…",
+    "loadSubtitle": "Altyazı yükle…",
+    "playlist": "Oynatma listesi",
+    "filters": "Görüntü ayarları",
+    "settings": "Ayarlar…",
+    "shortcuts": "Klavye kısayolları",
+    "licenses": "Lisanslar ve Teşekkürler"
+  },
+  "recent": {
+    "title": "Son açılanlar",
+    "empty": "Henüz dosya açılmadı",
+    "clear": "Listeyi temizle",
+    "cleared": "Son açılanlar listesi temizlendi",
+    "remove": "Listeden kaldır",
+    "removeItem": "{name} dosyasını listeden kaldır",
+    "removed": "{name} listeden kaldırıldı",
+    "openItem": "{name} dosyasını aç",
+    "missing": "⚠️ {name} bulunamadı; listeden kaldırıldı",
+    "resumeAt": "{time} konumunda kaldı",
+    "types": {
+      "video": "Video",
+      "audio": "Ses",
+      "image": "Fotoğraf"
+    }
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "empty": "Bu bölümde henüz ayar yok.",
+    "confirmReset": "Tüm ayarlar varsayılan değerlerine döndürülsün mü?",
+    "tabs": {
+      "general": "Genel",
+      "playback": "Oynatma",
+      "subtitle": "Altyazı",
+      "audio": "Ses",
+      "photo": "Fotoğraf",
+      "appearance": "Görünüm",
+      "shortcuts": "Kısayollar",
+      "advanced": "Gelişmiş",
+      "about": "Hakkında / Lisanslar"
+    },
+    "headings": {
+      "enhance": "Görüntü iyileştirme (AI Restorasyon)",
+      "audioRestore": "Ses iyileştirme (AI Restorasyon)"
+    },
+    "fields": {
+      "language": "Arayüz dili",
+      "rememberRecent": "Son açılan dosyaları hatırla",
+      "clearRecent": "Son açılanlar listesi",
+      "wheelVolume": "Fare tekerleğiyle ses ayarı (video)",
+      "middleClickFullscreen": "Orta tıkla tam ekran",
+      "defaultApps": "Varsayılan uygulama",
+      "resume": "Kaldığım yerden devam etmeyi öner",
+      "rememberSpeed": "Son oynatma hızını hatırla",
+      "speed": "Oynatma hızı",
+      "aspect": "En-boy oranı",
+      "rememberFilters": "Görüntü filtrelerini hatırla",
+      "pcSleep": "Uyku zamanlayıcısı bitince bilgisayarı uyut",
+      "sharpLevel": "Süper çözünürlük seviyesi",
+      "contrastBoost": "Ek kontrast",
+      "subDelay": "Altyazı gecikmesi",
+      "subSize": "Yazı boyutu",
+      "subColor": "Yazı rengi",
+      "subBackground": "Arka plan opaklığı",
+      "volume": "Ses seviyesi",
+      "muted": "Sessiz",
+      "voiceClarity": "Diyalog ve konuşma netleştirici",
+      "denoise": "Dip gürültü ve tıslama temizleyici",
+      "compressor": "Dinamik ses dengeleyici",
+      "deepFaces": "Fotoğraf iyileştirmede yüzleri de iyileştir (GFPGAN)",
+      "theme": "Tema",
+      "accent": "Vurgu rengi",
+      "accentReset": "Varsayılan vurgu rengi",
+      "compat": "Uyumluluk modu (yeniden başlatır)",
+      "dataDir": "Ayar klasörü",
+      "resetAll": "Tüm ayarları sıfırla",
+      "licenses": "Açık kaynak lisansları"
+    },
+    "help": {
+      "defaultApps": "Windows, uygulamaların kendini varsayılan yapmasına izin vermez; açılan pencerede VHO'yu seçin.",
+      "pcSleep": "Varsayılan olarak kapalıdır.",
+      "compat": "Yalnızca ses gelip görüntü siyah kalıyorsa açın. CPU kullanımı artar."
+    },
+    "options": {
+      "languageSystem": "Sistem dili",
+      "aspectContain": "Orijinal",
+      "aspectFill": "Ekrana yay",
+      "themeDark": "Koyu",
+      "themeLight": "Açık",
+      "themeContrast": "Yüksek kontrast"
+    },
+    "buttons": {
+      "defaultApps": "Varsayılan uygulama olarak ayarla",
+      "reset": "Sıfırla",
+      "toggle": "Aç / Kapat",
+      "resetAll": "Sıfırla…",
+      "showLicenses": "Lisansları göster"
+    },
+    "toasts": {
+      "defaultAppsFailed": "⚠️ Windows Ayarları açılamadı",
+      "reset": "Ayarlar varsayılanlara döndürüldü"
+    },
+    "about": {
+      "description": "Video, fotoğraf ve müzik için açık kaynak medya stüdyosu.",
+      "license": "MIT lisansı · Geliştirici: Halil SARITAŞ · TurkuazCode"
+    }
+  },
+  "shortcuts": {
+    "helpTitle": "Klavye kısayolları",
+    "helpHint": "Bu pencereyi ? veya F1 ile açıp kapatabilirsiniz.",
+    "edit": "Kısayolları düzenle",
+    "hint": "Değiştir'e tıklayıp yeni tuşa basın. Esc: vazgeç, Backspace: tuşu kaldır.",
+    "change": "Değiştir",
+    "pressKey": "Bir tuşa basın…",
+    "none": "Atanmamış",
+    "saved": "Kısayol kaydedildi",
+    "conflict": "⚠️ {key} zaten \"{action}\" için kullanılıyor",
+    "resetAll": "Tüm kısayolları sıfırla",
+    "scopes": {
+      "global": "Genel",
+      "video": "Video",
+      "photo": "Fotoğraf"
+    },
+    "actions": {
+      "fullscreen": "Tam ekran",
+      "snapshot": "Ekran görüntüsü",
+      "playlist": "Oynatma listesi",
+      "splitView": "A/B karşılaştırma",
+      "openFile": "Dosya aç",
+      "settings": "Ayarlar",
+      "help": "Kısayol yardımı",
+      "playPause": "Oynat / duraklat",
+      "seekBack": "5 sn geri",
+      "seekForward": "5 sn ileri",
+      "seekBackLong": "30 sn geri",
+      "seekForwardLong": "30 sn ileri",
+      "volumeUp": "Sesi artır",
+      "volumeDown": "Sesi azalt",
+      "mute": "Sessiz",
+      "subtitles": "Altyazı aç / kapat",
+      "subDelayMinus": "Altyazı gecikmesi −50 ms",
+      "subDelayPlus": "Altyazı gecikmesi +50 ms",
+      "pip": "Resim içinde resim",
+      "aiVideo": "AI restorasyon",
+      "slideshow": "Slayt gösterisi",
+      "photoPrev": "Önceki görsel",
+      "photoNext": "Sonraki görsel",
+      "rotateRight": "Sağa döndür",
+      "rotateLeft": "Sola döndür",
+      "photoInfo": "Görsel bilgisi",
+      "deepEnhance": "Fotoğrafı iyileştir (4x)",
+      "zoomIn": "Yakınlaştır",
+      "zoomOut": "Uzaklaştır",
+      "zoomReset": "Boyutu sıfırla",
+      "aiPhoto": "AI restorasyon"
+    }
+  }
+}
