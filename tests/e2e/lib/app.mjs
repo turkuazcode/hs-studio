@@ -16,9 +16,9 @@ export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..
 export const FIXTURES = join(REPO_ROOT, "tests", "fixtures");
 export const fixture = (name) => join(FIXTURES, name);
 
-/** CDP ports reserved for VHO tests. */
-const PORT_MIN = 9500;
-const PORT_MAX = 9599;
+/** CDP ports reserved for VHO tests (override with VHO_E2E_PORT_MIN / VHO_E2E_PORT_MAX). */
+const PORT_MIN = Number(process.env.VHO_E2E_PORT_MIN) || 9500;
+const PORT_MAX = Number(process.env.VHO_E2E_PORT_MAX) || 9599;
 
 export function defaultExe() {
   return process.env.VHO_EXE || join(REPO_ROOT, "src-tauri", "target", "release", process.platform === "win32" ? "vho.exe" : "vho");
