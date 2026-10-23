@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite src --port 3000",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:release": "tauri build --no-bundle",
+    "test": "node --test \"tests/unit/*.test.mjs\"",
+    "e2e": "node --test --test-concurrency=1 \"tests/e2e/*.e2e.mjs\"",
+    "fixtures": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/fixtures/make-fixtures.ps1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
