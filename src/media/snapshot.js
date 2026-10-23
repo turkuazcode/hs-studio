@@ -10,11 +10,11 @@ export const rotatedCanvasSize = (w, h, rotation) =>
   rotation % 180 !== 0 ? { width: h, height: w } : { width: w, height: h };
 
 /**
- * app: { dom, state, toast, flashScreen, filters, photo }  (resolved lazily)
+ * app: { dom, state, bus, engine, toast, flashScreen, filters, photo }  (resolved lazily)
  */
 export function createSnapshot(app) {
   const { dom, state } = app;
-  const { video, imageElement, currentFilename, btnSnapshot } = dom;
+  const { imageElement, currentFilename, btnSnapshot } = dom;
 
   /** Triggers a browser download; false (with a toast) when there is nothing to save. */
   function downloadBlob(blob, filename) {
@@ -48,7 +48,7 @@ export function createSnapshot(app) {
     // What you see is what you save: grab the enhanced GPU frame when it's active
     if (enhancer?.active) {
       app.flashScreen();
-      const suffix = mediaType === "video" ? timeForFileName(video.currentTime) : "enhanced";
+      const suffix = mediaType === "video" ? timeForFileName(app.engine.time) : "enhanced";
       if (downloadBlob(await enhancer.snapshot(), `${safeName}_${suffix}.png`)) {
         app.toast("Geliştirilmiş kare kaydedildi!");
       }
@@ -71,15 +71,25 @@ export function createSnapshot(app) {
       return;
     }
 
-    if (mediaType !== "video" || !video.videoWidth || !video.videoHeight) return;
-    app.flashScreen();
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext("2d");
-    if (video.style.filter) ctx.filter = video.style.filter;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    downloadCanvas(canvas, `${safeName}_${timeForFileName(video.currentTime)}.png`, "Ekran görüntüsü kaydedildi!");
+    if (mediaType !== "video") return;
+    const name = `${safeName}_${timeForFileName(app.engine.time)}`;
+    try {
+      const shot = await app.engine.screenshot(name);
+      app.flashScreen();
+      if (shot.path) {
+        // libmpv writes the PNG itself (Pictures\VHO), subtitles included
+        app.toast(`Ekran görüntüsü kaydedildi: ${shot.path.split(/[\\/]/).pop()}`);
+        app.bus.emit("snapshot:saved", { path: shot.path });
+      } else if (downloadBlob(shot.blob, `${name}.png`)) {
+        app.toast("Ekran görüntüsü kaydedildi!");
+      }
+    } catch (e) {
+      if (e?.message === "no frame") return;
+      console.warn("Snapshot:", e);
+      app.toast(app.engine.kind === "mpv"
+        ? `⚠️ Ekran görüntüsü alınamadı: ${e?.message ?? e}`
+        : "⚠️ Uzak kaynaktan ekran görüntüsü alınamıyor (CORS)");
+    }
   }
 
   btnSnapshot.addEventListener("click", captureSnapshot);
