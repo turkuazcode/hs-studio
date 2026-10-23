@@ -54,6 +54,7 @@ while (-not $p.HasExited -and ((Get-Date) - $t0).TotalSeconds -lt $TimeoutSec) {
     foreach ($s in $samples) {
       if ($s.InstanceName -match '^pid_(\d+)_.*engtype_(.+)$') {
         $procId = [int]$Matches[1]; $eng = $Matches[2]
+        if ($eng -match 'Video') { $eng = 'VideoDecode' }  # AMD exposes VCN as "Video Codec 0"
         if ($tree -contains $procId) {
           $who = if ($procId -eq $rootPid) { 'app' } else { 'webview' }
           $k = "$who-$eng"; $gpu[$k] = [double]($gpu[$k]) + $s.CookedValue

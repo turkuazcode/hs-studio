@@ -34,6 +34,28 @@ mod imp {
     }
 
     pub fn create(parent: isize, w: i32, h: i32) -> isize {
+        unsafe {
+            let hinst = register();
+            let hwnd = CreateWindowExW(
+                WS_EX_NOPARENTNOTIFY,
+                CLASS.as_ptr(),
+                std::ptr::null(),
+                WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_DISABLED,
+                0,
+                0,
+                w,
+                h,
+                parent as HWND,
+                std::ptr::null_mut(),
+                hinst,
+                std::ptr::null(),
+            );
+            send_to_bottom(hwnd as isize, w, h);
+            hwnd as isize
+        }
+    }
+
+    fn register() -> windows_sys::Win32::Foundation::HINSTANCE {
         static REG: Once = Once::new();
         unsafe {
             let hinst = GetModuleHandleW(std::ptr::null());
@@ -52,22 +74,67 @@ mod imp {
                 };
                 RegisterClassW(&wc);
             });
+            hinst
+        }
+    }
+
+    /// Variant A' ("owned"): the video lives in its own borderless top-level popup that sits
+    /// exactly behind the (transparent) Tauri window. The Tauri window is made an *owned* window
+    /// of the popup, so Windows itself keeps it above the video in z-order; DWM then
+    /// alpha-composites two top-level windows, which is the one composition path that works.
+    pub fn create_owner_popup(top: isize) -> isize {
+        unsafe {
+            let hinst = register();
             let hwnd = CreateWindowExW(
-                WS_EX_NOPARENTNOTIFY,
+                WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
                 CLASS.as_ptr(),
                 std::ptr::null(),
-                WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_DISABLED,
+                WS_POPUP | WS_CLIPCHILDREN | WS_DISABLED,
                 0,
                 0,
-                w,
-                h,
-                parent as HWND,
+                1,
+                1,
+                std::ptr::null_mut(),
                 std::ptr::null_mut(),
                 hinst,
                 std::ptr::null(),
             );
-            send_to_bottom(hwnd as isize, w, h);
+            // owner relationship: Tauri window (owned) always above the video popup (owner)
+            SetWindowLongPtrW(top as HWND, GWLP_HWNDPARENT, hwnd as isize);
+            // owned windows lose their taskbar button unless WS_EX_APPWINDOW is set
+            let ex = GetWindowLongPtrW(top as HWND, GWL_EXSTYLE);
+            SetWindowLongPtrW(top as HWND, GWL_EXSTYLE, ex | WS_EX_APPWINDOW as isize);
+            sync_owner_popup(top, hwnd as isize);
             hwnd as isize
+        }
+    }
+
+    /// Keep the popup glued to the Tauri window's client area (call on move/resize/minimize).
+    pub fn sync_owner_popup(top: isize, video: isize) {
+        unsafe {
+            if IsIconic(top as HWND) != 0 || IsWindowVisible(top as HWND) == 0 {
+                ShowWindow(video as HWND, SW_HIDE);
+                return;
+            }
+            let mut r: RECT = std::mem::zeroed();
+            GetClientRect(top as HWND, &mut r);
+            let mut p = windows_sys::Win32::Foundation::POINT { x: 0, y: 0 };
+            windows_sys::Win32::Graphics::Gdi::ClientToScreen(top as HWND, &mut p);
+            SetWindowPos(
+                video as HWND,
+                std::ptr::null_mut(),
+                p.x,
+                p.y,
+                r.right,
+                r.bottom,
+                SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW,
+            );
+        }
+    }
+
+    pub fn bring_to_top(hwnd: isize) {
+        unsafe {
+            SetWindowPos(hwnd as HWND, HWND_TOP, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
         }
     }
 
