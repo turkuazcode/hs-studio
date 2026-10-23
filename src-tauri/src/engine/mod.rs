@@ -67,8 +67,13 @@ pub fn locate<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
 }
 
 /// Primary GPU description; integrated GPUs (little dedicated VRAM) default to `profile=fast`.
+#[cfg(not(windows))]
 fn gpu_info() -> Value {
-    #[cfg(windows)]
+    json!({})
+}
+
+#[cfg(windows)]
+fn gpu_info() -> Value {
     unsafe {
         use windows::Win32::Graphics::Dxgi::{CreateDXGIFactory1, IDXGIFactory1};
         let info = (|| -> windows::core::Result<Value> {
@@ -79,10 +84,8 @@ fn gpu_info() -> Value {
             let vram_mb = (d.DedicatedVideoMemory / (1024 * 1024)) as u64;
             Ok(json!({"name": name, "dedicatedMb": vram_mb, "integrated": vram_mb < 2048}))
         })();
-        return info.unwrap_or_else(|e| json!({"error": e.to_string()}));
+        info.unwrap_or_else(|e| json!({"error": e.to_string()}))
     }
-    #[allow(unreachable_code)]
-    json!({})
 }
 
 /// Creates the video surface + mpv core for `win`. Never fails: errors become "unavailable".

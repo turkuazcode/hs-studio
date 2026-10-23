@@ -1964,3 +1964,83 @@ body.is-dragging .drop-zone .drop-card {
   padding-top: 10px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
+
+/* ==========================================================================
+   libmpv engine (ADR 0001): mpv draws the video in a native window BEHIND the
+   transparent app window, so the page is see-through while it shows video.
+   ========================================================================== */
+html.engine-mpv-video,
+html.engine-mpv-video body,
+html.engine-mpv-video .app-container,
+html.engine-mpv-video .viewport {
+  background: transparent;
+}
+html.engine-mpv-video .video-element { display: none !important; }
+
+/* Click / double-click / Ctrl+wheel target over the mpv picture */
+.mpv-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: transparent;
+}
+.mpv-surface[hidden],
+.dropdown-container[hidden],
+#sub-track-list[hidden] { display: none; }
+
+/* Engine-specific settings */
+html[data-engine="html5"] .mpv-only { display: none !important; }
+html[data-engine="mpv"] .html5-only { display: none !important; }
+
+/* Every panel scrolls when it is taller than the window */
+.effects-panel {
+  max-height: calc(100vh - 70px);
+  overflow-y: auto;
+}
+
+/* Subtitle style (app overlay) */
+.subtitles-container { --sub-scale: 1; --sub-color: #ffffff; --sub-lift: 0vh; }
+.subtitles-container .subtitle-text {
+  font-size: calc(21px * var(--sub-scale));
+  color: var(--sub-color);
+}
+.subtitles-container { margin-bottom: var(--sub-lift); }
+
+/* Chapter and bookmark markers on the timeline */
+.timeline-marker {
+  position: absolute;
+  top: -3px;
+  width: 3px;
+  height: calc(100% + 6px);
+  transform: translateX(-50%);
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 9;
+}
+.chapter-marker { background: rgba(255, 255, 255, 0.85); }
+.bookmark-marker { background: #fbbf24; width: 4px; }
+
+/* Bookmark list: delete button */
+.bookmark-item { display: flex; justify-content: space-between; gap: 10px; }
+.bookmark-del { opacity: 0.6; padding: 0 4px; }
+.bookmark-del:hover { opacity: 1; color: #f43f5e; }
+
+/* Dynamic menus can get long (many chapters / tracks) */
+#chapters-menu, #audio-track-menu, #bookmarks-menu { max-height: 50vh; overflow-y: auto; min-width: 200px; }
+
+/* Engine info line */
+.engine-info { font-size: 11px; color: var(--text-muted); line-height: 1.4; word-break: break-word; }
+.panel-note { font-size: 12px; color: var(--text-muted); }
+
+/* 10-band equalizer */
+.eq-preset { max-width: 140px; padding: 3px 6px; font-size: 12px; }
+.eq-bands { display: flex; justify-content: space-between; gap: 2px; margin-top: 8px; }
+.eq-band { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 24px; }
+.eq-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 18px;
+  height: 110px;
+  accent-color: var(--accent-ruby);
+}
+.eq-val, .eq-freq { font-size: 10px; color: var(--text-muted); }

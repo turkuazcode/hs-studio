@@ -50,11 +50,14 @@ export const formatDelay = (ms) => `${ms > 0 ? "+" : ""}${ms} ms`;
 
 /**
  * Subtitle controller.
- * deps: { dom, bus, toast(msg), openSearch() }
+ * deps: { dom, bus, toast(msg), openSearch(), engine() -> engine facade }
+ *
+ * Two renderers: the app's own overlay (SRT/VTT parsed here; any engine) and, with libmpv,
+ * mpv/libass itself (embedded tracks, ASS styling, files added with `sub-add`).
  */
-export function createSubtitles({ dom, bus, toast, openSearch }) {
+export function createSubtitles({ dom, bus, toast, openSearch, engine = () => null }) {
   const {
-    video, subtitleText, btnToggleSubtitles, subStatusLabel, subtitlesMenu, subMenuToggle, subMenuToggleText,
+    subtitleText, subTrackList, btnToggleSubtitles, subStatusLabel, subtitlesMenu, subMenuToggle, subMenuToggleText,
     subMenuSearch, subMenuBrowse, subMenuClear, subFileInput, subtitleSearchModal, speedMenu, aspectMenu,
     valSubDelay, btnSubMinus, btnSubPlus, btnSubReset,
   } = dom;
@@ -62,10 +65,24 @@ export function createSubtitles({ dom, bus, toast, openSearch }) {
   let subtitles = [];
   let subtitlesEnabled = true;
   let subtitleDelay = 0; // ms
+  let lastTime = 0;
+  let nativeTracks = []; // libmpv subtitle tracks
+  let lastNativeSid = null;
+  const mpv = () => engine()?.kind === "mpv";
+  const nativeSelected = () => nativeTracks.find((t) => t.selected) ?? null;
 
   function updateSubtitleUi() {
+    renderTrackList();
     if (!btnToggleSubtitles) return;
-    if (subtitles.length > 0 && subtitlesEnabled) {
+    if (!subtitles.length && nativeTracks.length) {
+      const on = !!nativeSelected();
+      btnToggleSubtitles.classList.toggle("sub-active", on);
+      btnToggleSubtitles.classList.toggle("sub-disabled", !on);
+      subStatusLabel.textContent = on ? "CC Açık" : "CC Kapalı";
+      if (subMenuToggleText) subMenuToggleText.textContent = on ? "● Altyazıyı Kapat (C)" : "○ Altyazıyı Aç (C)";
+      if (subMenuToggle) subMenuToggle.classList.toggle("active", on);
+      subtitleText.textContent = "";
+    } else if (subtitles.length > 0 && subtitlesEnabled) {
       btnToggleSubtitles.classList.add("sub-active");
       btnToggleSubtitles.classList.remove("sub-disabled");
       subStatusLabel.textContent = "CC Açık";
@@ -87,7 +104,47 @@ export function createSubtitles({ dom, bus, toast, openSearch }) {
     }
   }
 
+  /** Embedded / mpv-loaded tracks in the CC menu ("Kapalı" + one entry per track). */
+  function renderTrackList() {
+    if (!subTrackList) return;
+    subTrackList.replaceChildren();
+    subTrackList.hidden = !nativeTracks.length;
+    if (!nativeTracks.length) return;
+    const sel = nativeSelected();
+    const item = (text, id, active) => {
+      const el = document.createElement("div");
+      el.className = "dropdown-item" + (active ? " active" : "");
+      el.dataset.sid = id;
+      el.textContent = text;
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        subtitlesMenu.classList.remove("show");
+        selectNative(id === "no" ? null : Number(id));
+      });
+      return el;
+    };
+    subTrackList.append(item("Altyazı kanalı: Kapalı", "no", !sel));
+    for (const t of nativeTracks) subTrackList.append(item(t.label, t.id, t.selected));
+  }
+
+  function selectNative(id) {
+    if (id !== null) lastNativeSid = id;
+    engine().selectTrack("sub", id).catch((e) => console.warn("sid", e));
+    const t = nativeTracks.find((x) => x.id === id);
+    toast(t ? `Altyazı: ${t.label}` : "Altyazı kapatıldı");
+  }
+
   function toggleSubtitles() {
+    if (subtitles.length === 0 && nativeTracks.length && mpv()) {
+      const sel = nativeSelected();
+      if (sel) {
+        lastNativeSid = sel.id;
+        selectNative(null);
+      } else {
+        selectNative(lastNativeSid ?? nativeTracks[0].id);
+      }
+      return;
+    }
     if (subtitles.length === 0) {
       // No subtitle loaded yet: open subtitle search directly
       openSearch();
@@ -100,6 +157,18 @@ export function createSubtitles({ dom, bus, toast, openSearch }) {
 
   /** Accepts a File (input / HTML drop) or a filesystem path (dialog / native drop). */
   async function loadSubtitleFile(source) {
+    // libmpv renders subtitle files itself (SRT, VTT, ASS/SSA with full styling, any encoding)
+    if (typeof source === "string" && mpv()) {
+      try {
+        await engine().addSubtitle(source);
+        subtitles = [];
+        subtitleText.textContent = "";
+        toast(`Altyazı yüklendi: ${source.split(/[\/]/).pop()}`);
+        return;
+      } catch (e) {
+        console.warn("sub-add", e); // fall back to the app's own renderer below
+      }
+    }
     try {
       const buf = typeof source === "string"
         ? await (await fetch(convertFileSrc(source))).arrayBuffer()
@@ -122,12 +191,14 @@ export function createSubtitles({ dom, bus, toast, openSearch }) {
       subtitleText.textContent = "";
       return;
     }
-    const cue = findCue(subtitles, video.currentTime + (subtitleDelay / 1000));
+    const cue = findCue(subtitles, lastTime + (subtitleDelay / 1000));
     subtitleText.textContent = cue ? cue.text : "";
   }
 
   function setSubtitleDelay(ms) {
     subtitleDelay = ms;
+    // mpv: positive sub-delay shows subtitles later; the overlay's delay shifts the lookup time forward
+    if (mpv()) engine().set("sub-delay", -ms / 1000).catch(() => {});
     valSubDelay.textContent = formatDelay(subtitleDelay);
     updateSubtitles();
   }
@@ -140,13 +211,45 @@ export function createSubtitles({ dom, bus, toast, openSearch }) {
 
   /** A new video starts without subtitles. */
   function resetForNewMedia() {
+    nativeTracks = [];
+    lastNativeSid = null;
+    lastTime = 0;
     subtitles = [];
     subtitlesEnabled = true;
     updateSubtitleUi();
     subtitleText.textContent = "";
   }
 
-  bus.on("media:time", updateSubtitles);
+  bus.on("media:time", ({ time }) => {
+    lastTime = time;
+    updateSubtitles();
+  });
+
+  /** Track list from the engine (libmpv): keeps the CC menu and label in sync. */
+  function setNativeTracks(list) {
+    nativeTracks = list;
+    const sel = nativeSelected();
+    if (sel) lastNativeSid = sel.id;
+    updateSubtitleUi();
+  }
+
+  // ------------------------------------------------------------------------
+  // Style (size, colour, position) for both renderers; raised above the HUD
+  // ------------------------------------------------------------------------
+  const style = { size: 100, color: "#ffffff", pos: 100 };
+  function setStyle(next) {
+    Object.assign(style, next);
+    const container = subtitleText.parentElement;
+    container.style.setProperty("--sub-scale", style.size / 100);
+    container.style.setProperty("--sub-color", style.color);
+    container.style.setProperty("--sub-lift", `${100 - style.pos}vh`);
+    if (mpv()) {
+      const e = engine();
+      e.set("sub-scale", style.size / 100).catch(() => {});
+      e.set("sub-color", style.color).catch(() => {});
+      e.set("sub-pos", style.pos).catch(() => {});
+    }
+  }
 
   // CC button: click toggles, right click opens the menu
   if (btnToggleSubtitles) {
@@ -214,6 +317,10 @@ export function createSubtitles({ dom, bus, toast, openSearch }) {
     setDelay: setSubtitleDelay,
     nudgeDelay,
     resetForNewMedia,
+    setNativeTracks,
+    setStyle,
+    get style() { return { ...style }; },
+    get nativeTracks() { return nativeTracks; },
     /** For tests / diagnostics. */
     get cues() { return subtitles; },
     get enabled() { return subtitlesEnabled; },
