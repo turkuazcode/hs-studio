@@ -1,10 +1,10 @@
 // Startup, empty screen, licenses window, module worker, shortcuts without media.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { launchApp } from "./lib/app.mjs";
+import { HTML5_ENGINE, launchApp } from "./lib/app.mjs";
 
 test("smoke: app starts, empty screen, licenses", { timeout: 120000 }, async (t) => {
-  const app = await launchApp();
+  const app = await launchApp({ env: HTML5_ENGINE });
   try {
     await t.test("boots without uncaught errors", async () => {
       assert.deepEqual(await app.errors(), []);

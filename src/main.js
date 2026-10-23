@@ -104,6 +104,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     get chapters() { return app.engine.chapters(); },
     get audioFilters() { return app.audioFx.chain; },
     get bookmarks() { return app.playbackMenus.bookmarks; },
+    /** Same path as the native file drop / open dialog (tests cannot synthesize an OS drop). */
+    openPaths: (paths) => app.loader.openPaths(paths),
   };
 
   // Files passed on the command line ("Open with VHO")
