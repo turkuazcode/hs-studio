@@ -216,13 +216,24 @@ fn main() {
             // Composition variants under test:
             //  transparent (default): tauri.conf "transparent": true -> tao DwmEnableBlurBehind + webview alpha 0
             //  bgcolor: opaque top-level window, only the WebView2 default background has alpha 0
+            //  videotop: diagnostic - video child ABOVE the webview (proves mpv renders; UI hidden)
+            //  owned: transparent Tauri window owned by a separate top-level video popup (A')
             if args.mode.as_deref() == Some("bgcolor") {
                 b = b.transparent(false).background_color(tauri::window::Color(0, 0, 0, 0));
             }
             let win = b.build()?;
             let top = win.hwnd()?.0 as isize;
             let size = win.inner_size()?;
-            let video = video_window::create(top, size.width as i32, size.height as i32);
+            let mode = args.mode.clone().unwrap_or_else(|| "transparent".into());
+            let owned = mode == "owned";
+            let video = if owned {
+                video_window::create_owner_popup(top)
+            } else {
+                video_window::create(top, size.width as i32, size.height as i32)
+            };
+            if mode == "videotop" {
+                video_window::bring_to_top(video);
+            }
 
             let started = Instant::now();
             let dll = resolve_dll(&args);
@@ -234,7 +245,7 @@ fn main() {
                 ("input-default-bindings".into(), "no".into()),
                 ("input-vo-keyboard".into(), "no".into()),
                 ("input-cursor".into(), "no".into()),
-                ("osc".into(), "no".into()),
+                ("load-scripts".into(), "no".into()), // no OSC/ytdl; LGPL build has no Lua at all
                 ("idle".into(), "yes".into()),
                 ("force-window".into(), "yes".into()),
                 ("keep-open".into(), "yes".into()),
@@ -278,11 +289,19 @@ fn main() {
             // Keep the video child covering the client area (resize, maximize, fullscreen).
             let h2 = app.handle().clone();
             win.on_window_event(move |e| {
-                if let WindowEvent::Resized(sz) = e {
-                    if let Some(st) = h2.try_state::<Mutex<Spike>>() {
-                        let v = st.lock().unwrap().video_hwnd;
-                        video_window::send_to_bottom(v, sz.width as i32, sz.height as i32);
+                let Some(st) = h2.try_state::<Mutex<Spike>>() else { return };
+                let (t, v) = { let g = st.lock().unwrap(); (g.top_hwnd, g.video_hwnd) };
+                match e {
+                    _ if owned => match e {
+                        WindowEvent::Moved(_) | WindowEvent::Resized(_) | WindowEvent::Focused(_) => {
+                            video_window::sync_owner_popup(t, v)
+                        }
+                        _ => {}
+                    },
+                    WindowEvent::Resized(sz) if mode != "videotop" => {
+                        video_window::send_to_bottom(v, sz.width as i32, sz.height as i32)
                     }
+                    _ => {}
                 }
             });
             Ok(())
