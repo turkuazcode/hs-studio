@@ -11,9 +11,11 @@ export const volumeToGain = (val) => (val <= 100 ? 1.0 : 1.0 + ((val - 100) / 10
 export const stepVolume = (current, delta) => Math.max(0, Math.min(200, current + delta));
 
 /**
- * deps: { dom, state, toast(msg) }
+ * deps: { dom, state, toast(msg), engine() -> the engine facade }
+ * The Web Audio graph belongs to the HTML5 engine's <video> element; with libmpv the
+ * volume (0-200 %) goes straight to mpv and the DSP switches become lavfi filters.
  */
-export function createAudioEngine({ dom, state, toast }) {
+export function createAudioEngine({ dom, state, toast, engine = () => null }) {
   const {
     video, volumeSlider, volumeBadge, iconVolMute, iconVolHigh, iconVolBoost, volumeContainer, btnVolume,
     checkAiDenoise, checkAiVoiceClarity, checkAiCompressor,
@@ -28,6 +30,7 @@ export function createAudioEngine({ dom, state, toast }) {
   let compressorNode = null;
   let limiterNode = null;
   let lastNonZeroVolume = 100;
+  let onRestoreChange = null;
 
   /** Builds the audio graph on first need. Returns false if the source can't be routed. */
   function ensureAudioGraph() {
@@ -124,14 +127,26 @@ export function createAudioEngine({ dom, state, toast }) {
 
   /** Applies the AI audio switches to the graph (creating it when DSP is wanted). */
   function syncAudioRestore() {
+    if (isMpv()) {
+      onRestoreChange?.();
+      return;
+    }
     if (aiAudioWanted() && !ensureAudioGraph()) {
       toast("⚠️ Bu kaynakta ses iyileştirme kullanılamıyor (CORS)");
     }
     reconnectAudioPipeline();
   }
 
+  const isMpv = () => engine()?.kind === "mpv";
+
+  /** HTML5 engine: the booster gain for a 0-200 level (graph created on first need). */
+  function applyGain(val) {
+    if (val > 100) ensureAudioGraph();
+    setGain(volumeToGain(val));
+  }
+
   function setVolume(val) {
-    if (val > 100 && !ensureAudioGraph()) {
+    if (!isMpv() && val > 100 && !ensureAudioGraph()) {
       val = 100;
       toast("⚠️ Bu kaynakta ses güçlendirici kullanılamıyor (CORS)");
     }
@@ -139,8 +154,12 @@ export function createAudioEngine({ dom, state, toast }) {
     volumeBadge.textContent = `${val}%`;
     if (val > 0) lastNonZeroVolume = val;
 
-    video.volume = Math.min(val, 100) / 100;
-    setGain(volumeToGain(val));
+    const e = engine();
+    if (e) e.setVolume(val);
+    else {
+      video.volume = Math.min(val, 100) / 100;
+      setGain(volumeToGain(val));
+    }
 
     iconVolMute.style.display = val === 0 ? "block" : "none";
     iconVolHigh.style.display = val > 0 && val <= 100 ? "block" : "none";
@@ -168,6 +187,17 @@ export function createAudioEngine({ dom, state, toast }) {
 
   return {
     setVolume,
+    applyGain,
+    /** New media: push the slider level to the active engine again. */
+    reapply: () => setVolume(sliderVolume()),
+    /** The AI audio switches for the libmpv filter chain ({ denoise, voice, compressor } or null). */
+    get restoreSwitches() {
+      return aiAudioWanted()
+        ? { denoise: !!checkAiDenoise?.checked, voice: !!checkAiVoiceClarity?.checked, compressor: !!checkAiCompressor?.checked }
+        : null;
+    },
+    /** Called when the AI audio switches change while libmpv plays (media/audio-fx.js). */
+    set onRestoreChange(fn) { onRestoreChange = fn; },
     /** Arrow keys: +/- 5 %. */
     nudgeVolume: (delta) => setVolume(stepVolume(sliderVolume(), delta)),
     /** Wake-up after the sleep timer: back to the user's own level. */

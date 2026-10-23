@@ -1,0 +1,275 @@
+//! libmpv playback engine (Plan 02 §2, ADR 0001).
+//!
+//! `libmpv-2.dll` (LGPL build, 38 DLLs) is loaded at runtime from next to the executable (or the
+//! bundle's `mpv/` resource folder). When it is missing, fails to load, `VHO_DISABLE_MPV` is set or
+//! the platform has no video surface yet, the engine is `unavailable` and the frontend falls back to
+//! the HTML5 `<video>` engine (incl. the Media Foundation transcode path).
+//!
+//! Commands: `engine_status`, `engine_load`, `engine_command`, `engine_set`, `engine_get`,
+//! `engine_show`, `engine_screenshot`. Events: `engine://property {name, value}`, `engine://event`.
+
+pub mod events;
+pub mod mpv;
+pub mod window;
+
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
+use std::time::Instant;
+
+use serde_json::{Value, json};
+use tauri::{AppHandle, Emitter, Manager, Runtime, WebviewWindow};
+
+/// Properties forwarded to the frontend as `engine://property`.
+pub const OBSERVED: &[&str] = &[
+    "time-pos", "duration", "pause", "track-list", "chapter-list", "chapter", "volume", "mute",
+    "eof-reached", "video-params", "hwdec-current", "aid", "sid", "speed", "sub-delay", "audio-delay",
+    "demuxer-cache-time", "seeking", "idle-active", "path",
+];
+
+#[derive(Default)]
+pub struct EngineState {
+    mpv: Option<Arc<mpv::Mpv>>,
+    error: Option<String>,
+    dll: Option<PathBuf>,
+    gpu: Value,
+}
+
+pub type Engine = Mutex<EngineState>;
+
+fn exe_dir() -> Option<PathBuf> {
+    std::env::current_exe().ok().and_then(|p| p.parent().map(Path::to_path_buf))
+}
+
+/// Finds libmpv-2.dll. Order: `VHO_MPV_DLL`, next to the exe, `<exe>/mpv/`, `<resources>/mpv/`.
+pub fn locate<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
+    if std::env::var_os("VHO_DISABLE_MPV").is_some_and(|v| !v.is_empty() && v != "0") {
+        return Err("libmpv disabled by VHO_DISABLE_MPV".into());
+    }
+    if !cfg!(windows) {
+        return Err("libmpv embedding is not available on this platform yet (path B)".into());
+    }
+    let name = "libmpv-2.dll";
+    let mut candidates = vec![];
+    if let Some(p) = std::env::var_os("VHO_MPV_DLL") {
+        candidates.push(PathBuf::from(p));
+    }
+    if let Some(d) = exe_dir() {
+        candidates.push(d.join(name));
+        candidates.push(d.join("mpv").join(name));
+    }
+    if let Ok(r) = app.path().resource_dir() {
+        candidates.push(r.join("mpv").join(name));
+    }
+    candidates
+        .into_iter()
+        .find(|p| p.is_file())
+        .ok_or_else(|| format!("{name} not found (run `npm run stage:mpv`)"))
+}
+
+/// Primary GPU description; integrated GPUs (little dedicated VRAM) default to `profile=fast`.
+fn gpu_info() -> Value {
+    #[cfg(windows)]
+    unsafe {
+        use windows::Win32::Graphics::Dxgi::{CreateDXGIFactory1, IDXGIFactory1};
+        let info = (|| -> windows::core::Result<Value> {
+            let f: IDXGIFactory1 = CreateDXGIFactory1()?;
+            let a = f.EnumAdapters1(0)?;
+            let d = a.GetDesc1()?;
+            let name = String::from_utf16_lossy(&d.Description).trim_end_matches('\0').to_string();
+            let vram_mb = (d.DedicatedVideoMemory / (1024 * 1024)) as u64;
+            Ok(json!({"name": name, "dedicatedMb": vram_mb, "integrated": vram_mb < 2048}))
+        })();
+        return info.unwrap_or_else(|e| json!({"error": e.to_string()}));
+    }
+    #[allow(unreachable_code)]
+    json!({})
+}
+
+/// Creates the video surface + mpv core for `win`. Never fails: errors become "unavailable".
+pub fn setup<R: Runtime>(app: &AppHandle<R>, win: &WebviewWindow<R>, dll: Result<PathBuf, String>) {
+    let mut st = EngineState { gpu: gpu_info(), ..Default::default() };
+    match dll.and_then(|dll| start(app, win, &dll, &st.gpu).map(|m| (m, dll))) {
+        Ok((m, dll)) => {
+            st.mpv = Some(m);
+            st.dll = Some(dll);
+        }
+        Err(e) => {
+            eprintln!("[VHO] libmpv unavailable, using the HTML5 engine: {e}");
+            st.error = Some(e);
+        }
+    }
+    app.manage::<Engine>(Mutex::new(st));
+}
+
+fn start<R: Runtime>(app: &AppHandle<R>, win: &WebviewWindow<R>, dll: &Path, gpu: &Value) -> Result<Arc<mpv::Mpv>, String> {
+    #[cfg(windows)]
+    let top = win.hwnd().map_err(|e| e.to_string())?.0 as isize;
+    #[cfg(not(windows))]
+    let top = {
+        let _ = win;
+        0isize
+    };
+    let wid = window::create(top)?;
+    let fast = gpu.get("integrated").and_then(Value::as_bool).unwrap_or(false);
+    let shots = screenshot_dir(app);
+    let mut opts: Vec<(&str, String)> = vec![
+        ("wid", wid.to_string()),
+        ("config", "no".into()),
+        ("terminal", "no".into()),
+        ("input-default-bindings", "no".into()),
+        ("input-vo-keyboard", "no".into()),
+        ("input-cursor", "no".into()),
+        ("cursor-autohide", "no".into()),
+        ("load-scripts", "no".into()), // VHO draws its own UI; the LGPL build has no Lua anyway
+        ("idle", "yes".into()),
+        ("force-window", "yes".into()),
+        ("keep-open", "yes".into()),
+        ("vo", "gpu-next".into()),
+        ("hwdec", "auto-safe".into()),
+        ("volume-max", "200".into()),
+        ("deinterlace", "auto".into()),
+        ("tone-mapping", "auto".into()),
+        ("screenshot-format", "png".into()),
+        ("sub-auto", "fuzzy".into()),
+        ("sub-codepage", "auto".into()),
+        ("alang", "tur,tr,eng,en".into()),
+        ("slang", "tur,tr,eng,en".into()),
+        ("background-color", "#000000".into()),
+    ];
+    if let Some(d) = &shots {
+        opts.push(("screenshot-directory", d.to_string_lossy().into_owned()));
+    }
+    if fast {
+        opts.push(("profile", "fast".into()));
+    }
+    let refs: Vec<(&str, &str)> = opts.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let m = mpv::Mpv::new(dll, &refs)?;
+    m.request_log_messages("warn");
+    for (i, p) in OBSERVED.iter().enumerate() {
+        let _ = m.observe(i as u64 + 1, p);
+    }
+    let h = app.clone();
+    let mut throttle = events::Throttle::default();
+    m.spawn_event_loop(move |ev| {
+        if ev.get("event").and_then(Value::as_str) == Some("log-message") {
+            eprintln!("[mpv] {}", ev.get("text").and_then(Value::as_str).unwrap_or("").trim_end());
+        }
+        for out in throttle.process(&ev, Instant::now()) {
+            let _ = match out {
+                events::Out::Property(p) => h.emit("engine://property", p),
+                events::Out::Event(e) => h.emit("engine://event", e),
+            };
+        }
+    });
+    Ok(m)
+}
+
+fn screenshot_dir<R: Runtime>(app: &AppHandle<R>) -> Option<PathBuf> {
+    if let Some(d) = std::env::var_os("VHO_SCREENSHOT_DIR") {
+        return Some(PathBuf::from(d));
+    }
+    app.path().picture_dir().ok().map(|d| d.join("VHO"))
+}
+
+/// Stops mpv on exit (the event thread ends with the shutdown event).
+pub fn shutdown<R: Runtime>(app: &AppHandle<R>) {
+    if let Some(st) = app.try_state::<Engine>() {
+        if let Some(m) = st.lock().unwrap().mpv.take() {
+            let _ = m.command(&json!(["quit"]));
+        }
+    }
+}
+
+fn mpv_of(st: &tauri::State<'_, Engine>) -> Result<Arc<mpv::Mpv>, String> {
+    let g = st.lock().unwrap();
+    g.mpv.clone().ok_or_else(|| g.error.clone().unwrap_or_else(|| "libmpv not loaded".into()))
+}
+
+#[tauri::command]
+pub fn engine_status(st: tauri::State<'_, Engine>) -> Value {
+    let g = st.lock().unwrap();
+    let m = g.mpv.as_ref();
+    let (client_major, client_minor) = m.map(|m| m.client_api_version()).unwrap_or((0, 0));
+    let (client, video, visible) = window::geometry();
+    json!({
+        "available": m.is_some(),
+        "error": g.error,
+        "dll": g.dll,
+        "mpvVersion": m.and_then(|m| m.get_property_string("mpv-version")),
+        "ffmpegVersion": m.and_then(|m| m.get_property_string("ffmpeg-version")),
+        "clientApi": format!("{client_major}.{client_minor}"),
+        "gpu": g.gpu,
+        "visible": visible,
+        "clientRect": client,
+        "videoRect": video,
+    })
+}
+
+/// `loadfile <path> replace`, optionally starting at `start` seconds.
+#[tauri::command]
+pub async fn engine_load(st: tauri::State<'_, Engine>, path: String, start: Option<f64>) -> Result<(), String> {
+    let m = mpv_of(&st)?;
+    let mut cmd = json!({"name": "loadfile", "url": path, "flags": "replace"});
+    if let Some(s) = start.filter(|s| *s > 0.0) {
+        cmd["options"] = json!({ "start": format!("{s:.3}") });
+    }
+    m.command(&cmd).map(|_| ())
+}
+
+#[tauri::command]
+pub async fn engine_command(st: tauri::State<'_, Engine>, args: Value) -> Result<Value, String> {
+    mpv_of(&st)?.command(&args)
+}
+
+#[tauri::command]
+pub async fn engine_set(st: tauri::State<'_, Engine>, name: String, value: Value) -> Result<(), String> {
+    mpv_of(&st)?.set_property(&name, &value)
+}
+
+#[tauri::command]
+pub async fn engine_get(st: tauri::State<'_, Engine>, name: String) -> Result<Value, String> {
+    mpv_of(&st)?.get_property(&name)
+}
+
+/// Shows / hides the video surface (hidden for photos, the empty screen and the HTML5 engine).
+#[tauri::command]
+pub async fn engine_show(app: AppHandle, visible: bool) -> Result<bool, String> {
+    let (tx, rx) = std::sync::mpsc::channel();
+    app.run_on_main_thread(move || {
+        window::set_visible(visible);
+        let _ = tx.send(window::is_visible());
+    })
+    .map_err(|e| e.to_string())?;
+    rx.recv_timeout(std::time::Duration::from_secs(2)).map_err(|e| e.to_string())
+}
+
+/// Saves the current frame as PNG (`with_subs`: as shown, incl. subtitles) and returns its path.
+#[tauri::command]
+pub async fn engine_screenshot(
+    app: AppHandle,
+    st: tauri::State<'_, Engine>,
+    stem: String,
+    with_subs: Option<bool>,
+) -> Result<String, String> {
+    let m = mpv_of(&st)?;
+    let dir = screenshot_dir(&app).ok_or("Resimler klasörü bulunamadı")?;
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let stem: String = stem
+        .chars()
+        .map(|c| if c.is_alphanumeric() || "-_".contains(c) { c } else { '_' })
+        .collect();
+    let stem = if stem.is_empty() { "VHO".to_string() } else { stem };
+    let mut path = dir.join(format!("{stem}.png"));
+    let mut n = 2;
+    while path.exists() {
+        path = dir.join(format!("{stem}_{n}.png"));
+        n += 1;
+    }
+    let p = path.to_string_lossy().into_owned();
+    let flags = if with_subs.unwrap_or(true) { "subtitles" } else { "video" };
+    m.command(&json!(["screenshot-to-file", p, flags]))?;
+    if !path.is_file() {
+        return Err("Ekran görüntüsü yazılamadı".into());
+    }
+    Ok(p)
+}

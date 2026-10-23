@@ -1,4 +1,5 @@
 mod ai;
+mod engine;
 mod photo;
 mod transcode;
 
@@ -248,9 +249,16 @@ pub fn run() {
                 args.push_str(COMPAT_BROWSER_ARGS);
             }
 
-            WebviewWindowBuilder::from_config(app.handle(), &config)?
-                .additional_browser_args(&args)
-                .build()?;
+            // libmpv engine: when the DLL set is present the window is transparent and the video
+            // is drawn by mpv into an owned popup behind it (ADR 0001). Otherwise the window stays
+            // opaque and the frontend uses the HTML5 <video> engine.
+            let mpv_dll = engine::locate(app.handle());
+            let mut builder = WebviewWindowBuilder::from_config(app.handle(), &config)?.additional_browser_args(&args);
+            if mpv_dll.is_ok() {
+                builder = builder.transparent(true);
+            }
+            let window = builder.build()?;
+            engine::setup(app.handle(), &window, mpv_dll);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -271,8 +279,20 @@ pub fn run() {
             photo::photo_decode,
             photo::photo_batch,
             photo::photo_cancel,
-            photo::photo_capabilities
+            photo::photo_capabilities,
+            engine::engine_status,
+            engine::engine_load,
+            engine::engine_command,
+            engine::engine_set,
+            engine::engine_get,
+            engine::engine_show,
+            engine::engine_screenshot
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if let tauri::RunEvent::Exit = event {
+                engine::shutdown(app);
+            }
+        });
 }
