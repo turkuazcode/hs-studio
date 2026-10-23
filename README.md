@@ -130,6 +130,53 @@ npm run tauri build
 
 ---
 
+## 🧪 Geliştirme ve test
+
+### Ön yüz modül yapısı
+`src/main.js` yalnızca önyüklemedir; modüller tek bir `app` bağlamı üzerinden birbirine bağlanır (döngüsel import yok). Paylaşılan durum `src/core/state.js`'de, bildirimler `src/core/events.js` olay veriyolunda.
+
+| Klasör | İçerik |
+|---|---|
+| `src/core/` | `dom.js` (tüm DOM referansları), `state.js` (reaktif store), `events.js` (olay veriyolu), `tauri.js` (`__TAURI__` sarmalayıcıları, tarayıcıda no-op), `format.js` (saf biçimleme) |
+| `src/media/` | `classify.js`, `subtitles.js`, `loader.js`, `video-player.js`, `audio-engine.js`, `visual-filters.js`, `photo-viewer.js`, `photo-ai.js`, `snapshot.js`, `onnx-patch.js` + mevcut `gpu-enhancer.js`, `ai-*.js`, `face-restore.js` |
+| `src/ui/` | `hud.js`, `timeline.js`, `playlist.js`, `panels.js`, `modals.js`, `sleep-timer.js`, `shortcuts.js`, `fullscreen.js`, `toasts.js`, `window-controls.js` |
+
+Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çözme, çalma listesi gezinme, ONNX yaması...) DOM'suz fonksiyonlardır ve birim testlidir.
+
+### Komutlar
+| Komut | Ne yapar |
+|---|---|
+| `npm ci` | Bağımlılıkları kurar |
+| `npm test` | Birim testleri (Node 24 yerleşik `node:test`, ek bağımlılık yok) |
+| `npm run build:release` | Release derlemesi: `src-tauri/target/release/vho.exe` |
+| `npm run e2e` | Uçtan uca testler; önce `npm run build:release` gerekir |
+| `cd src-tauri; cargo test --release --lib` | Rust birim testleri (`transcode` gerçek dosya testi `#[ignore]`) |
+| `npm run fixtures` | Test medyasını yeniden üretir (Windows) |
+
+### Uçtan uca (E2E) testler
+`tests/e2e/` altındaki testler `vho.exe`'yi `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=<9500-9599>` ile başlatır ve Chrome DevTools Protocol üzerinden sayfayı sürer (`lib/cdp.mjs`, `lib/app.mjs`). Medya dosyaları komut satırı argümanı olarak açılır ("Birlikte aç" yolu).
+
+- Her çalıştırma ayrı, geçici bir WebView2 profili kullanır (`WEBVIEW2_USER_DATA_FOLDER`): kullanıcının açık VHO'suna ve kaldığı yer kayıtlarına dokunmaz. Testler yalnızca kendi başlattıkları süreci kapatır.
+- Arka plandaki pencere yeniden çizilmeyebilir; bu yüzden testler ekran görüntüsüne değil, DOM ve medya durumuna (`videoWidth`, `getVideoPlaybackQuality()`, metinler) bakar.
+- **Güvenlik:** testler bilgisayarı asla uyku moduna almaz. `vho.exe`, `VHO_DISABLE_SYSTEM_SUSPEND=1` ile başlatılır (`suspend_system` hiçbir şey yapmaz) ve sayfa betikleri çalışmadan önce `__TAURI__.core.invoke` sarmalanır: `suspend_system` ve `set_compat_mode` arka uca hiç gitmez. Koruma her açılışta doğrulanır; doğrulanamazsa testler çalışmaz. Uyku zamanlayıcısı testleri "PC Uyku" kutusunu önce kapatır.
+- `window.confirm` ve indirmeler (ekran görüntüsü) test tarafında taklit edilir; yakalanmamış sayfa hataları toplanır ve her testin sonunda boş olmalıdır.
+- Başka bir derlemeyi denemek için: `$env:VHO_EXE = "C:\yol\vho.exe"; npm run e2e`. Ayrıntılı zamanlama günlüğü: `$env:VHO_E2E_DEBUG = 1`.
+
+| Dosya | Kapsam |
+|---|---|
+| `smoke.e2e.mjs` | Açılış, boş ekran, Lisanslar penceresi, AI işçi modülü, URL penceresi doğrulaması, paneller, uyumluluk modu onayı, tam ekran, uyku zamanlayıcı penceresi |
+| `video.e2e.mjs` | H.264 oynatma, duraklatma, atlama, ses %150/sessiz, A-B döngü, altyazı (UTF-8 SRT, Windows-1254 SRT, BOM'lu VTT, gecikme), hız/en-boy, renk filtreleri, AI/bölünmüş ekran, ekran görüntüsü, çalma listesi otomatik geçiş, "video bitince" uyku modu |
+| `legacy.e2e.mjs` | WMV9/WMA → Media Foundation dönüştürme → H.264/AAC kareleri çözülüyor (Windows) |
+| `photo.e2e.mjs` | JPEG + PNG, bilgi kartı, yakınlaştırma, döndürme, sarmalı gezinme, slayt gösterisi, ekran görüntüsü |
+
+### Test medyası (`tests/fixtures/`)
+Tamamı sentetik ve depoya dahildir (toplam ~185 KB); `tests/fixtures/make-fixtures.ps1` ile yeniden üretilir:
+- `sample-h264.mp4` (3 sn, 320×240, H.264/AAC) ve `legacy-wmv9.wmv` (3 sn, WMV9/WMA): `tests/fixtures/gen` içindeki küçük Rust aracı, Windows'un kendi Media Foundation kodlayıcılarıyla yazar.
+- `photo-a.jpg`, `photo-b.png`: System.Drawing ile çizilir.
+- `sample.srt` (UTF-8, CRLF), `sample.vtt` (UTF-8 BOM), `sample-1254.srt` (Windows-1254): `make-subtitles.mjs`.
+
+---
+
 ## 🤝 Katkıda Bulunma (Contributing)
 
 Açık kaynak topluluğunun katkılarını memnuniyetle karşılıyoruz!
