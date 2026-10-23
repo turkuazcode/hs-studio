@@ -17,3 +17,14 @@ accepted = [
     "CDLA-Permissive-2.0",
 ]
 workarounds = ["ring", "rustls"]
+# Evaluate target-specific dependencies for the platforms VHO ships on. Without this,
+# cfg(fuzzing)-only deps (rav1e -> libfuzzer-sys, NCSA) are counted although they are
+# never compiled into the app.
+targets = [
+    "x86_64-pc-windows-msvc",
+    "aarch64-pc-windows-msvc",
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",
+    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
+]
