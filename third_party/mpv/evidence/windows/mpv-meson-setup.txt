@@ -1,0 +1,216 @@
+The Meson build system
+Version: 1.12.1
+Source dir: <repo>/third_party/mpv/_build/src/mpv
+Build dir: <repo>/third_party/mpv/_build/src/mpv/build
+Build type: native build
+Project name: mpv
+Project version: 0.41.0
+C compiler for the host machine: cc (gcc 16.2.0 "cc (Rev6, Built by MSYS2 project) 16.2.0")
+C linker for the host machine: cc ld.bfd 2.47.20260726
+Host machine cpu family: x86_64
+Host machine cpu: x86_64
+Program python3 found: YES (C:\msys64\ucrt64\bin/python3.exe)
+Found pkg-config: YES (C:\msys64\ucrt64\bin/pkg-config.exe) 3.0.10
+Run-time dependency libavcodec found: YES 62.28.103
+Run-time dependency libavfilter found: YES 11.14.103
+Run-time dependency libavformat found: YES 62.12.103
+Run-time dependency libavutil found: YES 60.26.103
+Run-time dependency libswresample found: YES 6.3.103
+Run-time dependency libswscale found: YES 9.5.103
+Run-time dependency libplacebo found: YES 7.360.1
+Run-time dependency libass found: YES 0.17.5
+Compiler for C supports arguments -Wdisabled-optimization: YES 
+Compiler for C supports arguments -Wempty-body: YES 
+Compiler for C supports arguments -Wformat: YES 
+Compiler for C supports arguments -Wimplicit-fallthrough: YES 
+Compiler for C supports arguments -Woverflow: YES 
+Compiler for C supports arguments -Wparentheses: YES 
+Compiler for C supports arguments -Wpointer-arith: YES 
+Compiler for C supports arguments -Wshadow: YES 
+Compiler for C supports arguments -Wundef: YES 
+Compiler for C supports arguments -Wvla: YES 
+Compiler for C supports arguments -Wno-cast-function-type: YES 
+Compiler for C supports arguments -Wno-format-zero-length: YES 
+Compiler for C supports arguments -Wno-missing-field-initializers: YES 
+Compiler for C supports arguments -Wno-sign-compare: YES 
+Compiler for C supports arguments -Wno-switch: YES 
+Compiler for C supports arguments -Wno-unused-parameter: YES 
+Compiler for C supports arguments -fno-math-errno: YES 
+Compiler for C supports arguments -fno-signed-zeros: YES 
+Compiler for C supports arguments -fno-trapping-math: YES 
+Compiler for C supports arguments -Wmissing-prototypes: YES 
+Compiler for C supports arguments -Wstrict-prototypes: YES 
+Compiler for C supports arguments -Werror=implicit-function-declaration: YES 
+Compiler for C supports arguments -Wno-pointer-sign: YES 
+Compiler for C supports arguments -Wformat -Werror=format-security: YES 
+Compiler for C supports link arguments -Wl,--nxcompat,--no-seh,--dynamicbase: YES 
+Compiler for C supports link arguments -Wl,-z,noexecstack: NO 
+Run-time dependency dl found: NO  (tried builtin and system)
+Library atomic found: YES
+Run-time dependency appleframeworks found: NO  (tried framework)
+Checking for function "ppoll" : NO 
+Checking for function "memrchr" : NO 
+Library windowsapp skipped: feature uwp disabled
+Library avrt found: YES
+Library dwmapi found: YES
+Library gdi32 found: YES
+Library imm32 found: YES
+Library ntdll found: YES
+Library ole32 found: YES
+Library pathcch found: YES
+Library shcore found: YES
+Library user32 found: YES
+Library uuid found: YES
+Library uxtheme found: YES
+Library version found: YES
+C++ compiler for the host machine: c++ (gcc 16.2.0 "c++ (Rev6, Built by MSYS2 project) 16.2.0")
+C++ linker for the host machine: c++ ld.bfd 2.47.20260726
+Has header "winrt/base.h" : NO 
+Checking for function "glob" : NO 
+Header "sys/vt.h" has symbol "VT_GETMODE" : NO 
+Header "sys/consio.h" has symbol "VT_GETMODE" : NO 
+Header "dev/wscons/wsdisplay_usl_io.h" has symbol "VT_GETMODE" : NO 
+Checking for function "fstatfs" : NO 
+Checking for function "fstatfs" : NO 
+Compiler for C supports function attribute vector_size: YES 
+Program <repo>/third_party/mpv/_build/src/mpv/TOOLS/docutils-wrapper.py found: YES (C:/msys64/ucrt64/bin/python.exe <repo>/third_party/mpv/_build/src/mpv/TOOLS/docutils-wrapper.py)
+Program <repo>/third_party/mpv/_build/src/mpv/TOOLS/file2string.py found: YES (C:/msys64/ucrt64/bin/python.exe <repo>/third_party/mpv/_build/src/mpv/TOOLS/file2string.py)
+Program <repo>/third_party/mpv/_build/src/mpv/TOOLS/matroska.py found: YES (C:/msys64/ucrt64/bin/python.exe <repo>/third_party/mpv/_build/src/mpv/TOOLS/matroska.py)
+Program <repo>/third_party/mpv/_build/src/mpv/TOOLS/gen-mpv-desktop.py found: YES (C:/msys64/ucrt64/bin/python.exe <repo>/third_party/mpv/_build/src/mpv/TOOLS/gen-mpv-desktop.py)
+Program git found: YES (C:\msys64\usr\bin/git.exe)
+Dependency libcdio for host machine skipped: feature cdda disabled
+Dependency libcdio_paranoia for host machine skipped: feature cdda disabled
+Has header "linux/dvb/frontend.h" skipped: feature dvbin disabled
+Dependency dvdnav for host machine skipped: feature dvdnav disabled
+Run-time dependency iconv found: YES
+Dependency mujs for host machine skipped: feature javascript disabled
+Run-time dependency lcms2 found: YES 2.19
+Dependency libarchive for host machine skipped: feature libarchive disabled
+Run-time dependency libavdevice found: YES 62.3.103
+Dependency libbluray for host machine skipped: feature libbluray disabled
+Library m found: YES
+Library rt found: NO
+Dependency rubberband for host machine skipped: feature rubberband disabled
+sdl2-config found: NO
+Found CMake: C:\msys64\ucrt64\bin/cmake.exe (4.4.4)
+Run-time dependency sdl2 found: NO  (tried pkg-config, config-tool and cmake)
+Run-time dependency uchardet found: YES 0.0.8
+Dependency vapoursynth for host machine skipped: feature vapoursynth disabled
+Dependency vapoursynth-script for host machine skipped: feature vapoursynth disabled
+Run-time dependency xfixes found: NO  (tried pkg-config and cmake)
+Run-time dependency x11 found: NO  (tried pkg-config)
+Dependency zimg for host machine skipped: feature zimg disabled
+Run-time dependency zlib found: YES 1.3.2
+Run-time dependency alsa found: NO  (tried pkg-config)
+Dependency appleframeworks(modules: Foundation, AudioToolbox) for host machine skipped: feature audiounit disabled
+Header "AudioToolbox/AudioToolbox.h" has symbol "kAudioUnitSubType_RemoteIO" skipped: feature audiounit disabled
+Run-time dependency appleframeworks found: NO  (tried framework)
+Run-time dependency appleframeworks found: NO  (tried framework)
+Dependency jack for host machine skipped: feature jack disabled
+Dependency openal for host machine skipped: feature openal disabled
+Header "aaudio/AAudio.h" has symbol "AAudioStream" skipped: feature aaudio disabled
+Library OpenSLES found: NO
+Header "sys/soundcard.h" has symbol "SNDCTL_DSP_HALT" skipped: feature oss-audio disabled
+Run-time dependency libpipewire-0.3 found: NO  (tried pkg-config and cmake)
+Run-time dependency libpulse found: NO  (tried pkg-config and cmake)
+Run-time dependency sndio found: NO  (tried pkg-config and cmake)
+Header "audioclient.h" has symbol "IAudioClient" : YES 
+Dependency caca for host machine skipped: feature caca disabled
+Has header "d3d9.h" skipped: feature direct3d disabled
+Run-time dependency libdrm found: NO  (tried pkg-config and cmake)
+Run-time dependency libdisplay-info found: NO  (tried pkg-config and cmake)
+Dependency gbm for host machine skipped: feature gbm disabled
+Run-time dependency libjpeg found: YES 3.2.0
+Run-time dependency shaderc found: YES 2026.4.1
+Run-time dependency libsixel found: NO  (tried pkg-config and cmake)
+Run-time dependency spirv-cross-c-shared found: YES 0.68.0
+Run-time dependency wayland-client found: NO  (tried pkg-config and cmake)
+Run-time dependency wayland-cursor found: NO  (tried pkg-config and cmake)
+Run-time dependency wayland-protocols found: NO  (tried pkg-config and cmake)
+Run-time dependency xkbcommon found: NO  (tried pkg-config and cmake)
+Run-time dependency wayland-client found: NO  (tried pkg-config and cmake)
+Has header "linux/input-event-codes.h" with dependency wayland-client: NO 
+Program wayland-scanner found: NO
+Dependency x11 for host machine skipped: feature x11 disabled
+Dependency xscrnsaver for host machine skipped: feature x11 disabled
+Dependency xext for host machine skipped: feature x11 disabled
+Dependency xpresent for host machine skipped: feature x11 disabled
+Dependency xrandr for host machine skipped: feature x11 disabled
+Dependency xv for host machine skipped: feature xv disabled
+Run-time dependency gl found: YES
+Header "GL/wglext.h" has symbol "WGL_ACCESS_READ_ONLY_NV" : YES 
+Header "d3d9.h" has symbol "IDirect3D9Ex" : YES 
+Header "EGL/eglext.h" has symbol "EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE" : NO 
+Library EGL skipped: feature egl-angle-lib disabled
+Run-time dependency egl found: NO  (tried pkg-config and cmake)
+Library EGL skipped: feature egl-android disabled
+Dependency wayland-egl for host machine skipped: feature egl-wayland disabled
+Run-time dependency vulkan found: YES 1.4.363
+Header "vulkan/vulkan_core.h" has symbol "VK_VERSION_1_3" with dependency vulkan: YES 
+Checking for function "vkCreateDisplayPlaneSurfaceKHR" with dependency vulkan: YES 
+Header "d3d11sdklayers.h" has symbol "DXGI_DEBUG_D3D11" : YES 
+Run-time dependency ffnvcodec found: NO  (tried pkg-config and cmake)
+Header "OpenGLES/ES3/glext.h" has symbol "GL_RGB32F" skipped: feature ios-gl disabled
+Run-time dependency libva found: NO  (tried pkg-config and cmake)
+Dependency libva-drm for host machine skipped: feature vaapi-drm disabled
+Dependency libva-wayland for host machine skipped: feature vaapi-wayland disabled
+Dependency libva-x11 for host machine skipped: feature vaapi-x11 disabled
+Dependency libva-win32 for host machine skipped: feature vaapi-win32 disabled
+Dependency vdpau for host machine skipped: feature vdpau disabled
+Dependency appleframeworks(modules: CoreVideo) for host machine skipped: feature videotoolbox-pl disabled
+Program xcrun skipped: feature swift-build disabled
+Program rst2man rst2man.py skipped: feature manpage-build disabled
+Program rst2html rst2html.py skipped: feature html-build disabled
+Program rst2pdf skipped: feature pdf-build disabled
+Configuring config.h using configuration
+Message: List of enabled features: build-date cplugins d3d-hwaccel d3d11 d3d9-hwaccel dos-paths dxgi-debug-d3d11 ffmpeg gl gl-dxinterop gl-dxinterop-d3d9 gl-win32 glob glob-win32 iconv jpeg lcms2 libass libavdevice libplacebo shaderc spirv-cross uchardet vector vk-khr-display vulkan wasapi win32 win32-desktop win32-executable win32-threads zlib
+Windows resource compiler: GNU windres (GNU Binutils) 2.47.20260726
+Fetching value of define "MPV_CLIENT_API_VERSION" : (((2) << 16) | (5) | 0UL) 
+Compiler for C supports link arguments -Wl,-Bsymbolic: YES 
+Found pkg-config: YES (C:\msys64\ucrt64\bin/pkg-config.exe) 3.0.10
+Build targets in project: 29
+
+mpv 0.41.0
+
+    cocoa          : NO
+    d3d11          : YES
+    drm            : NO
+    javascript     : NO
+    libmpv         : YES
+    lua            : NO
+    opengl         : YES
+    vulkan         : YES
+    wayland        : NO
+    x11            : NO
+
+  User defined options
+    buildtype      : release
+    cdda           : disabled
+    cplayer        : true
+    d3d11          : enabled
+    default_library: shared
+    dvdnav         : disabled
+    gpl            : false
+    html-build     : disabled
+    iconv          : enabled
+    javascript     : disabled
+    jpeg           : enabled
+    lcms2          : enabled
+    libarchive     : disabled
+    libbluray      : disabled
+    libmpv         : true
+    lua            : disabled
+    manpage-build  : disabled
+    pdf-build      : disabled
+    prefix         : <repo>/third_party/mpv/_build/prefix
+    rubberband     : disabled
+    sdl2-audio     : disabled
+    sdl2-gamepad   : disabled
+    sdl2-video     : disabled
+    shaderc        : enabled
+    spirv-cross    : enabled
+    uchardet       : enabled
+    vapoursynth    : disabled
+    zimg           : disabled
+
+Found ninja-1.13.2 at C:\msys64\ucrt64\bin/ninja.exe

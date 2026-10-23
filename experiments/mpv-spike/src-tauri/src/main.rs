@@ -169,6 +169,14 @@ fn spike_click(s: tauri::State<Mutex<Spike>>, x: i32, y: i32) -> Result<Vec<Stri
     Err("unsupported".into())
 }
 
+/// Owned mode: is the video popup glued to the UI window's client area?
+#[tauri::command]
+fn spike_geom(s: tauri::State<Mutex<Spike>>) -> Value {
+    let g = s.lock().unwrap();
+    let (client, video, visible) = video_window::geometry(g.top_hwnd, g.video_hwnd);
+    json!({"client": client, "video": video, "video_visible": visible})
+}
+
 /// Which HWND would receive mouse input at client point (x,y)? (non-intrusive input check)
 #[tauri::command]
 fn spike_hittest(s: tauri::State<Mutex<Spike>>, x: i32, y: i32) -> Value {
@@ -214,17 +222,17 @@ fn main() {
                 b = b.additional_browser_args(&a);
             }
             // Composition variants under test:
-            //  transparent (default): tauri.conf "transparent": true -> tao DwmEnableBlurBehind + webview alpha 0
+            //  transparent: tauri.conf "transparent": true -> tao DwmEnableBlurBehind + webview alpha 0
             //  bgcolor: opaque top-level window, only the WebView2 default background has alpha 0
             //  videotop: diagnostic - video child ABOVE the webview (proves mpv renders; UI hidden)
-            //  owned: transparent Tauri window owned by a separate top-level video popup (A')
+            //  owned (default): transparent Tauri window owned by a separate top-level video popup (A-prime)
             if args.mode.as_deref() == Some("bgcolor") {
                 b = b.transparent(false).background_color(tauri::window::Color(0, 0, 0, 0));
             }
             let win = b.build()?;
             let top = win.hwnd()?.0 as isize;
             let size = win.inner_size()?;
-            let mode = args.mode.clone().unwrap_or_else(|| "transparent".into());
+            let mode = args.mode.clone().unwrap_or_else(|| "owned".into()); // the variant that works (ADR 0001)
             let owned = mode == "owned";
             let video = if owned {
                 video_window::create_owner_popup(top)
@@ -308,7 +316,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             mpv_command, mpv_set, mpv_get, spike_info, spike_log, spike_cpu, spike_capture, spike_click,
-            spike_hittest, spike_quit
+            spike_hittest, spike_geom, spike_quit
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
