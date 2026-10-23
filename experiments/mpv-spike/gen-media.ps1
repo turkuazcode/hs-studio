@@ -3,10 +3,10 @@
   H.264/HEVC are encoded with Windows Media Foundation encoders (h264_mf / hevc_mf) because an
   LGPL FFmpeg has no x264/x265. Nothing here comes from user media.
 
-  .\gen-media.ps1     -> media\h264-1080p.mp4, media\hevc-4k.mkv, media\multitrack.mkv
+  .\gen-media.ps1     -> media\h264-1080p.mp4, media\hevc-4k.mp4, media\multitrack.mkv
 #>
 param([string]$Prefix = "$PSScriptRoot\..\..\third_party\mpv\_build\prefix")
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Continue'  # ffmpeg logs to stderr; exit codes are checked
 $ff = Join-Path $Prefix 'bin\ffmpeg.exe'
 $env:Path = (Join-Path $Prefix 'bin') + ';C:\msys64\ucrt64\bin;' + $env:Path
 $m = Join-Path $PSScriptRoot 'media'
@@ -14,13 +14,14 @@ New-Item -ItemType Directory -Force $m | Out-Null
 function Write-NoBom([string]$name, [string]$text) { [IO.File]::WriteAllText((Join-Path $m $name), $text) }
 Push-Location $m
 try {
+  if (-not (Test-Path h264-1080p.mp4)) {
   $src1080 = 'testsrc2=size=1920x1080:rate=30,noise=alls=12:allf=t'
   & $ff -hide_banner -y -f lavfi -i $src1080 -f lavfi -i 'sine=frequency=440:sample_rate=48000' -t 40 `
     -c:v h264_mf -b:v 8M -pix_fmt nv12 -c:a aac -b:a 160k -movflags +faststart h264-1080p.mp4
-  if ($LASTEXITCODE) { throw 'h264 failed' }
+  if ($LASTEXITCODE) { throw 'h264 failed' } }
 
   & $ff -hide_banner -y -f lavfi -i 'testsrc2=size=3840x2160:rate=30,noise=alls=12:allf=t' -f lavfi -i 'sine=frequency=330:sample_rate=48000' -t 30 `
-    -c:v hevc_mf -b:v 20M -pix_fmt nv12 -c:a aac -b:a 160k hevc-4k.mkv
+    -c:v hevc_mf -hw_encoding 1 -b:v 20M -pix_fmt nv12 -tag:v hvc1 -c:a aac -b:a 160k hevc-4k.mp4  # mkv muxer needs extradata in header; MF HEVC gives it late
   if ($LASTEXITCODE) { throw 'hevc failed' }
 
   # --- multitrack: 2 audio (tur/eng), 2 subtitles (tur ASS, eng SRT), 3 chapters
