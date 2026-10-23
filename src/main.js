@@ -18,6 +18,7 @@ import { createSnapshot } from "./media/snapshot.js";
 import { createSubtitles } from "./media/subtitles.js";
 import { createVideoPlayer } from "./media/video-player.js";
 import { createVisualFilters } from "./media/visual-filters.js";
+import { createPhotoStudio } from "./studio/studio.js";
 import { createFullscreen } from "./ui/fullscreen.js";
 import { createHud } from "./ui/hud.js";
 import { createModals } from "./ui/modals.js";
@@ -62,6 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
   createModals(app);
   initShortcuts(app);
   initWindowControls(dom);
+  app.studio = createPhotoStudio(app);
 
   // Files passed on the command line ("Open with VHO")
   invoke?.("initial_files")
