@@ -1,0 +1,6 @@
+src-tauri/target/
+src-tauri/gen/
+media/
+lib/
+*.dll
+results/captures/*.bmp

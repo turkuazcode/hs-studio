@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>VHO mpv spike</title>
+<style>
+  html, body { margin: 0; height: 100%; background: transparent; color: #fff;
+    font: 13px system-ui, sans-serif; overflow: hidden; user-select: none; }
+  #title { position: absolute; inset: 0 0 auto 0; height: 32px; display: flex; align-items: center;
+    padding: 0 8px; gap: 8px; background: rgba(0,0,0,.45); }
+  #title .grow { flex: 1; height: 100%; }
+  #hud { position: absolute; left: 12px; right: 12px; bottom: 12px; padding: 10px 12px; border-radius: 10px;
+    background: rgba(20,20,28,.72); backdrop-filter: blur(8px); display: grid; gap: 8px; }
+  .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  button, select { background: #2b2f3a; color: #fff; border: 1px solid #444b5a; border-radius: 6px;
+    padding: 4px 10px; font: inherit; cursor: pointer; }
+  button:hover { background: #3a4050; }
+  input[type=range] { width: 100%; }
+  #badge { position: absolute; top: 44px; right: 12px; padding: 6px 10px; border-radius: 6px;
+    background: #e5484d; font-weight: 600; }
+  #stats { position: absolute; top: 44px; left: 12px; white-space: pre; font: 12px ui-monospace, monospace;
+    background: rgba(0,0,0,.55); padding: 6px 8px; border-radius: 6px; }
+</style>
+</head>
+<body>
+  <div id="title" data-tauri-drag-region>
+    <b>VHO mpv spike</b><span class="grow" data-tauri-drag-region></span>
+    <button id="fs">Tam ekran</button><button id="close">X</button>
+  </div>
+  <div id="badge">HTML ARAYÜZ ÜSTTE</div>
+  <div id="stats"></div>
+  <div id="hud">
+    <input id="seek" type="range" min="0" max="1000" value="0">
+    <div class="row">
+      <button id="play">Oynat/Duraklat</button>
+      <button id="back">-10 sn</button><button id="fwd">+10 sn</button>
+      <span id="time">0:00 / 0:00</span>
+      <label>Ses <select id="aid"></select></label>
+      <label>Altyazı <select id="sid"></select></label>
+      <input id="file" placeholder="dosya yolu" style="flex:1;min-width:160px;background:#111;color:#fff;border:1px solid #444;border-radius:6px;padding:4px 8px">
+      <button id="load">Aç</button>
+    </div>
+  </div>
+<script src="app.js"></script>
+</body>
+</html>
