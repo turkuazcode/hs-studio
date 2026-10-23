@@ -140,6 +140,7 @@ export function createInfoPanel(root, { invoke, convertFileSrc, onClose }) {
       renderInfo(info);
     } catch (e) {
       if (my !== token) return;
+      current = { path: item.path, info: null };
       renderInfo({ name: item.name, size: item.size, format: item.ext });
       rowsEl.append(Object.assign(document.createElement("dd"), { className: "ps-error", textContent: String(e).replace(/^\[[a-z-]+\]\s*/, "") }));
     }
