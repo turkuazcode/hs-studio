@@ -1,0 +1,38 @@
+[package]
+name = "mpv-spike"
+version = "0.0.1"
+description = "VHO engine spike: libmpv (wid embedding) under a transparent Tauri v2 webview"
+license = "MIT"
+edition = "2024"
+publish = false
+
+# Standalone experiment, not part of the main app's build.
+[workspace]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["custom-protocol"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Runtime loading of libmpv-2.dll (MIT/ISC): lets the app fall back to HTML5 when the DLL is missing.
+libloading = "0.8"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_Graphics_Gdi",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Threading",
+  "Win32_System_ProcessStatus",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_UI_Input_KeyboardAndMouse",
+] }
+
+[profile.release]
+codegen-units = 16
+lto = "thin"
+opt-level = 3
+panic = "abort"
+strip = true
