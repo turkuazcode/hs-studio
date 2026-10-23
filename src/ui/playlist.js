@@ -4,6 +4,8 @@
 //   file (browser File), path (local file via Tauri asset protocol), url (network).
 // ==========================================================================
 
+import { itemSize } from "../media/classify.js";
+
 /** Index after moving by step, wrapping at both ends; -1 for an empty list. */
 export function wrapIndex(current, step, length) {
   if (!length) return -1;
@@ -17,7 +19,11 @@ export function wrapIndex(current, step, length) {
 export const hasNextItem = (index, length) => length > 0 && index >= 0 && index < length - 1;
 
 /** Meta text under a playlist entry. */
-export const itemMetaText = (item) => item.file ? `${(item.file.size / 1048576).toFixed(1)} MB` : "Ağ Akışı";
+export function itemMetaText(item) {
+  if (item.url) return "Ağ Akışı";
+  // Browser File or local file from the backend (dialog / native drop / command line)
+  return `${(itemSize(item) / 1048576).toFixed(1)} MB`;
+}
 
 /**
  * app: { dom, state, loader, photo }  (resolved lazily)

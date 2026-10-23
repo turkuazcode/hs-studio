@@ -18,6 +18,8 @@ test("photo: two photos from the command line", { timeout: 120000 }, async (t) =
     await t.test("first photo, info card data, photo UI instead of video UI", async () => {
       await shown(640, "photo-a.jpg", "1 / 2");
       assert.equal(await app.text("#playlist-count-badge"), "2");
+      // local files show their size (was "Ağ Akışı" before the fix)
+      assert.match(await app.text(`#playlist-items li[data-idx="0"] .item-meta`), /^0.0 MB$/);
       assert.equal(await app.eval(`document.getElementById("playlist-drawer").classList.contains("open")`), true);
       assert.equal(await display("image-container"), "flex");
       assert.equal(await display("photo-hud"), "flex");
