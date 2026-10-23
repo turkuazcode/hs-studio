@@ -132,6 +132,23 @@ mod imp {
         }
     }
 
+    /// (client rect of `top` in screen coords, window rect of `video`, video visible?)
+    pub fn geometry(top: isize, video: isize) -> ([i32; 4], [i32; 4], bool) {
+        unsafe {
+            let mut r: RECT = std::mem::zeroed();
+            GetClientRect(top as HWND, &mut r);
+            let mut p = windows_sys::Win32::Foundation::POINT { x: 0, y: 0 };
+            windows_sys::Win32::Graphics::Gdi::ClientToScreen(top as HWND, &mut p);
+            let mut v: RECT = std::mem::zeroed();
+            GetWindowRect(video as HWND, &mut v);
+            (
+                [p.x, p.y, r.right, r.bottom],
+                [v.left, v.top, v.right - v.left, v.bottom - v.top],
+                IsWindowVisible(video as HWND) != 0,
+            )
+        }
+    }
+
     pub fn bring_to_top(hwnd: isize) {
         unsafe {
             SetWindowPos(hwnd as HWND, HWND_TOP, 0, 0, 0, 0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);

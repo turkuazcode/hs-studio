@@ -3,3 +3,4 @@ src-tauri/gen/
 media/
 lib/
 *.dll
+results/captures/*.bmp

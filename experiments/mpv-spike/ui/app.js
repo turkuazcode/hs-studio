@@ -1,7 +1,7 @@
 // VHO mpv spike UI: plain HTML controls over the mpv child window + an automated self-test.
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
-const { getCurrentWindow, LogicalSize } = window.__TAURI__.window;
+const { getCurrentWindow, LogicalSize, PhysicalPosition } = window.__TAURI__.window;
 const win = getCurrentWindow();
 const $ = (id) => document.getElementById(id);
 
@@ -159,6 +159,16 @@ async function selftest(file) {
     await win.setSize(new LogicalSize(800, 500)); await sleep(1200);
     S('resize', { osd: [await get('osd-width'), await get('osd-height')], inner: await win.innerSize(), cap: await cap('resized') });
     await win.setSize(new LogicalSize(1100, 680)); await sleep(800);
+
+    // move + minimize/restore (owned mode must keep the video popup glued / hidden)
+    const pos = await win.outerPosition();
+    await win.setPosition(new PhysicalPosition(pos.x + 60, pos.y + 40)); await sleep(700);
+    S('move', await invoke('spike_geom'));
+    await win.setPosition(pos); await sleep(300);
+    await win.minimize(); await sleep(900);
+    const gMin = await invoke('spike_geom');
+    await win.unminimize(); await win.setFocus().catch(() => {}); await sleep(1200);
+    S('minimize_restore', { minimized: gMin, restored: await invoke('spike_geom') });
 
     // fullscreen
     await win.setFullscreen(true); await sleep(2000);
