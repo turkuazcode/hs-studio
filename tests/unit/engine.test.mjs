@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  ENGINE_METHODS, EQ_BANDS, EQ_PRESETS, addBookmark, aspectProps, audioFilterChain, chapterAt,
+  ENGINE_METHODS, EQ_BANDS, isAudioOnlyMedia, EQ_PRESETS, addBookmark, aspectProps, audioFilterChain, chapterAt,
   createEngineFacade, cssViewTransform, engineKindFor, flipFilter, languageName, nextZoom, normalizeChapters,
   normalizeTracks, pictureProps, removeBookmark, subMarginFor, trackLabel,
 } from "../../src/media/engine/engine.js";
@@ -180,4 +180,13 @@ test("profile=fast follows the GPU in auto mode", () => {
   assert.equal(wantFastProfile("auto", undefined), false);
   assert.equal(wantFastProfile("on", { integrated: false }), true);
   assert.equal(wantFastProfile("off", { integrated: true }), false);
+});
+
+test("audio-only layout: by name or no real video track", () => {
+  assert.equal(isAudioOnlyMedia("song.mp3", null), true);
+  assert.equal(isAudioOnlyMedia("clip.mkv", null), false);
+  const t = (video) => ({ audio: [{ id: 1 }], sub: [], video });
+  assert.equal(isAudioOnlyMedia("x.mka", t([])), true);
+  assert.equal(isAudioOnlyMedia("x.m4a", t([{ codec: "mjpeg" }])), true); // cover art
+  assert.equal(isAudioOnlyMedia("x.mkv", t([{ codec: "h264" }])), false);
 });

@@ -105,7 +105,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   app.playlist = createPlaylist(app);
   app.panels = createPanels(app);
   app.playbackMenus = createPlaybackMenus(app);
-  app.menus = app.playbackMenus;
   app.view = app.playbackMenus;
   app.sleep = createSleepTimer(app);
   createModals(app);

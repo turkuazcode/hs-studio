@@ -20,6 +20,8 @@
 //         chapter, buffer, seeked, video, volume, speed
 // ==========================================================================
 
+import { isAudioOnlyName } from "../classify.js";
+
 export const ENGINE_EVENTS = Object.freeze([
   "loaded", "time", "duration", "playstate", "ended", "error", "tracks", "chapters",
   "chapter", "buffer", "seeked", "video", "volume", "speed",
@@ -183,6 +185,11 @@ export function addBookmark(list, time, label = "") {
 }
 
 export const removeBookmark = (list, index) => list.filter((_, i) => i !== index);
+
+/** Audio-only layout: by name, or libmpv found no real video track (cover art does not count). */
+export const isAudioOnlyMedia = (name, tracks) =>
+  isAudioOnlyName(name ?? "") ||
+  (!!tracks && tracks.audio.length > 0 && !tracks.video.some((t) => !["mjpeg", "png"].includes(t.codec)));
 
 /** Engine choice for an item: libmpv for real paths and URLs, <video> for browser File objects. */
 export function engineKindFor(item, mpvAvailable) {

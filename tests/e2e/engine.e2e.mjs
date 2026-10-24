@@ -26,6 +26,16 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
     // the UI's mirror (engine://property, rate limited) must have caught up too
     await app.waitFor(`Math.abs(${E}.time - ${time}) < 0.1`, { timeoutMs: 3000, message: `UI time ${time}` });
   };
+  /** Clicks through the HUD "⋯" menu: more("chapters", "chapter:2"). */
+  const more = async (...ids) => {
+    await app.click("#btn-hud-more");
+    for (const id of ids) {
+      await app.waitFor(`!document.getElementById("hud-more-menu").hidden &&
+        !!document.querySelector('#hud-more-menu [data-menu-id="${id}"]')`, { timeoutMs: 3000, message: `menu item ${id}` });
+      await app.click(`#hud-more-menu [data-menu-id="${id}"]`);
+    }
+  };
+  const menuLabels = () => app.eval(`[...document.querySelectorAll("#hud-more-menu [data-menu-id]")].map((b) => b.dataset.menuId)`);
   const pause = async () => {
     await app.eval(`__TAURI__.core.invoke("engine_set", { name: "pause", value: true }).then(() => true)`);
     await waitProp("pause", "(v) => v === true");
@@ -43,6 +53,23 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
       assert.equal(await app.eval(`getComputedStyle(document.body).backgroundColor`), "rgba(0, 0, 0, 0)");
       assert.equal((await status()).visible, true);
       assert.match(await app.text("#engine-info"), /^libmpv/);
+    });
+
+    await t.test("minimal HUD: only frequent controls visible, the rest in the ⋯ menu", async () => {
+      const visible = await app.eval(`[...document.querySelectorAll(".controls-group.right button")]
+        .filter((b) => b.offsetParent !== null).map((b) => b.id)`);
+      assert.deepEqual(visible, ["btn-toggle-subtitles", "btn-sub-menu", "btn-hud-more", "btn-fullscreen"]);
+      assert.equal(await app.eval(`document.getElementById("btn-toggle-effects").offsetParent`), null);
+      assert.equal(await app.eval(`document.getElementById("btn-toggle-audio-panel").offsetParent`), null);
+      await app.waitFor(`window.__vhoEngine.tracks.audio.length === 2 && window.__vhoEngine.chapters.length === 3`, { timeoutMs: 8000 });
+      await app.click("#btn-hud-more");
+      await app.waitFor(`!document.getElementById("hud-more-menu").hidden`, { timeoutMs: 3000 });
+      const ids = await menuLabels();
+      for (const id of ["audio-tracks", "chapters", "bookmarks", "speed", "ab-loop", "aspect", "view", "snapshot",
+        "video-settings", "audio-settings", "settings"]) assert.ok(ids.includes(id), `${id} in ${ids}`);
+      assert.equal(ids.includes("pip"), false); // PiP: HTML5 engine only
+      await app.eval(`document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })), true`);
+      await app.waitFor(`document.getElementById("hud-more-menu").hidden`, { timeoutMs: 3000 });
     });
 
     await t.test("plays: time advances, duration, title, play/pause button", async () => {
@@ -69,16 +96,12 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
       await waitProp("time-pos", "(v) => Math.abs(v - 5) < 0.15");
     });
 
-    await t.test("audio track menu switches aid and language", async () => {
-      await app.waitFor(`!document.getElementById("audio-track-container").hidden &&
-        document.querySelectorAll("#audio-track-menu [data-aid]").length === 2`, { timeoutMs: 5000 });
+    await t.test("audio track menu (⋯) switches aid and language", async () => {
       assert.equal((await get("current-tracks/audio")).lang, "tur"); // alang=tur,eng
-      assert.equal(await app.text("#audio-track-label"), "Ses: TUR");
-      await app.click("#btn-audio-tracks");
-      await app.click(`#audio-track-menu [data-aid="2"]`);
+      await more("audio-tracks", "audio:2");
       await waitProp("aid", "(v) => v === 2");
       assert.equal((await get("current-tracks/audio")).lang, "eng");
-      await app.waitFor(`document.getElementById("audio-track-label").textContent === "Ses: ENG"`, { timeoutMs: 3000 });
+      assert.match(await app.toast(), /^Ses kanalı: English 880Hz/);
     });
 
     await t.test("subtitle tracks: embedded ASS / SRT in the CC menu", async () => {
@@ -114,20 +137,17 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
       await waitProp("sub-delay", "(v) => Math.abs(v) < 1e-6");
     });
 
-    await t.test("chapters: markers, menu, jump", async () => {
-      await app.waitFor(`!document.getElementById("chapters-container").hidden &&
-        document.querySelectorAll("#chapters-menu [data-chapter]").length === 3`, { timeoutMs: 5000 });
+    await t.test("chapters: markers, ⋯ menu, jump", async () => {
       assert.equal(await app.eval(`document.querySelectorAll("#timeline-track .chapter-marker").length`), 2);
       assert.deepEqual((await app.eval(`${E}.chapters`)).map((c) => c.title), ["Bölüm 1", "Bölüm 2", "Bölüm 3"]);
-      await app.click("#btn-chapters");
-      await app.click(`#chapters-menu [data-chapter="2"]`);
+      await more("chapters", "chapter:2");
       await waitProp("chapter", "(v) => v === 2");
       await waitProp("time-pos", "(v) => v >= 3.95 && v < 4.5");
-      await app.waitFor(`document.getElementById("chapter-label").textContent === "Bölüm 3/3"`, { timeoutMs: 3000 });
+      assert.equal(await app.toast(), "Bölüm 3 (00:04)");
     });
 
     await t.test("audio delay +/-50 ms (audio panel)", async () => {
-      await app.click("#btn-toggle-audio-panel");
+      await more("audio-settings");
       assert.equal(await app.eval(`document.getElementById("audio-panel").classList.contains("show")`), true);
       await app.click("#btn-audio-plus");
       await waitProp("audio-delay", "(v) => Math.abs(v - 0.05) < 1e-6");
@@ -199,8 +219,7 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
       await app.waitFor(`${E}.bookmarks.length === 1 && document.querySelectorAll("#timeline-track .bookmark-marker").length === 1`, { timeoutMs: 3000 });
       assert.equal((await app.eval(`${E}.bookmarks`))[0].time, 1.5);
       await seek(4);
-      await app.click("#btn-bookmarks");
-      await app.click("#bookmark-list .bookmark-item");
+      await more("bookmarks", "bookmark:0");
       await waitProp("time-pos", "(v) => Math.abs(v - 1.5) < 0.1");
     });
 
@@ -217,14 +236,13 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
     });
 
     await t.test("rotate / flip / zoom map to video-rotate, vf, video-zoom", async () => {
-      await app.click("#btn-view-menu");
-      await app.click(`#view-menu [data-view="rotate"]`);
+      await more("view", "view:rotate");
       await waitProp("video-rotate", "(v) => v === 90");
-      await app.click(`#view-menu [data-view="hflip"]`);
+      await more("view", "view:hflip");
       await waitProp("vf", `(v) => JSON.stringify(v).includes("hflip")`);
       await app.eval(`document.getElementById("viewport").dispatchEvent(new WheelEvent("wheel", { deltaY: -100, ctrlKey: true, bubbles: true, cancelable: true })), true`);
       await waitProp("video-zoom", "(v) => Math.abs(v - 0.1) < 1e-6");
-      await app.click(`#view-menu [data-view="reset"]`);
+      await more("view", "view:reset");
       await waitProp("video-rotate", "(v) => v === 0");
       await waitProp("vf", `(v) => Array.isArray(v) && v.length === 0`);
     });
@@ -247,6 +265,17 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
       const vp = await waitProp("video-params", "(v) => v && v.w === 640", 10000);
       assert.equal(vp.v.h, 360);
       assert.equal((await get("current-tracks/video")).codec, "hevc");
+    });
+
+    await t.test("audio-only file: no picture controls in the ⋯ menu", async () => {
+      await app.eval(`${E}.openPaths([${JSON.stringify(fixture("engine-tone.m4a"))}]).then(() => true)`);
+      await app.waitFor(`${E}.kind === "mpv" && document.documentElement.classList.contains("media-audio-only") && ${E}.time > 0.2`, { timeoutMs: 10000 });
+      await app.click("#btn-hud-more");
+      await app.waitFor(`!document.getElementById("hud-more-menu").hidden`, { timeoutMs: 3000 });
+      const ids = await menuLabels();
+      for (const id of ["aspect", "view", "snapshot", "video-settings"]) assert.equal(ids.includes(id), false, id);
+      assert.ok(ids.includes("audio-settings"));
+      await app.eval(`document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })), true`);
     });
 
     await t.test("playlist auto-advance at the end (eof)", async () => {

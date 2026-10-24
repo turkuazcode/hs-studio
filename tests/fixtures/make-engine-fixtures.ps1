@@ -8,6 +8,7 @@
   engine-multitrack.mkv  320x240 H.264, 6 s, 2 audio (tur 440 Hz / eng 880 Hz),
                          2 subtitles (tur ASS / eng SRT), 3 chapters (0, 2, 4 s)
   engine-hevc.mp4        640x360 HEVC, 2 s, AAC
+  engine-tone.m4a        3 s AAC tone (audio-only layout)
 #>
 param([string]$Prefix = $(if ($env:VHO_MPV_PREFIX) { $env:VHO_MPV_PREFIX } else { "$PSScriptRoot\..\..\third_party\mpv\_build\prefix" }))
 $ErrorActionPreference = 'Continue'  # ffmpeg logs to stderr; exit codes are checked
@@ -55,5 +56,7 @@ try {
   & $ff -hide_banner -loglevel error -y -f lavfi -i 'testsrc2=size=640x360:rate=15' -f lavfi -i 'sine=frequency=330:sample_rate=48000' -t 2 `
     -c:v hevc_mf -hw_encoding 1 -b:v 200k -pix_fmt nv12 -tag:v hvc1 -c:a aac -b:a 32k -ac 1 engine-hevc.mp4
   if ($LASTEXITCODE) { Write-Warning 'hevc_mf failed (no Media Foundation HEVC encoder?)' }
+  & $ff -hide_banner -loglevel error -y -f lavfi -i 'sine=frequency=523:sample_rate=48000' -t 3 -c:a aac -b:a 32k -ac 1 engine-tone.m4a
+  if ($LASTEXITCODE) { throw 'tone failed' }
   Get-ChildItem engine-* | Select-Object Name, Length
 } finally { Pop-Location; Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue }
