@@ -712,18 +712,20 @@
                 <nav id="ps-breadcrumb" class="ps-breadcrumb" aria-label="Klasör yolu"></nav>
                 <button id="ps-fav-toggle" class="ps-btn ps-star" title="Favorilere ekle">☆</button>
                 <span class="ps-spacer"></span>
-                <input id="ps-search" class="ps-input" type="search" placeholder="Ada göre ara… (Ctrl+F)" spellcheck="false" />
-              </div>
-              <div class="ps-toolbar ps-toolbar-2">
-                <label class="ps-field">Sırala
-                  <select id="ps-sort" class="ps-select">
-                    <option value="name">Ad</option>
-                    <option value="date">Değiştirilme tarihi</option>
-                    <option value="size">Boyut</option>
-                    <option value="exifDate">Çekim tarihi (EXIF)</option>
-                  </select>
-                </label>
+                <input id="ps-search" class="ps-input" type="search" placeholder="Ara… (Ctrl+F)" spellcheck="false" />
+                <select id="ps-sort" class="ps-select" title="Sırala" aria-label="Sırala">
+                  <option value="name">Ad</option>
+                  <option value="date">Değiştirilme tarihi</option>
+                  <option value="size">Boyut</option>
+                  <option value="exifDate">Çekim tarihi</option>
+                </select>
                 <button id="ps-sort-dir" class="ps-btn" title="Artan / azalan">↑</button>
+                <button id="ps-filter-toggle" class="ps-btn" title="Filtreler">Filtre</button>
+                <button id="ps-more" class="ps-btn" title="Diğer işlemler" aria-haspopup="menu">⋯</button>
+                <button id="ps-close" class="ps-btn" title="Stüdyoyu kapat (Esc)">✕</button>
+              </div>
+              <!-- Rarely used: filters (closed by default) -->
+              <div id="ps-filters" class="ps-toolbar ps-toolbar-2" hidden>
                 <label class="ps-field">Tür
                   <select id="ps-filter-type" class="ps-select">
                     <option value="all">Tümü</option>
@@ -745,13 +747,14 @@
               </div>
               <div class="ps-actionbar">
                 <span id="ps-status" class="ps-status" role="status"></span>
-                <span class="ps-spacer"></span>
-                <button id="ps-act-open" class="ps-btn" title="Görüntüleyicide aç (Enter)">Aç</button>
-                <button id="ps-act-edit" class="ps-btn" title="Düzenle (E)">Düzenle</button>
-                <button id="ps-act-compare" class="ps-btn" title="2-4 fotoğrafı yan yana karşılaştır">Karşılaştır</button>
-                <button id="ps-act-batch" class="ps-btn" title="Seçili fotoğraflara toplu işlem">Toplu İşlem</button>
-                <button id="ps-act-info" class="ps-btn" title="Bilgi paneli (I)">Bilgi</button>
-                <button id="ps-close" class="ps-btn" title="Stüdyoyu kapat (Esc)">✕</button>
+                <!-- Commands for the "⋯" / right-click menus (not shown as buttons) -->
+                <span class="ps-commands" hidden>
+                  <button id="ps-act-open">Aç</button>
+                  <button id="ps-act-edit">Düzenle</button>
+                  <button id="ps-act-compare">Karşılaştır</button>
+                  <button id="ps-act-batch">Toplu İşlem</button>
+                  <button id="ps-act-info">Bilgi</button>
+                </span>
               </div>
               <div class="ps-content">
                 <div class="ps-grid-wrap">
