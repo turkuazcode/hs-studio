@@ -148,7 +148,9 @@ const waitExit = (proc, ms) => new Promise((res) => {
 export const HTML5_ENGINE = Object.freeze({ VHO_DISABLE_MPV: "1" });
 
 /** True when the libmpv DLL set is staged next to the test executable (npm run stage:mpv). */
-export const mpvStaged = (exe = defaultExe()) => existsSync(join(dirname(exe), "libmpv-2.dll"));
+/** Same lookup locations as the backend (engine/mod.rs): next to the exe, exe\mpv\, resources\mpv\. */
+export const mpvStaged = (exe = defaultExe()) =>
+  ["", "mpv", join("resources", "mpv")].some((sub) => existsSync(join(dirname(exe), sub, "libmpv-2.dll")));
 
 /** A temporary data folder for VHO_DATA_DIR that outlives one launch (restart tests). */
 export const makeDataDir = () => mkdtemp(join(tmpdir(), "vho-e2e-data-"));
