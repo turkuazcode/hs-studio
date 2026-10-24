@@ -205,8 +205,16 @@ export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone })
     }
   }
 
-  function cancel() {
-    if (running) invoke("photo_cancel", { id: running }).catch(() => {});
+  /** Cancels the running job; retries while the backend has not registered it yet. */
+  async function cancel() {
+    const id = running;
+    if (!id) return;
+    statusEl.textContent = "İptal ediliyor…";
+    while (running === id) {
+      const ok = await invoke("photo_cancel", { id }).catch(() => false);
+      if (ok) return;
+      await new Promise((r) => setTimeout(r, 50));
+    }
   }
 
   form.addEventListener("input", updatePreview);
