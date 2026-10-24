@@ -60,3 +60,18 @@ dynaudnorm), AI ses anahtarları lavfi filtresi olarak, %200 ses (`volume-max=20
 doygunluk/gama/ton, en-boy (`video-aspect-override`, `keepaspect`), A-B döngü (`ab-loop-a/b`),
 `hwdec=auto-safe` (Ayarlar > Gelişmiş), `profile=fast` (dahili GPU'da varsayılan açık),
 `deinterlace=auto`, `tone-mapping=auto` (HDR → SDR), HLS URL'leri. PiP yalnızca HTML5 motorunda.
+
+## Arayüz (minimal HUD)
+Video HUD'unda yalnızca: oynat/duraklat, ±10 sn, ses, süre, CC (+ `▾` kompakt kanal menüsü), `⋯`,
+tam ekran. Ses kanalı, bölümler, yer imleri (Y), hız, en-boy, görüntü (döndür/yansıt/yakınlaştır),
+A-B, ekran görüntüsü, PiP (yalnızca HTML5), görüntü/ses panelleri `⋯` menüsünde
+(`ui/playback-menus.js`). İnce ayarlar Ayarlar penceresinde (`media/engine-settings.js`):
+Altyazı > konum, Ses > ekolayzır hazır ayarı / normalizasyon, Gelişmiş > donanım çözme,
+`profile=fast`. Yalnızca ses dosyalarında görüntü öğeleri gösterilmez.
+
+## Ölçüm (gerçek uygulama, 1080p30 H.264 8 Mb/s, Ryzen 5 7535U + Radeon 660M, 20 sn)
+| Motor | vho.exe CPU (makine %) | WebView2 CPU (makine %) | GPU 3D % | GPU Video % | Düşen kare |
+|---|---|---|---|---|---|
+| libmpv (d3d11va, dahili GPU → `profile=fast`) | 0,68 (tek çekirdeğin %8,2'si) | 0,75 | 5,2 | 10,9 | 0 / 0 |
+| HTML5 `<video>` (`VHO_DISABLE_MPV=1`) | 0,07 | 1,52 | 6,6 | 10,8 | 1 / 799 |
+Değerler gösterge niteliğindedir (başka ajanlar aynı anda derleme yapıyordu; GPU sayaçları ~5 sn aralıkla).
