@@ -31,3 +31,4 @@ src-tauri/target/
 
 # Fixture generator build output
 tests/fixtures/gen/target/
+/mpv/
