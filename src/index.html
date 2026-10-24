@@ -62,7 +62,7 @@
           </button>
 
           <!-- Video Effects / Filter Settings -->
-          <button id="btn-toggle-effects" class="titlebar-action-btn" title="Görüntü Ayarları">
+          <button id="btn-toggle-effects" class="titlebar-action-btn" hidden title="Görüntü Ayarları">
             <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
               <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z"/>
             </svg>
@@ -70,7 +70,7 @@
           </button>
 
           <!-- Audio panel: equalizer, normalisation, audio delay (libmpv) -->
-          <button id="btn-toggle-audio-panel" class="titlebar-action-btn" title="Ses Ayarları (Ekolayzır)">
+          <button id="btn-toggle-audio-panel" class="titlebar-action-btn" hidden title="Ses Ayarları (Ekolayzır)">
             <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
               <path d="M3 12h2v5H3v-5zm4-6h2v11H7V6zm4 3h2v8h-2V9zm4-6h2v14h-2V3z"/>
             </svg>
@@ -294,7 +294,7 @@
               </div>
             </div>
 
-            <!-- Right Group: Subtitles (CC), A-B Loop, Snapshot, Aspect Ratio, PiP, Fullscreen -->
+            <!-- Right Group (minimal UI): CC (+ compact track menu), "⋯" (everything else), Fullscreen -->
             <div class="controls-group right">
               
               <!-- Subtitles (CC) Toggle & Menu -->
@@ -305,6 +305,7 @@
                   </svg>
                   <span id="sub-status-label">CC</span>
                 </button>
+                <button id="btn-sub-menu" class="hud-badge-btn hud-caret" title="Altyazı kanalları ve seçenekleri" aria-haspopup="menu">▾</button>
                 <div id="subtitles-menu" class="dropdown-menu">
                   <div id="sub-menu-toggle" class="dropdown-item active">
                     <span id="sub-menu-toggle-text">● Altyazı: Açık</span>
@@ -322,48 +323,13 @@
                 </div>
               </div>
 
-              <!-- Audio track menu (libmpv, 2+ tracks) -->
-              <div class="dropdown-container" id="audio-track-container" hidden>
-                <button id="btn-audio-tracks" class="hud-badge-btn" title="Ses Kanalı">
-                  <span id="audio-track-label">Ses</span>
-                </button>
-                <div id="audio-track-menu" class="dropdown-menu"></div>
-              </div>
+              <!-- "⋯" menu: tracks, chapters, bookmarks, speed, aspect, picture, A-B, snapshot, PiP,
+                   picture/audio settings (ui/playback-menus.js) -->
+              <button id="btn-hud-more" class="hud-btn hud-more" title="Diğer seçenekler" aria-haspopup="menu" aria-expanded="false">⋯</button>
 
-              <!-- Chapters (libmpv) -->
-              <div class="dropdown-container" id="chapters-container" hidden>
-                <button id="btn-chapters" class="hud-badge-btn" title="Bölümler">
-                  <span id="chapter-label">Bölümler</span>
-                </button>
-                <div id="chapters-menu" class="dropdown-menu"></div>
-              </div>
-
-              <!-- Bookmarks (per file) -->
-              <div class="dropdown-container">
-                <button id="btn-bookmarks" class="hud-badge-btn" title="Yer İmleri (K: ekle)">
-                  <span>Yer İmi</span>
-                </button>
-                <div id="bookmarks-menu" class="dropdown-menu">
-                  <div id="bookmark-add" class="dropdown-item">+ Yer imi ekle (K)</div>
-                  <div id="bookmark-list"></div>
-                </div>
-              </div>
-
-              <!-- Picture menu: rotate / flip / zoom -->
-              <div class="dropdown-container">
-                <button id="btn-view-menu" class="hud-badge-btn" title="Görüntü: döndür, yansıt, yakınlaştır (Ctrl+tekerlek)">
-                  <span>Görüntü</span>
-                </button>
-                <div id="view-menu" class="dropdown-menu">
-                  <div class="dropdown-item" data-view="rotate">↻ 90° Döndür</div>
-                  <div class="dropdown-item" data-view="hflip">⇋ Yatay Yansıt</div>
-                  <div class="dropdown-item" data-view="vflip">⇵ Dikey Yansıt</div>
-                  <div class="dropdown-item" data-view="zoom-in">+ Yakınlaştır (Ctrl+tekerlek)</div>
-                  <div class="dropdown-item" data-view="zoom-out">− Uzaklaştır</div>
-                  <div class="dropdown-item" data-view="reset">⟲ Görüntüyü Sıfırla</div>
-                </div>
-              </div>
-
+              <!-- Rarely used controls: reached through "⋯" (and shortcuts); kept as hidden
+                   elements because their logic (and settings bindings) lives on them -->
+              <div id="hud-overflow" class="hud-overflow" hidden>
               <!-- A-B Repeat Button -->
               <button id="btn-ab-loop" class="hud-badge-btn" title="A-B Tekrar Döngüsü: A noktasını seç">
                 <span id="ab-loop-label">A-B Döngü</span>
@@ -411,6 +377,8 @@
                   <path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 .02H3V4.97h18v14.05z"/>
                 </svg>
               </button>
+
+              </div>
 
               <!-- Fullscreen Toggle -->
               <button id="btn-fullscreen" class="hud-btn" title="Tam Ekran (F)" aria-label="Fullscreen">
