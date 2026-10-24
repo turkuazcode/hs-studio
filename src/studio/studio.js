@@ -13,6 +13,7 @@ import { createEditor } from "./editor.js";
 import { createFilmstrip } from "./filmstrip.js";
 import { createGrid } from "./grid.js";
 import { createInfoPanel } from "./info-panel.js";
+import { createMenu } from "./menu.js";
 import {
   baseName, createSettings, nextFrame, dateInputToMs, emptySelection, filterItems, memoryStorage, parentDir, pathSegments,
   reconcileSelection, selectAll, selectClick, selectMove, selectedInOrder, sortItems, toggleFavorite,
@@ -355,13 +356,24 @@ export function createPhotoStudio(app) {
   const backBtn = mkHudBtn("ps-back-to-studio", "Stüdyoya dön (Esc)", '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M3 4h6v6H3zM11 4h6v6h-6zM3 12h6v4H3zM11 12h6v4h-6z"/></svg>');
   const editBtn = mkHudBtn("ps-viewer-edit", "Düzenle", '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M13.6 2.6a2 2 0 012.8 2.8l-9 9L4 15l.6-3.4 9-9zM3 17h14v1.5H3z"/></svg>');
   const infoBtn = mkHudBtn("ps-viewer-info", "Ayrıntılar: EXIF, histogram, harita", '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M3 3h14v14H3V3zm2 10v2h2v-2H5zm4-4v6h2V9H9zm4-3v9h2V6h-2z"/></svg>');
+  // Slim viewer toolbar: back + edit visible, the rest behind "⋯" (UI principles)
+  const viewerMoreBtn = mkHudBtn("ps-viewer-more", "Diğer", "⋯");
+  viewerMoreBtn.classList.add("ps-hud-more");
   hudLeft?.prepend(backBtn);
-  hudRight?.append(editBtn, infoBtn);
+  hudRight?.append(editBtn, viewerMoreBtn);
+  const viewerMenu = createMenu([
+    { id: "info", label: "Ayrıntılar (EXIF, histogram, harita)", run: () => infoBtn.click() },
+    { id: "studio", label: "Klasörde göster (Fotoğraf Stüdyosu)", run: () => backToStudio() },
+    { id: "rotateLeft", label: "Sola döndür", run: () => dom.btnPhotoRotateLeft?.click() },
+    { id: "settings", label: "Fotoğraf ayarları…", run: () => app.settingsModal?.open("photo"), enabled: () => !!app.settingsModal },
+  ]);
+  viewerMoreBtn.addEventListener("click", () => (viewerMenu.isOpen ? viewerMenu.close() : viewerMenu.openFor(viewerMoreBtn)));
   function viewerButtons(on) {
     backBtn.hidden = !on;
-    infoBtn.hidden = !on;
     const cur = state.get("playlist")[state.get("currentPlaylistIndex")];
-    editBtn.hidden = !(cur?.path && cur.isImage);
+    const local = !!(cur?.path && cur.isImage);
+    editBtn.hidden = !local;
+    viewerMoreBtn.hidden = !local;
   }
   viewerButtons(false);
   backBtn.addEventListener("click", () => backToStudio());
@@ -600,6 +612,45 @@ export function createPhotoStudio(app) {
   $("ps-act-info").addEventListener("click", () => setInfoVisible(infoEl.hidden || infoEl.parentElement !== contentEl));
   $("ps-close").addEventListener("click", () => hide());
 
+  // Filters: closed by default; the button shows when a filter is active
+  const filtersEl = $("ps-filters");
+  const filterBtn = $("ps-filter-toggle");
+  filterBtn.addEventListener("click", () => {
+    filtersEl.hidden = !filtersEl.hidden;
+    filterBtn.classList.toggle("active", !filtersEl.hidden);
+  });
+  const markFilter = () => filterBtn.classList.toggle("has-filter", filter.type !== "all" || filter.from != null || filter.to != null || recursive);
+  for (const id of ["ps-filter-type", "ps-date-from", "ps-date-to", "ps-recursive"]) $(id).addEventListener("change", markFilter);
+
+  // "⋯" menu and right-click on the grid: everything that is not used all the time
+  const cmd = (id) => () => $(id).click();
+  const can = (id) => () => !$(id).disabled;
+  const studioMenu = createMenu([
+    { id: "open", label: "Aç", run: cmd("ps-act-open"), enabled: can("ps-act-open") },
+    { id: "edit", label: "Düzenle", run: cmd("ps-act-edit"), enabled: can("ps-act-edit") },
+    { id: "compare", label: "Karşılaştır (2-4 fotoğraf)", run: cmd("ps-act-compare"), enabled: can("ps-act-compare") },
+    { id: "batch", label: "Toplu işlem…", run: cmd("ps-act-batch"), enabled: can("ps-act-batch") },
+    { id: "s1", separator: true },
+    { id: "info", label: "Bilgi paneli (EXIF, histogram, harita)", run: cmd("ps-act-info") },
+    { id: "selectAll", label: "Tümünü seç", run: () => { sel = selectAll(paths, sel); syncSelection(); }, enabled: () => paths.length > 0 },
+    { id: "pick", label: "Klasör seç…", run: () => pickFolder(), enabled: () => !!dialogOpen },
+    { id: "settings", label: "Fotoğraf ayarları…", run: () => app.settingsModal?.open("photo"), enabled: () => !!app.settingsModal },
+  ]);
+  $("ps-more").addEventListener("click", (e) => (studioMenu.isOpen ? studioMenu.close() : studioMenu.openFor(e.currentTarget)));
+  gridEl.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    e.stopPropagation(); // not the app-wide context menu
+    const c = e.target.closest(".ps-cell");
+    if (c) {
+      const i = Number(c.dataset.index);
+      if (!sel.selected.has(paths[i])) {
+        sel = selectClick(sel, i, {}, paths);
+        syncSelection();
+      }
+    }
+    studioMenu.openAt(e.clientX, e.clientY);
+  });
+
   // ------------------------------------------------------------ keyboard
   function gridKey(e) {
     const cols = grid.columns;
@@ -636,6 +687,7 @@ export function createPhotoStudio(app) {
   }
 
   window.addEventListener("keydown", (e) => {
+    if (studioMenu.isOpen || viewerMenu.isOpen) return; // the menu handles its own keys
     const overlay = [editor, compare, batch].find((x) => x.isOpen);
     if (overlay) {
       if (overlay.handleKey(e)) e.preventDefault();
