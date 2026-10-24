@@ -40,6 +40,9 @@ crc32fast = "1"
 # libmpv playback engine (src/engine): libmpv-2.dll is loaded at RUNTIME (dynamic linking keeps
 # the LGPL build replaceable and lets the app fall back to the HTML5 engine). libloading is ISC.
 libloading = "0.8"
+# Platform: persistent settings + window size/position (MIT OR Apache-2.0)
+tauri-plugin-store = "2"
+tauri-plugin-window-state = "2"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [
@@ -61,6 +64,10 @@ windows = { version = "0.62", features = [
   "Win32_System_Variant",
 ] }
 
+
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+# Second launch with a file opens it in the running window (MIT OR Apache-2.0)
+tauri-plugin-single-instance = "2"
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]
