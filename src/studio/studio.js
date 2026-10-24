@@ -687,7 +687,16 @@ export function createPhotoStudio(app) {
   }
 
   window.addEventListener("keydown", (e) => {
-    if (studioMenu.isOpen || viewerMenu.isOpen) return; // the menu handles its own keys
+    if (studioMenu.isOpen || viewerMenu.isOpen) {
+      // The menu handles its own arrow keys; Esc closes it from anywhere
+      if (e.key === "Escape") {
+        studioMenu.close();
+        viewerMenu.close();
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      return;
+    }
     const overlay = [editor, compare, batch].find((x) => x.isOpen);
     if (overlay) {
       if (overlay.handleKey(e)) e.preventDefault();

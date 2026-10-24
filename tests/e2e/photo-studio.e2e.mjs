@@ -121,6 +121,32 @@ test("photo studio", { timeout: 300000 }, async (t) => {
       assert.equal(await app.eval(`document.getElementById("photo-studio").hidden`), false, "Esc first clears the selection");
     });
 
+    await t.test("minimal UI: filters, actions and info closed by default; ⋯ and right-click menus", async () => {
+      const hidden = (id) => app.eval(`document.getElementById(${J(id)}).hidden`);
+      assert.equal(await hidden("ps-filters"), true);
+      assert.equal(await hidden("ps-info"), true);
+      assert.equal(await app.eval(`getComputedStyle(document.getElementById("ps-act-batch")).display === "none" ||
+        getComputedStyle(document.querySelector(".ps-commands")).display === "none"`), true, "action buttons not in the toolbar");
+      await app.click("#ps-filter-toggle");
+      assert.equal(await hidden("ps-filters"), false);
+      await app.click("#ps-filter-toggle");
+      await mouse(1);
+      await mouse(2, { ctrlKey: true });
+      await app.click("#ps-more");
+      const items = await app.eval(`[...document.querySelectorAll(".ps-menu:not([hidden]) .ps-menu-item")].map((b) => [b.dataset.menu, b.disabled])`);
+      assert.deepEqual(Object.fromEntries(items).compare, false, "compare enabled for 2 photos");
+      assert.ok(items.some(([id]) => id === "batch"));
+      await key("Escape");
+      assert.equal(await app.eval(`!!document.querySelector(".ps-menu:not([hidden])")`), false);
+      // Right-click a cell: selects it and opens the same menu; the app-wide menu stays closed
+      await app.eval(`(() => { const c = document.querySelector(${J(cell(5))}); const r = c.getBoundingClientRect();
+        c.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: r.left + 10, clientY: r.top + 10 })); return true; })()`);
+      assert.equal(await grid("focus"), "5");
+      assert.equal(await app.eval(`!!document.querySelector('.ps-menu:not([hidden]) [data-menu="edit"]:not(:disabled)')`), true);
+      await app.eval(`document.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })), true`);
+      assert.equal(await app.eval(`!!document.querySelector(".ps-menu:not([hidden])")`), false);
+    });
+
     await t.test("info panel: EXIF rows, histogram, GPS map tab (Leaflet vendored)", async () => {
       await mouse(1); // IMG_1.jpg
       await app.click("#ps-act-info");

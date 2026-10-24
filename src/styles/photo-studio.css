@@ -1090,3 +1090,76 @@ body.ps-strip-on .floating-nav-btn {
   flex: 1;
   min-width: 180px;
 }
+
+/* Popup menus ("⋯", right-click) */
+.ps-menu[hidden] {
+  display: none !important;
+}
+
+.ps-menu {
+  position: fixed;
+  z-index: 200;
+  min-width: 200px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-specular);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(24px);
+}
+
+.ps-menu-item {
+  background: none;
+  border: none;
+  color: var(--text-pure);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.ps-menu-item:hover:not(:disabled),
+.ps-menu-item:focus-visible {
+  background: var(--bg-pill-hover);
+  outline: none;
+}
+
+.ps-menu-item:disabled {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.ps-menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border-subtle);
+}
+
+/* Filter button: dot while a filter is active */
+#ps-filter-toggle.has-filter::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: var(--accent-ruby-bright);
+  vertical-align: middle;
+}
+
+.ps-hud-more {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.ps-commands {
+  display: none;
+}
+
+#ps-search {
+  width: 180px;
+}
