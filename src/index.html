@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="platform.css" />
+    <link rel="stylesheet" href="styles/photo-studio.css" />
   </head>
   <body>
     <!-- Main Application Container -->
@@ -769,6 +770,107 @@
               <button id="btn-confirm-url" class="btn-primary">Oynat</button>
             </div>
           </div>
+        </div>
+
+        <!-- ===== Photo Studio (Plan 04 §2-§5): folder browser, info panel, editor, compare, batch.
+             Behaviour: src/studio/*.js, styles: styles/photo-studio.css ===== -->
+        <div id="photo-studio-layer" class="ps-layer">
+          <section id="photo-studio" class="ps-root" hidden aria-label="Fotoğraf Stüdyosu">
+            <aside class="ps-sidebar">
+              <div class="ps-side-head"><span>Favoriler</span></div>
+              <ul id="ps-favorites" class="ps-favs"></ul>
+              <div class="ps-side-head">
+                <span>Klasörler</span>
+                <button id="ps-pick-folder" class="ps-btn ps-btn-sm" title="Klasör seç">Klasör Seç…</button>
+              </div>
+              <ul id="ps-tree" class="ps-tree" role="tree"></ul>
+            </aside>
+            <div class="ps-main">
+              <div class="ps-toolbar">
+                <button id="ps-up" class="ps-btn" title="Üst klasör (Backspace)">↑</button>
+                <nav id="ps-breadcrumb" class="ps-breadcrumb" aria-label="Klasör yolu"></nav>
+                <button id="ps-fav-toggle" class="ps-btn ps-star" title="Favorilere ekle">☆</button>
+                <span class="ps-spacer"></span>
+                <input id="ps-search" class="ps-input" type="search" placeholder="Ara… (Ctrl+F)" spellcheck="false" />
+                <select id="ps-sort" class="ps-select" title="Sırala" aria-label="Sırala">
+                  <option value="name">Ad</option>
+                  <option value="date">Değiştirilme tarihi</option>
+                  <option value="size">Boyut</option>
+                  <option value="exifDate">Çekim tarihi</option>
+                </select>
+                <button id="ps-sort-dir" class="ps-btn" title="Artan / azalan">↑</button>
+                <button id="ps-filter-toggle" class="ps-btn" title="Filtreler">Filtre</button>
+                <button id="ps-more" class="ps-btn" title="Diğer işlemler" aria-haspopup="menu">⋯</button>
+                <button id="ps-close" class="ps-btn" title="Stüdyoyu kapat (Esc)">✕</button>
+              </div>
+              <!-- Rarely used: filters (closed by default) -->
+              <div id="ps-filters" class="ps-toolbar ps-toolbar-2" hidden>
+                <label class="ps-field">Tür
+                  <select id="ps-filter-type" class="ps-select">
+                    <option value="all">Tümü</option>
+                    <option value="photo">Fotoğraflar</option>
+                    <option value="image">JPEG / PNG / WebP…</option>
+                    <option value="raw">RAW</option>
+                    <option value="heif">HEIC / HEIF</option>
+                    <option value="video">Videolar</option>
+                  </select>
+                </label>
+                <label class="ps-field">Tarih
+                  <input id="ps-date-from" class="ps-input ps-date" type="date" title="Başlangıç" />
+                  <span>–</span>
+                  <input id="ps-date-to" class="ps-input ps-date" type="date" title="Bitiş" />
+                </label>
+                <label class="ps-field ps-check"><input id="ps-recursive" type="checkbox" /> Alt klasörler</label>
+                <span class="ps-spacer"></span>
+                <input id="ps-zoom" type="range" min="96" max="320" value="168" class="filter-slider ps-zoom" title="Küçük resim boyutu" />
+              </div>
+              <div class="ps-actionbar">
+                <span id="ps-status" class="ps-status" role="status"></span>
+                <!-- Commands for the "⋯" / right-click menus (not shown as buttons) -->
+                <span class="ps-commands" hidden>
+                  <button id="ps-act-open">Aç</button>
+                  <button id="ps-act-edit">Düzenle</button>
+                  <button id="ps-act-compare">Karşılaştır</button>
+                  <button id="ps-act-batch">Toplu İşlem</button>
+                  <button id="ps-act-info">Bilgi</button>
+                </span>
+              </div>
+              <div class="ps-content">
+                <div class="ps-grid-wrap">
+                  <div id="ps-grid" class="ps-grid" tabindex="0" role="listbox" aria-multiselectable="true" aria-label="Küçük resimler"></div>
+                  <div id="ps-empty" class="ps-empty" hidden>
+                    <p class="ps-empty-text"></p>
+                    <button class="btn-primary btn-sm ps-empty-pick">Klasör Seç…</button>
+                  </div>
+                </div>
+                <aside id="ps-info" class="ps-info" hidden>
+                  <div class="ps-info-head">
+                    <strong class="ps-info-title">Bilgi</strong>
+                    <button class="btn-icon-close ps-info-close" title="Kapat">✕</button>
+                  </div>
+                  <div class="ps-tabs">
+                    <button class="ps-tab active" data-tab-btn="info">Bilgi</button>
+                    <button class="ps-tab" data-tab-btn="map" disabled>Harita</button>
+                  </div>
+                  <div class="ps-tab-body" data-tab="info">
+                    <canvas class="ps-histogram" width="256" height="90" aria-label="Histogram"></canvas>
+                    <dl class="ps-info-rows"></dl>
+                    <details class="ps-info-all-wrap" hidden>
+                      <summary>Tüm meta veriler</summary>
+                      <table class="ps-info-all"></table>
+                    </details>
+                  </div>
+                  <div class="ps-tab-body" data-tab="map" hidden>
+                    <div class="ps-map" hidden></div>
+                    <p class="ps-map-note"></p>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </section>
+          <div id="ps-editor" class="ps-overlay ps-editor" hidden></div>
+          <div id="ps-compare" class="ps-overlay ps-compare" hidden></div>
+          <div id="ps-batch" class="ps-modal" hidden></div>
         </div>
 
         <!-- Hidden Native File Inputs -->

@@ -55,7 +55,8 @@
     },
     "headings": {
       "enhance": "Picture enhancement (AI Restoration)",
-      "audioRestore": "Audio enhancement (AI Restoration)"
+      "audioRestore": "Audio enhancement (AI Restoration)",
+      "photoStudio": "Photo Studio"
     },
     "fields": {
       "language": "Interface language",
@@ -88,7 +89,11 @@
       "compat": "Compatibility mode (restarts)",
       "dataDir": "Settings folder",
       "resetAll": "Reset all settings",
-      "licenses": "Open source licenses"
+      "licenses": "Open source licenses",
+      "studioSort": "Default sort order",
+      "studioDescending": "Descending order",
+      "studioRecursive": "Include sub-folders",
+      "studioThumbSize": "Thumbnail size"
     },
     "help": {
       "defaultApps": "Windows does not let apps make themselves the default; choose VHO in the window that opens.",
@@ -101,7 +106,11 @@
       "aspectFill": "Stretch to fill",
       "themeDark": "Dark",
       "themeLight": "Light",
-      "themeContrast": "High contrast"
+      "themeContrast": "High contrast",
+      "sortName": "Name",
+      "sortDate": "Date modified",
+      "sortSize": "Size",
+      "sortExifDate": "Date taken (EXIF)"
     },
     "buttons": {
       "defaultApps": "Set as default app",
@@ -169,7 +178,9 @@
       "zoomIn": "Zoom in",
       "zoomOut": "Zoom out",
       "zoomReset": "Reset size",
-      "aiPhoto": "AI restoration"
+      "aiPhoto": "AI restoration",
+      "photoStudio": "Photo Studio (browse folder)",
+      "photoEdit": "Edit photo"
     }
   }
 }

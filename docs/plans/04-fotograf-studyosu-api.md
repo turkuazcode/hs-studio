@@ -17,6 +17,12 @@
 | `photo_batch` | `job: BatchJob` | `BatchSummary` | `photo-batch-progress` |
 | `photo_cancel` | `id: string` (scanId / requestId / jobId) | `boolean` (false = not running) | – |
 | `photo_capabilities` | – | `Capabilities` | – |
+| `photo_list_dirs` | `dir?: string` | `DirEntry[]` (`{ name, path }`) | – |
+
+`photo_list_dirs` (added by B3 for the folder tree): with `dir`, the immediate sub-folders
+(natural order, hidden/system skipped, files not opened); without `dir`, the well-known
+folders (Resimler, Masaüstü, İndirilenler, Videolar, Ana klasör) followed by the file
+system roots (drive letters on Windows, `/` elsewhere).
 
 Every long-running command keeps its promise pending until it finishes or is cancelled.
 It also emits events tagged with your id, so **register listeners before invoking** and
@@ -152,6 +158,8 @@ const summary = await invoke('photo_batch', { job: {
     { op: 'flip', axis: 'horizontal' },                    // or 'vertical'
     { op: 'crop', x: 0, y: 0, width: 800, height: 600 },   // display pixels at this step
     { op: 'resize', longEdge: 2048 },                      // or {percent}, {width}, {height}, {width,height[,exact]}; {upscale:true} to enlarge
+    { op: 'adjust', brightness: 10, contrast: 0, saturation: 5, temperature: -20 }, // each -100..100 (B3)
+    { op: 'sharpen', amount: 40 },                         // 0..100, 3x3 Laplacian (B3)
   ],
   output: {
     format: 'same',          // same | jpeg | png | webp | avif | tiff | bmp  (same: HEIC/RAW → jpeg)

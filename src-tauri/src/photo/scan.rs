@@ -341,10 +341,71 @@ pub fn scan(
     Ok(summary(items.len(), folders, false))
 }
 
+/// One folder of the photo browser's folder tree.
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct DirEntry {
+    pub name: String,
+    pub path: String,
+}
+
+/// Immediate sub-folders of `dir` (natural order, hidden/system folders skipped).
+/// Only directory entries are read; files are not opened.
+pub fn list_dirs(dir: &Path) -> Result<Vec<DirEntry>, String> {
+    let entries = std::fs::read_dir(dir).map_err(|e| format!("Klasör okunamadı: {e}"))?;
+    let mut out: Vec<DirEntry> = entries
+        .flatten()
+        .filter(|e| e.file_type().is_ok_and(|t| t.is_dir()))
+        .filter_map(|e| {
+            let name = e.file_name().to_string_lossy().into_owned();
+            let meta = e.metadata().ok()?;
+            (!is_hidden(&name, &meta)).then(|| DirEntry { name, path: e.path().to_string_lossy().into_owned() })
+        })
+        .collect();
+    out.sort_by(|a, b| natural_cmp(&a.name, &b.name));
+    Ok(out)
+}
+
+/// Tree roots: the given well-known folders that exist, then the file system roots
+/// (drive letters on Windows, "/" elsewhere). Drive roots are only checked for existence.
+pub fn roots(known: Vec<(String, std::path::PathBuf)>) -> Vec<DirEntry> {
+    let mut out: Vec<DirEntry> = known
+        .into_iter()
+        .filter(|(_, p)| p.is_dir())
+        .map(|(name, p)| DirEntry { name, path: p.to_string_lossy().into_owned() })
+        .collect();
+    #[cfg(windows)]
+    for letter in b'A'..=b'Z' {
+        let root = format!("{}:\\", letter as char);
+        if Path::new(&root).exists() {
+            out.push(DirEntry { name: format!("{}:", letter as char), path: root });
+        }
+    }
+    #[cfg(not(windows))]
+    out.push(DirEntry { name: "/".into(), path: "/".into() });
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::photo::testutil::*;
+
+    #[test]
+    fn photo_list_dirs_and_roots() {
+        let dir = temp_dir("list_dirs");
+        for d in ["b10", "B2", "a", ".hidden"] {
+            std::fs::create_dir_all(dir.join(d)).unwrap();
+        }
+        std::fs::write(dir.join("file.jpg"), b"x").unwrap();
+        let names: Vec<_> = list_dirs(&dir).unwrap().into_iter().map(|d| d.name).collect();
+        assert_eq!(names, ["a", "B2", "b10"]);
+        assert!(list_dirs(&dir.join("missing")).is_err());
+        let r = roots(vec![("Test".into(), dir.clone()), ("Yok".into(), dir.join("missing"))]);
+        assert_eq!(r[0], DirEntry { name: "Test".into(), path: dir.to_string_lossy().into_owned() });
+        assert!(!r.iter().any(|d| d.name == "Yok"));
+        assert!(r.len() >= 2, "at least one file system root");
+    }
 
     fn run(dir: &Path, opts: ScanOptions) -> (ScanSummary, Vec<ScanItem>) {
         let mut all: Vec<ScanItem> = Vec::new();

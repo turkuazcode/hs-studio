@@ -308,6 +308,29 @@ pub async fn photo_batch(app: AppHandle, job: ops::BatchJob) -> Result<ops::Batc
     .await
 }
 
+/// Folder tree for the photo browser: sub-folders of `dir`, or (no `dir`) the
+/// well-known picture folders followed by the file system roots.
+#[tauri::command]
+pub async fn photo_list_dirs(app: AppHandle, dir: Option<String>) -> Result<Vec<scan::DirEntry>, String> {
+    match dir.filter(|d| !d.is_empty()) {
+        Some(d) => blocking(move || scan::list_dirs(Path::new(&d))).await,
+        None => {
+            let p = app.path();
+            let known: Vec<(String, PathBuf)> = [
+                ("Resimler", p.picture_dir()),
+                ("Masaüstü", p.desktop_dir()),
+                ("İndirilenler", p.download_dir()),
+                ("Videolar", p.video_dir()),
+                ("Ana klasör", p.home_dir()),
+            ]
+            .into_iter()
+            .filter_map(|(n, d)| Some((n.to_string(), d.ok()?)))
+            .collect();
+            blocking(move || Ok(scan::roots(known))).await
+        }
+    }
+}
+
 /// Cancels a running scan / thumbnail request / batch job by id.
 #[tauri::command]
 pub fn photo_cancel(id: String) -> bool {

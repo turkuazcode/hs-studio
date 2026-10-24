@@ -141,6 +141,7 @@ npm run tauri build
 | `src/media/engine/` | Oynatma motoru cephesi: `engine.js` (ortak sözleşme + saf yardımcılar), `mpv-engine.js` (libmpv, birincil), `html5-engine.js` (`<video>` yedeği + Media Foundation dönüştürme) — ayrıntı: [docs/engine.md](docs/engine.md) |
 | `src/media/` | `audio-fx.js` (ekolayzır/normalizasyon/ses gecikmesi), `classify.js`, `subtitles.js`, `loader.js`, `video-player.js`, `audio-engine.js`, `visual-filters.js`, `photo-viewer.js`, `photo-ai.js`, `snapshot.js`, `onnx-patch.js` + mevcut `gpu-enhancer.js`, `ai-*.js`, `face-restore.js` |
 | `src/ui/` | `hud.js`, `timeline.js`, `playlist.js`, `panels.js`, `modals.js`, `sleep-timer.js`, `shortcuts.js` (merkezî kısayol tablosu), `fullscreen.js`, `toasts.js`, `window-controls.js`, `platform.js` (platform katmanı önyüklemesi), `settings-modal.js`, `settings-bindings.js`, `recent-files.js`, `menus.js` (sağ tık + titlebar menüsü, fare), `shortcut-editor.js`, `shortcut-help.js`, `theme.js`, `playback-menus.js` (ses/altyazı kanalı, bölümler, yer imleri, görüntü menüsü) |
+| `src/studio/` | Fotoğraf Stüdyosu: `studio.js` (klasör tarayıcı, görüntüleyici oturumu), `grid.js` (sanal ızgara), `thumbs.js`, `info-panel.js` (EXIF, histogram), `map.js` (Leaflet + OSM, isteğe bağlı), `editor.js`, `compare.js`, `batch.js`, `filmstrip.js`, `logic.js` (saf yardımcılar). Stil: `src/styles/photo-studio.css`; Leaflet: `src/vendor/leaflet/` (BSD-2) |
 | `src/i18n/` | `tr.json`, `en.json` (arayüz metinleri; şimdilik yalnızca platform katmanı) |
 
 Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çözme, çalma listesi gezinme, ONNX yaması...) DOM'suz fonksiyonlardır ve birim testlidir.
@@ -176,6 +177,7 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 | `engine.e2e.mjs` | libmpv: motor etkin, oynat/duraklat/atla, ses kanalı (`aid` + dil), altyazı kanalı, `sub-add` ile harici SRT, bölüm atlama, ses gecikmesi, ekolayzır (`af`), ses %150 + renk ayarları, kare kare, ekran görüntüsü dosyası, yer imi, A-B (`ab-loop`), döndür/yansıt/yakınlaştır, fotoğrafta video penceresi gizli, HEVC, otomatik geçiş; `VHO_DISABLE_MPV=1` → HTML5 yedeği |
 | `photo.e2e.mjs` | JPEG + PNG, bilgi kartı, yakınlaştırma, döndürme, sarmalı gezinme, slayt gösterisi, ekran görüntüsü |
 | `platform.e2e.mjs` | Ayarlar penceresi (sekmeler, dil değişimi yeniden yüklemeden), kısayol düzenleyici çakışma denetimi, `?` yardım, sağ tık menüsü, tema; ayar değiştir → yeniden başlat → korunmuş; son açılanlar (küçük resim, kaldır, temizle); ikinci `vho.exe dosya.mp4` → aynı pencerede açılır |
+| `photo-studio.e2e.mjs` | Geçici klasörde üretilen 300 fotoğraf (EXIF tarih/GPS/yönlendirme) + video: ızgara, sıralama, filtre/arama, çoklu seçim, bilgi paneli, görüntüleyici + şerit gezinme, kırp/döndür + kaydet, karşılaştırma, toplu WebP dönüştürme (EXIF tarihi korunur), iptal, 5.000 dosyada ilk çizim süresi |
 
 ### Test medyası (`tests/fixtures/`)
 Tamamı sentetik ve depoya dahildir (toplam ~185 KB); `tests/fixtures/make-fixtures.ps1` ile yeniden üretilir:
