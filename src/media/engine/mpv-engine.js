@@ -26,8 +26,16 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
   let loadedFile = false;
   let view = {};
 
-  const cmd = (args) => invoke("engine_command", { args });
-  const set = (name, value) => invoke("engine_set", { name, value });
+  // Tauri runs async commands concurrently: queue property writes and commands so mpv applies
+  // them in the order the UI issued them (e.g. three slider changes, setLoop then seek).
+  let queue = Promise.resolve();
+  const ordered = (fn) => {
+    const p = queue.then(fn);
+    queue = p.catch(() => {});
+    return p;
+  };
+  const cmd = (args) => ordered(() => invoke("engine_command", { args }));
+  const set = (name, value) => ordered(() => invoke("engine_set", { name, value }));
   const get = (name) => invoke("engine_get", { name });
   const quiet = (p) => p.catch((e) => console.warn("[mpv]", e));
 
@@ -117,6 +125,10 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
   // A page reload (dev tools / tests) must not leave the previous file playing behind the UI
   quiet(cmd(["stop"]));
   quiet(invoke("engine_show", { visible: false }));
+  // mirror the state mpv already has (the observers only report changes)
+  get("pause").then((v) => { paused = !!v; }).catch(() => {});
+  get("volume").then((v) => { if (typeof v === "number") volume = v; }).catch(() => {});
+  get("speed").then((v) => { if (typeof v === "number") rate = v; }).catch(() => {});
 
   const engine = {
     kind: "mpv",
@@ -150,9 +162,10 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
       previewSrc = item.path ? convertFileSrc(item.path) : item.url ?? "";
       active = true;
       await engine.show(true);
-      await set("pause", false).catch(() => {});
+      // no property event arrives when mpv was already unpaused (e.g. after a page reload)
+      await set("pause", false).then(() => { paused = false; }).catch(() => {});
       try {
-        await invoke("engine_load", { path: item.path ?? item.url, start: start ?? null });
+        await ordered(() => invoke("engine_load", { path: item.path ?? item.url, start: start ?? null }));
       } catch (e) {
         loading = false;
         emit("error", String(e));
@@ -163,7 +176,10 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
       if (ended) return quiet(cmd(["seek", 0, "absolute"]).then(() => set("pause", false)));
       return quiet(set("pause", false));
     },
-    pause() { return quiet(set("pause", true)); },
+    pause() {
+      paused = true;
+      return quiet(set("pause", true));
+    },
     toggle() { return paused ? engine.play() : engine.pause(); },
     seek(t, mode = "absolute") {
       if (mode === "absolute") {

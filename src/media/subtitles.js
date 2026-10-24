@@ -163,7 +163,7 @@ export function createSubtitles({ dom, bus, toast, openSearch, engine = () => nu
         await engine().addSubtitle(source);
         subtitles = [];
         subtitleText.textContent = "";
-        toast(`Altyazı yüklendi: ${source.split(/[\/]/).pop()}`);
+        toast(`Altyazı yüklendi: ${source.split(/[\\/]/).pop()}`);
         return;
       } catch (e) {
         console.warn("sub-add", e); // fall back to the app's own renderer below

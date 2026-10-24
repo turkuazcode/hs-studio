@@ -36,6 +36,28 @@ impl Default for Throttle {
 impl Throttle {
     /// Converts one mpv event (JSON from `mpv_event_to_node`) into zero or more outputs.
     pub fn process(&mut self, ev: &Value, now: Instant) -> Vec<Out> {
+        let mut out = self.handle(ev, now);
+        // trailing edge: a value held back by the rate limit is sent once its interval passed
+        // (the event loop also calls this with Null every 100 ms while mpv is idle)
+        out.extend(self.flush_due(now));
+        out
+    }
+
+    fn flush_due(&mut self, now: Instant) -> Vec<Out> {
+        let mut out = vec![];
+        for (i, name) in THROTTLED.iter().enumerate() {
+            let due = self.last_emit[i].is_none_or(|t| now.duration_since(t) >= MIN_INTERVAL);
+            if due {
+                if let Some(v) = self.pending[i].take() {
+                    self.last_emit[i] = Some(now);
+                    out.push(Out::Property(json!({"name": name, "value": v})));
+                }
+            }
+        }
+        out
+    }
+
+    fn handle(&mut self, ev: &Value, now: Instant) -> Vec<Out> {
         let kind = ev.get("event").and_then(Value::as_str).unwrap_or("");
         match kind {
             "property-change" => {
@@ -109,6 +131,17 @@ mod tests {
         assert_eq!(out.len(), 2);
         assert_eq!(out[0], Out::Property(json!({"name": "time-pos", "value": 51.0 / 26.0})));
         assert_eq!(out[1], Out::Property(json!({"name": "pause", "value": true})));
+    }
+
+    #[test]
+    fn held_back_value_is_sent_on_the_idle_tick() {
+        let mut t = Throttle::default();
+        let t0 = Instant::now();
+        assert_eq!(t.process(&prop("time-pos", json!(1.0)), t0).len(), 1);
+        assert!(t.process(&prop("time-pos", json!(2.0)), t0 + Duration::from_millis(50)).is_empty());
+        assert!(t.process(&Value::Null, t0 + Duration::from_millis(100)).is_empty());
+        let out = t.process(&Value::Null, t0 + Duration::from_millis(130));
+        assert_eq!(out, vec![Out::Property(json!({"name": "time-pos", "value": 2.0}))]);
     }
 
     #[test]
