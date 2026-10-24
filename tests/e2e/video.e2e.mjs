@@ -2,14 +2,14 @@
 // VTT), speed & aspect menus, colour filters, AI restoration toggle, snapshot, playlist advance.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { launchApp, fixture } from "./lib/app.mjs";
+import { HTML5_ENGINE, launchApp, fixture } from "./lib/app.mjs";
 import { sleep } from "./lib/cdp.mjs";
 
 const MP4 = fixture("sample-h264.mp4");
 const V = `document.getElementById("video-element")`;
 
 test("video: H.264 clip + SRT opened from the command line", { timeout: 180000 }, async (t) => {
-  const app = await launchApp({ args: [MP4, fixture("sample.srt")] });
+  const app = await launchApp({ args: [MP4, fixture("sample.srt")], env: HTML5_ENGINE });
   const has = (sel, cls) => app.eval(`document.querySelector(${JSON.stringify(sel)}).classList.contains(${JSON.stringify(cls)})`);
   const seek = async (time) => {
     await app.eval(`${V}.currentTime = ${time}, true`);

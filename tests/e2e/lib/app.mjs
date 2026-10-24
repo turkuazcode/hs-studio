@@ -144,6 +144,12 @@ const waitExit = (proc, ms) => new Promise((res) => {
  * connects CDP, installs the error collector + stubs (via one reload) and waits until
  * the app has booted (window.__vho).
  */
+/** Environment that hides the libmpv DLLs from the app: HTML5 fallback engine. */
+export const HTML5_ENGINE = Object.freeze({ VHO_DISABLE_MPV: "1" });
+
+/** True when the libmpv DLL set is staged next to the test executable (npm run stage:mpv). */
+export const mpvStaged = (exe = defaultExe()) => existsSync(join(dirname(exe), "libmpv-2.dll"));
+
 /** A temporary data folder for VHO_DATA_DIR that outlives one launch (restart tests). */
 export const makeDataDir = () => mkdtemp(join(tmpdir(), "vho-e2e-data-"));
 export const removeDir = (dir) => rm(dir, { recursive: true, force: true, maxRetries: 15, retryDelay: 400 }).catch(() => {});
@@ -158,14 +164,17 @@ export function appEnv({ port, userData, dataDir }) {
     VHO_DATA_DIR: dataDir,
     // Backend guard: suspend_system becomes a no-op (never sleep the test machine)
     VHO_DISABLE_SYSTEM_SUSPEND: "1",
+    // libmpv screenshots go to the throw-away profile, never to the user's Pictures folder
+    VHO_SCREENSHOT_DIR: join(userData, "screenshots"),
   };
 }
 
 /**
  * dataDir: reuse a data folder (e.g. to restart with the same settings); the caller removes
  * it. Without it a fresh folder inside the temporary WebView2 profile is used.
+ * env: extra environment variables (e.g. HTML5_ENGINE).
  */
-export async function launchApp({ args = [], exe = defaultExe(), dataDir } = {}) {
+export async function launchApp({ args = [], exe = defaultExe(), dataDir, env: extraEnv = {} } = {}) {
   if (!existsSync(exe)) {
     throw new Error(`${exe} not found. Build it first: npm run build:release (or set VHO_EXE)`);
   }
@@ -176,7 +185,7 @@ export async function launchApp({ args = [], exe = defaultExe(), dataDir } = {})
     dataDir = join(userData, "vho-data");
     await mkdir(dataDir, { recursive: true });
   }
-  const env = appEnv({ port, userData, dataDir });
+  const env = { ...appEnv({ port, userData, dataDir }), ...extraEnv };
   const proc = spawn(exe, args, { env, stdio: "ignore", windowsHide: false });
   const exited = new Promise((res) => proc.once("exit", (code) => res(code)));
   debug("launch: pid", proc.pid, "port", port, "args", args);

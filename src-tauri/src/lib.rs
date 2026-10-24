@@ -1,4 +1,5 @@
 mod ai;
+mod engine;
 mod photo;
 mod platform;
 mod transcode;
@@ -128,7 +129,9 @@ async fn transcode_media(app: AppHandle, path: String) -> Result<String, String>
 
     if !output.exists() {
         let job = TRANSCODE_JOB.fetch_add(1, Ordering::SeqCst) + 1;
-        let partial = dir.join(format!("{key:016x}.part.mp4"));
+        // per-job partial file: a cancelled older job (e.g. the same file reopened after a page
+        // reload) must not delete the file the current job is writing
+        let partial = dir.join(format!("{key:016x}.{job}.part.mp4"));
         let (app2, src, part) = (app.clone(), path.clone(), partial.clone());
         let result = tauri::async_runtime::spawn_blocking(move || {
             let mut report = |p: f64| {
@@ -272,9 +275,16 @@ pub fn run() {
                 args.push_str(COMPAT_BROWSER_ARGS);
             }
 
-            WebviewWindowBuilder::from_config(app.handle(), &config)?
-                .additional_browser_args(&args)
-                .build()?;
+            // libmpv engine: when the DLL set is present the window is transparent and the video
+            // is drawn by mpv into an owned popup behind it (ADR 0001). Otherwise the window stays
+            // opaque and the frontend uses the HTML5 <video> engine.
+            let mpv_dll = engine::locate(app.handle());
+            let mut builder = WebviewWindowBuilder::from_config(app.handle(), &config)?.additional_browser_args(&args);
+            if mpv_dll.is_ok() {
+                builder = builder.transparent(true);
+            }
+            let window = builder.build()?;
+            engine::setup(app.handle(), &window, mpv_dll);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -297,7 +307,15 @@ pub fn run() {
             photo::photo_cancel,
             photo::photo_capabilities,
             platform::settings_dir,
-            platform::open_default_apps_settings
+            platform::open_default_apps_settings,
+            engine::engine_status,
+            engine::engine_load,
+            engine::engine_command,
+            engine::engine_set,
+            engine::engine_get,
+            engine::engine_show,
+            engine::engine_screenshot,
+            engine::engine_thumbnail
         ])
         .build(context)
         .expect("error while building tauri application");
@@ -307,6 +325,9 @@ pub fn run() {
         #[cfg(target_os = "macos")]
         if let tauri::RunEvent::Opened { urls } = &_event {
             platform::on_opened_urls(_app, urls);
+        }
+        if let tauri::RunEvent::Exit = _event {
+            engine::shutdown(_app);
         }
     });
 }

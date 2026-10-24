@@ -15,12 +15,12 @@ export const sleepBadgeText = (seconds) => `${Math.floor(seconds / 60)}:${String
 export const fadeLevel = (step) => Math.max(0, 1 - step / FADE_STEPS);
 
 /**
- * app: { dom, state, toast, audio, video }  (resolved lazily)
+ * app: { dom, state, toast, audio, video, engine }  (resolved lazily)
  */
 export function createSleepTimer(app) {
   const { dom, state } = app;
   const {
-    video, btnSleepTimer, sleepTimerModal, btnCancelSleep, btnDisableSleep, inputCustomSleep, btnCustomSleep,
+    btnSleepTimer, sleepTimerModal, btnCancelSleep, btnDisableSleep, inputCustomSleep, btnCustomSleep,
     checkPcSleep, sleepBadge, sleepOverlay, btnWakeUp,
   } = dom;
 
@@ -103,19 +103,17 @@ export function createSleepTimer(app) {
   function triggerSleepMode() {
     clearInterval(sleepFadeInterval);
     resetSleepTimerUi();
-    const gainNode = app.audio.gainNode;
-    const useGain = !!gainNode;
-    const startLevel = useGain ? gainNode.gain.value : video.volume;
+    // Fade the engine's own level (0-200 %); the slider keeps the user's level for wake-up
+    const startLevel = app.engine.volume;
     let step = 0;
     sleepFadeInterval = setInterval(() => {
       step++;
       const k = fadeLevel(step);
-      if (useGain) gainNode.gain.value = startLevel * k;
-      else video.volume = startLevel * k;
+      app.engine.setVolume(startLevel * k);
       if (k <= 0) {
         clearInterval(sleepFadeInterval);
         sleepFadeInterval = null;
-        video.pause();
+        app.engine.pause();
         sleepOverlay.classList.add("active");
 
         if (checkPcSleep?.checked && invoke) {

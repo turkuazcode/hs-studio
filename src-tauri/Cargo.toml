@@ -37,14 +37,26 @@ rayon = "1.10"
 # Lossy WebP encoding (libwebp, BSD-3-Clause, compiled from source by libwebp-sys)
 webp = { version = "0.3", default-features = false }
 crc32fast = "1"
+# libmpv playback engine (src/engine): libmpv-2.dll is loaded at RUNTIME (dynamic linking keeps
+# the LGPL build replaceable and lets the app fall back to the HTML5 engine). libloading is ISC.
+libloading = "0.8"
 # Platform: persistent settings + window size/position (MIT OR Apache-2.0)
 tauri-plugin-store = "2"
 tauri-plugin-window-state = "2"
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61", features = ["Win32_System_Power"] }
+windows-sys = { version = "0.61", features = [
+  "Win32_System_Power",
+  "Win32_Foundation",
+  "Win32_Graphics_Gdi",
+  "Win32_System_LibraryLoader",
+  "Win32_UI_Shell",
+  "Win32_UI_HiDpi",
+  "Win32_UI_WindowsAndMessaging",
+] }
 windows = { version = "0.62", features = [
   "Win32_Foundation",
+  "Win32_Graphics_Dxgi",
   "Win32_Graphics_Imaging",
   "Win32_Media_MediaFoundation",
   "Win32_System_Com",

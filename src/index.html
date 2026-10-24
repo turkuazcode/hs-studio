@@ -62,11 +62,19 @@
           </button>
 
           <!-- Video Effects / Filter Settings -->
-          <button id="btn-toggle-effects" class="titlebar-action-btn" title="Görüntü Ayarları">
+          <button id="btn-toggle-effects" class="titlebar-action-btn" hidden title="Görüntü Ayarları">
             <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
               <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z"/>
             </svg>
             <span>Filtreler</span>
+          </button>
+
+          <!-- Audio panel: equalizer, normalisation, audio delay (libmpv) -->
+          <button id="btn-toggle-audio-panel" class="titlebar-action-btn" hidden title="Ses Ayarları (Ekolayzır)">
+            <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+              <path d="M3 12h2v5H3v-5zm4-6h2v11H7V6zm4 3h2v8h-2V9zm4-6h2v14h-2V3z"/>
+            </svg>
+            <span>Ses</span>
           </button>
 
           <!-- AI Restoration Button -->
@@ -103,8 +111,12 @@
         </div>
         <div id="split-screen-line" class="split-divider-indicator" style="display:none;"></div>
 
-        <!-- Native Video Element -->
+        <!-- Native Video Element (HTML5 engine) -->
         <video id="video-element" class="video-element" playsinline></video>
+
+        <!-- libmpv engine: the video is drawn by mpv in a native window BEHIND this transparent page;
+             this empty layer receives clicks / double clicks / Ctrl+wheel zoom on the picture -->
+        <div id="mpv-surface" class="mpv-surface" hidden></div>
 
         <!-- Native Image Element for Photo Studio -->
         <div id="image-container" class="image-container" style="display:none;">
@@ -282,7 +294,7 @@
               </div>
             </div>
 
-            <!-- Right Group: Subtitles (CC), A-B Loop, Snapshot, Aspect Ratio, PiP, Fullscreen -->
+            <!-- Right Group (minimal UI): CC (+ compact track menu), "⋯" (everything else), Fullscreen -->
             <div class="controls-group right">
               
               <!-- Subtitles (CC) Toggle & Menu -->
@@ -293,6 +305,7 @@
                   </svg>
                   <span id="sub-status-label">CC</span>
                 </button>
+                <button id="btn-sub-menu" class="hud-badge-btn hud-caret" title="Altyazı kanalları ve seçenekleri" aria-haspopup="menu">▾</button>
                 <div id="subtitles-menu" class="dropdown-menu">
                   <div id="sub-menu-toggle" class="dropdown-item active">
                     <span id="sub-menu-toggle-text">● Altyazı: Açık</span>
@@ -300,6 +313,7 @@
                   <div id="sub-menu-search" class="dropdown-item">
                     <span>🌐 Online Altyazı Bul</span>
                   </div>
+                  <div id="sub-track-list" hidden></div>
                   <div id="sub-menu-browse" class="dropdown-item">
                     <span>📁 Dosyadan Altyazı Seç</span>
                   </div>
@@ -309,6 +323,13 @@
                 </div>
               </div>
 
+              <!-- "⋯" menu: tracks, chapters, bookmarks, speed, aspect, picture, A-B, snapshot, PiP,
+                   picture/audio settings (ui/playback-menus.js) -->
+              <button id="btn-hud-more" class="hud-btn hud-more" title="Diğer seçenekler" aria-haspopup="menu" aria-expanded="false">⋯</button>
+
+              <!-- Rarely used controls: reached through "⋯" (and shortcuts); kept as hidden
+                   elements because their logic (and settings bindings) lives on them -->
+              <div id="hud-overflow" class="hud-overflow" hidden>
               <!-- A-B Repeat Button -->
               <button id="btn-ab-loop" class="hud-badge-btn" title="A-B Tekrar Döngüsü: A noktasını seç">
                 <span id="ab-loop-label">A-B Döngü</span>
@@ -356,6 +377,8 @@
                   <path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 .02H3V4.97h18v14.05z"/>
                 </svg>
               </button>
+
+              </div>
 
               <!-- Fullscreen Toggle -->
               <button id="btn-fullscreen" class="hud-btn" title="Tam Ekran (F)" aria-label="Fullscreen">
@@ -466,6 +489,22 @@
               <input id="slider-saturate" type="range" min="0" max="250" value="100" class="filter-slider">
             </div>
 
+            <div class="filter-group mpv-only">
+              <div class="filter-label">
+                <span>Gama (Gamma)</span>
+                <span id="val-gamma">0</span>
+              </div>
+              <input id="slider-gamma" type="range" min="-100" max="100" value="0" class="filter-slider">
+            </div>
+
+            <div class="filter-group mpv-only">
+              <div class="filter-label">
+                <span>Renk Tonu (Hue)</span>
+                <span id="val-hue">0</span>
+              </div>
+              <input id="slider-hue" type="range" min="-100" max="100" value="0" class="filter-slider">
+            </div>
+
             <div class="filter-group">
               <div class="filter-label">
                 <span>Altyazı Gecikmesi (Subtitle Sync)</span>
@@ -482,6 +521,11 @@
               Varsayılanlara Sıfırla
             </button>
 
+
+            <!-- Active playback engine (options: Ayarlar > Gelişmiş) -->
+            <div class="restore-section-title">Oynatma Motoru</div>
+            <div id="engine-info" class="engine-info">—</div>
+
             <!-- GPU Compatibility Mode (black video screen workaround) -->
             <label class="restore-check-row compat-row" title="Uygulama yeniden başlatılır">
               <input type="checkbox" id="check-compat-mode" />
@@ -490,6 +534,41 @@
                 <span>Yalnızca ses gelip görüntü siyah kalıyorsa açın. CPU kullanımı artar.</span>
               </div>
             </label>
+          </div>
+        </div>
+
+        <!-- Audio panel (libmpv): equalizer, normalisation, audio delay -->
+        <div id="audio-panel" class="effects-panel audio-panel">
+          <div class="effects-header">
+            <h4>Ses Ayarları</h4>
+            <button id="btn-close-audio-panel" class="btn-icon-close">✕</button>
+          </div>
+          <div class="effects-body">
+            <p class="html5-only panel-note">Ekolayzır, normalizasyon ve ses gecikmesi libmpv oynatma motoru gerektirir.</p>
+            <div class="filter-group mpv-only">
+              <div class="filter-label">
+                <span>Ses Gecikmesi (Audio Sync)</span>
+                <span id="val-audio-delay">0 ms</span>
+              </div>
+              <div class="delay-controls">
+                <button id="btn-audio-minus" class="btn-sm btn-secondary">-50ms</button>
+                <button id="btn-audio-reset" class="btn-sm btn-ghost">Sıfırla</button>
+                <button id="btn-audio-plus" class="btn-sm btn-secondary">+50ms</button>
+              </div>
+            </div>
+            <label class="restore-check-row mpv-only">
+              <input type="checkbox" id="check-audio-normalize" />
+              <div class="check-text">
+                <strong>Ses Normalizasyonu</strong>
+                <span>Sessiz ve gürültülü sahneleri dengeler (dynaudnorm)</span>
+              </div>
+            </label>
+            <div class="filter-group mpv-only">
+              <div class="filter-label"><span>Ekolayzır (10 bant)</span>
+                <select id="select-eq-preset" class="modal-select eq-preset"></select>
+              </div>
+              <div id="eq-bands" class="eq-bands"></div>
+            </div>
           </div>
         </div>
 
@@ -695,7 +774,7 @@
         <!-- Hidden Native File Inputs -->
         <input id="file-input" type="file" multiple accept="video/*,audio/*,image/*,.mkv,.mp4,.m4v,.avi,.mov,.webm,.flv,.ts,.mp3,.m4a,.flac,.wav,.ogg,.opus,.jpg,.jpeg,.png,.webp,.gif,.bmp,.svg,.avif,.srt,.vtt" style="display:none;" />
         <input id="playlist-file-input" type="file" multiple accept="video/*,audio/*,image/*,.mkv,.mp4,.m4v,.avi,.mov,.webm,.flv,.ts,.mp3,.m4a,.flac,.wav,.ogg,.opus,.jpg,.jpeg,.png,.webp,.gif,.bmp,.svg,.avif,.srt,.vtt" style="display:none;" />
-        <input id="sub-file-input" type="file" accept=".srt,.vtt" style="display:none;" />
+        <input id="sub-file-input" type="file" accept=".srt,.vtt,.ass,.ssa" style="display:none;" />
       </main>
     </div>
 

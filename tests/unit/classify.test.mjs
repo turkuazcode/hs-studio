@@ -20,6 +20,7 @@ test("classify: by extension", () => {
   assert.equal(classify({ name: "photo.JPG" }), "image");
   assert.equal(classify({ name: "x.webp" }), "image");
   assert.equal(classify({ name: "sub.srt" }), "sub");
+  assert.equal(classify({ name: "styled.ass" }), "sub");
   assert.equal(classify({ name: "sub.VTT" }), "sub");
   assert.equal(classify({ name: "doc.pdf" }), "unknown");
   assert.equal(classify({ name: "archive.zip", type: "application/zip" }), "unknown");

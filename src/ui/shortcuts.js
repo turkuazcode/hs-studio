@@ -44,6 +44,9 @@ export function defaultActions(app) {
     { id: "subDelayMinus", scope: "video", keys: ["KeyG"], run: () => app.subtitles.nudgeDelay(-50) },
     { id: "subDelayPlus", scope: "video", keys: ["KeyH"], run: () => app.subtitles.nudgeDelay(50) },
     { id: "pip", scope: "video", keys: ["KeyP"], run: () => app.video.clickPip() },
+    { id: "frameStep", scope: "video", keys: ["Period"], run: () => app.video.frameStep(1) },
+    { id: "frameBack", scope: "video", keys: ["Comma"], run: () => app.video.frameStep(-1) },
+    { id: "bookmarkAdd", scope: "video", keys: ["KeyY"], run: () => app.playbackMenus.addBookmark() },
     {
       id: "aiVideo", scope: "video", keys: ["KeyR", "KeyA"],
       run: () => app.panels.toggleAiMaster("AI Restorasyon & Netleştirici Açık ✨", "AI Restorasyon Kapalı"),

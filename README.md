@@ -138,8 +138,9 @@ npm run tauri build
 | Klasör | İçerik |
 |---|---|
 | `src/core/` | `dom.js` (tüm DOM referansları), `state.js` (reaktif store), `events.js` (olay veriyolu), `tauri.js` (`__TAURI__` sarmalayıcıları, tarayıcıda no-op), `format.js` (saf biçimleme), `settings-schema.js` + `settings.js` (sürümlü ayar şeması, doğrulama, göç, `settings.register()`), `library.js` (son açılanlar + kaldığın yer), `i18n.js` (`t()`, `applyTranslations()`), `keymap.js` (kısayol birleşimleri, çakışma denetimi) |
-| `src/media/` | `classify.js`, `subtitles.js`, `loader.js`, `video-player.js`, `audio-engine.js`, `visual-filters.js`, `photo-viewer.js`, `photo-ai.js`, `snapshot.js`, `onnx-patch.js` + mevcut `gpu-enhancer.js`, `ai-*.js`, `face-restore.js` |
-| `src/ui/` | `hud.js`, `timeline.js`, `playlist.js`, `panels.js`, `modals.js`, `sleep-timer.js`, `shortcuts.js` (merkezî kısayol tablosu), `fullscreen.js`, `toasts.js`, `window-controls.js`, `platform.js` (platform katmanı önyüklemesi), `settings-modal.js`, `settings-bindings.js`, `recent-files.js`, `menus.js` (sağ tık + titlebar menüsü, fare), `shortcut-editor.js`, `shortcut-help.js`, `theme.js` |
+| `src/media/engine/` | Oynatma motoru cephesi: `engine.js` (ortak sözleşme + saf yardımcılar), `mpv-engine.js` (libmpv, birincil), `html5-engine.js` (`<video>` yedeği + Media Foundation dönüştürme) — ayrıntı: [docs/engine.md](docs/engine.md) |
+| `src/media/` | `audio-fx.js` (ekolayzır/normalizasyon/ses gecikmesi), `classify.js`, `subtitles.js`, `loader.js`, `video-player.js`, `audio-engine.js`, `visual-filters.js`, `photo-viewer.js`, `photo-ai.js`, `snapshot.js`, `onnx-patch.js` + mevcut `gpu-enhancer.js`, `ai-*.js`, `face-restore.js` |
+| `src/ui/` | `hud.js`, `timeline.js`, `playlist.js`, `panels.js`, `modals.js`, `sleep-timer.js`, `shortcuts.js` (merkezî kısayol tablosu), `fullscreen.js`, `toasts.js`, `window-controls.js`, `platform.js` (platform katmanı önyüklemesi), `settings-modal.js`, `settings-bindings.js`, `recent-files.js`, `menus.js` (sağ tık + titlebar menüsü, fare), `shortcut-editor.js`, `shortcut-help.js`, `theme.js`, `playback-menus.js` (ses/altyazı kanalı, bölümler, yer imleri, görüntü menüsü) |
 | `src/i18n/` | `tr.json`, `en.json` (arayüz metinleri; şimdilik yalnızca platform katmanı) |
 
 Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çözme, çalma listesi gezinme, ONNX yaması...) DOM'suz fonksiyonlardır ve birim testlidir.
@@ -150,9 +151,11 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 | `npm ci` | Bağımlılıkları kurar |
 | `npm test` | Birim testleri (Node 24 yerleşik `node:test`, ek bağımlılık yok) |
 | `npm run build:release` | Release derlemesi: `src-tauri/target/release/vho.exe` |
+| `npm run stage:mpv` | LGPL libmpv DLL'lerini (38 adet) exe'nin yanına kopyalar; kaynak `third_party/mpv/_build/dist` ya da `-Source`/`VHO_MPV_DIST`. DLL yoksa uygulama HTML5 motoruyla çalışır |
 | `npm run e2e` | Uçtan uca testler; önce `npm run build:release` gerekir |
 | `cd src-tauri; cargo test --release --lib` | Rust birim testleri (`transcode` gerçek dosya testi `#[ignore]`) |
 | `npm run fixtures` | Test medyasını yeniden üretir (Windows) |
+| `npm run fixtures:engine` | libmpv test medyasını (çok kanallı MKV, HEVC) LGPL ffmpeg ile üretir |
 
 ### Uçtan uca (E2E) testler
 `tests/e2e/` altındaki testler `vho.exe`'yi `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=<9500-9599>` ile başlatır ve Chrome DevTools Protocol üzerinden sayfayı sürer (`lib/cdp.mjs`, `lib/app.mjs`). Medya dosyaları komut satırı argümanı olarak açılır ("Birlikte aç" yolu).
@@ -162,6 +165,7 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 - Arka plandaki pencere yeniden çizilmeyebilir; bu yüzden testler ekran görüntüsüne değil, DOM ve medya durumuna (`videoWidth`, `getVideoPlaybackQuality()`, metinler) bakar.
 - **Güvenlik:** testler bilgisayarı asla uyku moduna almaz. `vho.exe`, `VHO_DISABLE_SYSTEM_SUSPEND=1` ile başlatılır (`suspend_system` hiçbir şey yapmaz) ve sayfa betikleri çalışmadan önce `__TAURI__.core.invoke` sarmalanır: `suspend_system` ve `set_compat_mode` arka uca hiç gitmez. Koruma her açılışta doğrulanır; doğrulanamazsa testler çalışmaz. Uyku zamanlayıcısı testleri "PC Uyku" kutusunu önce kapatır.
 - `window.confirm` ve indirmeler (ekran görüntüsü) test tarafında taklit edilir; yakalanmamış sayfa hataları toplanır ve her testin sonunda boş olmalıdır.
+- Motor: `engine.e2e.mjs` libmpv'yi test eder (DLL'ler `npm run stage:mpv` ile hazırlanmamışsa atlanır); diğer dosyalar ve yedek testi `VHO_DISABLE_MPV=1` ile **HTML5 motorunu** kullanır. mpv ekran görüntüleri geçici profile yazılır (`VHO_SCREENSHOT_DIR`). CDP port aralığı `VHO_E2E_PORT_MIN`/`VHO_E2E_PORT_MAX` ile değiştirilebilir.
 - Başka bir derlemeyi denemek için: `$env:VHO_EXE = "C:\yol\vho.exe"; npm run e2e`. Ayrıntılı zamanlama günlüğü: `$env:VHO_E2E_DEBUG = 1`.
 
 | Dosya | Kapsam |
@@ -169,6 +173,7 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 | `smoke.e2e.mjs` | Açılış, boş ekran, Lisanslar penceresi, AI işçi modülü, URL penceresi doğrulaması, paneller, uyumluluk modu onayı, tam ekran, uyku zamanlayıcı penceresi |
 | `video.e2e.mjs` | H.264 oynatma, duraklatma, atlama, ses %150/sessiz, A-B döngü, altyazı (UTF-8 SRT, Windows-1254 SRT, BOM'lu VTT, gecikme), hız/en-boy, renk filtreleri, AI/bölünmüş ekran, ekran görüntüsü, çalma listesi otomatik geçiş, "video bitince" uyku modu |
 | `legacy.e2e.mjs` | WMV9/WMA → Media Foundation dönüştürme → H.264/AAC kareleri çözülüyor (Windows) |
+| `engine.e2e.mjs` | libmpv: motor etkin, oynat/duraklat/atla, ses kanalı (`aid` + dil), altyazı kanalı, `sub-add` ile harici SRT, bölüm atlama, ses gecikmesi, ekolayzır (`af`), ses %150 + renk ayarları, kare kare, ekran görüntüsü dosyası, yer imi, A-B (`ab-loop`), döndür/yansıt/yakınlaştır, fotoğrafta video penceresi gizli, HEVC, otomatik geçiş; `VHO_DISABLE_MPV=1` → HTML5 yedeği |
 | `photo.e2e.mjs` | JPEG + PNG, bilgi kartı, yakınlaştırma, döndürme, sarmalı gezinme, slayt gösterisi, ekran görüntüsü |
 | `platform.e2e.mjs` | Ayarlar penceresi (sekmeler, dil değişimi yeniden yüklemeden), kısayol düzenleyici çakışma denetimi, `?` yardım, sağ tık menüsü, tema; ayar değiştir → yeniden başlat → korunmuş; son açılanlar (küçük resim, kaldır, temizle); ikinci `vho.exe dosya.mp4` → aynı pencerede açılır |
 

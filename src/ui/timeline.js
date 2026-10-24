@@ -1,6 +1,7 @@
 // ==========================================================================
 // Timeline: progress / buffer bars, time labels, YouTube-style live thumbnail
-// preview on hover, click-to-seek and the frame-accurate A-B loop.
+// preview on hover, click-to-seek, A-B loop (frame accurate in both engines),
+// chapter and bookmark markers. Talks only to the engine facade.
 // ==========================================================================
 
 import { formatTime } from "../core/format.js";
@@ -14,50 +15,32 @@ export const pointerFraction = (clientX, rect) => Math.max(0, Math.min(1, (clien
 export const percentOf = (t, duration) => `${(t / duration) * 100}%`;
 
 /**
- * app: { dom, state, bus }
+ * app: { dom, state, bus, engine }
  */
 export function createTimeline(app) {
-  const { dom } = app;
+  const { dom, engine } = app;
   const {
-    video, thumbVideo, thumbCtx, timelineThumbCanvas, timelineContainer, timelineProgress, timelineBuffer,
+    thumbVideo, thumbCtx, timelineThumbCanvas, timelineContainer, timelineProgress, timelineBuffer,
     timelineTooltip, timelineTooltipTime, timeCurrent, timeTotal, abMarkerA, abMarkerB, abRange, btnAbLoop,
-    abLoopLabel,
+    abLoopLabel, timelineTrack,
   } = dom;
 
-  let isSeeking = false; // kept from the original controller (never set: clicks seek directly)
   let loopPointA = null;
   let loopPointB = null;
-  let abLoopGen = 0;
   let lastThumbSeek = 0;
   let thumbPendingTime = null;
+  const markers = { chapter: [], bookmark: [] }; // kind -> [{ time, title }]
 
-  const hasDuration = () => Number.isFinite(video.duration) && !!video.duration;
+  const hasDuration = () => engine.hasDuration();
 
   // ------------------------------------------------------------------------
-  // A-B loop (timeupdate only fires ~4 Hz and overshoots B by up to 250 ms,
-  // so a requestVideoFrameCallback chain checks every frame)
+  // A-B loop: the engine loops itself (mpv ab-loop-a/b, <video> frame callbacks)
   // ------------------------------------------------------------------------
-  function checkAbLoop() {
-    if (loopPointA !== null && loopPointB !== null && video.currentTime >= loopPointB) {
-      video.currentTime = loopPointA;
-    }
-  }
-
-  function armAbLoop() {
-    if (!video.requestVideoFrameCallback || loopPointB === null) return;
-    const gen = ++abLoopGen;
-    const tick = () => {
-      if (gen !== abLoopGen || loopPointB === null) return;
-      checkAbLoop();
-      video.requestVideoFrameCallback(tick);
-    };
-    video.requestVideoFrameCallback(tick);
-  }
-
   function clearAbLoop() {
+    const had = loopPointA !== null;
     loopPointA = null;
     loopPointB = null;
-    abLoopGen++;
+    if (had) engine.setLoop(null, null);
     abMarkerA.style.display = "none";
     abMarkerB.style.display = "none";
     abRange.style.display = "none";
@@ -67,25 +50,27 @@ export function createTimeline(app) {
 
   btnAbLoop.addEventListener("click", () => {
     if (!hasDuration()) return;
+    const d = engine.duration;
+    const t = engine.time;
     if (loopPointA === null) {
-      loopPointA = video.currentTime;
-      abMarkerA.style.left = percentOf(loopPointA, video.duration);
+      loopPointA = t;
+      abMarkerA.style.left = percentOf(loopPointA, d);
       abMarkerA.style.display = "block";
       abLoopLabel.textContent = "A: " + formatTime(loopPointA) + " -> B?";
       btnAbLoop.classList.add("active");
     } else if (loopPointB === null) {
-      if (video.currentTime <= loopPointA) return;
-      loopPointB = video.currentTime;
-      abMarkerB.style.left = percentOf(loopPointB, video.duration);
+      if (t <= loopPointA) return;
+      loopPointB = t;
+      abMarkerB.style.left = percentOf(loopPointB, d);
       abMarkerB.style.display = "block";
 
-      abRange.style.left = percentOf(loopPointA, video.duration);
-      abRange.style.width = percentOf(loopPointB - loopPointA, video.duration);
+      abRange.style.left = percentOf(loopPointA, d);
+      abRange.style.width = percentOf(loopPointB - loopPointA, d);
       abRange.style.display = "block";
 
       abLoopLabel.textContent = "A-B Döngüde";
-      video.currentTime = loopPointA;
-      armAbLoop();
+      engine.setLoop(loopPointA, loopPointB); // also jumps back to A
+      engine.seek(loopPointA);
     } else {
       clearAbLoop();
     }
@@ -94,31 +79,56 @@ export function createTimeline(app) {
   // ------------------------------------------------------------------------
   // Time & progress
   // ------------------------------------------------------------------------
-  video.addEventListener("timeupdate", () => {
-    checkAbLoop();
-    if (!isSeeking) {
-      if (Number.isFinite(video.duration) && video.duration > 0) {
-        timelineProgress.style.width = percentOf(video.currentTime, video.duration);
-      }
-      timeCurrent.textContent = formatTime(video.currentTime);
-    }
-    app.bus.emit("media:time", { time: video.currentTime });
+  function showTime(t) {
+    const d = engine.duration;
+    if (Number.isFinite(d) && d > 0) timelineProgress.style.width = percentOf(Math.min(t, d), d);
+    timeCurrent.textContent = formatTime(t);
+  }
+
+  engine.on("time", (t) => {
+    showTime(t);
+    app.bus.emit("media:time", { time: t });
   });
 
-  video.addEventListener("loadedmetadata", () => {
-    timeTotal.textContent = formatTime(video.duration);
-    timeCurrent.textContent = formatTime(video.currentTime);
+  engine.on("duration", (d) => {
+    timeTotal.textContent = formatTime(d);
+    timeCurrent.textContent = formatTime(engine.time);
+    renderMarkers();
   });
 
-  video.addEventListener("progress", () => {
-    if (video.buffered.length > 0 && Number.isFinite(video.duration) && video.duration > 0) {
-      const bufferedEnd = video.buffered.end(video.buffered.length - 1);
-      timelineBuffer.style.width = percentOf(bufferedEnd, video.duration);
-    }
+  engine.on("buffer", (end) => {
+    const d = engine.duration;
+    if (Number.isFinite(d) && d > 0) timelineBuffer.style.width = percentOf(Math.min(end, d), d);
   });
 
   // ------------------------------------------------------------------------
-  // Live thumbnail preview on hover (one seek in flight at a time)
+  // Chapter / bookmark markers
+  // ------------------------------------------------------------------------
+  function renderMarkers() {
+    timelineTrack.querySelectorAll(".timeline-marker").forEach((m) => m.remove());
+    const d = engine.duration;
+    if (!(Number.isFinite(d) && d > 0)) return;
+    for (const [kind, list] of Object.entries(markers)) {
+      for (const m of list) {
+        if (kind === "chapter" && m.time <= 0.05) continue; // the first chapter starts at 0
+        const el = document.createElement("div");
+        el.className = `timeline-marker ${kind}-marker`;
+        el.style.left = percentOf(m.time, d);
+        el.title = `${m.title} (${formatTime(m.time)})`;
+        timelineTrack.append(el);
+      }
+    }
+  }
+
+  function setMarkers(kind, list) {
+    markers[kind] = list.map((m) => ({ time: m.time, title: m.title ?? m.label ?? "" }));
+    renderMarkers();
+  }
+
+  // ------------------------------------------------------------------------
+  // Live thumbnail preview on hover (one seek in flight at a time).
+  // libmpv: the preview still decodes in the webview when it can (MP4/WebM);
+  // other containers simply show no picture, only the time.
   // ------------------------------------------------------------------------
   function requestThumb(t) {
     if (thumbVideo.seeking) {
@@ -139,11 +149,14 @@ export function createTimeline(app) {
       requestThumb(t);
     }
   });
+  thumbVideo.addEventListener("error", () => {
+    thumbCtx.clearRect(0, 0, timelineThumbCanvas.width, timelineThumbCanvas.height);
+  });
 
   timelineContainer.addEventListener("mousemove", (e) => {
     if (!hasDuration()) return;
     const pos = pointerFraction(e.clientX, timelineContainer.getBoundingClientRect());
-    const targetTime = pos * video.duration;
+    const targetTime = pos * engine.duration;
     timelineTooltipTime.textContent = formatTime(targetTime);
     timelineTooltip.style.left = `${pos * 100}%`;
 
@@ -151,11 +164,12 @@ export function createTimeline(app) {
     const now = Date.now();
     if (now - lastThumbSeek > THUMB_THROTTLE_MS) {
       lastThumbSeek = now;
-      if (video.currentSrc && thumbVideo.src !== video.currentSrc) {
-        thumbVideo.src = video.currentSrc;
+      const src = engine.previewSrc;
+      if (src && thumbVideo.src !== src) {
+        thumbVideo.src = src;
       }
       try {
-        requestThumb(targetTime);
+        if (src) requestThumb(targetTime);
       } catch (_) {}
     }
   });
@@ -163,14 +177,17 @@ export function createTimeline(app) {
   timelineContainer.addEventListener("click", (e) => {
     if (!hasDuration()) return;
     const pos = pointerFraction(e.clientX, timelineContainer.getBoundingClientRect());
-    video.currentTime = pos * video.duration;
+    engine.seek(pos * engine.duration);
     timelineProgress.style.width = `${pos * 100}%`;
   });
 
   return {
-    /** New video: no loop, empty bars, zero times. */
+    /** New video: no loop, empty bars, zero times, no markers. */
     reset() {
       clearAbLoop();
+      markers.chapter = [];
+      markers.bookmark = [];
+      renderMarkers();
       timelineProgress.style.width = "0%";
       timelineBuffer.style.width = "0%";
       timeCurrent.textContent = timeTotal.textContent = "00:00";
@@ -181,6 +198,7 @@ export function createTimeline(app) {
       thumbCtx.clearRect(0, 0, timelineThumbCanvas.width, timelineThumbCanvas.height);
     },
     clearAbLoop,
+    setMarkers,
     get loop() { return { a: loopPointA, b: loopPointB }; },
   };
 }

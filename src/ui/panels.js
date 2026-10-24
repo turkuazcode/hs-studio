@@ -26,7 +26,7 @@ export function createPanels(app) {
     btnResetFilters, checkCompatMode, btnToggleAiRestore, aiRestorePanel, btnCloseAiRestore, checkAiMaster,
     aiMasterStatus, aiRestoreBadge, sliderAiSharp, valAiSharp, sliderAiContrast, valAiContrast,
     checkAiVoiceClarity, checkAiDenoise, checkAiCompressor, btnToggleSplitView, splitViewStatus,
-    splitScreenBanner, splitScreenLine, playlistDrawer,
+    splitScreenBanner, splitScreenLine, playlistDrawer, sliderGamma, sliderHue, audioPanel,
   } = dom;
   const applyFilters = () => app.filters.apply();
 
@@ -35,6 +35,7 @@ export function createPanels(app) {
   // ------------------------------------------------------------------------
   btnToggleEffects.addEventListener("click", () => {
     effectsPanel.classList.toggle("show");
+    audioPanel?.classList.remove("show");
   });
 
   btnCloseEffects.addEventListener("click", () => {
@@ -44,11 +45,16 @@ export function createPanels(app) {
   sliderBrightness.addEventListener("input", applyFilters);
   sliderContrast.addEventListener("input", applyFilters);
   sliderSaturate.addEventListener("input", applyFilters);
+  sliderGamma?.addEventListener("input", applyFilters);
+  sliderHue?.addEventListener("input", applyFilters);
+
 
   btnResetFilters.addEventListener("click", () => {
     sliderBrightness.value = 100;
     sliderContrast.value = 100;
     sliderSaturate.value = 100;
+    if (sliderGamma) sliderGamma.value = 0;
+    if (sliderHue) sliderHue.value = 0;
     applyFilters();
     app.subtitles.setDelay(0);
   });
@@ -100,7 +106,9 @@ export function createPanels(app) {
 
     if (enabled) {
       if (aiMasterStatus) {
-        aiMasterStatus.textContent = app.filters.enhancer ? "Aktif (GPU & DSP Açık)" : "Aktif (CSS & DSP, WebGL2 yok)";
+        aiMasterStatus.textContent = app.engine.kind === "mpv"
+          ? "Aktif (libmpv: renk + ses filtreleri)"
+          : app.filters.enhancer ? "Aktif (GPU & DSP Açık)" : "Aktif (CSS & DSP, WebGL2 yok)";
         aiMasterStatus.style.color = "var(--accent-ruby-bright)";
       }
       if (aiRestoreBadge) aiRestoreBadge.style.display = "inline-block";
@@ -187,6 +195,10 @@ export function createPanels(app) {
   // Split-screen A/B comparison (left half original, right half processed by the shader)
   function toggleSplitView(forceState) {
     const next = typeof forceState === "boolean" ? forceState : !state.get("isSplitViewActive");
+    if (next && app.engine.kind === "mpv") {
+      app.toast("⚠️ A/B karşılaştırma libmpv motorunda kullanılamıyor");
+      return;
+    }
     if (next && !app.filters.enhancer) {
       app.toast("⚠️ A/B karşılaştırma için WebGL2 desteği gerekli");
       return;
