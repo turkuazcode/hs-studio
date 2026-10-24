@@ -66,9 +66,26 @@ pub fn rename(path: &Path, new_name: &str) -> Result<PathBuf, String> {
     }
     let target = rename_target(path, new_name, |p| p.exists(), same_file)?;
     if target != path {
-        std::fs::rename(path, &target).map_err(|e| format!("Yeniden adlandırılamadı: {e}"))?;
+        retry_busy(|| std::fs::rename(path, &target)).map_err(|e| format!("Yeniden adlandırılamadı: {e}"))?;
     }
     Ok(target)
+}
+
+/// Retries an operation while the file is still held open (the player releases it a moment
+/// after `stop`): Windows sharing violation / access denied, up to ~2 s.
+fn retry_busy<T, E: std::fmt::Display>(mut op: impl FnMut() -> Result<T, E>) -> Result<T, E> {
+    let mut tries = 0;
+    loop {
+        match op() {
+            Ok(v) => return Ok(v),
+            Err(e) if tries < 12 => {
+                let _ = e;
+                tries += 1;
+                std::thread::sleep(std::time::Duration::from_millis(170));
+            }
+            Err(e) => return Err(e),
+        }
+    }
 }
 
 /// `dir/stem<suffix>.ext`, or with " (2)", " (3)"... appended when taken.
@@ -91,7 +108,8 @@ pub fn trash_file(path: &Path) -> Result<(), String> {
     if !path.exists() {
         return Err("Dosya bulunamadı".into());
     }
-    trash::delete(path).map_err(|e| format!("Geri Dönüşüm Kutusu'na taşınamadı: {e}"))
+    retry_busy(|| if path.exists() { trash::delete(path) } else { Ok(()) })
+        .map_err(|e| format!("Geri Dönüşüm Kutusu'na taşınamadı: {e}"))
 }
 
 #[derive(Serialize, Debug)]
