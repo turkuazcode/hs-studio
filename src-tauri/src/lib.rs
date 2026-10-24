@@ -314,7 +314,8 @@ pub fn run() {
             engine::engine_set,
             engine::engine_get,
             engine::engine_show,
-            engine::engine_screenshot
+            engine::engine_screenshot,
+            engine::engine_thumbnail
         ])
         .build(context)
         .expect("error while building tauri application");

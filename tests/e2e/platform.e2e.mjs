@@ -207,7 +207,7 @@ test("platform: recent files", { timeout: 120000 }, async (t) => {
     try {
       await platformReady(app);
       await t.test("opened video is recorded with duration and a thumbnail", async () => {
-        await app.waitFor(`document.getElementById("video-element").currentTime > 1`, { timeoutMs: 15000, message: "video playing" });
+        await app.waitFor(`window.__vhoEngine.time > 1`, { timeoutMs: 15000, message: "video playing" }); // either engine
         const lib = await waitStore(dataDir, "library.json", (l) => l.library?.recent?.[0]?.thumb?.startsWith("data:image/jpeg"), "video thumb");
         const v = lib.library.recent[0];
         assert.equal(v.name, "sample-h264.mp4");
@@ -256,7 +256,7 @@ test("platform: second launch with a file opens it in the running window", { tim
     });
     assert.equal(code, 0, "second instance exits after forwarding");
     await app.waitFor(`document.getElementById("current-filename").textContent === "sample-h264.mp4"`, { timeoutMs: 15000, message: "file opened in the first window" });
-    await app.waitFor(`document.getElementById("video-element").videoWidth > 0`, { timeoutMs: 15000, message: "video decoded" });
+    await app.waitFor(`window.__vhoEngine.time > 0.2 && (window.__vhoEngine.kind === "mpv" || document.getElementById("video-element").videoWidth > 0)`, { timeoutMs: 15000, message: "video decoded" }); // either engine
     const pages = await (await fetch(`http://127.0.0.1:${app.port}/json/list`)).json();
     assert.equal(pages.filter((p) => p.type === "page").length, 1, "still one window");
     assert.equal(await app.text("#playlist-count-badge"), "1");

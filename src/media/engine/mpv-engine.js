@@ -101,9 +101,14 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
         loadedFile = true;
         ended = false;
         // re-read the values that changed while stale events were ignored
-        get("duration").then((d) => { duration = d ?? NaN; emit("duration", duration); }).catch(() => {});
-        emit("loaded", { kind: "mpv" });
-        emit("playstate", !paused);
+        // "loaded" after the duration is known (resume offer, recent files)
+        get("duration")
+          .then((d) => { duration = d ?? NaN; emit("duration", duration); })
+          .catch(() => {})
+          .finally(() => {
+            emit("loaded", { kind: "mpv" });
+            emit("playstate", !paused);
+          });
         break;
       case "end-file":
         if (ev.reason === "error") {

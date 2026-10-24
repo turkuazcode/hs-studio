@@ -66,25 +66,46 @@ export function createRecentFiles(app) {
   // One frame a little into the video (the first frame is often black)
   app.bus.on("media:time", ({ time }) => {
     if (!current || current.captured) return;
-    const d = dom.video.duration;
+    const mpv = app.engine?.kind === "mpv";
+    const d = mpv ? app.engine.duration : dom.video.duration;
     const target = Number.isFinite(d) && d > 0 ? Math.min(3, d * 0.2) : 3;
-    if (time < target || dom.video.videoWidth === 0) return;
+    if (time < target || (!mpv && dom.video.videoWidth === 0)) return;
     current.captured = true;
+    const entry = current;
+    if (mpv) {
+      // libmpv draws outside the webview: grab the frame through the backend (PNG data URL)
+      invoke?.("engine_thumbnail")
+        .then((url) => new Promise((res, rej) => {
+          const img = new Image();
+          img.onload = () => res(img);
+          img.onerror = rej;
+          img.src = url;
+        }))
+        .then((img) => {
+          const thumb = captureFrame(img);
+          if (thumb) library.recent.update(entry.id, { thumb });
+        })
+        .catch((e) => console.warn("[recent] engine_thumbnail", e));
+      return;
+    }
     const thumb = captureFrame(dom.video);
     if (thumb) library.recent.update(current.id, { thumb });
   });
 
-  function captureFrame(video) {
+  /** src: <video> or a loaded <img>. */
+  function captureFrame(src) {
     try {
       const c = document.createElement("canvas");
       c.width = THUMB_W;
       c.height = THUMB_H;
       const ctx = c.getContext("2d");
-      const s = Math.min(THUMB_W / video.videoWidth, THUMB_H / video.videoHeight);
-      const w = video.videoWidth * s, h = video.videoHeight * s;
+      const vw = src.videoWidth || src.naturalWidth, vh = src.videoHeight || src.naturalHeight;
+      if (!vw || !vh) return "";
+      const s = Math.min(THUMB_W / vw, THUMB_H / vh);
+      const w = vw * s, h = vh * s;
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, THUMB_W, THUMB_H);
-      ctx.drawImage(video, (THUMB_W - w) / 2, (THUMB_H - h) / 2, w, h);
+      ctx.drawImage(src, (THUMB_W - w) / 2, (THUMB_H - h) / 2, w, h);
       return c.toDataURL("image/jpeg", 0.7);
     } catch (e) {
       console.warn("[recent] thumbnail", e); // tainted / no frame

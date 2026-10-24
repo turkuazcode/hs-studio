@@ -246,6 +246,44 @@ pub async fn engine_show(app: AppHandle, visible: bool) -> Result<bool, String> 
     rx.recv_timeout(std::time::Duration::from_secs(2)).map_err(|e| e.to_string())
 }
 
+/// Current frame (video only, no subtitles) as a PNG data URL, for the recent-files thumbnails.
+/// The temporary file lives in the app cache folder and is removed again.
+#[tauri::command]
+pub async fn engine_thumbnail(app: AppHandle, st: tauri::State<'_, Engine>) -> Result<String, String> {
+    let m = mpv_of(&st)?;
+    let dir = app.path().app_cache_dir().map_err(|e| e.to_string())?.join("thumbs");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let path = dir.join(format!("frame-{}.png", std::process::id()));
+    m.command(&json!(["screenshot-to-file", path.to_string_lossy(), "video"]))?;
+    let bytes = std::fs::read(&path).map_err(|e| e.to_string());
+    let _ = std::fs::remove_file(&path);
+    Ok(format!("data:image/png;base64,{}", base64(&bytes?)))
+}
+
+/// Standard base64 (RFC 4648, with padding).
+pub fn base64(data: &[u8]) -> String {
+    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::with_capacity(data.len().div_ceil(3) * 4);
+    for c in data.chunks(3) {
+        let n = (c[0] as u32) << 16 | (*c.get(1).unwrap_or(&0) as u32) << 8 | *c.get(2).unwrap_or(&0) as u32;
+        out.push(T[(n >> 18) as usize & 63] as char);
+        out.push(T[(n >> 12) as usize & 63] as char);
+        out.push(if c.len() > 1 { T[(n >> 6) as usize & 63] as char } else { '=' });
+        out.push(if c.len() > 2 { T[n as usize & 63] as char } else { '=' });
+    }
+    out
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn base64_matches_rfc4648_vectors() {
+        for (i, o) in [("", ""), ("f", "Zg=="), ("fo", "Zm8="), ("foo", "Zm9v"), ("foob", "Zm9vYg=="), ("foobar", "Zm9vYmFy")] {
+            assert_eq!(super::base64(i.as_bytes()), o);
+        }
+    }
+}
+
 /// Saves the current frame as PNG (`with_subs`: as shown, incl. subtitles) and returns its path.
 #[tauri::command]
 pub async fn engine_screenshot(

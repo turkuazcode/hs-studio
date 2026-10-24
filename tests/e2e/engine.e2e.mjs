@@ -213,9 +213,9 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
       assert.ok(existsSync(join(dir, files[0])));
     });
 
-    await t.test("bookmarks (K): stored per file, marker on the timeline", async () => {
+    await t.test("bookmarks (Y): stored per file, marker on the timeline", async () => {
       await seek(1.5);
-      await app.key("KeyK");
+      await app.key("KeyY");
       await app.waitFor(`${E}.bookmarks.length === 1 && document.querySelectorAll("#timeline-track .bookmark-marker").length === 1`, { timeoutMs: 3000 });
       assert.equal((await app.eval(`${E}.bookmarks`))[0].time, 1.5);
       await seek(4);
@@ -309,7 +309,7 @@ test("engine fallback: VHO_DISABLE_MPV=1 -> HTML5 engine, opaque window", { time
       assert.equal(await app.eval(`document.getElementById("btn-pip").hidden`), false);
       assert.match(await app.text("#engine-info"), /HTML5 <video> yedek motoru — libmpv yok/);
       assert.notEqual(await app.eval(`getComputedStyle(document.body).backgroundColor`), "rgba(0, 0, 0, 0)");
-      assert.equal(await app.eval(`document.getElementById("audio-track-container").hidden`), true);
+      assert.equal(await app.eval(`document.getElementById("btn-hud-more").offsetParent !== null`), true);
     });
     await t.test("no uncaught page errors", async () => {
       assert.deepEqual(await app.errors(), []);
