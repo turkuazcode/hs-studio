@@ -16,7 +16,7 @@ export const MEDIA_ERR_TEXT = {
 
 export const ASPECT_CLASSES = ["aspect-16-9", "aspect-21-9", "aspect-4-3", "aspect-fill"];
 
-/** localStorage key of the resume position. */
+/** Key of the resume position (app.resume store; localStorage in older builds). */
 export const resumeKey = (item) =>
   item.url ? "vho_url_" + item.url : `vho_file_${item.name || "Online Video"}_${itemSize(item)}`;
 
@@ -267,10 +267,10 @@ export function createVideoPlayer(app) {
   }
 
   // ------------------------------------------------------------------------
-  // Resume position (localStorage)
+  // Resume position (app.resume: library store, see core/library.js)
   // ------------------------------------------------------------------------
   function checkResumePlayback() {
-    const saved = localStorage.getItem(state.get("currentFileKey"));
+    const saved = app.resume.get(state.get("currentFileKey"));
     if (!saved) return;
     const savedTime = parseFloat(saved);
     if (shouldOfferResume(savedTime, video.duration)) {
@@ -291,7 +291,7 @@ export function createVideoPlayer(app) {
   });
 
   btnResumeNo.addEventListener("click", () => {
-    localStorage.removeItem(state.get("currentFileKey"));
+    app.resume.remove(state.get("currentFileKey"));
     resumePendingTime = 0;
     resumeToast.classList.remove("show");
   });
@@ -300,7 +300,7 @@ export function createVideoPlayer(app) {
   setInterval(() => {
     const key = state.get("currentFileKey");
     if (key && state.get("currentMediaType") === "video" && video.currentTime > 5 && !video.paused) {
-      localStorage.setItem(key, video.currentTime);
+      app.resume.set(key, video.currentTime);
     }
   }, 3000);
 
@@ -340,7 +340,7 @@ export function createVideoPlayer(app) {
 
   // Video end -> sleep timer check or playlist auto advance
   video.addEventListener("ended", () => {
-    localStorage.removeItem(state.get("currentFileKey"));
+    app.resume.remove(state.get("currentFileKey"));
     if (app.sleep.isVideoEndArmed) {
       app.sleep.trigger();
       return;
