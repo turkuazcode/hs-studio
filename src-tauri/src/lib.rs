@@ -1,5 +1,6 @@
 mod ai;
 mod photo;
+mod platform;
 mod transcode;
 
 use std::path::{Path, PathBuf};
@@ -77,13 +78,14 @@ fn prepare_media(app: AppHandle, paths: Vec<String>) -> Vec<MediaEntry> {
         .collect()
 }
 
-/// Files passed on the command line ("Open with VHO" / double-click in Explorer).
+/// Files passed on the command line ("Open with VHO" / double-click in Explorer), plus
+/// files the OS handed over before the page was ready (macOS Finder).
 #[tauri::command]
-fn initial_files() -> Vec<String> {
-    std::env::args()
-        .skip(1)
-        .filter(|a| !a.starts_with('-') && Path::new(a).is_file())
-        .collect()
+fn initial_files(pending: tauri::State<'_, platform::PendingOpen>) -> Vec<String> {
+    let cwd = std::env::current_dir().unwrap_or_default();
+    let mut files = platform::file_args(std::env::args().skip(1), &cwd);
+    files.extend(pending.take_and_mark_ready());
+    files
 }
 
 #[tauri::command]
@@ -227,9 +229,31 @@ async fn suspend_system() -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let mut context = tauri::generate_context!();
+    platform::apply_test_isolation(&mut context);
+
+    let builder = tauri::Builder::default();
+    // Must be the first plugin: a second launch exits here, before any window exists.
+    #[cfg(any(target_os = "macos", windows, target_os = "linux"))]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
+        platform::on_second_instance(app, argv, cwd)
+    }));
+
+    let mut window_state = tauri_plugin_window_state::Builder::new().with_state_flags(
+        tauri_plugin_window_state::StateFlags::SIZE
+            | tauri_plugin_window_state::StateFlags::POSITION
+            | tauri_plugin_window_state::StateFlags::MAXIMIZED,
+    );
+    if let Some(file) = platform::window_state_filename() {
+        window_state = window_state.with_filename(file);
+    }
+
+    let app = builder
+        .manage(platform::PendingOpen::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_store::Builder::new().build())
+        .plugin(window_state.build())
         .setup(|app| {
             prune_transcode_cache(app.handle());
 
@@ -272,8 +296,18 @@ pub fn run() {
             photo::photo_batch,
             photo::photo_cancel,
             photo::photo_list_dirs,
-            photo::photo_capabilities
+            photo::photo_capabilities,
+            platform::settings_dir,
+            platform::open_default_apps_settings
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(context)
+        .expect("error while building tauri application");
+
+    app.run(|_app, _event| {
+        // Finder "Open With" / double-click while running or at launch (macOS only)
+        #[cfg(target_os = "macos")]
+        if let tauri::RunEvent::Opened { urls } = &_event {
+            platform::on_opened_urls(_app, urls);
+        }
+    });
 }

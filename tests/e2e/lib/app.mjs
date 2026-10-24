@@ -1,11 +1,13 @@
 // Starts / stops vho.exe for E2E tests and wraps the CDP session with app helpers.
 //
-// Isolation: every launch gets its own WebView2 profile (WEBVIEW2_USER_DATA_FOLDER), so
-// tests never see the user's localStorage (resume positions) and never join a VHO the
-// user or another agent is running. Only the process started here is ever stopped.
+// Isolation: every launch gets its own WebView2 profile (WEBVIEW2_USER_DATA_FOLDER) and its
+// own data folder (VHO_DATA_DIR: settings.json, library.json, window state), so tests never
+// see or change the user's settings / resume positions. VHO_DATA_DIR also scopes the
+// single-instance lock, so a test VHO never forwards files to the user's own VHO (or
+// another agent's). Only the process started here is ever stopped.
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -16,7 +18,7 @@ export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..
 export const FIXTURES = join(REPO_ROOT, "tests", "fixtures");
 export const fixture = (name) => join(FIXTURES, name);
 
-/** CDP ports reserved for VHO tests (override with VHO_E2E_PORT_MIN / VHO_E2E_PORT_MAX). */
+/** CDP ports reserved for VHO tests (override: VHO_E2E_PORT_MIN / VHO_E2E_PORT_MAX). */
 const PORT_MIN = Number(process.env.VHO_E2E_PORT_MIN) || 9500;
 const PORT_MAX = Number(process.env.VHO_E2E_PORT_MAX) || 9599;
 
@@ -32,7 +34,7 @@ function portFree(port) {
   });
 }
 
-/** A free port in 9500-9599, starting at a random offset (parallel runs by other agents). */
+/** A free port in the reserved range, starting at a random offset (parallel runs by other agents). */
 export async function findFreePort() {
   const span = PORT_MAX - PORT_MIN + 1;
   const start = Math.floor(Math.random() * span);
@@ -142,23 +144,40 @@ const waitExit = (proc, ms) => new Promise((res) => {
  * connects CDP, installs the error collector + stubs (via one reload) and waits until
  * the app has booted (window.__vho).
  */
-export async function launchApp({ args = [], exe = defaultExe() } = {}) {
+/** A temporary data folder for VHO_DATA_DIR that outlives one launch (restart tests). */
+export const makeDataDir = () => mkdtemp(join(tmpdir(), "vho-e2e-data-"));
+export const removeDir = (dir) => rm(dir, { recursive: true, force: true, maxRetries: 15, retryDelay: 400 }).catch(() => {});
+
+/** Environment of a test vho.exe (also used for second-instance launches). */
+export function appEnv({ port, userData, dataDir }) {
+  return {
+    ...process.env,
+    WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port}`,
+    WEBVIEW2_USER_DATA_FOLDER: userData,
+    // Settings / library / window state / single-instance lock isolated from the user's VHO
+    VHO_DATA_DIR: dataDir,
+    // Backend guard: suspend_system becomes a no-op (never sleep the test machine)
+    VHO_DISABLE_SYSTEM_SUSPEND: "1",
+  };
+}
+
+/**
+ * dataDir: reuse a data folder (e.g. to restart with the same settings); the caller removes
+ * it. Without it a fresh folder inside the temporary WebView2 profile is used.
+ */
+export async function launchApp({ args = [], exe = defaultExe(), dataDir } = {}) {
   if (!existsSync(exe)) {
     throw new Error(`${exe} not found. Build it first: npm run build:release (or set VHO_EXE)`);
   }
   const port = await findFreePort();
   const userData = await mkdtemp(join(tmpdir(), "vho-e2e-"));
-  const proc = spawn(exe, args, {
-    env: {
-      ...process.env,
-      WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port}`,
-      WEBVIEW2_USER_DATA_FOLDER: userData,
-      // Backend guard: suspend_system becomes a no-op (never sleep the test machine)
-      VHO_DISABLE_SYSTEM_SUSPEND: "1",
-    },
-    stdio: "ignore",
-    windowsHide: false,
-  });
+  const ownData = !dataDir;
+  if (ownData) {
+    dataDir = join(userData, "vho-data");
+    await mkdir(dataDir, { recursive: true });
+  }
+  const env = appEnv({ port, userData, dataDir });
+  const proc = spawn(exe, args, { env, stdio: "ignore", windowsHide: false });
   const exited = new Promise((res) => proc.once("exit", (code) => res(code)));
   debug("launch: pid", proc.pid, "port", port, "args", args);
 
@@ -203,6 +222,9 @@ export async function launchApp({ args = [], exe = defaultExe() } = {}) {
     port,
     cdp,
     userData,
+    dataDir,
+    env,
+    exe,
     /** Backend commands the guard answered instead of the app (e.g. ["suspend_system"]). */
     blockedCalls: () => cdp.evaluate("window.__blockedCalls"),
     /** Re-checks the invoke guard (throws if a call could reach the backend unseen). */
