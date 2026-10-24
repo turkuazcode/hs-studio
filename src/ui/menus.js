@@ -127,13 +127,14 @@ export function initMenus(app) {
 
   function contextItems() {
     const mode = state.get("currentMediaType");
-    const hasVideo = mode === "video" && !!dom.video.getAttribute("src");
+    // any engine (libmpv has no src on the <video> element)
+    const hasVideo = mode === "video" && !dom.dropZone.classList.contains("visible");
     const items = [];
     if (mode === "image") {
       items.push({ id: "slideshow", labelKey: "menu.slideshow", shortcut: "slideshow", run: () => app.photo.toggleSlideshow() });
     } else {
       items.push({
-        id: "play-pause", labelKey: dom.video.paused ? "menu.play" : "menu.pause", shortcut: "playPause",
+        id: "play-pause", labelKey: app.engine.paused ? "menu.play" : "menu.pause", shortcut: "playPause",
         disabled: !hasVideo, run: () => app.video.togglePlay(),
       });
     }
@@ -227,7 +228,7 @@ export function initMenus(app) {
   // Mouse: middle click = fullscreen, wheel = volume (video)
   // ------------------------------------------------------------------------
   const viewport = document.getElementById("viewport");
-  const onMedia = (target) => target === dom.video || target === dom.gpuCanvas || target === viewport ||
+  const onMedia = (target) => target === dom.video || target === dom.gpuCanvas || target === viewport || target === dom.mpvSurface ||
     target?.id === "subtitles-container" || target?.id === "subtitle-text" || target?.closest?.("#image-container");
 
   viewport?.addEventListener("mousedown", (e) => {
@@ -239,8 +240,9 @@ export function initMenus(app) {
     app.fullscreen.toggle();
   });
   viewport?.addEventListener("wheel", (e) => {
+    if (e.ctrlKey) return; // Ctrl+wheel = zoom (ui/playback-menus.js)
     if (!settings.get("general.wheelVolume") || state.get("currentMediaType") !== "video") return;
-    if (!(e.target === dom.video || e.target === dom.gpuCanvas || e.target === viewport ||
+    if (!(e.target === dom.video || e.target === dom.gpuCanvas || e.target === viewport || e.target === dom.mpvSurface ||
       e.target?.id === "subtitles-container" || e.target?.id === "subtitle-text")) return;
     e.preventDefault();
     app.audio.nudgeVolume(e.deltaY < 0 ? 5 : -5);

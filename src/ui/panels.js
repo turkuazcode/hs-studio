@@ -5,7 +5,6 @@
 // ==========================================================================
 
 import { invoke } from "../core/tauri.js";
-import { loadJson, saveJson } from "../core/storage.js";
 
 /** Presets (data-driven). */
 export const AI_PRESETS = {
@@ -27,8 +26,7 @@ export function createPanels(app) {
     btnResetFilters, checkCompatMode, btnToggleAiRestore, aiRestorePanel, btnCloseAiRestore, checkAiMaster,
     aiMasterStatus, aiRestoreBadge, sliderAiSharp, valAiSharp, sliderAiContrast, valAiContrast,
     checkAiVoiceClarity, checkAiDenoise, checkAiCompressor, btnToggleSplitView, splitViewStatus,
-    splitScreenBanner, splitScreenLine, playlistDrawer, sliderGamma, sliderHue, sliderSubSize, valSubSize,
-    sliderSubPos, valSubPos, selectSubColor, audioPanel,
+    splitScreenBanner, splitScreenLine, playlistDrawer, sliderGamma, sliderHue, audioPanel,
   } = dom;
   const applyFilters = () => app.filters.apply();
 
@@ -50,24 +48,6 @@ export function createPanels(app) {
   sliderGamma?.addEventListener("input", applyFilters);
   sliderHue?.addEventListener("input", applyFilters);
 
-  // Subtitle style (app overlay + libmpv/libass)
-  const savedStyle = loadJson("vho_sub_style", null);
-  if (savedStyle) {
-    sliderSubSize.value = savedStyle.size;
-    sliderSubPos.value = savedStyle.pos;
-    selectSubColor.value = savedStyle.color;
-  }
-  function applySubStyle() {
-    const style = { size: Number(sliderSubSize.value), pos: Number(sliderSubPos.value), color: selectSubColor.value };
-    valSubSize.textContent = `${style.size}%`;
-    valSubPos.textContent = String(style.pos);
-    app.subtitles.setStyle(style);
-    saveJson("vho_sub_style", style);
-  }
-  sliderSubSize.addEventListener("input", applySubStyle);
-  sliderSubPos.addEventListener("input", applySubStyle);
-  selectSubColor.addEventListener("change", applySubStyle);
-  app.bus.on("engine:changed", applySubStyle);
 
   btnResetFilters.addEventListener("click", () => {
     sliderBrightness.value = 100;
