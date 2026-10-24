@@ -40,6 +40,7 @@ Her ajan **kendi git worktree'sinde** çalışır, kendi dalına commit eder. En
 | Ajan | Plan |
 |---|---|
 | **D1 Medya eylemleri** | [06-medya-eylemleri.md](06-medya-eylemleri.md) — Windows Fotoğraflar tarzı araç çubuğu; sil/paylaş/yazdır/kopyala/arka plan yap/birlikte aç/metin tanıma; video kesme/dönüştürme/kare kaydetme; müzik etiket düzenleme/sözler |
+| **D3 Akıllı düzenleme** | [07-akilli-duzenleme.md](07-akilli-duzenleme.md) — nesne silme (LaMa), arka plan kaldırma/bulanıklaştırma (BiRefNet), siyah-beyaz renklendirme (DDColor); D1'den sonra. "Otomatik iyileştir" kapsam dışı (kullanıcı geliştiriyor) |
 | **D2 Metin çevirisi (i18n)** | [03-platform-ve-ayarlar.md](03-platform-ve-ayarlar.md) §3 — mevcut tüm metinlerin TR/EN anahtarlarına taşınması (D1 bittikten sonra, en son) |
 
 ### Dalga 3 — Kütüphane, ağ, yayın
