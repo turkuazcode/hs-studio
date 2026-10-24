@@ -137,9 +137,10 @@ npm run tauri build
 
 | Klasör | İçerik |
 |---|---|
-| `src/core/` | `dom.js` (tüm DOM referansları), `state.js` (reaktif store), `events.js` (olay veriyolu), `tauri.js` (`__TAURI__` sarmalayıcıları, tarayıcıda no-op), `format.js` (saf biçimleme) |
+| `src/core/` | `dom.js` (tüm DOM referansları), `state.js` (reaktif store), `events.js` (olay veriyolu), `tauri.js` (`__TAURI__` sarmalayıcıları, tarayıcıda no-op), `format.js` (saf biçimleme), `settings-schema.js` + `settings.js` (sürümlü ayar şeması, doğrulama, göç, `settings.register()`), `library.js` (son açılanlar + kaldığın yer), `i18n.js` (`t()`, `applyTranslations()`), `keymap.js` (kısayol birleşimleri, çakışma denetimi) |
 | `src/media/` | `classify.js`, `subtitles.js`, `loader.js`, `video-player.js`, `audio-engine.js`, `visual-filters.js`, `photo-viewer.js`, `photo-ai.js`, `snapshot.js`, `onnx-patch.js` + mevcut `gpu-enhancer.js`, `ai-*.js`, `face-restore.js` |
-| `src/ui/` | `hud.js`, `timeline.js`, `playlist.js`, `panels.js`, `modals.js`, `sleep-timer.js`, `shortcuts.js`, `fullscreen.js`, `toasts.js`, `window-controls.js` |
+| `src/ui/` | `hud.js`, `timeline.js`, `playlist.js`, `panels.js`, `modals.js`, `sleep-timer.js`, `shortcuts.js` (merkezî kısayol tablosu), `fullscreen.js`, `toasts.js`, `window-controls.js`, `platform.js` (platform katmanı önyüklemesi), `settings-modal.js`, `settings-bindings.js`, `recent-files.js`, `menus.js` (sağ tık + titlebar menüsü, fare), `shortcut-editor.js`, `shortcut-help.js`, `theme.js` |
+| `src/i18n/` | `tr.json`, `en.json` (arayüz metinleri; şimdilik yalnızca platform katmanı) |
 
 Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çözme, çalma listesi gezinme, ONNX yaması...) DOM'suz fonksiyonlardır ve birim testlidir.
 
@@ -156,7 +157,8 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 ### Uçtan uca (E2E) testler
 `tests/e2e/` altındaki testler `vho.exe`'yi `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=<9500-9599>` ile başlatır ve Chrome DevTools Protocol üzerinden sayfayı sürer (`lib/cdp.mjs`, `lib/app.mjs`). Medya dosyaları komut satırı argümanı olarak açılır ("Birlikte aç" yolu).
 
-- Her çalıştırma ayrı, geçici bir WebView2 profili kullanır (`WEBVIEW2_USER_DATA_FOLDER`): kullanıcının açık VHO'suna ve kaldığı yer kayıtlarına dokunmaz. Testler yalnızca kendi başlattıkları süreci kapatır.
+- Her çalıştırma ayrı, geçici bir WebView2 profili (`WEBVIEW2_USER_DATA_FOLDER`) ve ayrı bir veri klasörü (`VHO_DATA_DIR`: `settings.json`, `library.json`, pencere konumu) kullanır: kullanıcının ayarlarına ve kaldığı yer kayıtlarına dokunmaz. `VHO_DATA_DIR` tek örnek (single-instance) kilidini de o klasöre özgü yapar; test VHO'su dosyalarını kullanıcının açık VHO'suna iletmez. Testler yalnızca kendi başlattıkları süreci kapatır.
+- CDP port aralığı varsayılan 9500-9599; paralel çalışmalar için `VHO_E2E_PORT_MIN` / `VHO_E2E_PORT_MAX` ile değiştirilebilir.
 - Arka plandaki pencere yeniden çizilmeyebilir; bu yüzden testler ekran görüntüsüne değil, DOM ve medya durumuna (`videoWidth`, `getVideoPlaybackQuality()`, metinler) bakar.
 - **Güvenlik:** testler bilgisayarı asla uyku moduna almaz. `vho.exe`, `VHO_DISABLE_SYSTEM_SUSPEND=1` ile başlatılır (`suspend_system` hiçbir şey yapmaz) ve sayfa betikleri çalışmadan önce `__TAURI__.core.invoke` sarmalanır: `suspend_system` ve `set_compat_mode` arka uca hiç gitmez. Koruma her açılışta doğrulanır; doğrulanamazsa testler çalışmaz. Uyku zamanlayıcısı testleri "PC Uyku" kutusunu önce kapatır.
 - `window.confirm` ve indirmeler (ekran görüntüsü) test tarafında taklit edilir; yakalanmamış sayfa hataları toplanır ve her testin sonunda boş olmalıdır.
@@ -168,6 +170,7 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 | `video.e2e.mjs` | H.264 oynatma, duraklatma, atlama, ses %150/sessiz, A-B döngü, altyazı (UTF-8 SRT, Windows-1254 SRT, BOM'lu VTT, gecikme), hız/en-boy, renk filtreleri, AI/bölünmüş ekran, ekran görüntüsü, çalma listesi otomatik geçiş, "video bitince" uyku modu |
 | `legacy.e2e.mjs` | WMV9/WMA → Media Foundation dönüştürme → H.264/AAC kareleri çözülüyor (Windows) |
 | `photo.e2e.mjs` | JPEG + PNG, bilgi kartı, yakınlaştırma, döndürme, sarmalı gezinme, slayt gösterisi, ekran görüntüsü |
+| `platform.e2e.mjs` | Ayarlar penceresi (sekmeler, dil değişimi yeniden yüklemeden), kısayol düzenleyici çakışma denetimi, `?` yardım, sağ tık menüsü, tema; ayar değiştir → yeniden başlat → korunmuş; son açılanlar (küçük resim, kaldır, temizle); ikinci `vho.exe dosya.mp4` → aynı pencerede açılır |
 
 ### Test medyası (`tests/fixtures/`)
 Tamamı sentetik ve depoya dahildir (toplam ~185 KB); `tests/fixtures/make-fixtures.ps1` ile yeniden üretilir:
