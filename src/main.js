@@ -14,6 +14,7 @@ import { createAppState } from "./core/state.js";
 import { convertFileSrc, invoke, listen } from "./core/tauri.js";
 import { createAudioEngine } from "./media/audio-engine.js";
 import { createAudioFx } from "./media/audio-fx.js";
+import { registerEngineSettings } from "./media/engine-settings.js";
 import { createEngineFacade } from "./media/engine/engine.js";
 import { createHtml5Engine } from "./media/engine/html5-engine.js";
 import { createMpvEngine } from "./media/engine/mpv-engine.js";
@@ -131,6 +132,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   initPlatform(app)
     .catch((e) => console.error("[platform]", e))
     .finally(() => {
+      // engine options after the base fields (tab order), once the stored values are loaded
+      registerEngineSettings(app);
       invoke?.("initial_files")
         .then((paths) => app.loader.openPaths(paths))
         .catch((e) => console.warn("initial_files", e));

@@ -553,43 +553,10 @@
               Varsayılanlara Sıfırla
             </button>
 
-            <!-- Subtitle style (both renderers) -->
-            <div class="restore-section-title">Altyazı Stili</div>
-            <div class="filter-group">
-              <div class="filter-label"><span>Boyut</span><span id="val-sub-size">100%</span></div>
-              <input id="slider-sub-size" type="range" min="50" max="200" value="100" class="filter-slider">
-            </div>
-            <div class="filter-group">
-              <div class="filter-label"><span>Konum (alttan yukarı)</span><span id="val-sub-pos">100</span></div>
-              <input id="slider-sub-pos" type="range" min="50" max="100" value="100" class="filter-slider">
-            </div>
-            <div class="filter-group">
-              <div class="filter-label"><span>Renk</span></div>
-              <select id="select-sub-color" class="modal-select">
-                <option value="#ffffff">Beyaz</option>
-                <option value="#ffff00">Sarı</option>
-                <option value="#00ffff">Camgöbeği</option>
-                <option value="#a0ff80">Açık yeşil</option>
-              </select>
-            </div>
 
-            <!-- Engine / advanced -->
-            <div class="restore-section-title">Oynatma Motoru (Gelişmiş)</div>
+            <!-- Active playback engine (options: Ayarlar > Gelişmiş) -->
+            <div class="restore-section-title">Oynatma Motoru</div>
             <div id="engine-info" class="engine-info">—</div>
-            <div class="filter-group mpv-only">
-              <div class="filter-label"><span>Donanım ile çözme</span></div>
-              <select id="select-hwdec" class="modal-select">
-                <option value="auto-safe">Otomatik (önerilen)</option>
-                <option value="no">Kapalı (yazılım)</option>
-              </select>
-            </div>
-            <label class="restore-check-row mpv-only" title="Zayıf/dahili ekran kartları için">
-              <input type="checkbox" id="check-fast-profile" />
-              <div class="check-text">
-                <strong>Hızlı görüntü profili (profile=fast)</strong>
-                <span>Dahili ekran kartlarında GPU yükünü azaltır; ölçekleme kalitesi biraz düşer.</span>
-              </div>
-            </label>
 
             <!-- GPU Compatibility Mode (black video screen workaround) -->
             <label class="restore-check-row compat-row" title="Uygulama yeniden başlatılır">

@@ -7,6 +7,7 @@ import {
   normalizeTracks, pictureProps, removeBookmark, subMarginFor, trackLabel,
 } from "../../src/media/engine/engine.js";
 import { bandLabel, formatAudioDelay } from "../../src/media/audio-fx.js";
+import { wantFastProfile } from "../../src/media/engine-settings.js";
 
 /** Minimal engine implementing the whole contract; records calls. */
 function fakeEngine(kind) {
@@ -171,4 +172,12 @@ test("audio panel labels", () => {
   assert.equal(formatAudioDelay(0), "0 ms");
   assert.equal(bandLabel(1000), "1k");
   assert.equal(bandLabel(62), "62");
+});
+
+test("profile=fast follows the GPU in auto mode", () => {
+  assert.equal(wantFastProfile("auto", { integrated: true }), true);
+  assert.equal(wantFastProfile("auto", { integrated: false }), false);
+  assert.equal(wantFastProfile("auto", undefined), false);
+  assert.equal(wantFastProfile("on", { integrated: false }), true);
+  assert.equal(wantFastProfile("off", { integrated: true }), false);
 });

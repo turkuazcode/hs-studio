@@ -1998,13 +1998,8 @@ html[data-engine="mpv"] .html5-only { display: none !important; }
   overflow-y: auto;
 }
 
-/* Subtitle style (app overlay) */
-.subtitles-container { --sub-scale: 1; --sub-color: #ffffff; --sub-lift: 0vh; }
-.subtitles-container .subtitle-text {
-  font-size: calc(21px * var(--sub-scale));
-  color: var(--sub-color);
-}
-.subtitles-container { margin-bottom: var(--sub-lift); }
+/* Subtitle position (size/colour: platform.css, Settings > Altyazı) */
+.subtitles-container { margin-bottom: var(--sub-lift, 0vh); }
 
 /* Chapter and bookmark markers on the timeline */
 .timeline-marker {

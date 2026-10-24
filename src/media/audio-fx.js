@@ -6,7 +6,6 @@
 // ==========================================================================
 
 import { EQ_BANDS, EQ_PRESETS, audioFilterChain } from "./engine/engine.js";
-import { loadJson, saveJson } from "../core/storage.js";
 
 /** "+50 ms" / "0 ms" / "-100 ms" */
 export const formatAudioDelay = (ms) => `${ms > 0 ? "+" : ""}${ms} ms`;
@@ -15,7 +14,9 @@ export const formatAudioDelay = (ms) => `${ms > 0 ? "+" : ""}${ms} ms`;
 export const bandLabel = (f) => (f >= 1000 ? `${f / 1000}k` : String(f));
 
 /**
- * app: { dom, engine, audio, toast, bus }
+ * app: { dom, engine, audio, toast, bus, settings? }
+ * Persisted in the settings store (audio.eqPreset, audio.eqGains, audio.normalize; registered by
+ * media/engine-settings.js), so the Settings window and this panel stay in sync.
  */
 export function createAudioFx(app) {
   const { dom, engine } = app;
@@ -24,14 +25,40 @@ export function createAudioFx(app) {
     checkAudioNormalize, selectEqPreset, eqBands, effectsPanel, aiRestorePanel,
   } = dom;
 
-  const saved = loadJson("vho_audio_fx", {});
-  let gains = Array.isArray(saved.gains) && saved.gains.length === EQ_BANDS.length ? saved.gains : EQ_BANDS.map(() => 0);
-  let preset = saved.preset ?? "flat";
-  let normalize = !!saved.normalize;
+  const settings = app.settings;
+  let gains = EQ_BANDS.map(() => 0);
+  let preset = "flat";
+  let normalize = false;
   let delayMs = 0; // per file, not persisted
   let lastChain = null;
+  let persisting = false;
 
-  const persist = () => saveJson("vho_audio_fx", { gains, preset, normalize });
+  function persist() {
+    if (!settings?.field?.("audio.eqGains")) return;
+    persisting = true;
+    try {
+      settings.set("audio.eqGains", { gains: [...gains] });
+      settings.set("audio.eqPreset", preset);
+      settings.set("audio.normalize", normalize);
+    } finally {
+      persisting = false;
+    }
+  }
+
+  /** Settings store -> panel + filter chain (startup and changes made in the Settings window). */
+  function loadFromSettings() {
+    if (!settings?.field?.("audio.eqGains")) return;
+    const g = settings.get("audio.eqGains")?.gains;
+    if (Array.isArray(g) && g.length === EQ_BANDS.length) gains = [...g];
+    preset = settings.get("audio.eqPreset") ?? preset;
+    if (EQ_PRESETS[preset]) gains = [...EQ_PRESETS[preset].gains];
+    normalize = !!settings.get("audio.normalize");
+    render();
+    apply();
+  }
+  for (const k of ["audio.eqGains", "audio.eqPreset", "audio.normalize"]) {
+    settings?.subscribe?.(k, () => { if (!persisting) loadFromSettings(); });
+  }
 
   // ------------------------------------------------------------------------
   // Panel
@@ -136,6 +163,7 @@ export function createAudioFx(app) {
   app.bus.on("engine:changed", () => apply(true));
 
   return {
+    loadFromSettings,
     /** New file: filters stay (mpv keeps `af`), the per-file audio delay starts at 0. */
     reapply() {
       setDelay(0);

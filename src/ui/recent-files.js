@@ -59,7 +59,7 @@ export function createRecentFiles(app) {
 
   app.bus.on("media:loaded", ({ kind }) => {
     if (!current || kind !== "video") return;
-    const d = dom.video.duration;
+    const d = app.engine?.duration ?? dom.video.duration;
     if (Number.isFinite(d) && d > 0) library.recent.update(current.id, { duration: d });
   });
 

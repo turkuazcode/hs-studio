@@ -16,8 +16,6 @@ import {
 /** Bookmark storage key for the current file (same identity as the resume position). */
 export const bookmarkKey = (fileKey) => (fileKey ? `vho_bm_${fileKey}` : "");
 
-/** Profile "fast" values and their gpu-next defaults (restored when switched off). */
-const FAST_PROPS = ["scale", "dscale", "cscale", "dither", "correct-downscaling", "linear-downscaling", "sigmoid-upscaling", "hdr-compute-peak"];
 
 /**
  * app: { dom, state, bus, engine, toast, hud, timeline, subtitles, video, menus }
@@ -27,7 +25,7 @@ export function createPlaybackMenus(app) {
   const {
     audioTrackContainer, btnAudioTracks, audioTrackLabel, audioTrackMenu, chaptersContainer, btnChapters,
     chapterLabel, chaptersMenu, btnBookmarks, bookmarksMenu, bookmarkAdd, bookmarkList, btnViewMenu, viewMenu,
-    mpvSurface, viewport, controlsHud, engineInfo, selectHwdec, checkFastProfile,
+    mpvSurface, viewport, controlsHud, engineInfo,
   } = dom;
 
   // ------------------------------------------------------------------------
@@ -288,12 +286,9 @@ export function createPlaybackMenus(app) {
   });
 
   // ------------------------------------------------------------------------
-  // Engine info + advanced settings
+  // Engine info (options: Settings > Gelişmiş, media/engine-settings.js)
   // ------------------------------------------------------------------------
   const status = app.engineStatus ?? {};
-  const fastDefault = !!status.gpu?.integrated;
-  let fastDefaults = null; // gpu-next values before profile=fast (to switch it off again)
-
   function renderEngineInfo() {
     if (engine.kind === "mpv") {
       const gpu = status.gpu?.name ? ` · GPU: ${status.gpu.name}` : "";
@@ -305,50 +300,12 @@ export function createPlaybackMenus(app) {
     }
   }
 
-  async function applyAdvanced() {
-    if (engine.kind !== "mpv") return;
-    engine.set("hwdec", selectHwdec.value).catch(() => {});
-    const want = checkFastProfile.checked;
-    if (want === !!applyAdvanced.fastOn) return;
-    if (want) {
-      engine.impl.command(["apply-profile", "fast"]).catch(() => {});
-    } else if (fastDefaults) {
-      for (const [k, v] of Object.entries(fastDefaults)) engine.set(k, v).catch(() => {});
-    } else {
-      // started with profile=fast (integrated GPU): gpu-next defaults
-      const defaults = { scale: "lanczos", dscale: "hermite", cscale: "lanczos", dither: "fruit",
-        "correct-downscaling": true, "linear-downscaling": true, "sigmoid-upscaling": true, "hdr-compute-peak": "auto" };
-      for (const [k, v] of Object.entries(defaults)) engine.set(k, v).catch(() => {});
-    }
-    applyAdvanced.fastOn = want;
-  }
-
-  if (status.available) {
-    selectHwdec.value = loadJson("vho_hwdec", "auto-safe");
-    checkFastProfile.checked = loadJson("vho_fast_profile", fastDefault);
-    applyAdvanced.fastOn = fastDefault; // the backend starts mpv with profile=fast on integrated GPUs
-    if (!fastDefault) {
-      Promise.all(FAST_PROPS.map((k) => app.engines.mpv.get(k).then((v) => [k, v]).catch(() => null)))
-        .then((pairs) => { fastDefaults = Object.fromEntries(pairs.filter(Boolean)); });
-    }
-    selectHwdec.addEventListener("change", () => {
-      saveJson("vho_hwdec", selectHwdec.value);
-      applyAdvanced();
-      app.toast(selectHwdec.value === "no" ? "Donanım ile çözme kapalı" : "Donanım ile çözme otomatik");
-    });
-    checkFastProfile.addEventListener("change", () => {
-      saveJson("vho_fast_profile", checkFastProfile.checked);
-      applyAdvanced();
-    });
-  }
-
   app.bus.on("engine:changed", () => {
     lastMargins = "";
     lastSubMargin = null;
     renderEngineInfo();
     syncGeometry();
     syncSubMargin();
-    applyAdvanced();
   });
   renderEngineInfo();
 
