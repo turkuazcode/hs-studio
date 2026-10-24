@@ -23,6 +23,8 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
   const seek = async (time) => {
     await app.eval(`__TAURI__.core.invoke("engine_command", { args: ["seek", ${time}, "absolute+exact"] }).then(() => true)`);
     await waitProp("time-pos", `(v) => Math.abs(v - ${time}) < 0.1`);
+    // the UI's mirror (engine://property, rate limited) must have caught up too
+    await app.waitFor(`Math.abs(${E}.time - ${time}) < 0.1`, { timeoutMs: 3000, message: `UI time ${time}` });
   };
   const pause = async () => {
     await app.eval(`__TAURI__.core.invoke("engine_set", { name: "pause", value: true }).then(() => true)`);
