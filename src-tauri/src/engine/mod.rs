@@ -246,15 +246,24 @@ pub async fn engine_show(app: AppHandle, visible: bool) -> Result<bool, String> 
     rx.recv_timeout(std::time::Duration::from_secs(2)).map_err(|e| e.to_string())
 }
 
+/// Current frame (video only, no subtitles) as a PNG file in the app cache folder; the caller
+/// removes it (thumbnails, "copy frame").
+pub fn frame_to_temp(app: &AppHandle, st: &tauri::State<'_, Engine>) -> Result<PathBuf, String> {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    static N: AtomicU64 = AtomicU64::new(0);
+    let m = mpv_of(st)?;
+    let dir = app.path().app_cache_dir().map_err(|e| e.to_string())?.join("thumbs");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let path = dir.join(format!("frame-{}-{}.png", std::process::id(), N.fetch_add(1, Ordering::Relaxed)));
+    m.command(&json!(["screenshot-to-file", path.to_string_lossy(), "video"]))?;
+    Ok(path)
+}
+
 /// Current frame (video only, no subtitles) as a PNG data URL, for the recent-files thumbnails.
 /// The temporary file lives in the app cache folder and is removed again.
 #[tauri::command]
 pub async fn engine_thumbnail(app: AppHandle, st: tauri::State<'_, Engine>) -> Result<String, String> {
-    let m = mpv_of(&st)?;
-    let dir = app.path().app_cache_dir().map_err(|e| e.to_string())?.join("thumbs");
-    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let path = dir.join(format!("frame-{}.png", std::process::id()));
-    m.command(&json!(["screenshot-to-file", path.to_string_lossy(), "video"]))?;
+    let path = frame_to_temp(&app, &st)?;
     let bytes = std::fs::read(&path).map_err(|e| e.to_string());
     let _ = std::fs::remove_file(&path);
     Ok(format!("data:image/png;base64,{}", base64(&bytes?)))

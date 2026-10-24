@@ -1,3 +1,4 @@
+mod actions;
 mod ai;
 mod engine;
 mod photo;
@@ -316,7 +317,37 @@ pub fn run() {
             engine::engine_get,
             engine::engine_show,
             engine::engine_screenshot,
-            engine::engine_thumbnail
+            engine::engine_thumbnail,
+            actions::file_trash,
+            actions::file_rename,
+            actions::file_properties,
+            actions::file_reveal,
+            actions::file_open_with,
+            actions::file_share,
+            actions::set_wallpaper,
+            actions::actions_capabilities,
+            actions::system_action_allowed,
+            actions::actions_system_log,
+            actions::clipboard_copy_text,
+            actions::clipboard_read_text,
+            actions::clipboard_copy_files,
+            actions::clipboard_read_files,
+            actions::clipboard_copy_image,
+            actions::clipboard_copy_image_data,
+            actions::clipboard_image_size,
+            actions::clipboard_copy_frame,
+            actions::ocr_image,
+            actions::ocr_languages,
+            actions::media_tools,
+            actions::media_probe,
+            actions::media_job,
+            actions::media_job_cancel,
+            actions::replaygain_analyze,
+            actions::tags_read,
+            actions::tags_write,
+            actions::tags_save_cover,
+            actions::lyrics_read,
+            actions::export_dir
         ])
         .build(context)
         .expect("error while building tauri application");
