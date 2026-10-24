@@ -94,8 +94,11 @@ export function sortItems(items, key = "name", descending = false) {
   return out;
 }
 
-/** Turkish-aware lower case for searching ("İ" -> "i", "I" -> "ı"). */
-export const searchFold = (s = "") => s.toLocaleLowerCase("tr");
+/**
+ * Search key: Turkish-aware lower case with dotted/dotless i merged, so "img" finds
+ * "IMG_1" and "istanbul" finds "İstanbul" ("I" -> "ı" -> "i", "İ" -> "i").
+ */
+export const searchFold = (s = "") => s.toLocaleLowerCase("tr").replace(/ı/g, "i");
 
 /** "YYYY-MM-DD" (input type=date) -> local midnight ms; endOfDay -> 23:59:59.999. */
 export function dateInputToMs(value, endOfDay = false) {
