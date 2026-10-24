@@ -59,9 +59,9 @@ fn candidates() -> Vec<PathBuf> {
         dirs.push(if p.is_file() { p.parent().map(Path::to_path_buf).unwrap_or_default() } else { p });
     }
     if let Some(d) = std::env::current_exe().ok().and_then(|p| p.parent().map(Path::to_path_buf)) {
+        dirs.push(d.clone());
         dirs.push(d.join("mpv"));
         dirs.push(d.join("resources").join("mpv"));
-        dirs.push(d);
     }
     dirs
 }
