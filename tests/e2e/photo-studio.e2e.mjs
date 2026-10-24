@@ -120,7 +120,7 @@ test("photo studio", { timeout: 300000 }, async (t) => {
       await app.click("#ps-act-info");
       await app.waitFor(`document.getElementById("ps-info").dataset.loaded === ${J(manifest[0].path)}`, { timeoutMs: 10000, message: "info loaded" });
       const rows = await app.eval(`Object.fromEntries([...document.querySelectorAll("#ps-info dt")].map((d) => [d.textContent, d.nextElementSibling.textContent]))`);
-      assert.equal(rows["Kamera"], "VHO Test Synthetic");
+      assert.equal(rows["Kamera"], "VHO Test Kamera 1");
       assert.equal(rows["Boyutlar"], "640 × 480 (0,3 MP)");
       assert.match(rows["Çekim tarihi"], /^08\.01\.2021 10:00:01/);
       assert.match(rows["Konum"], /^41\.00100, 28\.97100/);

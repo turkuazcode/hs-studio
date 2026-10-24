@@ -3,7 +3,7 @@
 // DOM, cells are recycled, thumbnails are requested for the visible range only.
 // ==========================================================================
 
-import { gridWindow, scrollToShow } from "./logic.js";
+import { gridWindow, nextFrame, scrollToShow } from "./logic.js";
 
 const GAP = 8;
 const LABEL_H = 24;
@@ -137,7 +137,7 @@ export function createGrid(el, { thumbs, onActivate, onPointerSelect, onRender }
     if (paths.length) thumbs.request("grid", paths);
   }
 
-  const schedule = () => { if (!raf) raf = requestAnimationFrame(render); };
+  const schedule = () => { if (!raf) raf = nextFrame(render); };
 
   thumbs.onThumb((path) => {
     for (const c of cells.values()) {
@@ -187,7 +187,7 @@ export function createGrid(el, { thumbs, onActivate, onPointerSelect, onRender }
           pool.push(c);
         } else if (c.dataset.path !== items[i].path) fillCell(c, i);
       }
-      schedule();
+      render();
     },
     setSelection(sel, focusIndex) {
       selected = sel;
@@ -207,7 +207,7 @@ export function createGrid(el, { thumbs, onActivate, onPointerSelect, onRender }
       const l = measure();
       const top = scrollToShow(index, { cols: l.cols, cellHeight: l.cellH, gap: GAP, height: el.clientHeight - 2 * GAP, scrollTop: el.scrollTop });
       if (top !== el.scrollTop) el.scrollTop = top;
-      schedule();
+      render();
     },
     get columns() { return layout.cols; },
     get visibleRows() { return Math.max(1, Math.floor(el.clientHeight / (layout.cellH + GAP))); },

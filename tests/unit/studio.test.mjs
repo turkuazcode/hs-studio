@@ -65,7 +65,7 @@ test("filterItems: type, date range, Turkish-aware name search", () => {
   assert.deepEqual(n({ type: "raw" }), ["ışık.CR2"]);
   assert.deepEqual(n({ query: "istanbul" }), ["İstanbul.jpg"]);
   assert.deepEqual(n({ query: "IŞIK" }), ["ışık.CR2"]);
-  assert.deepEqual(n({ query: "isik" }), ["ışık.CR2"]);
+  assert.deepEqual(n({ query: "işik" }), ["ışık.CR2"], "dotless ı and i are one letter for search");
   assert.deepEqual(filterItems([it("IMG_1.jpg")], { query: "img_1" }).length, 1, "ASCII I matches i");
   assert.deepEqual(n({ from: dateInputToMs("2024-05-05"), to: dateInputToMs("2024-05-09", true) }), ["ışık.CR2", "clip.mp4"]);
   assert.equal(dateInputToMs("bad"), null);

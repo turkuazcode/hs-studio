@@ -5,6 +5,18 @@
 // backend's ops.rs), crop geometry, undo/redo history, settings adapter.
 // ==========================================================================
 
+/**
+ * Runs `fn` on the next animation frame, or after `ms` when frames are throttled
+ * (background / occluded window), whichever comes first. Returns a cancel function.
+ */
+export function nextFrame(fn, ms = 34) {
+  let done = false;
+  const run = () => { if (!done) { done = true; fn(); } };
+  const raf = globalThis.requestAnimationFrame?.(run);
+  const timer = setTimeout(run, ms);
+  return () => { done = true; clearTimeout(timer); if (raf) globalThis.cancelAnimationFrame?.(raf); };
+}
+
 // ---------------------------------------------------------------------------
 // Paths
 // ---------------------------------------------------------------------------
