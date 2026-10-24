@@ -127,7 +127,9 @@ async fn transcode_media(app: AppHandle, path: String) -> Result<String, String>
 
     if !output.exists() {
         let job = TRANSCODE_JOB.fetch_add(1, Ordering::SeqCst) + 1;
-        let partial = dir.join(format!("{key:016x}.part.mp4"));
+        // per-job partial file: a cancelled older job (e.g. the same file reopened after a page
+        // reload) must not delete the file the current job is writing
+        let partial = dir.join(format!("{key:016x}.{job}.part.mp4"));
         let (app2, src, part) = (app.clone(), path.clone(), partial.clone());
         let result = tauri::async_runtime::spawn_blocking(move || {
             let mut report = |p: f64| {
