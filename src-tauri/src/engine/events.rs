@@ -125,7 +125,8 @@ mod tests {
             let now = t0 + Duration::from_millis(i * 1000 / 26);
             emitted += t.process(&prop("time-pos", json!(i as f64 / 26.0)), now).len();
         }
-        assert!((14..=17).contains(&emitted), "emitted {emitted} in 2 s");
+        // 26 Hz input, >= 125 ms apart: one emission per ~153 ms (every 4th event) = 13 in 2 s
+        assert!((12..=16).contains(&emitted), "emitted {emitted} in 2 s");
         // pause flushes the newest time first, then the pause change
         let out = t.process(&prop("pause", json!(true)), t0 + Duration::from_millis(2001));
         assert_eq!(out.len(), 2);

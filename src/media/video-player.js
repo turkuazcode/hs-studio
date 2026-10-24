@@ -249,7 +249,7 @@ export function createVideoPlayer(app) {
 
   btnAspectRatio.addEventListener("click", (e) => {
     e.stopPropagation();
-    app.menus?.closeAll(aspectMenu);
+    app.playbackMenus?.closeAll?.(aspectMenu);
     aspectMenu.classList.toggle("show");
     speedMenu.classList.remove("show");
   });
@@ -269,7 +269,7 @@ export function createVideoPlayer(app) {
   // Speed selector
   btnSpeed.addEventListener("click", (e) => {
     e.stopPropagation();
-    app.menus?.closeAll(speedMenu);
+    app.playbackMenus?.closeAll?.(speedMenu);
     speedMenu.classList.toggle("show");
     aspectMenu.classList.remove("show");
   });
@@ -290,7 +290,7 @@ export function createVideoPlayer(app) {
     speedMenu.classList.remove("show");
     aspectMenu.classList.remove("show");
     if (subtitlesMenu) subtitlesMenu.classList.remove("show");
-    app.menus?.closeAll();
+    app.playbackMenus?.closeAll?.();
   });
 
   // Click / double click on the picture (the <video> element, or the transparent surface
