@@ -166,6 +166,9 @@ export function appEnv({ port, userData, dataDir }) {
     VHO_DATA_DIR: dataDir,
     // Backend guard: suspend_system becomes a no-op (never sleep the test machine)
     VHO_DISABLE_SYSTEM_SUSPEND: "1",
+    // Backend guard (Plan 06): wallpaper / lock screen / share / print / open with / reveal in
+    // folder are only logged (actions_system_log), never applied to the test machine
+    VHO_DISABLE_SYSTEM_CHANGES: "1",
     // libmpv screenshots go to the throw-away profile, never to the user's Pictures folder
     VHO_SCREENSHOT_DIR: join(userData, "screenshots"),
   };

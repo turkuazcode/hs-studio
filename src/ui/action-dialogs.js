@@ -178,11 +178,13 @@ export function createDialogs(app) {
           },
         ],
       });
-      requestAnimationFrame(() => {
+      const select = () => {
         input.focus();
         const [a, b] = selection ?? [0, value.length];
         input.setSelectionRange(a, b);
-      });
+      };
+      select();
+      requestAnimationFrame(select);
       input.addEventListener("input", () => d.setStatus(""));
     });
   }
