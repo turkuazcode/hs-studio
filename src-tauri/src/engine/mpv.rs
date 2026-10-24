@@ -363,12 +363,15 @@ impl Mpv {
         std::thread::Builder::new()
             .name("mpv-events".into())
             .spawn(move || loop {
-                let ev = unsafe { (mpv.api.wait_event)(mpv.h, -1.0) };
+                // 100 ms timeout: the callback gets `Value::Null` when idle, which lets the
+                // facade flush rate-limited values (the last time-pos after a seek while paused)
+                let ev = unsafe { (mpv.api.wait_event)(mpv.h, 0.1) };
                 if ev.is_null() {
                     continue;
                 }
                 let id = unsafe { (*ev).event_id };
                 if id == EVENT_NONE {
+                    on_event(Value::Null);
                     continue;
                 }
                 let mut node = Node { u: NodeU { int64: 0 }, format: FORMAT_NONE };
