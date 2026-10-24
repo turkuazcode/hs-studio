@@ -7,6 +7,11 @@ export const VIDEO_EXT = new Set(["mp4", "m4v", "webm", "mkv", "mov", "ogv", "ts
 export const AUDIO_EXT = new Set(["mp3", "m4a", "aac", "flac", "wav", "ogg", "opus"]);
 export const IMAGE_EXT = new Set(["jpg", "jpeg", "png", "webp", "gif", "bmp", "svg", "avif", "ico"]);
 export const SUB_EXT = new Set(["srt", "vtt", "ass", "ssa"]); // ASS/SSA: rendered by libmpv (libass)
+/** Photos the webview cannot show itself: opened through the backend's photo_decode. */
+export const RAW_EXT = new Set(["3fr", "ari", "arw", "bay", "cr2", "cr3", "crw", "dcr", "dng", "erf", "fff", "iiq", "k25",
+  "kdc", "mef", "mos", "mrw", "nef", "nrw", "orf", "pef", "raf", "raw", "rw2", "rwl", "sr2", "srf", "srw", "x3f"]);
+export const DECODE_IMAGE_EXT = new Set(["heic", "heif", "hif", "tif", "tiff", "tga", "pbm", "pgm", "ppm", "pnm", "pam",
+  "qoi", ...RAW_EXT]);
 
 /** Lower-case extension of a file name or URL (query string / hash ignored). */
 export const extOf = (n = "") => n.split(/[?#]/)[0].split(".").pop().toLowerCase();
@@ -18,12 +23,15 @@ export const extOf = (n = "") => n.split(/[?#]/)[0].split(".").pop().toLowerCase
 export function classify({ name, type = "" }) {
   const ext = extOf(name);
   if (SUB_EXT.has(ext)) return "sub";
-  if (IMAGE_EXT.has(ext) || type.startsWith("image/")) return "image";
+  if (IMAGE_EXT.has(ext) || DECODE_IMAGE_EXT.has(ext) || type.startsWith("image/")) return "image";
   if (VIDEO_EXT.has(ext) || type.startsWith("video/") || type.startsWith("audio/")) return "video";
   return "unknown";
 }
 
 export const isImageFile = (url) => IMAGE_EXT.has(extOf(url));
+
+/** HEIC / RAW / TIFF...: needs a backend-decoded display copy (photo_decode). */
+export const needsDecode = (name) => DECODE_IMAGE_EXT.has(extOf(name));
 
 /** Audio-only formats never produce a picture (no "video not decoded" warning). */
 export const isAudioOnlyName = (name) => AUDIO_EXT.has(extOf(name));
@@ -34,7 +42,7 @@ export const isRemoteUrl = (src, origin = globalThis.location?.origin) =>
 
 /** Native file dialog filters. */
 export const DIALOG_FILTERS = [
-  { name: "Medya ve Altyazı", extensions: [...VIDEO_EXT, ...IMAGE_EXT, ...SUB_EXT] },
+  { name: "Medya ve Altyazı", extensions: [...VIDEO_EXT, ...IMAGE_EXT, ...DECODE_IMAGE_EXT, ...SUB_EXT] },
   { name: "Tüm Dosyalar", extensions: ["*"] },
 ];
 

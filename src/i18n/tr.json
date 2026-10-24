@@ -55,7 +55,8 @@
     },
     "headings": {
       "enhance": "Görüntü iyileştirme (AI Restorasyon)",
-      "audioRestore": "Ses iyileştirme (AI Restorasyon)"
+      "audioRestore": "Ses iyileştirme (AI Restorasyon)",
+      "photoStudio": "Fotoğraf Stüdyosu"
     },
     "fields": {
       "language": "Arayüz dili",
@@ -88,7 +89,11 @@
       "compat": "Uyumluluk modu (yeniden başlatır)",
       "dataDir": "Ayar klasörü",
       "resetAll": "Tüm ayarları sıfırla",
-      "licenses": "Açık kaynak lisansları"
+      "licenses": "Açık kaynak lisansları",
+      "studioSort": "Varsayılan sıralama",
+      "studioDescending": "Azalan sıralama",
+      "studioRecursive": "Alt klasörleri de tara",
+      "studioThumbSize": "Küçük resim boyutu"
     },
     "help": {
       "defaultApps": "Windows, uygulamaların kendini varsayılan yapmasına izin vermez; açılan pencerede VHO'yu seçin.",
@@ -101,7 +106,11 @@
       "aspectFill": "Ekrana yay",
       "themeDark": "Koyu",
       "themeLight": "Açık",
-      "themeContrast": "Yüksek kontrast"
+      "themeContrast": "Yüksek kontrast",
+      "sortName": "Ad",
+      "sortDate": "Değiştirilme tarihi",
+      "sortSize": "Boyut",
+      "sortExifDate": "Çekim tarihi (EXIF)"
     },
     "buttons": {
       "defaultApps": "Varsayılan uygulama olarak ayarla",
@@ -169,7 +178,9 @@
       "zoomIn": "Yakınlaştır",
       "zoomOut": "Uzaklaştır",
       "zoomReset": "Boyutu sıfırla",
-      "aiPhoto": "AI restorasyon"
+      "aiPhoto": "AI restorasyon",
+      "photoStudio": "Fotoğraf Stüdyosu (klasöre göz at)",
+      "photoEdit": "Fotoğrafı düzenle"
     }
   }
 }

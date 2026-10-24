@@ -2,8 +2,9 @@
 // Photo studio: image loading, zoom / pan / rotate, slideshow, info card.
 // ==========================================================================
 
-import { extOf, isRemoteUrl, itemSize } from "./classify.js";
+import { extOf, isRemoteUrl, itemSize, needsDecode } from "./classify.js";
 import { formatFileSize, aspectRatioText } from "../core/format.js";
+import { convertFileSrc, invoke } from "../core/tauri.js";
 
 export const SLIDESHOW_INTERVAL_MS = 3500;
 export const MIN_ZOOM = 0.1;
@@ -214,7 +215,22 @@ export function createPhotoViewer(app) {
       scheduleNextSlide();
     };
 
-    imageElement.src = src;
+    if (item.path && !item.playPath && needsDecode(name) && invoke) {
+      // HEIC / RAW / TIFF...: the backend makes a displayable copy once (cached)
+      const gen = state.get("loadGen");
+      imageElement.removeAttribute("src");
+      invoke("photo_decode", { path: item.path }).then((r) => {
+        if (state.get("loadGen") !== gen) return;
+        item.playPath = r.path;
+        imageElement.src = convertFileSrc(r.path);
+      }).catch((e) => {
+        if (state.get("loadGen") !== gen) return;
+        app.toast(`⚠️ "${name}" açılamadı: ${String(e).replace(/^\[[a-z-]+\]\s*/, "")}`);
+        scheduleNextSlide();
+      });
+    } else {
+      imageElement.src = src;
+    }
     resetPhotoTransform();
     app.filters.apply();
     updatePhotoCounter();

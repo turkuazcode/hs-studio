@@ -25,6 +25,7 @@ import { createSnapshot } from "./media/snapshot.js";
 import { createSubtitles } from "./media/subtitles.js";
 import { createVideoPlayer } from "./media/video-player.js";
 import { createVisualFilters } from "./media/visual-filters.js";
+import { createPhotoStudio } from "./studio/studio.js";
 import { createFullscreen } from "./ui/fullscreen.js";
 import { createHud } from "./ui/hud.js";
 import { createModals } from "./ui/modals.js";
@@ -125,6 +126,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     /** Same path as the native file drop / open dialog (tests cannot synthesize an OS drop). */
     openPaths: (paths) => app.loader.openPaths(paths),
   };
+  app.studio = createPhotoStudio(app);
 
   // Settings window, recent files, menus, themes, language... then the files passed on
   // the command line ("Open with VHO"), so they open with the restored settings.
