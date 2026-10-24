@@ -142,7 +142,9 @@ npm run tauri build
 | `src/media/` | `audio-fx.js` (ekolayzır/normalizasyon/ses gecikmesi), `classify.js`, `subtitles.js`, `loader.js`, `video-player.js`, `audio-engine.js`, `visual-filters.js`, `photo-viewer.js`, `photo-ai.js`, `snapshot.js`, `onnx-patch.js` + mevcut `gpu-enhancer.js`, `ai-*.js`, `face-restore.js` |
 | `src/ui/` | `hud.js`, `timeline.js`, `playlist.js`, `panels.js`, `modals.js`, `sleep-timer.js`, `shortcuts.js` (merkezî kısayol tablosu), `fullscreen.js`, `toasts.js`, `window-controls.js`, `platform.js` (platform katmanı önyüklemesi), `settings-modal.js`, `settings-bindings.js`, `recent-files.js`, `menus.js` (sağ tık + titlebar menüsü, fare), `shortcut-editor.js`, `shortcut-help.js`, `theme.js`, `playback-menus.js` (ses/altyazı kanalı, bölümler, yer imleri, görüntü menüsü) |
 | `src/studio/` | Fotoğraf Stüdyosu: `studio.js` (klasör tarayıcı, görüntüleyici oturumu), `grid.js` (sanal ızgara), `thumbs.js`, `info-panel.js` (EXIF, histogram), `map.js` (Leaflet + OSM, isteğe bağlı), `editor.js`, `compare.js`, `batch.js`, `filmstrip.js`, `logic.js` (saf yardımcılar). Stil: `src/styles/photo-studio.css`; Leaflet: `src/vendor/leaflet/` (BSD-2) |
-| `src/i18n/` | `tr.json`, `en.json` (arayüz metinleri; şimdilik yalnızca platform katmanı) |
+| `src/ui/` (eylemler) | `media-actions.js` (medya türüne göre ince araç çubuğu + "⋯"/sağ tık menüsü, kısayollar, Ayarlar alanları), `action-dialogs.js` (onay, yeniden adlandırma, özellikler, ffmpeg iş ilerlemesi/iptal), `export-dialogs.js` (kes, GIF, klip, dönüştür, sesi çıkar, döndür, altyazı, kontak sayfası, zil sesi, ReplayGain), `photo-tools.js` (görüntüyü kopyala, yazdırma önizlemesi, arka plan/kilit ekranı, OCR katmanı), `music-tools.js` (etiket düzenleyici + kapak, şarkı sözleri paneli) — ayrıntı: [docs/media-actions.md](docs/media-actions.md) |
+| `src/media/` (eylemler) | `actions-logic.js` (saf: ad doğrulama, aralıklar, yazdırma yerleşimi, OCR katmanı, kısayol tablosu), `lyrics.js` (LRC ayrıştırıcı) |
+| `src/i18n/` | `tr.json`, `en.json` (arayüz metinleri: platform katmanı + medya eylemleri `actions.*`) |
 
 Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çözme, çalma listesi gezinme, ONNX yaması...) DOM'suz fonksiyonlardır ve birim testlidir.
 
@@ -152,9 +154,9 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 | `npm ci` | Bağımlılıkları kurar |
 | `npm test` | Birim testleri (Node 24 yerleşik `node:test`, ek bağımlılık yok) |
 | `npm run build:release` | Release derlemesi: `src-tauri/target/release/vho.exe` |
-| `npm run stage:mpv` | LGPL libmpv DLL'lerini (38 adet) exe'nin yanına kopyalar; kaynak `third_party/mpv/_build/dist` ya da `-Source`/`VHO_MPV_DIST`. DLL yoksa uygulama HTML5 motoruyla çalışır |
+| `npm run stage:mpv` | LGPL libmpv DLL'lerini (38 adet) ve aynı derlemenin `ffmpeg.exe`/`ffprobe.exe` araçlarını exe'nin yanına kopyalar; kaynak `third_party/mpv/_build/dist` ya da `-Source`/`VHO_MPV_DIST` (araçlar dist'te yoksa `..\prefix\bin`). DLL yoksa uygulama HTML5 motoruyla çalışır; ffmpeg yoksa dışa aktarma eylemleri kapalıdır |
 | `npm run e2e` | Uçtan uca testler; önce `npm run build:release` gerekir |
-| `cd src-tauri; cargo test --release --lib` | Rust birim testleri (`transcode` gerçek dosya testi `#[ignore]`) |
+| `cd src-tauri; cargo test --release --lib` | Rust birim testleri (`transcode` gerçek dosya testi `#[ignore]`; `actions::*`: ad/çakışma, tüm ffmpeg hazır ayar argümanları, etiket eşleme, LRC/ebur128 ayrıştırma) |
 | `npm run fixtures` | Test medyasını yeniden üretir (Windows) |
 | `npm run fixtures:engine` | libmpv test medyasını (çok kanallı MKV, HEVC) LGPL ffmpeg ile üretir |
 
@@ -164,6 +166,7 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 - Her çalıştırma ayrı, geçici bir WebView2 profili (`WEBVIEW2_USER_DATA_FOLDER`) ve ayrı bir veri klasörü (`VHO_DATA_DIR`: `settings.json`, `library.json`, pencere konumu) kullanır: kullanıcının ayarlarına ve kaldığı yer kayıtlarına dokunmaz. `VHO_DATA_DIR` tek örnek (single-instance) kilidini de o klasöre özgü yapar; test VHO'su dosyalarını kullanıcının açık VHO'suna iletmez. Testler yalnızca kendi başlattıkları süreci kapatır.
 - CDP port aralığı varsayılan 9500-9599; paralel çalışmalar için `VHO_E2E_PORT_MIN` / `VHO_E2E_PORT_MAX` ile değiştirilebilir.
 - Arka plandaki pencere yeniden çizilmeyebilir; bu yüzden testler ekran görüntüsüne değil, DOM ve medya durumuna (`videoWidth`, `getVideoPlaybackQuality()`, metinler) bakar.
+- **Güvenlik (sistem eylemleri):** `vho.exe` her zaman `VHO_DISABLE_SYSTEM_CHANGES=1` ile başlatılır: masaüstü arka planı, kilit ekranı, paylaşım, yazdırma, "Birlikte aç" ve "Klasörde göster" yalnızca `actions_system_log` günlüğüne yazılır, uygulanmaz. Silme testi yalnızca testin kendi geçici kopyasını Geri Dönüşüm Kutusu'na taşır ve o öğeyi yeniden kalıcı olarak siler; panodaki metin test öncesi saklanıp sonra geri yüklenir.
 - **Güvenlik:** testler bilgisayarı asla uyku moduna almaz. `vho.exe`, `VHO_DISABLE_SYSTEM_SUSPEND=1` ile başlatılır (`suspend_system` hiçbir şey yapmaz) ve sayfa betikleri çalışmadan önce `__TAURI__.core.invoke` sarmalanır: `suspend_system` ve `set_compat_mode` arka uca hiç gitmez. Koruma her açılışta doğrulanır; doğrulanamazsa testler çalışmaz. Uyku zamanlayıcısı testleri "PC Uyku" kutusunu önce kapatır.
 - `window.confirm` ve indirmeler (ekran görüntüsü) test tarafında taklit edilir; yakalanmamış sayfa hataları toplanır ve her testin sonunda boş olmalıdır.
 - Motor: `engine.e2e.mjs` libmpv'yi test eder (DLL'ler `npm run stage:mpv` ile hazırlanmamışsa atlanır); diğer dosyalar ve yedek testi `VHO_DISABLE_MPV=1` ile **HTML5 motorunu** kullanır. mpv ekran görüntüleri geçici profile yazılır (`VHO_SCREENSHOT_DIR`). CDP port aralığı `VHO_E2E_PORT_MIN`/`VHO_E2E_PORT_MAX` ile değiştirilebilir.
@@ -177,6 +180,7 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 | `engine.e2e.mjs` | libmpv: motor etkin, oynat/duraklat/atla, ses kanalı (`aid` + dil), altyazı kanalı, `sub-add` ile harici SRT, bölüm atlama, ses gecikmesi, ekolayzır (`af`), ses %150 + renk ayarları, kare kare, ekran görüntüsü dosyası, yer imi, A-B (`ab-loop`), döndür/yansıt/yakınlaştır, fotoğrafta video penceresi gizli, HEVC, otomatik geçiş; `VHO_DISABLE_MPV=1` → HTML5 yedeği |
 | `photo.e2e.mjs` | JPEG + PNG, bilgi kartı, yakınlaştırma, döndürme, sarmalı gezinme, slayt gösterisi, ekran görüntüsü |
 | `platform.e2e.mjs` | Ayarlar penceresi (sekmeler, dil değişimi yeniden yüklemeden), kısayol düzenleyici çakışma denetimi, `?` yardım, sağ tık menüsü, tema; ayar değiştir → yeniden başlat → korunmuş; son açılanlar (küçük resim, kaldır, temizle); ikinci `vho.exe dosya.mp4` → aynı pencerede açılır |
+| `actions.e2e.mjs` | Medya eylemleri (geçici kopyalar üzerinde): türe göre araç çubukları ve menüler, yolu/dosyayı/görüntüyü/kareyi panoya kopyala, kayıpsız kesim (süre ±1 sn), sesi çıkar (yalnızca ses), 720p dönüştürme (960×720), GIF, kayıpsız döndürme, kontak sayfası, altyazı göm/ayıkla, iş iptali (yarım dosya kalmaz), favori, her zaman üstte, mini oynatıcı, yeniden adlandırma (çakışma denetimi), sil → Geri Dönüşüm Kutusu + listeden çıkar, özellikler, yazdırma önizlemesi, OCR (Windows OCR dili yoksa atlanır), etiket düzenle → yeniden oku, LRC sözleri, ReplayGain, M4R zil sesi; sistem eylemleri günlüğe yazılıp uygulanmaz |
 | `photo-studio.e2e.mjs` | Geçici klasörde üretilen 300 fotoğraf (EXIF tarih/GPS/yönlendirme) + video: ızgara, sıralama, filtre/arama, çoklu seçim, bilgi paneli, görüntüleyici + şerit gezinme, kırp/döndür + kaydet, karşılaştırma, toplu WebP dönüştürme (EXIF tarihi korunur), iptal, 5.000 dosyada ilk çizim süresi |
 
 ### Test medyası (`tests/fixtures/`)
