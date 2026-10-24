@@ -140,6 +140,7 @@ npm run tauri build
 | `src/core/` | `dom.js` (tüm DOM referansları), `state.js` (reaktif store), `events.js` (olay veriyolu), `tauri.js` (`__TAURI__` sarmalayıcıları, tarayıcıda no-op), `format.js` (saf biçimleme) |
 | `src/media/` | `classify.js`, `subtitles.js`, `loader.js`, `video-player.js`, `audio-engine.js`, `visual-filters.js`, `photo-viewer.js`, `photo-ai.js`, `snapshot.js`, `onnx-patch.js` + mevcut `gpu-enhancer.js`, `ai-*.js`, `face-restore.js` |
 | `src/ui/` | `hud.js`, `timeline.js`, `playlist.js`, `panels.js`, `modals.js`, `sleep-timer.js`, `shortcuts.js`, `fullscreen.js`, `toasts.js`, `window-controls.js` |
+| `src/studio/` | Fotoğraf Stüdyosu: `studio.js` (klasör tarayıcı, görüntüleyici oturumu), `grid.js` (sanal ızgara), `thumbs.js`, `info-panel.js` (EXIF, histogram), `map.js` (Leaflet + OSM, isteğe bağlı), `editor.js`, `compare.js`, `batch.js`, `filmstrip.js`, `logic.js` (saf yardımcılar). Stil: `src/styles/photo-studio.css`; Leaflet: `src/vendor/leaflet/` (BSD-2) |
 
 Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çözme, çalma listesi gezinme, ONNX yaması...) DOM'suz fonksiyonlardır ve birim testlidir.
 
@@ -168,6 +169,9 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 | `video.e2e.mjs` | H.264 oynatma, duraklatma, atlama, ses %150/sessiz, A-B döngü, altyazı (UTF-8 SRT, Windows-1254 SRT, BOM'lu VTT, gecikme), hız/en-boy, renk filtreleri, AI/bölünmüş ekran, ekran görüntüsü, çalma listesi otomatik geçiş, "video bitince" uyku modu |
 | `legacy.e2e.mjs` | WMV9/WMA → Media Foundation dönüştürme → H.264/AAC kareleri çözülüyor (Windows) |
 | `photo.e2e.mjs` | JPEG + PNG, bilgi kartı, yakınlaştırma, döndürme, sarmalı gezinme, slayt gösterisi, ekran görüntüsü |
+| `photo-studio.e2e.mjs` | Geçici klasörde üretilen 300 fotoğraf (EXIF tarih/GPS/yönlendirme) + video: ızgara, sıralama, filtre/arama, çoklu seçim, bilgi paneli, görüntüleyici + şerit gezinme, kırp/döndür + kaydet, karşılaştırma, toplu WebP dönüştürme (EXIF tarihi korunur), iptal, 5.000 dosyada ilk çizim süresi |
+
+CDP port aralığı `VHO_E2E_PORT_MIN` / `VHO_E2E_PORT_MAX` ile değiştirilebilir (varsayılan 9500-9599).
 
 ### Test medyası (`tests/fixtures/`)
 Tamamı sentetik ve depoya dahildir (toplam ~185 KB); `tests/fixtures/make-fixtures.ps1` ile yeniden üretilir:
