@@ -28,6 +28,7 @@ import { createVisualFilters } from "./media/visual-filters.js";
 import { createPhotoStudio } from "./studio/studio.js";
 import { createFullscreen } from "./ui/fullscreen.js";
 import { createHud } from "./ui/hud.js";
+import { createMediaActions } from "./ui/media-actions.js";
 import { createModals } from "./ui/modals.js";
 import { createPanels } from "./ui/panels.js";
 import { createPlaybackMenus } from "./ui/playback-menus.js";
@@ -127,6 +128,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     openPaths: (paths) => app.loader.openPaths(paths),
   };
   app.studio = createPhotoStudio(app);
+  // File / photo / video / music actions (Plan 06): toolbar, "⋯" + right-click menus, dialogs
+  app.mediaActions = createMediaActions(app);
+  window.__vhoActions = app.mediaActions;
 
   // Settings window, recent files, menus, themes, language... then the files passed on
   // the command line ("Open with VHO"), so they open with the restored settings.
@@ -135,6 +139,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     .finally(() => {
       // engine options after the base fields (tab order), once the stored values are loaded
       registerEngineSettings(app);
+      app.mediaActions.registerSettings().catch((e) => console.error("[actions] settings", e));
       invoke?.("initial_files")
         .then((paths) => app.loader.openPaths(paths))
         .catch((e) => console.warn("initial_files", e));

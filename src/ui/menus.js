@@ -141,6 +141,11 @@ export function initMenus(app) {
     items.push(
       { id: "fullscreen", labelKey: "menu.fullscreen", shortcut: "fullscreen", run: () => app.fullscreen.toggle() },
       { id: "snapshot", labelKey: "menu.snapshot", shortcut: "snapshot", disabled: mode === "none", run: () => app.snapshot.capture() },
+    );
+    // File actions of the shown media (copy, share, rename, delete, properties: ui/media-actions.js)
+    const fileActions = app.mediaActions?.contextItems?.() ?? [];
+    if (fileActions.length) items.push({ separator: true }, ...fileActions);
+    items.push(
       { separator: true },
       { id: "open-file", labelKey: "menu.openFile", shortcut: "openFile", run: () => dom.btnBrowse.click() },
       { id: "open-url", labelKey: "menu.openUrl", run: () => dom.btnOpenUrl.click() },

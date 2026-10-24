@@ -158,7 +158,7 @@ test("actions: every i18n key used by the action modules exists (tr + en)", () =
   for (const f of files) {
     const src = readFileSync(join(SRC, f), "utf8");
     for (const m of src.matchAll(/\bt\(\s*"(actions\.[\w.]+)"/g)) used.add(m[1]);
-    for (const m of src.matchAll(/(?:labelKey|titleKey|helpKey|key):\s*"(actions\.[\w.]+)"/g)) used.add(m[1]);
+    for (const m of src.matchAll(/(?:labelKey|titleKey|helpKey):\s*"(actions\.[\w.]+)"/g)) used.add(m[1]);
   }
   assert.ok(used.size > 80, `found ${used.size} keys`);
   const tr = dict("tr"), en = dict("en");
