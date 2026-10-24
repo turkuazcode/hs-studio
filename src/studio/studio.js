@@ -14,7 +14,7 @@ import { createFilmstrip } from "./filmstrip.js";
 import { createGrid } from "./grid.js";
 import { createInfoPanel } from "./info-panel.js";
 import {
-  baseName, createSettings, dateInputToMs, emptySelection, filterItems, memoryStorage, parentDir, pathSegments,
+  baseName, createSettings, nextFrame, dateInputToMs, emptySelection, filterItems, memoryStorage, parentDir, pathSegments,
   reconcileSelection, selectAll, selectClick, selectMove, selectedInOrder, sortItems, toggleFavorite,
 } from "./logic.js";
 import { createThumbService } from "./thumbs.js";
@@ -200,7 +200,7 @@ export function createPhotoStudio(app) {
 
   function scheduleView() {
     if (viewRaf) return;
-    viewRaf = requestAnimationFrame(() => {
+    viewRaf = nextFrame(() => {
       viewRaf = 0;
       applyView({ reset: false });
     });
@@ -606,7 +606,7 @@ export function createPhotoStudio(app) {
     else if (dirty && dir) openFolder(dir, { keepScroll: true, focusPath });
     else if (!dir) showEmpty("Göz atmak için soldan bir klasör seçin.");
     else if (focusPath) focusOn(focusPath);
-    requestAnimationFrame(() => { grid.renderNow(); gridEl.focus({ preventScroll: true }); });
+    nextFrame(() => { grid.renderNow(); gridEl.focus({ preventScroll: true }); });
   }
 
   function hide() {

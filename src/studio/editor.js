@@ -11,6 +11,7 @@ import {
   editFlip, editRotate, editToOps, initialEdit, isEditIdentity, parentDir, rotatedSize, sharpenImageData, stemOf,
 } from "./logic.js";
 import { loadBitmap } from "./info-panel.js";
+import { nextFrame } from "./logic.js";
 
 const PREVIEW_SIZE = 1600;
 
@@ -151,7 +152,7 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
     syncControls();
   }
   const isNeutral = (e) => !e.sharpen && Object.values(e.adjust).every((v) => !Number(v));
-  const schedule = () => { if (!raf) raf = requestAnimationFrame(render); };
+  const schedule = () => { if (!raf) raf = nextFrame(render); };
 
   function syncControls() {
     const e = live;
@@ -285,11 +286,12 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
   function commit(next) {
     live = history.push(next);
     geomKey = "";
+    syncControls();
     schedule();
   }
 
-  function undo() { live = history.undo(); geomKey = ""; schedule(); }
-  function redo() { live = history.redo(); geomKey = ""; schedule(); }
+  function undo() { live = history.undo(); geomKey = ""; syncControls(); schedule(); }
+  function redo() { live = history.redo(); geomKey = ""; syncControls(); schedule(); }
 
   for (const input of root.querySelectorAll("[data-adj]")) {
     const key = input.dataset.adj;
