@@ -8,6 +8,8 @@
 
 import { queryDom } from "./core/dom.js";
 import { createEventBus } from "./core/events.js";
+import { createLibrary } from "./core/library.js";
+import { createSettings, defaultAdapter } from "./core/settings.js";
 import { createAppState } from "./core/state.js";
 import { convertFileSrc, invoke, listen } from "./core/tauri.js";
 import { createAudioEngine } from "./media/audio-engine.js";
@@ -32,6 +34,7 @@ import { initShortcuts } from "./ui/shortcuts.js";
 import { createSleepTimer } from "./ui/sleep-timer.js";
 import { createTimeline } from "./ui/timeline.js";
 import { createToasts } from "./ui/toasts.js";
+import { initPlatform } from "./ui/platform.js";
 import { initWindowControls } from "./ui/window-controls.js";
 
 /** libmpv status from the backend; { available: false } in a browser or without the DLLs. */
@@ -44,9 +47,24 @@ async function engineStatus() {
   }
 }
 
+/** localStorage, or null when blocked (private mode / tests). */
+function safeLocalStorage() {
+  try { return window.localStorage; } catch { return null; }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const dom = queryDom();
   const app = { dom, state: createAppState(), bus: createEventBus() };
+
+  // Persistent settings + library (recent files, resume positions); loaded asynchronously,
+  // initPlatform() waits for them before applying values to the UI.
+  app.settings = createSettings({ adapter: defaultAdapter("settings.json", "settings") });
+  app.library = createLibrary({ adapter: defaultAdapter("library.json", "library"), legacyStorage: safeLocalStorage() });
+  app.resume = {
+    get: (key) => (app.settings.get("playback.resume") ? app.library.resume.get(key) : null),
+    set: (key, seconds) => app.library.resume.set(key, seconds),
+    remove: (key) => app.library.resume.remove(key),
+  };
 
   // Playback engine: libmpv when the backend loaded it, the <video> element otherwise
   app.engineStatus = await engineStatus();
@@ -90,7 +108,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   app.view = app.playbackMenus;
   app.sleep = createSleepTimer(app);
   createModals(app);
-  initShortcuts(app);
+  app.shortcuts = initShortcuts(app);
   initWindowControls(dom);
   app.video.syncEngineUi();
   // Diagnostics / E2E: which engine is active (read-only view)
@@ -108,10 +126,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     openPaths: (paths) => app.loader.openPaths(paths),
   };
 
-  // Files passed on the command line ("Open with VHO")
-  invoke?.("initial_files")
-    .then((paths) => app.loader.openPaths(paths))
-    .catch((e) => console.warn("initial_files", e));
+  // Settings window, recent files, menus, themes, language... then the files passed on
+  // the command line ("Open with VHO"), so they open with the restored settings.
+  initPlatform(app)
+    .catch((e) => console.error("[platform]", e))
+    .finally(() => {
+      invoke?.("initial_files")
+        .then((paths) => app.loader.openPaths(paths))
+        .catch((e) => console.warn("initial_files", e));
+    });
 
   // Release media resources when the app closes
   window.addEventListener("pagehide", () => {
