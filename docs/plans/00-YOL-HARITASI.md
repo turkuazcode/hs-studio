@@ -13,6 +13,12 @@
 | Mimari | Ön yüz: vanilla JS **ES modülleri** (çerçeve yok). Arka uç: Rust/Tauri v2. Arayüz motordan bağımsız: `engine` cephesi (facade) üzerinden konuşur. |
 | Platform | Geliştirme/test makinesi: Windows 11 (1 GB dahili AMD GPU). macOS/Linux derleme ve testi: CI (GitHub Actions) — uzak depo kararı kullanıcıda (Dalga 3). |
 
+## Arayüz ilkeleri (kullanıcı kararı — bağlayıcı)
+1. **Sadelik:** Ana ekranda yalnızca **sık kullanılan** kontroller görünür. Kullanıcı çok ayar görmemeli.
+2. **Gerisi gizli ama ulaşılabilir:** Az kullanılan eylemler "⋯" menüsünde / sağ tık menüsünde; seçenekler ve ince ayarlar **Ayarlar** penceresinde (B2'nin `app.settings.register` API'si). Yeni özellik = önce Ayarlar'a, ancak gerçekten sık kullanılıyorsa ana ekrana.
+3. **Medya türüne göre ayrı arayüz:** **Video**, **Fotoğraf** ve **Müzik** için ayrı ekran düzenleri (ayrı araç çubukları/kontroller). Bir türün kontrolleri diğerinde görünmez.
+4. Görsel tasarım ve ayrıntılı düzenlemeler daha sonra kullanıcıyla birlikte ayrıca yapılacak; şimdilik işlevsel ve sade olsun.
+
 ## Dalgalar ve ajan dağılımı
 Her ajan **kendi git worktree'sinde** çalışır, kendi dalına commit eder. Entegrasyon (birleştirme, çakışma çözümü, tam test) ana oturum tarafından yapılır.
 
