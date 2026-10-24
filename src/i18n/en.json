@@ -1,0 +1,183 @@
+{
+  "common": {
+    "close": "Close"
+  },
+  "keys": {
+    "space": "Space"
+  },
+  "menu": {
+    "title": "Menu",
+    "play": "Play",
+    "pause": "Pause",
+    "slideshow": "Slideshow",
+    "fullscreen": "Fullscreen",
+    "snapshot": "Screenshot",
+    "openFile": "Open file…",
+    "openUrl": "Open URL…",
+    "loadSubtitle": "Load subtitles…",
+    "playlist": "Playlist",
+    "filters": "Picture settings",
+    "settings": "Settings…",
+    "shortcuts": "Keyboard shortcuts",
+    "licenses": "Licenses & Credits"
+  },
+  "recent": {
+    "title": "Recent files",
+    "empty": "No files opened yet",
+    "clear": "Clear list",
+    "cleared": "Recent files cleared",
+    "remove": "Remove from list",
+    "removeItem": "Remove {name} from the list",
+    "removed": "{name} removed from the list",
+    "openItem": "Open {name}",
+    "missing": "⚠️ {name} was not found and has been removed from the list",
+    "resumeAt": "Stopped at {time}",
+    "types": {
+      "video": "Video",
+      "audio": "Audio",
+      "image": "Photo"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "empty": "No settings in this section yet.",
+    "confirmReset": "Restore all settings to their defaults?",
+    "tabs": {
+      "general": "General",
+      "playback": "Playback",
+      "subtitle": "Subtitles",
+      "audio": "Audio",
+      "photo": "Photo",
+      "appearance": "Appearance",
+      "shortcuts": "Shortcuts",
+      "advanced": "Advanced",
+      "about": "About / Licenses"
+    },
+    "headings": {
+      "enhance": "Picture enhancement (AI Restoration)",
+      "audioRestore": "Audio enhancement (AI Restoration)",
+      "photoStudio": "Photo Studio"
+    },
+    "fields": {
+      "language": "Interface language",
+      "rememberRecent": "Remember recently opened files",
+      "clearRecent": "Recent files list",
+      "wheelVolume": "Mouse wheel changes volume (video)",
+      "middleClickFullscreen": "Middle click toggles fullscreen",
+      "defaultApps": "Default app",
+      "resume": "Offer to resume where I left off",
+      "rememberSpeed": "Remember the last playback speed",
+      "speed": "Playback speed",
+      "aspect": "Aspect ratio",
+      "rememberFilters": "Remember picture filters",
+      "pcSleep": "Put the computer to sleep when the sleep timer ends",
+      "sharpLevel": "Super resolution level",
+      "contrastBoost": "Extra contrast",
+      "subDelay": "Subtitle delay",
+      "subSize": "Text size",
+      "subColor": "Text colour",
+      "subBackground": "Background opacity",
+      "volume": "Volume",
+      "muted": "Muted",
+      "voiceClarity": "Dialogue & speech clarity",
+      "denoise": "Hum & hiss remover",
+      "compressor": "Dynamic range compressor",
+      "deepFaces": "Also restore faces when enhancing photos (GFPGAN)",
+      "theme": "Theme",
+      "accent": "Accent colour",
+      "accentReset": "Default accent colour",
+      "compat": "Compatibility mode (restarts)",
+      "dataDir": "Settings folder",
+      "resetAll": "Reset all settings",
+      "licenses": "Open source licenses",
+      "studioSort": "Default sort order",
+      "studioDescending": "Descending order",
+      "studioRecursive": "Include sub-folders",
+      "studioThumbSize": "Thumbnail size"
+    },
+    "help": {
+      "defaultApps": "Windows does not let apps make themselves the default; choose VHO in the window that opens.",
+      "pcSleep": "Off by default.",
+      "compat": "Turn on only if you hear sound but the picture stays black. Uses more CPU."
+    },
+    "options": {
+      "languageSystem": "System language",
+      "aspectContain": "Original",
+      "aspectFill": "Stretch to fill",
+      "themeDark": "Dark",
+      "themeLight": "Light",
+      "themeContrast": "High contrast",
+      "sortName": "Name",
+      "sortDate": "Date modified",
+      "sortSize": "Size",
+      "sortExifDate": "Date taken (EXIF)"
+    },
+    "buttons": {
+      "defaultApps": "Set as default app",
+      "reset": "Reset",
+      "toggle": "On / Off",
+      "resetAll": "Reset…",
+      "showLicenses": "Show licenses"
+    },
+    "toasts": {
+      "defaultAppsFailed": "⚠️ Could not open Windows Settings",
+      "reset": "Settings restored to defaults"
+    },
+    "about": {
+      "description": "Open source media studio for video, photos and music.",
+      "license": "MIT license · Developer: Halil SARITAŞ · TurkuazCode"
+    }
+  },
+  "shortcuts": {
+    "helpTitle": "Keyboard shortcuts",
+    "helpHint": "Press ? or F1 to open or close this window.",
+    "edit": "Edit shortcuts",
+    "hint": "Click Change, then press the new key. Esc: cancel, Backspace: remove the key.",
+    "change": "Change",
+    "pressKey": "Press a key…",
+    "none": "Unassigned",
+    "saved": "Shortcut saved",
+    "conflict": "⚠️ {key} is already used for \"{action}\"",
+    "resetAll": "Reset all shortcuts",
+    "scopes": {
+      "global": "General",
+      "video": "Video",
+      "photo": "Photo"
+    },
+    "actions": {
+      "fullscreen": "Fullscreen",
+      "snapshot": "Screenshot",
+      "playlist": "Playlist",
+      "splitView": "A/B comparison",
+      "openFile": "Open file",
+      "settings": "Settings",
+      "help": "Shortcut help",
+      "playPause": "Play / pause",
+      "seekBack": "Back 5 s",
+      "seekForward": "Forward 5 s",
+      "seekBackLong": "Back 30 s",
+      "seekForwardLong": "Forward 30 s",
+      "volumeUp": "Volume up",
+      "volumeDown": "Volume down",
+      "mute": "Mute",
+      "subtitles": "Subtitles on / off",
+      "subDelayMinus": "Subtitle delay −50 ms",
+      "subDelayPlus": "Subtitle delay +50 ms",
+      "pip": "Picture in picture",
+      "aiVideo": "AI restoration",
+      "slideshow": "Slideshow",
+      "photoPrev": "Previous image",
+      "photoNext": "Next image",
+      "rotateRight": "Rotate right",
+      "rotateLeft": "Rotate left",
+      "photoInfo": "Image info",
+      "deepEnhance": "Enhance photo (4x)",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "zoomReset": "Reset size",
+      "aiPhoto": "AI restoration",
+      "photoStudio": "Photo Studio (browse folder)",
+      "photoEdit": "Edit photo"
+    }
+  }
+}

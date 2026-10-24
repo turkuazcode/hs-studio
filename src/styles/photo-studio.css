@@ -84,7 +84,8 @@ body.ps-open .titlebar {
 }
 
 .ps-select option {
-  background: #12151f;
+  background: var(--bg-canvas);
+  color: var(--text-pure);
 }
 
 .ps-input:focus,
@@ -95,6 +96,10 @@ body.ps-open .titlebar {
 .ps-date {
   color-scheme: dark;
   padding: 3px 6px;
+}
+
+:root[data-theme="light"] .ps-date {
+  color-scheme: light;
 }
 
 .ps-spacer {
@@ -129,7 +134,7 @@ body.ps-open .titlebar {
 
 .ps-sidebar {
   border-right: 1px solid var(--border-subtle);
-  background: rgba(14, 16, 24, 0.9);
+  background: var(--bg-surface);
   overflow-y: auto;
   padding: 10px 6px 16px;
   display: flex;
@@ -245,7 +250,7 @@ body.ps-open .titlebar {
   gap: 8px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--border-subtle);
-  background: rgba(14, 16, 24, 0.7);
+  background: var(--bg-surface);
   flex-wrap: wrap;
 }
 
@@ -454,7 +459,7 @@ body.ps-open .titlebar {
   width: 300px;
   flex: none;
   border-left: 1px solid var(--border-subtle);
-  background: rgba(14, 16, 24, 0.92);
+  background: var(--bg-surface-elevated);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -673,7 +678,7 @@ body.ps-open .titlebar {
 
 .ps-editor-tools {
   border-left: 1px solid var(--border-subtle);
-  background: rgba(14, 16, 24, 0.95);
+  background: var(--bg-surface-elevated);
   padding: 14px;
   overflow-y: auto;
   display: flex;
@@ -1072,4 +1077,16 @@ body.ps-strip-on .floating-nav-btn {
   .ps-batch-body {
     grid-template-columns: 1fr;
   }
+}
+
+/* Address bar (typed path) */
+.ps-path-form {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.ps-path {
+  flex: 1;
+  min-width: 180px;
 }

@@ -41,15 +41,21 @@ test("photo studio", { timeout: 300000 }, async (t) => {
     el.value = ${J(value)}; el.dispatchEvent(new Event(${J(ev)}, { bubbles: true })); return true; })()`);
   const waitScan = (total) => app.waitFor(`document.getElementById("ps-grid").dataset.loading === "0" &&
     document.getElementById("ps-grid").dataset.total === ${J(String(total))}`, { timeoutMs: 30000, message: `scan of ${total}` });
+  /** Types a folder into the address bar (pencil button) and presses Enter. */
+  const openPath = (p) => app.eval(`(() => { document.getElementById("ps-path-edit").click();
+    const i = document.getElementById("ps-path"); i.value = ${J(p)}; i.form.requestSubmit(); return true; })()`);
   const invoke = (cmd, args) => app.eval(`__TAURI__.core.invoke(${J(cmd)}, ${J(args)})`, { timeoutMs: 30000 });
 
   try {
     await t.test("open from the titlebar: grid shows every photo + the video", async () => {
       assert.ok(await app.eval(`!!document.getElementById("btn-open-studio")`), "start screen button");
-      await app.eval(`localStorage.setItem("vho.studio.lastFolder", ${J(J(SET))}), true`);
       await app.click("#btn-photo-studio");
       assert.equal(await app.eval(`document.getElementById("photo-studio").hidden`), false);
+      assert.equal(await app.eval(`document.getElementById("ps-empty").hidden`), false, "no folder yet: empty state");
+      await app.waitFor(`document.querySelectorAll("#ps-tree .ps-tree-node").length > 0`, { message: "folder tree roots" });
+      await openPath(SET);
       await waitScan(301);
+      assert.equal(await app.eval(`[...document.querySelectorAll("#ps-breadcrumb .ps-crumb")].pop().textContent`), "set");
       assert.equal(await grid("count"), "301");
       const rendered = Number(await grid("rendered"));
       assert.ok(rendered > 0 && rendered < 301, `virtualised: ${rendered} cells in the DOM`);
@@ -269,12 +275,8 @@ test("photo studio", { timeout: 300000 }, async (t) => {
 
     await t.test("performance: 5,000-file folder, first grid paint", async () => {
       makeBulkFolder(BULK, 5000);
-      await app.eval(`localStorage.setItem("vho.studio.favorites", ${J(J([BULK]))}), true`);
-      await app.click("#ps-close");
-      await app.click("#btn-photo-studio");
-      await app.waitFor(`document.querySelector("#ps-favorites .ps-fav")?.dataset.path === ${J(BULK)}`, { message: "favourite listed" });
       const started = Date.now();
-      await app.eval(`document.querySelector("#ps-favorites .ps-fav-open").click(), true`);
+      await openPath(BULK);
       await waitScan(5000);
       const firstPaint = Number(await grid("firstPaintMs"));
       const scanMs = Number(await grid("scanMs"));
@@ -290,6 +292,20 @@ test("photo studio", { timeout: 300000 }, async (t) => {
       t.diagnostic(`5000 files: first grid paint ${firstPaint} ms, scan+view ${scanMs} ms, first screen thumbnails (cold cache, 640x480 JPEG) ${thumbsMs} ms, DOM cells ${rendered}/${renderedAfter}`);
       console.log(`[perf] 5000 files: first grid paint ${firstPaint} ms; scan complete ${scanMs} ms; first-screen thumbnails ${thumbsMs} ms; DOM cells ${rendered} (after scroll ${renderedAfter})`);
       assert.ok(firstPaint < 2000, `first paint ${firstPaint} ms`);
+      // Favourites: star the folder, it is listed and persisted in the settings store
+      await app.click("#ps-fav-toggle");
+      assert.equal(await app.eval(`document.querySelector("#ps-favorites .ps-fav")?.dataset.path`), BULK);
+      assert.equal(await app.text("#ps-fav-toggle"), "★");
+      let stored;
+      for (let i = 0; i < 40 && !stored; i++) {
+        try {
+          const s = JSON.parse(readFileSync(join(app.dataDir, "settings.json"), "utf8"));
+          if (s.settings?.values?.["photo.studio.favorites"]?.paths?.includes(BULK)) stored = s.settings.values;
+        } catch { /* being written */ }
+        if (!stored) await new Promise((r) => setTimeout(r, 200));
+      }
+      assert.ok(stored, "favourites persisted in settings.json");
+      assert.equal(stored["photo.studio.lastFolder"], BULK);
       assert.ok(rendered < 300 && renderedAfter < 300, "virtualised");
     });
 

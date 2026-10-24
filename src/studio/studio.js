@@ -34,8 +34,47 @@ function safeLocalStorage() {
   }
 }
 
-/** Settings adapter shared by the studio; B2's settings store can be plugged in with settings.use(store). */
+/**
+ * Settings adapter shared by the studio: localStorage until the app's settings store is
+ * plugged in (createPhotoStudio does that when app.settings exists).
+ */
 export const studioSettings = createSettings(safeLocalStorage());
+
+const SORT_KEYS = ["name", "date", "size", "exifDate"];
+const isPathList = (v) => Array.isArray(v?.paths) && v.paths.every((p) => typeof p === "string");
+
+/** Registers the studio's persistent options in the app settings store (Settings > Fotoğraf). */
+export function registerStudioSettings(appSettings) {
+  const hidden = { control: "custom", render: (row) => { row.hidden = true; } };
+  appSettings.register("photo", [
+    { control: "heading", labelKey: "settings.headings.photoStudio" },
+    {
+      key: "photo.studio.sort", type: "enum", values: SORT_KEYS, default: "name", control: "select",
+      labelKey: "settings.fields.studioSort",
+      options: SORT_KEYS.map((v) => ({ value: v, labelKey: `settings.options.sort${v[0].toUpperCase()}${v.slice(1)}` })),
+    },
+    { key: "photo.studio.descending", type: "boolean", default: false, control: "toggle", labelKey: "settings.fields.studioDescending" },
+    { key: "photo.studio.recursive", type: "boolean", default: false, control: "toggle", labelKey: "settings.fields.studioRecursive" },
+    {
+      key: "photo.studio.thumbSize", type: "number", min: 96, max: 320, integer: true, default: 168, control: "range",
+      step: 8, unit: " px", labelKey: "settings.fields.studioThumbSize",
+    },
+    // Internal state (no visible control)
+    { key: "photo.studio.infoOpen", type: "boolean", default: false, ...hidden },
+    { key: "photo.studio.lastFolder", type: "string", default: "", maxLength: 4096, ...hidden },
+    { key: "photo.studio.favorites", type: "object", default: { paths: [] }, validate: isPathList, ...hidden },
+  ]);
+}
+
+/** createSettings() backend over the app settings store ("vho.studio.x" -> "photo.studio.x"). */
+export function appSettingsStore(appSettings) {
+  const key = (k) => k.replace(/^vho\.studio\./, "photo.studio.");
+  const wrapped = (k) => key(k) === "photo.studio.favorites";
+  return {
+    get: (k) => (appSettings.has(key(k)) ? (wrapped(k) ? appSettings.get(key(k))?.paths : appSettings.get(key(k))) : undefined),
+    set: (k, v) => appSettings.has(key(k)) && appSettings.set(key(k), wrapped(k) ? { paths: v } : v),
+  };
+}
 
 /**
  * app: { dom, state, bus, toast, playlist, photo, video, loader, hud }  (resolved lazily)
@@ -56,6 +95,10 @@ export function createPhotoStudio(app) {
   const contentEl = root.querySelector(".ps-content");
   const viewport = $("viewport");
   const settings = studioSettings;
+  if (app.settings?.register && !app.settings.has("photo.studio.sort")) {
+    registerStudioSettings(app.settings);
+    settings.use(appSettingsStore(app.settings));
+  }
 
   const thumbs = createThumbService({ invoke, listen, convertFileSrc });
 
@@ -468,14 +511,42 @@ export function createPhotoStudio(app) {
   $("ps-recursive").checked = recursive;
   $("ps-zoom").value = settings.get("thumbSize", 168);
 
-  $("ps-sort").addEventListener("change", (e) => {
-    sortKey = e.target.value;
+  function applySort(key) {
+    sortKey = key;
+    $("ps-sort").value = key;
     settings.set("sort", sortKey);
     const needExif = sortKey === "exifDate" && items.some((i) => i.kind !== "video" && i.exifDate === undefined);
     if (needExif) return openFolder(dir, { keepScroll: false });
     backendOrder = false;
     applyView();
-  });
+  }
+  $("ps-sort").addEventListener("change", (e) => applySort(e.target.value));
+
+  /** Options changed in the Settings window (or loaded after start-up). */
+  function applyPrefs() {
+    const s = settings.get("sort", "name"), d = !!settings.get("descending", false);
+    const r = !!settings.get("recursive", false), z = Number(settings.get("thumbSize", 168));
+    if (d !== descending) {
+      descending = d;
+      $("ps-sort-dir").textContent = d ? "↓" : "↑";
+      backendOrder = false;
+      if (s === sortKey) applyView();
+    }
+    if (s !== sortKey) applySort(s);
+    if (r !== recursive) {
+      recursive = r;
+      $("ps-recursive").checked = r;
+      if (dir) openFolder(dir);
+    }
+    if (String(z) !== $("ps-zoom").value) {
+      $("ps-zoom").value = z;
+      grid.setCellSize(z);
+    }
+  }
+  if (app.settings?.subscribe) {
+    app.settings.ready?.then(applyPrefs).catch(() => {});
+    for (const k of ["sort", "descending", "recursive", "thumbSize"]) app.settings.subscribe(`photo.studio.${k}`, () => applyPrefs());
+  }
   $("ps-sort-dir").addEventListener("click", (e) => {
     descending = !descending;
     settings.set("descending", descending);
@@ -573,8 +644,8 @@ export function createPhotoStudio(app) {
     }
     if (!root.hidden) {
       if (isTextField(e.target)) {
-        if (e.key === "Escape") { e.target.blur(); gridEl.focus(); e.preventDefault(); }
-        e.stopPropagation();
+        // Typing is left alone (global shortcuts ignore text fields); Esc leaves the field
+        if (e.key === "Escape") { e.target.blur(); gridEl.focus(); e.preventDefault(); e.stopPropagation(); }
         return;
       }
       if (e.code === "KeyF" && !e.ctrlKey) return; // fullscreen stays global
@@ -582,11 +653,50 @@ export function createPhotoStudio(app) {
       e.stopPropagation();
       return;
     }
-    // Viewer opened from the studio: Esc / Backspace go back to the grid
-    if (inSession() && state.get("currentMediaType") === "image" && (e.key === "Escape" || e.key === "Backspace") && !isTextField(e.target)) {
-      backToStudio();
-    }
   }, true);
+
+  // Viewer opened from the studio: Esc goes back to the grid (B2 shortcut table: Escape chain)
+  const viewerEscape = () => {
+    if (!root.hidden || !inSession() || state.get("currentMediaType") !== "image") return false;
+    backToStudio();
+    return true;
+  };
+  if (app.shortcuts?.onEscape) app.shortcuts.onEscape(viewerEscape);
+  else window.addEventListener("keydown", (e) => { if (e.key === "Escape" && !isTextField(e.target)) viewerEscape(); });
+
+  // Entry points in the central shortcut table (Settings > Kısayollar, F1 help)
+  app.shortcuts?.register?.({
+    id: "photoStudio", scope: "global", keys: ["Ctrl+Shift+KeyO"], labelKey: "shortcuts.actions.photoStudio",
+    run: () => (root.hidden ? show() : hide()),
+  });
+  app.shortcuts?.register?.({
+    id: "photoEdit", scope: "photo", keys: ["Ctrl+KeyE"], labelKey: "shortcuts.actions.photoEdit",
+    run: () => { if (!editBtn.hidden) editBtn.click(); },
+  });
+
+  // Address bar: type / paste a folder path (pencil button next to the breadcrumb)
+  const pathForm = Object.assign(document.createElement("form"), { className: "ps-path-form", hidden: true });
+  const pathInput = Object.assign(document.createElement("input"), {
+    id: "ps-path", className: "ps-input ps-path", type: "text", spellcheck: false, placeholder: "Klasör yolu yazın ve Enter",
+  });
+  pathForm.append(pathInput);
+  const pathBtn = Object.assign(document.createElement("button"), { id: "ps-path-edit", className: "ps-btn", title: "Yolu yaz / yapıştır", textContent: "✎" });
+  crumbEl.after(pathForm, pathBtn);
+  const closePath = () => { pathForm.hidden = true; crumbEl.hidden = false; };
+  pathBtn.addEventListener("click", () => {
+    crumbEl.hidden = true;
+    pathForm.hidden = false;
+    pathInput.value = dir;
+    pathInput.focus();
+    pathInput.select();
+  });
+  pathForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const p = pathInput.value.trim().replace(/^"(.*)"$/, "$1");
+    closePath();
+    if (p) openFolder(p);
+  });
+  pathInput.addEventListener("blur", () => setTimeout(closePath, 0));
 
   // ------------------------------------------------------- show / hide
   function show({ focusPath = null } = {}) {

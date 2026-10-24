@@ -8,6 +8,8 @@
 
 import { queryDom } from "./core/dom.js";
 import { createEventBus } from "./core/events.js";
+import { createLibrary } from "./core/library.js";
+import { createSettings, defaultAdapter } from "./core/settings.js";
 import { createAppState } from "./core/state.js";
 import { invoke } from "./core/tauri.js";
 import { createAudioEngine } from "./media/audio-engine.js";
@@ -28,11 +30,27 @@ import { initShortcuts } from "./ui/shortcuts.js";
 import { createSleepTimer } from "./ui/sleep-timer.js";
 import { createTimeline } from "./ui/timeline.js";
 import { createToasts } from "./ui/toasts.js";
+import { initPlatform } from "./ui/platform.js";
 import { initWindowControls } from "./ui/window-controls.js";
+
+/** localStorage, or null when blocked (private mode / tests). */
+function safeLocalStorage() {
+  try { return window.localStorage; } catch { return null; }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   const dom = queryDom();
   const app = { dom, state: createAppState(), bus: createEventBus() };
+
+  // Persistent settings + library (recent files, resume positions); loaded asynchronously,
+  // initPlatform() waits for them before applying values to the UI.
+  app.settings = createSettings({ adapter: defaultAdapter("settings.json", "settings") });
+  app.library = createLibrary({ adapter: defaultAdapter("library.json", "library"), legacyStorage: safeLocalStorage() });
+  app.resume = {
+    get: (key) => (app.settings.get("playback.resume") ? app.library.resume.get(key) : null),
+    set: (key, seconds) => app.library.resume.set(key, seconds),
+    remove: (key) => app.library.resume.remove(key),
+  };
 
   // Leaf services first: everything below may toast / poke the HUD
   Object.assign(app, createToasts(dom));
@@ -61,14 +79,19 @@ document.addEventListener("DOMContentLoaded", () => {
   app.panels = createPanels(app);
   app.sleep = createSleepTimer(app);
   createModals(app);
-  initShortcuts(app);
+  app.shortcuts = initShortcuts(app);
   initWindowControls(dom);
   app.studio = createPhotoStudio(app);
 
-  // Files passed on the command line ("Open with VHO")
-  invoke?.("initial_files")
-    .then((paths) => app.loader.openPaths(paths))
-    .catch((e) => console.warn("initial_files", e));
+  // Settings window, recent files, menus, themes, language... then the files passed on
+  // the command line ("Open with VHO"), so they open with the restored settings.
+  initPlatform(app)
+    .catch((e) => console.error("[platform]", e))
+    .finally(() => {
+      invoke?.("initial_files")
+        .then((paths) => app.loader.openPaths(paths))
+        .catch((e) => console.warn("initial_files", e));
+    });
 
   // Release media resources when the app closes
   window.addEventListener("pagehide", () => {
