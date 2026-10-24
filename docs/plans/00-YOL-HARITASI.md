@@ -30,6 +30,12 @@ Her ajan **kendi git worktree'sinde** çalışır, kendi dalına commit eder. En
 | **B2 Platform & ayarlar** | [03-platform-ve-ayarlar.md](03-platform-ve-ayarlar.md) §1–§4 |
 | **B3 Fotoğraf arayüzü** | [04-fotograf-studyosu.md](04-fotograf-studyosu.md) §2–§5 |
 
+### Dalga 2.5 — Medya eylemleri ve metin çevirisi (B1 + B3 birleştikten sonra)
+| Ajan | Plan |
+|---|---|
+| **D1 Medya eylemleri** | [06-medya-eylemleri.md](06-medya-eylemleri.md) — Windows Fotoğraflar tarzı araç çubuğu; sil/paylaş/yazdır/kopyala/arka plan yap/birlikte aç/metin tanıma; video kesme/dönüştürme/kare kaydetme; müzik etiket düzenleme/sözler |
+| **D2 Metin çevirisi (i18n)** | [03-platform-ve-ayarlar.md](03-platform-ve-ayarlar.md) §3 — mevcut tüm metinlerin TR/EN anahtarlarına taşınması (D1 bittikten sonra, en son) |
+
 ### Dalga 3 — Kütüphane, ağ, yayın
 | Ajan | Plan |
 |---|---|
@@ -66,5 +72,8 @@ Her ajan **kendi git worktree'sinde** çalışır, kendi dalına commit eder. En
 | 11 | Medya kütüphanesi, çalma listeleri (M3U), müzik modu | WMP | 05 |
 | 12 | Ağ akışları (HLS, YouTube linki*), DLNA/UPnP, TV'ye yayın | VLC | 05 |
 | 13 | Otomatik güncelleme, imzalı kurulum, mağazalar | hepsi | 03 |
+| 14 | Sil, paylaş, yazdır, kopyala, arka plan yap, birlikte aç, metin tanıma (OCR) | Windows Fotoğraflar | 06 |
+| 15 | Video kes/dönüştür/GIF/sesi çıkar/kare kaydet, mini oynatıcı | PotPlayer, VLC | 06 |
+| 16 | Müzik etiket düzenleyici, kapak, şarkı sözleri (LRC), ReplayGain | WMP, foobar2000 | 06 |
 
 \* YouTube bağlantıları yt-dlp gerektirir (Unlicense); kullanım koşulları nedeniyle kullanıcı onayıyla isteğe bağlı.
