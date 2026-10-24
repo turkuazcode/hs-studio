@@ -1,0 +1,133 @@
+/* ==========================================================================
+   Media actions (Plan 06): titlebar action toolbar, action dialogs, print preview,
+   OCR text layer, lyrics panel, mini player. Functional and sparse; the detailed visual
+   design comes later (docs/plans/00-YOL-HARITASI.md, "Arayüz ilkeleri" 4).
+   ========================================================================== */
+
+/* ---- Toolbar (titlebar, next to the file name) ---- */
+.media-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+.media-actions[hidden] { display: none !important; }
+.ma-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  width: 30px;
+  height: 28px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  transition: var(--transition-smooth);
+}
+.ma-btn:hover, .ma-btn:focus-visible { background: var(--bg-pill-hover); color: var(--text-pure); border-color: var(--border-subtle); }
+.ma-btn.active { color: var(--accent-ruby-bright); }
+.ma-more { font-weight: 700; letter-spacing: 1px; }
+.ma-mini-exit { display: none; }
+:root.mini-player .ma-mini-exit { display: inline-flex; }
+
+/* ---- Dialogs ---- */
+.vho-act-dialog { z-index: 95; }
+.vho-act-card { max-height: 86vh; overflow: auto; }
+.vho-act-card.is-busy .vho-act-body { opacity: 0.75; pointer-events: none; }
+.vho-act-body { display: flex; flex-direction: column; gap: 10px; }
+.vho-act-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-secondary); flex: 1; min-width: 0; }
+.vho-act-field small { color: var(--text-muted); }
+.vho-act-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.vho-act-inline { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.vho-act-hint { font-size: 11px; color: var(--text-muted); }
+.vho-act-file { font-size: 12px; color: var(--text-secondary); word-break: break-all; }
+.vho-act-check { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--text-secondary); cursor: pointer; }
+.vho-act-textarea { resize: vertical; font-family: inherit; min-height: 70px; }
+.vho-time { width: 110px; font-variant-numeric: tabular-nums; }
+.vho-act-status { min-height: 16px; font-size: 12px !important; }
+.vho-act-status.is-error { color: var(--color-danger) !important; }
+.vho-act-status.is-ok { color: var(--color-success) !important; }
+.vho-act-progress { height: 6px; border-radius: 3px; background: var(--bg-pill); overflow: hidden; }
+.vho-act-progress[hidden] { display: none; }
+.vho-act-progress-bar { height: 100%; width: 0; background: var(--accent-gradient); transition: width 0.2s; }
+.vho-act-choices { display: flex; flex-direction: column; gap: 4px; }
+.vho-act-choice { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--border-subtle); cursor: pointer; }
+.vho-act-choice:hover { background: var(--bg-pill); }
+.vho-act-choice-text { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.vho-act-choice-text small { color: var(--text-muted); font-size: 11px; }
+.vho-act-props h4 { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 6px 0 4px; }
+.vho-act-props dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 12px; margin: 0; }
+.vho-act-props dt { color: var(--text-muted); }
+.vho-act-props dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
+.vho-danger { color: var(--color-danger) !important; }
+
+/* ---- Print preview ---- */
+.vho-print-layout { display: flex; gap: 16px; align-items: flex-start; }
+.vho-print-stage { flex: 1; display: flex; justify-content: center; background: rgba(0, 0, 0, 0.35); border-radius: 10px; padding: 14px; min-height: 280px; }
+.vho-print-page { position: relative; background: #fff; height: 300px; max-width: 100%; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); overflow: hidden; }
+.vho-print-options { width: 190px; display: flex; flex-direction: column; gap: 10px; }
+.vho-print-area { position: absolute; overflow: hidden; }
+.vho-print-area img { position: absolute; display: block; max-width: none; }
+#vho-print-root { display: none; }
+@media print { #vho-print-root .vho-print-area { outline: none; } }
+
+/* ---- OCR text layer ---- */
+.vho-ocr-layer { position: absolute; z-index: 30; pointer-events: auto; user-select: text; }
+.vho-ocr-word {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  line-height: 1;
+  overflow: hidden;
+  background: rgba(56, 189, 248, 0.14);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.6);
+  cursor: text;
+}
+.vho-ocr-word::selection { background: rgba(56, 189, 248, 0.55); color: transparent; }
+.vho-ocr-bar {
+  position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%); z-index: 31;
+  display: flex; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 12px;
+  background: var(--bg-surface-elevated); border: 1px solid var(--border-specular); font-size: 12px;
+}
+
+/* ---- Tag editor ---- */
+.vho-tags-layout { display: flex; gap: 16px; }
+.vho-tags-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.vho-tags-side { width: 170px; display: flex; flex-direction: column; gap: 8px; }
+.vho-tag-cover { display: flex; flex-direction: column; gap: 6px; }
+.vho-tag-cover-img { width: 170px; height: 170px; object-fit: cover; border-radius: 8px; background: var(--bg-pill); }
+.vho-tag-cover-img[hidden] { display: none; }
+
+/* ---- Lyrics panel (music) ---- */
+.vho-lyrics {
+  position: absolute; top: 12px; right: 12px; bottom: 96px; width: min(360px, 42%); z-index: 25;
+  display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
+  background: var(--bg-surface-elevated); border: 1px solid var(--border-specular);
+}
+.vho-lyrics header { display: flex; gap: 8px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border-subtle); }
+.vho-lyrics header strong { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vho-lyrics header small { color: var(--text-muted); font-size: 11px; }
+.vho-lyrics-list { list-style: none; margin: 0; padding: 14px 16px 40%; overflow-y: auto; flex: 1; }
+.vho-lyric-line { padding: 4px 0; font-size: 14px; color: var(--text-secondary); white-space: pre-wrap; transition: color 0.2s, transform 0.2s; }
+.vho-lyrics.is-synced .vho-lyric-line { cursor: pointer; color: var(--text-muted); }
+.vho-lyrics.is-synced .vho-lyric-line:hover { color: var(--text-secondary); }
+.vho-lyric-line.is-current { color: var(--text-pure) !important; font-weight: 600; transform: scale(1.03); transform-origin: left center; }
+.vho-lyrics-empty { padding: 16px; font-size: 12px; color: var(--text-muted); }
+
+/* ---- Mini player: only the picture / song and the HUD ---- */
+:root.mini-player .titlebar-actions,
+:root.mini-player .media-actions,
+:root.mini-player .titlebar-brand .brand-text-group,
+:root.mini-player .titlebar-divider,
+:root.mini-player .playlist-drawer,
+:root.mini-player .vho-lyrics { display: none !important; }
+:root.mini-player .current-filename { max-width: 46vw; }
+
+/* ---- Themes ---- */
+:root[data-theme="light"] .ma-btn { color: #334155; }
+:root[data-theme="light"] .vho-print-stage { background: rgba(0, 0, 0, 0.08); }
+:root[data-theme="contrast"] .ma-btn { color: #fff; border-color: #fff; }
