@@ -691,6 +691,7 @@ export function createPhotoStudio(app) {
         else if (sel.focus >= 0) openIndex(sel.focus);
         break;
       case "Backspace": if (parentDir(dir)) openFolder(parentDir(dir)); break;
+      case "Delete": if (hasSelection()) app.mediaActions.forPaths.delete(selectedPaths()); break;
       case "Escape":
         if (sel.selected.size) { sel = emptySelection(); syncSelection(); } else hide();
         break;

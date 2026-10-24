@@ -46,7 +46,7 @@ tauri-plugin-window-state = "2"
 # Media actions (Plan 06): recycle bin (MIT), clipboard text/image/file list (MIT OR Apache-2.0),
 # music tags + cover art + lyrics (MIT OR Apache-2.0)
 trash = "5"
-arboard = { version = "3.6", default-features = false, features = ["image-data"] }
+arboard = { version = "=3.6.1", default-features = false, features = ["image-data"] }
 lofty = "0.22"
 
 [target.'cfg(windows)'.dependencies]
