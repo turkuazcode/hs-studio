@@ -54,7 +54,7 @@ SRT/VTT/ASS, yol ile açılan/sürüklenen altyazı), altyazı stili (`sub-scale
 `sub-pos`; HUD görünürken `sub-margin-y` yükselir), altyazı gecikmesi (`sub-delay`), ses gecikmesi
 ±50 ms (`audio-delay`), 10 bant ekolayzır + hazır ayarlar + normalizasyon (`af=lavfi=[…]`,
 dynaudnorm), AI ses anahtarları lavfi filtresi olarak, %200 ses (`volume-max=200`), bölümler
-(zaman çubuğu işaretleri + menü), dosya başına yer imleri (K), kare kare (`.` `,`), ekran görüntüsü
+(zaman çubuğu işaretleri + menü), dosya başına yer imleri (Y), kare kare (`.` `,`), ekran görüntüsü
 (`screenshot-to-file`, altyazılı), döndür/yansıt (`video-rotate`, `vf=hflip/vflip`), yakınlaştırma
 (Ctrl+tekerlek, `video-zoom`) ve kaydırma (Ctrl+sürükle, `video-pan-*`), parlaklık/kontrast/
 doygunluk/gama/ton, en-boy (`video-aspect-override`, `keepaspect`), A-B döngü (`ab-loop-a/b`),
