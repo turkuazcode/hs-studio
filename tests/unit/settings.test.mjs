@@ -4,7 +4,7 @@ import {
   BASE_FIELDS, SETTINGS_VERSION, defaultValues, extractLegacyResume, isLegacyResumeKey, migrateSettings,
   sanitizeValues, validateValue,
 } from "../../src/core/settings-schema.js";
-import { createSettings, memoryAdapter } from "../../src/core/settings.js";
+import { createSettings, memoryAdapter, tauriStoreAdapter } from "../../src/core/settings.js";
 import { addRecent, createLibrary, RECENT_MAX, sanitizeRecent, setResume } from "../../src/core/library.js";
 
 const tick = (ms = 5) => new Promise((r) => setTimeout(r, ms));
@@ -181,4 +181,27 @@ test("library: one-time migration of localStorage resume positions", async () =>
   await tick(20);
   assert.equal(adapter.doc.resume.k, undefined);
   assert.deepEqual(adapter.doc.recent, []);
+});
+
+test("settings: a value left unsaved in the backend store by a reloaded page is written to disk on load", async () => {
+  // tauri-plugin-store returns the already-loaded instance for the same path after a page reload
+  const disk = {};
+  const cache = {};
+  const store = {
+    async get(k) { return cache[k]; },
+    async set(k, v) { cache[k] = v; },
+    async save() { Object.assign(disk, structuredClone(cache)); },
+  };
+  const prev = globalThis.window;
+  globalThis.window = { __TAURI__: { core: { invoke: async () => "C:\data" }, store: { load: async () => store } } };
+  try {
+    // previous page: set() ran, the page reloaded before save()
+    await store.set("settings", { version: SETTINGS_VERSION, values: defaultValues(BASE_FIELDS) });
+    assert.equal(disk.settings, undefined);
+    const settings = createSettings({ adapter: tauriStoreAdapter("settings.json", "settings") });
+    await settings.ready;
+    assert.equal(disk.settings?.version, SETTINGS_VERSION, "persisted on load");
+  } finally {
+    globalThis.window = prev;
+  }
 });

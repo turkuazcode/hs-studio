@@ -69,7 +69,14 @@ export function tauriStoreAdapter(fileName, storeKey) {
     return storePromise;
   };
   return {
-    async load() { return (await open()).get(storeKey); },
+    async load() {
+      const store = await open();
+      const doc = await store.get(storeKey);
+      // The backend keeps loaded stores across page reloads: a value set by the previous page
+      // whose save() never ran is in memory but not on disk. Persist it once now.
+      if (doc !== undefined) await store.save().catch((e) => console.error("[settings] save on load failed", e));
+      return doc;
+    },
     async save(doc) {
       const store = await open();
       await store.set(storeKey, doc);
