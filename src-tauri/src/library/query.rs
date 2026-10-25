@@ -86,10 +86,10 @@ pub fn fts_query(text: &str) -> Option<String> {
     if words.is_empty() { None } else { Some(words.join(" ")) }
 }
 
-/// Case/diacritic folding helper for tags and search words. Turkish dotted capital İ folds
-/// to i (Unicode lower-casing would leave a combining dot).
+/// Case folding for tags and search words. Turkish İ and ı fold to i (the FTS index stores
+/// names the same way), so "baris" finds "Barış" and "istanbul" finds "İstanbul".
 pub fn fold(s: &str) -> String {
-    s.trim().chars().flat_map(|c| if c == 'İ' { vec!['i'] } else { c.to_lowercase().collect() }).collect()
+    s.trim().chars().flat_map(|c| if c == 'İ' || c == 'ı' { vec!['i'] } else { c.to_lowercase().collect() }).collect()
 }
 
 struct Built {
@@ -371,8 +371,8 @@ pub fn rebuild_fts(conn: &Connection) -> rusqlite::Result<()> {
     conn.execute_batch(
         "DELETE FROM media_fts;
          INSERT INTO media_fts (rowid, media_id, name, title, artist, album, tags)
-           SELECT m.rowid, m.id, m.name, a.title, a.artist, a.album,
-                  (SELECT group_concat(tag, ' ') FROM media_tags t WHERE t.media_id = m.id)
+           SELECT m.rowid, m.id, replace(replace(m.name, 'ı', 'i'), 'İ', 'i'), replace(replace(a.title, 'ı', 'i'), 'İ', 'i'), replace(replace(a.artist, 'ı', 'i'), 'İ', 'i'), replace(replace(a.album, 'ı', 'i'), 'İ', 'i'),
+                  replace(replace((SELECT group_concat(tag, ' ') FROM media_tags t WHERE t.media_id = m.id), 'ı', 'i'), 'İ', 'i')
            FROM media m LEFT JOIN audio_tags a ON a.media_id = m.id;",
     )
 }

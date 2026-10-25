@@ -224,26 +224,26 @@ CREATE VIRTUAL TABLE media_fts USING fts5(
   tokenize = 'unicode61 remove_diacritics 2'
 );
 INSERT INTO media_fts (rowid, media_id, name, title, artist, album, tags)
-  SELECT m.rowid, m.id, m.name, a.title, a.artist, a.album,
-         (SELECT group_concat(tag, ' ') FROM media_tags t WHERE t.media_id = m.id)
+  SELECT m.rowid, m.id, replace(replace(m.name, 'ı', 'i'), 'İ', 'i'), replace(replace(a.title, 'ı', 'i'), 'İ', 'i'), replace(replace(a.artist, 'ı', 'i'), 'İ', 'i'), replace(replace(a.album, 'ı', 'i'), 'İ', 'i'),
+         replace(replace((SELECT group_concat(tag, ' ') FROM media_tags t WHERE t.media_id = m.id), 'ı', 'i'), 'İ', 'i')
   FROM media m LEFT JOIN audio_tags a ON a.media_id = m.id;
 
 CREATE TRIGGER media_fts_insert AFTER INSERT ON media BEGIN
   INSERT INTO media_fts (rowid, media_id, name, title, artist, album, tags)
-  VALUES (new.rowid, new.id, new.name, NULL, NULL, NULL, NULL);
+  VALUES (new.rowid, new.id, replace(replace(new.name, 'ı', 'i'), 'İ', 'i'), NULL, NULL, NULL, NULL);
 END;
 CREATE TRIGGER media_fts_delete AFTER DELETE ON media BEGIN
   DELETE FROM media_fts WHERE rowid = old.rowid;
 END;
 CREATE TRIGGER media_fts_name AFTER UPDATE OF name ON media BEGIN
-  UPDATE media_fts SET name = new.name WHERE rowid = new.rowid;
+  UPDATE media_fts SET name = replace(replace(new.name, 'ı', 'i'), 'İ', 'i') WHERE rowid = new.rowid;
 END;
 CREATE TRIGGER media_fts_audio_insert AFTER INSERT ON audio_tags BEGIN
-  UPDATE media_fts SET title = new.title, artist = new.artist, album = new.album
+  UPDATE media_fts SET title = replace(replace(new.title, 'ı', 'i'), 'İ', 'i'), artist = replace(replace(new.artist, 'ı', 'i'), 'İ', 'i'), album = replace(replace(new.album, 'ı', 'i'), 'İ', 'i')
   WHERE rowid = (SELECT rowid FROM media WHERE id = new.media_id);
 END;
 CREATE TRIGGER media_fts_audio_update AFTER UPDATE ON audio_tags BEGIN
-  UPDATE media_fts SET title = new.title, artist = new.artist, album = new.album
+  UPDATE media_fts SET title = replace(replace(new.title, 'ı', 'i'), 'İ', 'i'), artist = replace(replace(new.artist, 'ı', 'i'), 'İ', 'i'), album = replace(replace(new.album, 'ı', 'i'), 'İ', 'i')
   WHERE rowid = (SELECT rowid FROM media WHERE id = new.media_id);
 END;
 CREATE TRIGGER media_fts_audio_delete AFTER DELETE ON audio_tags BEGIN
@@ -251,11 +251,11 @@ CREATE TRIGGER media_fts_audio_delete AFTER DELETE ON audio_tags BEGIN
   WHERE rowid = (SELECT rowid FROM media WHERE id = old.media_id);
 END;
 CREATE TRIGGER media_fts_tag_insert AFTER INSERT ON media_tags BEGIN
-  UPDATE media_fts SET tags = (SELECT group_concat(tag, ' ') FROM media_tags WHERE media_id = new.media_id)
+  UPDATE media_fts SET tags = replace(replace((SELECT group_concat(tag, ' ') FROM media_tags WHERE media_id = new.media_id), 'ı', 'i'), 'İ', 'i')
   WHERE rowid = (SELECT rowid FROM media WHERE id = new.media_id);
 END;
 CREATE TRIGGER media_fts_tag_delete AFTER DELETE ON media_tags BEGIN
-  UPDATE media_fts SET tags = (SELECT group_concat(tag, ' ') FROM media_tags WHERE media_id = old.media_id)
+  UPDATE media_fts SET tags = replace(replace((SELECT group_concat(tag, ' ') FROM media_tags WHERE media_id = old.media_id), 'ı', 'i'), 'İ', 'i')
   WHERE rowid = (SELECT rowid FROM media WHERE id = old.media_id);
 END;
 "#;

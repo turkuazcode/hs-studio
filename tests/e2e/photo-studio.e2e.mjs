@@ -8,6 +8,7 @@ import { existsSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { launchApp } from "./lib/app.mjs";
+import { withDb } from "./lib/db.mjs";
 import { jpegSize, makeBulkFolder, makePhotoFolder } from "./lib/photo-fixtures.mjs";
 import { sortItems } from "../../src/studio/logic.js";
 
@@ -318,20 +319,27 @@ test("photo studio", { timeout: 300000 }, async (t) => {
       t.diagnostic(`5000 files: first grid paint ${firstPaint} ms, scan+view ${scanMs} ms, first screen thumbnails (cold cache, 640x480 JPEG) ${thumbsMs} ms, DOM cells ${rendered}/${renderedAfter}`);
       console.log(`[perf] 5000 files: first grid paint ${firstPaint} ms; scan complete ${scanMs} ms; first-screen thumbnails ${thumbsMs} ms; DOM cells ${rendered} (after scroll ${renderedAfter})`);
       assert.ok(firstPaint < 2000, `first paint ${firstPaint} ms`);
-      // Favourites: star the folder, it is listed and persisted in the settings store
+      // Favourites: star the folder, it is listed and persisted as a favorite folder in
+      // library.db (Plan 13/L02); a favorite folder is not a library folder
       await app.click("#ps-fav-toggle");
-      assert.equal(await app.eval(`document.querySelector("#ps-favorites .ps-fav")?.dataset.path`), BULK);
+      await app.waitFor(`document.querySelector("#ps-favorites .ps-fav")?.dataset.path === ${J(BULK)}`, { timeoutMs: 5000, message: "favorite listed" });
       assert.equal(await app.text("#ps-fav-toggle"), "★");
+      let fav = null;
+      for (let i = 0; i < 40 && !fav; i++) {
+        try { fav = withDb(app.dataDir, (db) => db.prepare("SELECT path, favorite, watched FROM folders WHERE favorite = 1").get()); } catch { /* being written */ }
+        if (!fav) await new Promise((r) => setTimeout(r, 200));
+      }
+      assert.equal(fav?.path, BULK, "favorite folder persisted in library.db");
+      assert.equal(fav.watched, 0, "not added to the library");
       let stored;
       for (let i = 0; i < 40 && !stored; i++) {
         try {
           const s = JSON.parse(readFileSync(join(app.dataDir, "settings.json"), "utf8"));
-          if (s.settings?.values?.["photo.studio.favorites"]?.paths?.includes(BULK)) stored = s.settings.values;
+          if (s.settings?.values?.["photo.studio.lastFolder"] === BULK) stored = s.settings.values;
         } catch { /* being written */ }
         if (!stored) await new Promise((r) => setTimeout(r, 200));
       }
-      assert.ok(stored, "favourites persisted in settings.json");
-      assert.equal(stored["photo.studio.lastFolder"], BULK);
+      assert.equal(stored?.["photo.studio.lastFolder"], BULK);
       assert.ok(rendered < 300 && renderedAfter < 300, "virtualised");
     });
 
