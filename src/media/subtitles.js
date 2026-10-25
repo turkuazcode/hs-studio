@@ -4,6 +4,7 @@
 // The parsing functions at the top are pure and unit tested.
 // ==========================================================================
 
+import { i18n, t } from "../core/i18n.js";
 import { convertFileSrc } from "../core/tauri.js";
 
 /** UTF-8 when valid, otherwise Windows-1254 (old Turkish subtitle files). */
@@ -78,27 +79,27 @@ export function createSubtitles({ dom, bus, toast, openSearch, engine = () => nu
       const on = !!nativeSelected();
       btnToggleSubtitles.classList.toggle("sub-active", on);
       btnToggleSubtitles.classList.toggle("sub-disabled", !on);
-      subStatusLabel.textContent = on ? "CC Açık" : "CC Kapalı";
-      if (subMenuToggleText) subMenuToggleText.textContent = on ? "● Altyazıyı Kapat (C)" : "○ Altyazıyı Aç (C)";
+      subStatusLabel.textContent = t(on ? "ui.subs.ccOn" : "ui.subs.ccOff");
+      if (subMenuToggleText) subMenuToggleText.textContent = t(on ? "ui.subs.menuOff" : "ui.subs.menuOn");
       if (subMenuToggle) subMenuToggle.classList.toggle("active", on);
       subtitleText.textContent = "";
     } else if (subtitles.length > 0 && subtitlesEnabled) {
       btnToggleSubtitles.classList.add("sub-active");
       btnToggleSubtitles.classList.remove("sub-disabled");
-      subStatusLabel.textContent = "CC Açık";
-      if (subMenuToggleText) subMenuToggleText.textContent = "● Altyazıyı Kapat (C)";
+      subStatusLabel.textContent = t("ui.subs.ccOn");
+      if (subMenuToggleText) subMenuToggleText.textContent = t("ui.subs.menuOff");
       if (subMenuToggle) subMenuToggle.classList.add("active");
     } else if (subtitles.length > 0 && !subtitlesEnabled) {
       btnToggleSubtitles.classList.remove("sub-active");
       btnToggleSubtitles.classList.add("sub-disabled");
-      subStatusLabel.textContent = "CC Kapalı";
-      if (subMenuToggleText) subMenuToggleText.textContent = "○ Altyazıyı Aç (C)";
+      subStatusLabel.textContent = t("ui.subs.ccOff");
+      if (subMenuToggleText) subMenuToggleText.textContent = t("ui.subs.menuOn");
       if (subMenuToggle) subMenuToggle.classList.remove("active");
       subtitleText.textContent = "";
     } else {
       btnToggleSubtitles.classList.remove("sub-active", "sub-disabled");
       subStatusLabel.textContent = "CC";
-      if (subMenuToggleText) subMenuToggleText.textContent = "🌐 Altyazı Bul / Yükle";
+      if (subMenuToggleText) subMenuToggleText.textContent = t("ui.subs.menuFind");
       if (subMenuToggle) subMenuToggle.classList.remove("active");
       subtitleText.textContent = "";
     }
@@ -123,15 +124,15 @@ export function createSubtitles({ dom, bus, toast, openSearch, engine = () => nu
       });
       return el;
     };
-    subTrackList.append(item("Altyazı kanalı: Kapalı", "no", !sel));
+    subTrackList.append(item(t("ui.subs.trackOff"), "no", !sel));
     for (const t of nativeTracks) subTrackList.append(item(t.label, t.id, t.selected));
   }
 
   function selectNative(id) {
     if (id !== null) lastNativeSid = id;
     engine().selectTrack("sub", id).catch((e) => console.warn("sid", e));
-    const t = nativeTracks.find((x) => x.id === id);
-    toast(t ? `Altyazı: ${t.label}` : "Altyazı kapatıldı");
+    const track = nativeTracks.find((x) => x.id === id);
+    toast(track ? t("ui.subs.toastTrack", { label: track.label }) : t("ui.subs.toastTrackOff"));
   }
 
   function toggleSubtitles() {
@@ -152,7 +153,7 @@ export function createSubtitles({ dom, bus, toast, openSearch, engine = () => nu
     }
     subtitlesEnabled = !subtitlesEnabled;
     updateSubtitleUi();
-    toast(subtitlesEnabled ? "Altyazı Açıldı (Aktif)" : "Altyazı Kapatıldı (Gizli)");
+    toast(t(subtitlesEnabled ? "ui.subs.toastShown" : "ui.subs.toastHidden"));
   }
 
   /** Accepts a File (input / HTML drop) or a filesystem path (dialog / native drop). */
@@ -163,7 +164,7 @@ export function createSubtitles({ dom, bus, toast, openSearch, engine = () => nu
         await engine().addSubtitle(source);
         subtitles = [];
         subtitleText.textContent = "";
-        toast(`Altyazı yüklendi: ${source.split(/[\\/]/).pop()}`);
+        toast(t("ui.subs.toastLoadedFile", { name: source.split(/[\\/]/).pop() }));
         return;
       } catch (e) {
         console.warn("sub-add", e); // fall back to the app's own renderer below
@@ -178,11 +179,11 @@ export function createSubtitles({ dom, bus, toast, openSearch, engine = () => nu
       updateSubtitleUi();
       updateSubtitles();
       toast(subtitles.length
-        ? `Altyazı yüklendi (${subtitles.length} satır)`
-        : "⚠️ Altyazı dosyasında geçerli satır bulunamadı");
+        ? t("ui.subs.toastLoadedLines", { n: subtitles.length })
+        : t("ui.subs.noCues"));
     } catch (e) {
       console.warn(e);
-      toast("⚠️ Altyazı okunamadı");
+      toast(t("ui.subs.readFailed"));
     }
   }
 
@@ -206,7 +207,7 @@ export function createSubtitles({ dom, bus, toast, openSearch, engine = () => nu
   /** Shifts the delay and confirms it in a toast (G/H keys, +/- buttons). */
   function nudgeDelay(deltaMs) {
     setSubtitleDelay(subtitleDelay + deltaMs);
-    toast(`Altyazı senkronu: ${valSubDelay.textContent}`);
+    toast(t("ui.subs.toastSync", { delay: valSubDelay.textContent }));
   }
 
   /** A new video starts without subtitles. */
@@ -300,7 +301,7 @@ export function createSubtitles({ dom, bus, toast, openSearch, engine = () => nu
     subtitlesEnabled = false;
     updateSubtitleUi();
     subtitlesMenu.classList.remove("show");
-    toast("Altyazı kaldırıldı");
+    toast(t("ui.subs.toastRemoved"));
   });
 
   // Subtitle delay controls (+/- 100 ms) in the effects panel
@@ -308,8 +309,10 @@ export function createSubtitles({ dom, bus, toast, openSearch, engine = () => nu
   btnSubMinus.addEventListener("click", () => nudgeDelay(-100));
   btnSubReset.addEventListener("click", () => {
     setSubtitleDelay(0);
-    toast("Altyazı gecikmesi sıfırlandı");
+    toast(t("ui.subs.toastDelayReset"));
   });
+  i18n.onChange(() => updateSubtitleUi());
+
 
   return {
     load: loadSubtitleFile,

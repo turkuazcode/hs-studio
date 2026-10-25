@@ -7,6 +7,7 @@
 // ==========================================================================
 
 import { EQ_BANDS, EQ_PRESETS } from "./engine/engine.js";
+import { t } from "../core/i18n.js";
 
 /** mpv option values of profile=fast and the gpu-next defaults it replaces. */
 export const FAST_PROFILE_DEFAULTS = Object.freeze({
@@ -28,30 +29,31 @@ export function registerEngineSettings(app) {
   if (!settings?.register) return;
   const status = app.engineStatus ?? {};
   const presetOptions = [
-    ...Object.entries(EQ_PRESETS).map(([value, p]) => ({ value, label: p.label })),
-    { value: "custom", label: "Özel" },
+    ...Object.entries(EQ_PRESETS).map(([value, p]) => ({ value, labelKey: p.labelKey })),
+    { value: "custom", labelKey: "audio.eq.custom" },
   ];
 
   settings.register("subtitle", [
     {
       key: "subtitle.position", type: "number", min: 50, max: 100, integer: true, default: 100,
-      control: "range", step: 1, label: "Altyazı konumu (100 = en alt)",
-      help: "libmpv: sub-pos. Kontrol çubuğu görünürken altyazı otomatik yükselir.",
+      control: "range", step: 1, labelKey: "settings.fields.subPosition",
+      helpKey: "settings.help.subPosition",
     },
   ]);
 
   settings.register("audio", [
-    { control: "heading", label: "Ekolayzır ve normalizasyon (libmpv)" },
+    { control: "heading", labelKey: "settings.headings.eq" },
     { key: "audio.eqPreset", type: "enum", values: presetOptions.map((o) => o.value), default: "flat",
-      control: "select", label: "Ekolayzır hazır ayarı", options: presetOptions },
+      control: "select", labelKey: "settings.fields.eqPreset", options: presetOptions },
     { key: "audio.normalize", type: "boolean", default: false, control: "toggle",
-      label: "Ses normalizasyonu", help: "Sessiz ve gürültülü sahneleri dengeler (dynaudnorm)." },
+      labelKey: "ui.audio.normalize", helpKey: "settings.help.normalize" },
     { key: "audio.eqGains", type: "object", default: { gains: EQ_BANDS.map(() => 0) }, validate: validGains,
       control: "custom", render: (row) => {
         const b = document.createElement("button");
         b.type = "button";
         b.className = "btn-secondary btn-sm";
-        b.textContent = "10 bantlı ekolayzırı aç (Ses paneli)";
+        b.dataset.i18n = "settings.buttons.openEq";
+        b.textContent = t("settings.buttons.openEq");
         b.addEventListener("click", () => {
           app.settingsModal?.close?.();
           app.dom.audioPanel.classList.add("show");
@@ -61,7 +63,7 @@ export function registerEngineSettings(app) {
   ]);
 
   settings.register("advanced", [
-    { control: "heading", label: "Oynatma motoru" },
+    { control: "heading", labelKey: "ui.effects.engine" },
     { control: "custom", render: (row) => {
       const p = document.createElement("p");
       p.className = "engine-info";
@@ -69,12 +71,13 @@ export function registerEngineSettings(app) {
       row.append(p);
     } },
     { key: "engine.hwdec", type: "enum", values: ["auto-safe", "no"], default: "auto-safe", control: "select",
-      label: "Donanım ile video çözme",
-      options: [{ value: "auto-safe", label: "Otomatik (önerilen)" }, { value: "no", label: "Kapalı (yazılım)" }] },
+      labelKey: "settings.fields.hwdec",
+      options: [{ value: "auto-safe", labelKey: "settings.options.hwdecAuto" }, { value: "no", labelKey: "settings.options.hwdecOff" }] },
     { key: "engine.fastProfile", type: "enum", values: ["auto", "on", "off"], default: "auto", control: "select",
-      label: "Hızlı görüntü profili (profile=fast)",
-      help: `Dahili ekran kartlarında GPU yükünü azaltır.${status.gpu?.name ? ` Bu bilgisayar: ${status.gpu.name}${status.gpu.integrated ? " (dahili)" : ""}.` : ""}`,
-      options: [{ value: "auto", label: "Otomatik (dahili GPU'da açık)" }, { value: "on", label: "Açık" }, { value: "off", label: "Kapalı" }] },
+      labelKey: "settings.fields.fastProfile",
+      helpKey: status.gpu?.name ? (status.gpu.integrated ? "settings.help.fastProfileGpuIntegrated" : "settings.help.fastProfileGpu") : "settings.help.fastProfile",
+      helpVars: status.gpu?.name ? { gpu: status.gpu.name } : undefined,
+      options: [{ value: "auto", labelKey: "settings.options.fastAuto" }, { value: "on", labelKey: "settings.options.on" }, { value: "off", labelKey: "settings.options.off" }] },
   ]);
 
   // ------------------------------------------------------------------------
@@ -106,7 +109,8 @@ export function registerEngineSettings(app) {
   for (const k of ["subtitle.fontScale", "subtitle.color", "subtitle.position"]) settings.subscribe(k, applySubtitleStyle);
   settings.subscribe("engine.hwdec", (v) => {
     applyEngineOptions();
-    app.toast(v === "no" ? "Donanım ile çözme kapalı" : "Donanım ile çözme otomatik");
+    app.toast(t(v === "no" ? "settings.toasts.hwdecOff" : "settings.toasts.hwdecAuto"));
+
   });
   settings.subscribe("engine.fastProfile", applyEngineOptions);
   app.bus.on("engine:changed", () => {

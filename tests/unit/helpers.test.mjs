@@ -1,4 +1,5 @@
 // Pure helpers extracted from the former main.js controller.
+import "./i18n-setup.mjs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { volumeToGain, stepVolume } from "../../src/media/audio-engine.js";
@@ -33,8 +34,8 @@ test("photo zoom clamps and snaps to fit", () => {
   assert.equal(nextZoom(0.8, 1.25), 1);   // 1.0 exactly
   assert.equal(nextZoom(1.03, 0.99), 1);  // within 0.04 of fit -> snap
   assert.equal(nextZoom(1.02, 1), 1.02);  // factor 1 never snaps
-  assert.equal(zoomLabel(1), "Fit");
-  assert.equal(zoomLabel(1.04), "Fit");
+  assert.equal(zoomLabel(1), "Sığdır");
+  assert.equal(zoomLabel(1.04), "Sığdır");
   assert.equal(zoomLabel(2.5), "250%");
 });
 

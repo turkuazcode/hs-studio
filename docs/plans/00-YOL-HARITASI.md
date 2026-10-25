@@ -10,7 +10,7 @@
 | Konu | Karar |
 |---|---|
 | Oynatma motoru | **libmpv, LGPL derlemesi** (`-Dgpl=false`) + **FFmpeg LGPL** (`--enable-gpl` YOK). VHO'nun MIT lisansı korunur. Dinamik bağlama (DLL/dylib/so). |
-| Lisans politikası | Kabul: MIT, Apache-2.0, BSD-2/3, ISC, Zlib, BSL-1.0 (2026-10-25 kullanıcı onayı), MPL-2.0, Unicode, CC0, CC-BY-4.0, **LGPL (yalnızca dinamik bağlama)**. Red: GPL, AGPL, ticari olmayan (NC, S-Lab), lisanssız kod. Her yeni bağımlılık `legal/NOTICES_HEADER.txt` + `legal/generate-notices.ps1` ile bildirime eklenir. |
+| Lisans politikası | Kabul: MIT, Apache-2.0, BSD-2/3, ISC, Zlib, BSL-1.0 (2026-10-25 kullanıcı onayı), MPL-2.0, Unicode, CC0, CC-BY-4.0, OFL-1.1 (yalnızca fontlar; font, E1 — Outfit arayüz fontu, 2026-10-25), **LGPL (yalnızca dinamik bağlama)**. Red: GPL, AGPL, ticari olmayan (NC, S-Lab), lisanssız kod. Her yeni bağımlılık `legal/NOTICES_HEADER.txt` + `legal/generate-notices.ps1` ile bildirime eklenir. |
 | Eski HTML5 `<video>` yolu | libmpv yüklenemezse **yedek motor** olarak kalır (motor soyutlaması arkasında). |
 | Mimari | Ön yüz: vanilla JS **ES modülleri** (çerçeve yok). Arka uç: Rust/Tauri v2. Arayüz motordan bağımsız: `engine` cephesi (facade) üzerinden konuşur. |
 | Platform | Geliştirme/test makinesi: Windows 11 (1 GB dahili AMD GPU). macOS/Linux derleme ve testi: CI (GitHub Actions) — uzak depo kararı kullanıcıda (Dalga 3). |

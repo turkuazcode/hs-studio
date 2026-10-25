@@ -106,7 +106,10 @@ export function createMediaActions(app) {
     document.documentElement.classList.remove("media-audio-only");
     if (dom.controlsHud) dom.controlsHud.style.display = "none";
     dom.dropZone?.classList.add("visible");
-    if (dom.currentFilename) dom.currentFilename.textContent = t("actions.common.noMedia");
+    if (dom.currentFilename) {
+      dom.currentFilename.dataset.i18n = "actions.common.noMedia";
+      dom.currentFilename.textContent = t("actions.common.noMedia");
+    }
     app.playlist.render();
     render();
   }
@@ -189,7 +192,11 @@ export function createMediaActions(app) {
         const pos = app.resume?.get?.(oldKey);
         if (pos) { app.resume.set(resumeKey(next), pos); app.resume.remove(oldKey); }
         app.bus.emit("file:renamed", { path: oldPath, newPath });
-        if (dom.currentFilename && kind === "photo") dom.currentFilename.textContent = next.name;
+        if (dom.currentFilename && kind === "photo") {
+          delete dom.currentFilename.dataset.i18n;
+          dom.currentFilename.textContent = next.name;
+        }
+
         app.playlist.render();
         app.toast(t("actions.toast.renamed", { name: next.name }));
       });

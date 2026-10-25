@@ -12,20 +12,25 @@ import {
 } from "./logic.js";
 import { loadBitmap } from "./info-panel.js";
 import { nextFrame } from "./logic.js";
+import { t } from "../core/i18n.js";
 
 const PREVIEW_SIZE = 1600;
 
 const SLIDERS = [
-  { key: "brightness", label: "Parlaklık", min: -100, max: 100 },
-  { key: "contrast", label: "Kontrast", min: -100, max: 100 },
-  { key: "saturation", label: "Doygunluk", min: -100, max: 100 },
-  { key: "temperature", label: "Sıcaklık", min: -100, max: 100 },
-  { key: "sharpen", label: "Keskinlik", min: 0, max: 100 },
+  { key: "brightness", labelKey: "studio.editor.brightness", min: -100, max: 100 },
+  { key: "contrast", labelKey: "studio.editor.contrast", min: -100, max: 100 },
+  { key: "saturation", labelKey: "studio.editor.saturation", min: -100, max: 100 },
+  { key: "temperature", labelKey: "studio.editor.temperature", min: -100, max: 100 },
+  { key: "sharpen", labelKey: "studio.editor.sharpen", min: 0, max: 100 },
 ];
 
 const SAVE_FORMATS = { jpg: "jpeg", jpeg: "jpeg", png: "png", webp: "webp", avif: "avif", tif: "tiff", tiff: "tiff", bmp: "bmp" };
 
-const TEMPLATE = `
+// Built when the editor is created (the dictionary is loaded by then); every text carries its
+// i18n key so a language switch re-translates it (core/i18n.js applyTranslations).
+const tx = (key) => `data-i18n="${key}">${t(key)}`;
+const ti = (key) => `data-i18n-title="${key}" title="${t(key)}"`;
+const template = () => `
   <div class="ps-editor-stage">
     <canvas class="ps-editor-canvas"></canvas>
     <div class="ps-crop-box" hidden>
@@ -33,48 +38,48 @@ const TEMPLATE = `
       <span class="ps-crop-h" data-h="nw"></span><span class="ps-crop-h" data-h="ne"></span>
       <span class="ps-crop-h" data-h="sw"></span><span class="ps-crop-h" data-h="se"></span>
     </div>
-    <div class="ps-editor-busy" hidden>Yükleniyor…</div>
+    <div class="ps-editor-busy" hidden>${t("ui.licenses.loading")}</div>
   </div>
   <aside class="ps-editor-tools">
     <div class="ps-editor-head">
-      <strong class="ps-editor-title">Düzenle</strong>
+      <strong class="ps-editor-title">${t("ui.studio.edit")}</strong>
       <span class="ps-editor-dims"></span>
     </div>
     <div class="ps-tool-row">
-      <button class="ps-btn" data-act="undo" title="Geri al (Ctrl+Z)" disabled>↶ Geri al</button>
-      <button class="ps-btn" data-act="redo" title="Yinele (Ctrl+Y)" disabled>↷ Yinele</button>
-      <button class="ps-btn" data-act="reset" title="Tüm değişiklikleri sıfırla">Sıfırla</button>
+      <button class="ps-btn" data-act="undo" ${ti("studio.editor.undoTitle")} disabled ${tx("studio.editor.undo")}</button>
+      <button class="ps-btn" data-act="redo" ${ti("studio.editor.redoTitle")} disabled ${tx("studio.editor.redo")}</button>
+      <button class="ps-btn" data-act="reset" ${ti("studio.editor.resetTitle")} ${tx("common.reset")}</button>
     </div>
-    <h5>Döndür / Yansıt</h5>
+    <h5 ${tx("studio.editor.rotateFlip")}</h5>
     <div class="ps-tool-row">
-      <button class="ps-btn" data-act="rotl" title="Sola döndür">⟲ Sola</button>
-      <button class="ps-btn" data-act="rotr" title="Sağa döndür">⟳ Sağa</button>
-      <button class="ps-btn" data-act="fliph" title="Yatay yansıt">⇋ Yatay</button>
-      <button class="ps-btn" data-act="flipv" title="Dikey yansıt">⇵ Dikey</button>
+      <button class="ps-btn" data-act="rotl" ${ti("shortcuts.actions.rotateLeft")} ${tx("studio.editor.left")}</button>
+      <button class="ps-btn" data-act="rotr" ${ti("shortcuts.actions.rotateRight")} ${tx("studio.editor.right")}</button>
+      <button class="ps-btn" data-act="fliph" ${ti("ui.menu.hflip")} ${tx("studio.editor.horizontal")}</button>
+      <button class="ps-btn" data-act="flipv" ${ti("ui.menu.vflip")} ${tx("studio.editor.vertical")}</button>
     </div>
-    <h5>Kırp</h5>
+    <h5 ${tx("studio.editor.crop")}</h5>
     <div class="ps-tool-row">
-      <button class="ps-btn" data-act="crop">✂ Kırpma aracı</button>
-      <button class="ps-btn" data-act="uncrop" title="Kırpmayı kaldır">Kırpmayı kaldır</button>
+      <button class="ps-btn" data-act="crop" ${tx("studio.editor.cropTool")}</button>
+      <button class="ps-btn" data-act="uncrop" ${ti("studio.editor.uncrop")} ${tx("studio.editor.uncrop")}</button>
     </div>
     <div class="ps-crop-panel" hidden>
-      <div class="ps-chips">${CROP_RATIOS.map((r) => `<button class="ps-chip" data-ratio="${r.id}">${r.label}</button>`).join("")}</div>
+      <div class="ps-chips">${CROP_RATIOS.map((r) => `<button class="ps-chip" data-ratio="${r.id}"${r.labelKey ? ` ${tx(r.labelKey)}` : `>${r.label}`}</button>`).join("")}</div>
       <div class="ps-tool-row">
-        <button class="ps-btn ps-btn-accent" data-act="crop-apply">Uygula</button>
-        <button class="ps-btn" data-act="crop-cancel">Vazgeç</button>
+        <button class="ps-btn ps-btn-accent" data-act="crop-apply" ${tx("studio.editor.apply")}</button>
+        <button class="ps-btn" data-act="crop-cancel" ${tx("common.cancel")}</button>
       </div>
     </div>
-    <h5>Ayarlar</h5>
+    <h5 ${tx("studio.editor.adjust")}</h5>
     ${SLIDERS.map((s) => `
       <label class="ps-slider">
-        <span>${s.label}</span><output data-out="${s.key}">0</output>
+        <span ${tx(s.labelKey)}</span><output data-out="${s.key}">0</output>
         <input type="range" class="filter-slider" data-adj="${s.key}" min="${s.min}" max="${s.max}" value="0" step="1">
       </label>`).join("")}
     <div class="ps-editor-save">
-      <button class="btn-primary btn-sm" data-act="save" title="Orijinalin üzerine yazar (onay istenir)">Kaydet</button>
-      <button class="btn-secondary btn-sm" data-act="save-copy" title="Yanına '_düzenlendi' kopyası">Kopya Kaydet</button>
-      <button class="btn-secondary btn-sm" data-act="save-as">Farklı Kaydet…</button>
-      <button class="btn-ghost btn-sm" data-act="close">Kapat</button>
+      <button class="btn-primary btn-sm" data-act="save" ${ti("studio.editor.saveTitle")} ${tx("studio.editor.save")}</button>
+      <button class="btn-secondary btn-sm" data-act="save-copy" ${ti("studio.editor.saveCopyTitle")} ${tx("studio.editor.saveCopy")}</button>
+      <button class="btn-secondary btn-sm" data-act="save-as" ${tx("studio.editor.saveAs")}</button>
+      <button class="btn-ghost btn-sm" data-act="close" ${tx("common.close")}</button>
     </div>
     <div class="ps-editor-status" role="status"></div>
   </aside>`;
@@ -83,7 +88,7 @@ const TEMPLATE = `
  * root: empty overlay element. deps: { invoke, convertFileSrc, dialogSave, toast, onSaved(outcome, mode), onClose }
  */
 export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, onSaved, onClose }) {
-  root.innerHTML = TEMPLATE;
+  root.innerHTML = template();
   const $ = (s) => root.querySelector(s);
   const canvas = $(".ps-editor-canvas");
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -335,23 +340,23 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
     const e = history.state;
     const ops = editToOps(e, full.w, full.h);
     if (!ops.length) {
-      toast("Kaydedilecek bir değişiklik yok");
+      toast(t("studio.editor.nothingToSave"));
       return;
     }
     const output = { format: "same", quality: 92, metadata: "keep", lossless: true, counterStart: 1 };
     if (mode === "save") {
-      if (!window.confirm(`"${item.name}" dosyasının üzerine yazılsın mı?\nOrijinal fotoğraf değiştirilir; bu işlem geri alınamaz.`)) return;
+      if (!window.confirm(t("studio.editor.overwriteConfirm", { name: item.name }))) return;
       Object.assign(output, { conflict: "overwrite", nameTemplate: "{name}" });
     } else if (mode === "copy") {
-      Object.assign(output, { conflict: "rename", nameTemplate: "{name}_düzenlendi" });
+      Object.assign(output, { conflict: "rename", nameTemplate: `{name}${t("studio.editor.copySuffix")}` });
     } else {
       if (!dialogSave) {
-        toast("Farklı kaydet bu ortamda kullanılamıyor");
+        toast(t("studio.editor.saveAsUnavailable"));
         return;
       }
       const ext = item.browserNative === false ? "jpg" : (item.ext || "jpg");
       const target = await dialogSave({
-        defaultPath: `${parentDir(item.path)}${item.path.includes("\\") ? "\\" : "/"}${stemOf(item.name)}_düzenlendi.${ext}`,
+        defaultPath: `${parentDir(item.path)}${item.path.includes("\\") ? "\\" : "/"}${stemOf(item.name)}${t("studio.editor.copySuffix")}.${ext}`,
         filters: [
           { name: "JPEG", extensions: ["jpg", "jpeg"] }, { name: "PNG", extensions: ["png"] },
           { name: "WebP", extensions: ["webp"] }, { name: "AVIF", extensions: ["avif"] }, { name: "TIFF", extensions: ["tif", "tiff"] },
@@ -367,16 +372,16 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
       });
     }
     saving = true;
-    status.textContent = "Kaydediliyor…";
+    status.textContent = t("studio.editor.saving");
     root.dataset.saving = "1";
     try {
       const summary = await invoke("photo_batch", { job: { jobId: `edit-${Date.now()}`, files: [item.path], ops, output } });
       const r = summary.results[0];
       root.dataset.lastResult = JSON.stringify(r);
-      if (!r?.ok) throw new Error(r?.error ?? "bilinmeyen hata");
+      if (!r?.ok) throw new Error(r?.error ?? t("studio.editor.unknownError"));
       saved = history.state;
-      status.textContent = `Kaydedildi: ${baseName(r.output)} (${r.width} × ${r.height})`;
-      toast(`Kaydedildi: ${baseName(r.output)}`);
+      status.textContent = t("studio.editor.savedDims", { name: baseName(r.output), w: r.width, h: r.height });
+      toast(t("studio.editor.saved", { name: baseName(r.output) }));
       onSaved?.(r, mode, item);
       if (mode === "save") {
         // The original changed: start over from the saved file
@@ -385,8 +390,8 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
         await open(again);
       }
     } catch (err) {
-      status.textContent = `Kaydedilemedi: ${String(err.message ?? err).replace(/^\[[a-z-]+\]\s*/, "")}`;
-      toast("⚠️ Kaydedilemedi");
+      status.textContent = t("studio.editor.saveFailed", { error: String(err.message ?? err).replace(/^\[[a-z-]+\]\s*/, "") });
+      toast(t("studio.editor.saveFailedToast"));
     } finally {
       saving = false;
       root.dataset.saving = "0";
@@ -420,20 +425,21 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
       root.dataset.full = `${full.w}x${full.h}`;
       schedule();
     } catch (e) {
-      busy.textContent = `Açılamadı: ${String(e).replace(/^\[[a-z-]+\]\s*/, "")}`;
+      busy.textContent = t("studio.editor.openFailed", { error: String(e).replace(/^\[[a-z-]+\]\s*/, "") });
     }
   }
 
   function close(force = false) {
     if (!isOpen()) return true;
     const dirty = JSON.stringify(history.state) !== JSON.stringify(saved) && !isEditIdentity(history.state);
-    if (!force && dirty && !window.confirm("Kaydedilmemiş değişiklikler kaybolacak. Düzenleyici kapatılsın mı?")) return false;
+    if (!force && dirty && !window.confirm(t("studio.editor.discardConfirm"))) return false;
     exitCrop(false);
     root.hidden = true;
     bitmap?.close?.();
     bitmap = null;
     item = null;
-    busy.textContent = "Yükleniyor…";
+    busy.textContent = t("ui.licenses.loading");
+
     onClose?.();
     return true;
   }

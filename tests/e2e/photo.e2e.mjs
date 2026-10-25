@@ -39,7 +39,7 @@ test("photo: two photos from the command line", { timeout: 120000 }, async (t) =
       await app.key("Minus");
       assert.equal(await app.text("#photo-zoom-level"), "125%");
       await app.key("Digit0");
-      assert.equal(await app.text("#photo-zoom-level"), "Fit");
+      assert.equal(await app.text("#photo-zoom-level"), "Sığdır");
       assert.match(await transform(), /scale\(1\) rotate\(0deg\)/);
     });
 

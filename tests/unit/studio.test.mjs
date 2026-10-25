@@ -1,4 +1,5 @@
 // Photo studio pure helpers (src/studio/logic.js, batch.js form mapping).
+import "./i18n-setup.mjs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {

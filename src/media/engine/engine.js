@@ -21,6 +21,7 @@
 // ==========================================================================
 
 import { isAudioOnlyName } from "../classify.js";
+import { t as tr } from "../../core/i18n.js";
 
 export const ENGINE_EVENTS = Object.freeze([
   "loaded", "time", "duration", "playstate", "ended", "error", "tracks", "chapters",
@@ -68,10 +69,10 @@ export function normalizeTracks(list) {
   return out;
 }
 
-/** Menu text: title, else language name, else "Kanal <id>"; codec/language appended. */
+/** Menu text: title, else language name, else "Channel <id>" (i18n); codec/language appended. */
 export function trackLabel(t) {
-  const name = t.title || languageName(t.lang) || `Kanal ${t.id}`;
-  const extra = [t.title && t.lang ? t.lang : "", t.codec ? String(t.codec).toUpperCase() : "", t.external ? "harici" : ""]
+  const name = t.title || languageName(t.lang) || tr("ui.tracks.channel", { id: t.id });
+  const extra = [t.title && t.lang ? t.lang : "", t.codec ? String(t.codec).toUpperCase() : "", t.external ? tr("ui.tracks.external") : ""]
     .filter(Boolean).join(", ");
   return extra ? `${name} (${extra})` : name;
 }
@@ -79,7 +80,7 @@ export function trackLabel(t) {
 /** mpv chapter-list -> [{ index, time, title }] (titles default to "Bölüm n"). */
 export function normalizeChapters(list) {
   return (Array.isArray(list) ? list : [])
-    .map((c, index) => ({ index, time: Number(c.time) || 0, title: c.title || `Bölüm ${index + 1}` }))
+    .map((c, index) => ({ index, time: Number(c.time) || 0, title: c.title || tr("ui.tracks.chapter", { n: index + 1 }) }))
     .sort((a, b) => a.time - b.time);
 }
 
@@ -94,15 +95,15 @@ export function chapterAt(chapters, t) {
 export const EQ_BANDS = Object.freeze([31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]);
 
 export const EQ_PRESETS = Object.freeze({
-  flat:      { label: "Düz",            gains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
-  bass:      { label: "Bas Güçlendir",  gains: [6, 5, 4, 2, 0, 0, 0, 0, 0, 0] },
-  treble:    { label: "Tiz Güçlendir",  gains: [0, 0, 0, 0, 0, 0, 2, 4, 5, 6] },
-  vocal:     { label: "Konuşma/Vokal",  gains: [-3, -2, -1, 0, 2, 4, 4, 3, 1, 0] },
-  rock:      { label: "Rock",           gains: [5, 4, 2, 0, -1, -1, 1, 3, 4, 5] },
-  pop:       { label: "Pop",            gains: [-1, 1, 3, 4, 3, 0, -1, -1, 1, 2] },
-  classical: { label: "Klasik",         gains: [3, 2, 1, 0, 0, 0, -1, 1, 2, 3] },
-  cinema:    { label: "Sinema",         gains: [4, 3, 1, 0, -1, 0, 1, 2, 3, 2] },
-  night:     { label: "Gece (yumuşak)", gains: [-4, -3, -1, 0, 1, 2, 2, 0, -2, -3] },
+  flat:      { labelKey: "audio.eq.flat", gains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+  bass:      { labelKey: "audio.eq.bass", gains: [6, 5, 4, 2, 0, 0, 0, 0, 0, 0] },
+  treble:    { labelKey: "audio.eq.treble", gains: [0, 0, 0, 0, 0, 0, 2, 4, 5, 6] },
+  vocal:     { labelKey: "audio.eq.vocal", gains: [-3, -2, -1, 0, 2, 4, 4, 3, 1, 0] },
+  rock:      { labelKey: "audio.eq.rock", gains: [5, 4, 2, 0, -1, -1, 1, 3, 4, 5] },
+  pop:       { labelKey: "audio.eq.pop", gains: [-1, 1, 3, 4, 3, 0, -1, -1, 1, 2] },
+  classical: { labelKey: "audio.eq.classical", gains: [3, 2, 1, 0, 0, 0, -1, 1, 2, 3] },
+  cinema:    { labelKey: "audio.eq.cinema", gains: [4, 3, 1, 0, -1, 0, 1, 2, 3, 2] },
+  night:     { labelKey: "audio.eq.night", gains: [-4, -3, -1, 0, 1, 2, 2, 0, -2, -3] },
 });
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));

@@ -5,6 +5,7 @@
 
 import { computeHistogram, infoRows } from "./logic.js";
 import { createMapView } from "./map.js";
+import { t } from "../core/i18n.js";
 
 /** Untainted bitmap of a local file (fetch through the asset protocol). */
 export async function loadBitmap(url) {
@@ -81,18 +82,19 @@ export function createInfoPanel(root, { invoke, convertFileSrc, onClose }) {
     const gps = current?.info?.exif?.gps;
     mapEl.hidden = true;
     if (!gps) {
-      mapNote.textContent = "Bu fotoğrafta konum (GPS) bilgisi yok.";
+      mapNote.textContent = t("studio.map.noGps");
       return;
     }
     if (!navigator.onLine) {
-      mapNote.textContent = "Çevrimdışı: harita gösterilemiyor.";
+      mapNote.textContent = t("studio.map.offline");
       return;
     }
     mapNote.textContent = `${gps.latitude.toFixed(5)}, ${gps.longitude.toFixed(5)}`;
     mapEl.hidden = false;
     map.show(gps.latitude, gps.longitude).catch((e) => {
       mapEl.hidden = true;
-      mapNote.textContent = `Harita yüklenemedi: ${e.message ?? e}`;
+      mapNote.textContent = t("studio.map.loadFailed", { error: e.message ?? e });
+
     });
   }
 
@@ -120,7 +122,8 @@ export function createInfoPanel(root, { invoke, convertFileSrc, onClose }) {
     $(".ps-info-all-wrap").hidden = !fields.length;
     const hasGps = !!info?.exif?.gps;
     mapTabBtn.disabled = !hasGps;
-    mapTabBtn.title = hasGps ? "Konumu haritada göster" : "Konum bilgisi yok";
+    mapTabBtn.title = t(hasGps ? "studio.map.show" : "studio.map.noLocation");
+
     root.dataset.hasGps = hasGps ? "1" : "0";
     if (!hasGps && tab === "map") setTab("info");
     else if (tab === "map") showMap();

@@ -1,4 +1,5 @@
 // Engine facade contract (with fake engines) and the pure engine helpers.
+import "./i18n-setup.mjs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {

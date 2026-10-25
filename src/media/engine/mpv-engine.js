@@ -5,6 +5,8 @@
 // ==========================================================================
 
 import { normalizeChapters, normalizeTracks, flipFilter } from "./engine.js";
+import { t } from "../../core/i18n.js";
+
 
 /**
  * deps: { invoke, listen, convertFileSrc, status } — status = engine_status() result.
@@ -114,7 +116,7 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
       case "end-file":
         if (ev.reason === "error") {
           loading = false;
-          emit("error", ev.file_error || "dosya açılamadı");
+          emit("error", ev.file_error || t("ui.video.fileOpenFailed"));
         }
         break;
       case "playback-restart":

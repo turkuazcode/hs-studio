@@ -5,6 +5,7 @@
 // ==========================================================================
 
 import { formatTime } from "../core/format.js";
+import { i18n, t } from "../core/i18n.js";
 
 export const THUMB_THROTTLE_MS = 100;
 
@@ -44,23 +45,29 @@ export function createTimeline(app) {
     abMarkerA.style.display = "none";
     abMarkerB.style.display = "none";
     abRange.style.display = "none";
-    abLoopLabel.textContent = "A-B Döngü";
+    abLoopLabel.textContent = t("ui.ab.label");
     btnAbLoop.classList.remove("active");
   }
+  // re-render the label in the new language (state is kept)
+  i18n.onChange(() => {
+    if (loopPointA === null) abLoopLabel.textContent = t("ui.ab.label");
+    else if (loopPointB === null) abLoopLabel.textContent = t("ui.ab.waitB", { a: formatTime(loopPointA) });
+    else abLoopLabel.textContent = t("ui.ab.looping");
+  });
 
   btnAbLoop.addEventListener("click", () => {
     if (!hasDuration()) return;
     const d = engine.duration;
-    const t = engine.time;
+    const now = engine.time;
     if (loopPointA === null) {
-      loopPointA = t;
+      loopPointA = now;
       abMarkerA.style.left = percentOf(loopPointA, d);
       abMarkerA.style.display = "block";
-      abLoopLabel.textContent = "A: " + formatTime(loopPointA) + " -> B?";
+      abLoopLabel.textContent = t("ui.ab.waitB", { a: formatTime(loopPointA) });
       btnAbLoop.classList.add("active");
     } else if (loopPointB === null) {
-      if (t <= loopPointA) return;
-      loopPointB = t;
+      if (now <= loopPointA) return;
+      loopPointB = now;
       abMarkerB.style.left = percentOf(loopPointB, d);
       abMarkerB.style.display = "block";
 
@@ -68,7 +75,8 @@ export function createTimeline(app) {
       abRange.style.width = percentOf(loopPointB - loopPointA, d);
       abRange.style.display = "block";
 
-      abLoopLabel.textContent = "A-B Döngüde";
+      abLoopLabel.textContent = t("ui.ab.looping");
+
       engine.setLoop(loopPointA, loopPointB); // also jumps back to A
       engine.seek(loopPointA);
     } else {

@@ -7,12 +7,14 @@
 
 import { cssViewTransform } from "./engine.js";
 import { isAudioOnlyName, isRemoteUrl } from "../classify.js";
+import { t } from "../../core/i18n.js";
 
+/** MediaError code -> message in the current UI language. */
 export const MEDIA_ERR_TEXT = {
-  1: "Yükleme iptal edildi.",
-  2: "Ağ hatası: kaynak indirilemedi.",
-  3: "Çözme hatası: dosya bozuk ya da codec (HEVC/AV1) donanımca desteklenmiyor.",
-  4: "Format desteklenmiyor (konteyner/codec). MP4 (H.264/AAC) veya WebM (VP9/Opus) önerilir.",
+  get 1() { return t("ui.mediaErr.aborted"); },
+  get 2() { return t("ui.mediaErr.network"); },
+  get 3() { return t("ui.mediaErr.decode"); },
+  get 4() { return t("ui.mediaErr.format"); },
 };
 
 /** Assumed frame duration for frame stepping when the stream does not tell (30 fps). */
@@ -98,7 +100,7 @@ export function createHtml5Engine({ app, invoke, listen }) {
   function transcodeAndPlay(item, gen, codec) {
     unloadElement();
     transcodingPath = item.path;
-    showTranscode(`Eski codec${codec ? ` (${codec})` : ""} uyumlu formata dönüştürülüyor… İlk açılışta bir kez yapılır.`, 0);
+    showTranscode(t(codec ? "ui.mediaErr.transcodingCodec" : "ui.mediaErr.transcoding", { codec }), 0);
     invoke("transcode_media", { path: item.path })
       .then((out) => {
         if (gen !== loadGen()) return;
@@ -112,7 +114,7 @@ export function createHtml5Engine({ app, invoke, listen }) {
         transcodingPath = null;
         hideTranscode();
         console.warn("transcode_media", err);
-        app.toast(`⚠️ Video dönüştürülemedi: ${err}`);
+        app.toast(t("ui.mediaErr.transcodeFailed", { error: err }));
       });
     return true;
   }
@@ -141,7 +143,7 @@ export function createHtml5Engine({ app, invoke, listen }) {
       console.warn("MediaError", code, video.error?.message);
       if (retryWithoutCors?.()) return;
       if ((code === 3 || code === 4) && unsupported()) return;
-      app.toast(`⚠️ ${MEDIA_ERR_TEXT[code] || "Bilinmeyen medya hatası."}`);
+      app.toast(`⚠️ ${MEDIA_ERR_TEXT[code] || t("ui.mediaErr.unknown")}`);
       emit("playstate", false);
     };
 
@@ -150,14 +152,14 @@ export function createHtml5Engine({ app, invoke, listen }) {
       // 1) No picture: unsupported video codec (MPEG-4 Part 2, H.263...) or missing HEVC extension
       if (video.videoWidth === 0 && !audioOnly) {
         if (!unsupported()) {
-          app.toast("⚠️ Video akışı çözülemedi (yalnızca ses). HEVC için Microsoft 'HEVC Video Extensions' gerekebilir.");
+          app.toast(t("ui.mediaErr.noVideoHevc"));
         }
         return;
       }
       // Some codecs report a frame size yet never produce frames: verify after playback starts
       setTimeout(() => {
         if (gen === loadGen() && !audioOnly && video.currentTime > 0.5 && noVideoFramesDecoded()) {
-          if (!unsupported()) app.toast("⚠️ Video karesi çözülemedi; yalnızca ses oynatılıyor.");
+          if (!unsupported()) app.toast(t("ui.mediaErr.noVideoFrame"));
         }
       }, 1500);
       // 2) No sound: unsupported audio codec such as AC3/DTS (Chromium-only counters)
@@ -166,7 +168,7 @@ export function createHtml5Engine({ app, invoke, listen }) {
             "webkitAudioDecodedByteCount" in video &&
             video.webkitAudioDecodedByteCount === 0 &&
             video.webkitVideoDecodedByteCount > 0) {
-          app.toast("🔇 Ses izi çözülemedi (AC3/DTS/E-AC3 desteklenmiyor olabilir).");
+          app.toast(t("ui.mediaErr.noAudio"));
         }
       }, 2500);
     };
@@ -180,7 +182,7 @@ export function createHtml5Engine({ app, invoke, listen }) {
   }
 
   function playItem(item, gen) {
-    const name = item.name || "Online Video";
+    const name = item.name || t("ui.video.onlineName");
     const src = app.loader.resolveSource(item);
 
     // Remote media: request CORS so Web Audio / WebGL can read it. If the server
@@ -200,7 +202,8 @@ export function createHtml5Engine({ app, invoke, listen }) {
         video.load();
         startPlayback();
         if (app.audio.isRouted) {
-          app.toast("⚠️ Sunucu CORS izni vermiyor: ses işleme açık olduğundan ses gelmeyebilir. Uygulamayı yeniden başlatıp bu linki ses güçlendirici kullanmadan açın.");
+          app.toast(t("ui.mediaErr.corsAudio"));
+
         }
         return true;
       };

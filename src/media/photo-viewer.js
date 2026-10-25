@@ -5,6 +5,7 @@
 import { extOf, isRemoteUrl, itemSize, needsDecode } from "./classify.js";
 import { formatFileSize, aspectRatioText } from "../core/format.js";
 import { convertFileSrc, invoke } from "../core/tauri.js";
+import { t } from "../core/i18n.js";
 
 export const SLIDESHOW_INTERVAL_MS = 3500;
 export const MIN_ZOOM = 0.1;
@@ -21,7 +22,7 @@ export function nextZoom(current, factor) {
 export const rotateBy = (rotation, delta) => (rotation + delta + 360) % 360;
 
 /** Zoom badge text: "Fit" near 100 %, otherwise a percentage. */
-export const zoomLabel = (zoom) => Math.abs(zoom - 1) < 0.05 ? "Fit" : `${Math.round(zoom * 100)}%`;
+export const zoomLabel = (zoom) => Math.abs(zoom - 1) < 0.05 ? t("ui.photo.fit") : `${Math.round(zoom * 100)}%`;
 
 /**
  * app: { dom, state, bus, toast, filters, loader, video, playlist, hud }  (resolved lazily)
@@ -103,7 +104,7 @@ export function createPhotoViewer(app) {
   function rotate(delta) {
     photoRotation = rotateBy(photoRotation, delta);
     updateImageTransform(true);
-    app.toast(delta < 0 ? `Sola Döndürüldü (${photoRotation}°)` : `Sağa Döndürüldü (${photoRotation}°)`);
+    app.toast(t(delta < 0 ? "ui.photo.rotatedLeft" : "ui.photo.rotatedRight", { deg: photoRotation }));
   }
 
   // Slideshow: a setTimeout chain that only counts once the current image has loaded
@@ -116,7 +117,7 @@ export function createPhotoViewer(app) {
   function toggleSlideshow(forceState, { silent = false } = {}) {
     const next = typeof forceState === "boolean" ? forceState : !state.get("isSlideshowActive");
     if (next && state.get("playlist").length < 2) {
-      if (!silent) app.toast("Slayt gösterisi için listede en az 2 medya olmalı");
+      if (!silent) app.toast(t("ui.photo.slideshowNeedsTwo"));
       return;
     }
     state.set("isSlideshowActive", next);
@@ -124,11 +125,11 @@ export function createPhotoViewer(app) {
     if (iconSlideshowPause) iconSlideshowPause.style.display = next ? "inline-block" : "none";
     if (next) {
       scheduleNextSlide();
-      if (!silent) app.toast("Slayt Gösterisi Başlatıldı (3.5 sn)");
+      if (!silent) app.toast(t("ui.photo.slideshowStarted"));
     } else {
       clearTimeout(slideshowTimer);
       slideshowTimer = null;
-      if (!silent) app.toast("Slayt Gösterisi Duraklatıldı");
+      if (!silent) app.toast(t("ui.photo.slideshowPaused"));
     }
   }
 
@@ -179,9 +180,10 @@ export function createPhotoViewer(app) {
     dropZone.classList.remove("visible");
 
     const src = app.loader.resolveSource(item);
-    const name = item.name || "Fotoğraf";
+    const name = item.name || t("ui.photo.fallbackName");
     const fileSizeStr = formatFileSize(itemSize(item));
 
+    delete currentFilename.dataset.i18n; // a file name, not a translatable text
     currentFilename.textContent = name;
 
     // Remote images: ask for CORS so the GPU enhancer and snapshots keep working
@@ -211,7 +213,7 @@ export function createPhotoViewer(app) {
         imageElement.src = src;
         return;
       }
-      app.toast(`⚠️ "${name}" açılamadı. Bu görsel formatı (TIFF/HEIC vb.) desteklenmiyor veya dosya bozuk.`);
+      app.toast(t("ui.photo.openFailedFormat", { name }));
       scheduleNextSlide();
     };
 
@@ -225,7 +227,8 @@ export function createPhotoViewer(app) {
         imageElement.src = convertFileSrc(r.path);
       }).catch((e) => {
         if (state.get("loadGen") !== gen) return;
-        app.toast(`⚠️ "${name}" açılamadı: ${String(e).replace(/^\[[a-z-]+\]\s*/, "")}`);
+        app.toast(t("ui.photo.openFailed", { name, error: String(e).replace(/^\[[a-z-]+\]\s*/, "") }));
+
         scheduleNextSlide();
       });
     } else {

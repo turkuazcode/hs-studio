@@ -4,6 +4,7 @@
 //   file (browser File), path (local file via Tauri asset protocol), url (network).
 // ==========================================================================
 
+import { i18n, t } from "../core/i18n.js";
 import { itemSize } from "../media/classify.js";
 
 /** Index after moving by step, wrapping at both ends; -1 for an empty list. */
@@ -20,7 +21,7 @@ export const hasNextItem = (index, length) => length > 0 && index >= 0 && index 
 
 /** Meta text under a playlist entry. */
 export function itemMetaText(item) {
-  if (item.url) return "Ağ Akışı";
+  if (item.url) return t("ui.playlist.stream");
   // Browser File or local file from the backend (dialog / native drop / command line)
   return `${(itemSize(item) / 1048576).toFixed(1)} MB`;
 }
@@ -52,12 +53,12 @@ export function createPlaylist(app) {
     rendered = { list: playlist, length: playlist.length };
     const currentIndex = state.get("currentPlaylistIndex");
     playlistCountBadge.textContent = playlist.length;
-    playlistTotalText.textContent = `${playlist.length} Medya`;
+    playlistTotalText.textContent = t("ui.playlist.count", { n: playlist.length });
 
     if (!playlist.length) {
       const empty = document.createElement("li");
       empty.className = "playlist-empty";
-      empty.append("Listeniz boş.", document.createElement("br"), "Video veya fotoğraf dosyalarını buraya sürükleyin.");
+      empty.append(t("ui.playlist.empty"), document.createElement("br"), t("ui.playlist.emptyHint"));
       playlistItemsList.replaceChildren(empty);
       app.photo.updateCounter();
       return;
@@ -71,7 +72,8 @@ export function createPlaylist(app) {
 
       const badge = document.createElement("span");
       badge.className = `type-badge ${item.isImage ? "is-photo" : "is-video"}`;
-      badge.textContent = item.isImage ? "FOTO" : "VİDEO";
+      badge.textContent = t(item.isImage ? "ui.playlist.badgePhoto" : "ui.playlist.badgeVideo");
+
 
       const name = document.createElement("div");
       name.className = "item-name";
@@ -138,8 +140,11 @@ export function createPlaylist(app) {
     if (li) playPlaylistItem(Number(li.dataset.idx));
   });
 
+  i18n.onChange(() => renderPlaylist());
+
   return {
     render: renderPlaylist,
+
     play: playPlaylistItem,
     navigate: navigatePlaylist,
     append,
