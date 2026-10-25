@@ -1,21 +1,21 @@
 <div align="center">
 
 # 🎬 VHO — Video H Oynatıcısı
-### Yeni Nesil, Ultra Hafif & Çapraz Platform Açık Kaynak Video Oynatıcı
+### Açık kaynak video, fotoğraf ve müzik oynatıcısı / stüdyosu
 
 [![Tauri 2.0](https://img.shields.io/badge/Tauri-2.0-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app/)
 [![Rust](https://img.shields.io/badge/Rust-1.85+-orange?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey?style=for-the-badge)](#-platformlar)
+[![Platform](https://img.shields.io/badge/Test%20edilen-Windows%2011%20x64-lightgrey?style=for-the-badge)](docs/platform-support.md)
 [![Developer](https://img.shields.io/badge/Developer-Halil%20SARITAŞ%20(hsrts)-E11D48?style=for-the-badge)](https://github.com/hsrts)
 
 <br/>
 
-**VHO (Video H Oynatıcısı)**, VLC'nin zengin format desteğini ve mpv'nin güçlü video motorunu; **Tauri 2.0, Rust ve modern cam tasarım (Glassmorphism)** ile birleştiren yüksek performanslı, minimalist bir masaüstü medya oynatıcısıdır.
-
-Geleneksel medya oynatıcıların hantal ve 90'lardan kalma arayüzlerini geride bırakarak, Apple TV ve IINA standartlarında modern bir seyir deneyimi sunar.
+**VHO (Video H Oynatıcısı)**, oynatma motoru olarak LGPL **libmpv**'yi, arayüz için **Tauri 2.0 + Rust + sade bir web arayüzünü** kullanan masaüstü medya uygulamasıdır: video oynatıcı, fotoğraf stüdyosu ve müzik araçları bir arada.
 
 </div>
+
+> **Platform durumu:** Yalnızca **Windows 11 x64** üzerinde gerçek cihazda test edildi. macOS ve Linux için kod derlenebilir durumda olabilir, fakat libmpv gömme yok ve **test edilmedi**; ayrıntılı yetenek tablosu: [docs/platform-support.md](docs/platform-support.md).
 
 ---
 
@@ -23,18 +23,17 @@ Geleneksel medya oynatıcıların hantal ve 90'lardan kalma arayüzlerini geride
 
 | Özellik | Açıklama |
 |---|---|
-| ⚡ **Yerel AI Restorasyon (144p Kurtarma)** | 144p/360p eski kamera ve telefon videoları için GPU donanım hızlandırmalı kenar keskinleştirme (Unsharp Mask), dinamik kontrast (CAS) ve diyalog netleştirici DSP ses filtresi. |
-| 🔊 **%200 Ses Yükseltici (Audio Boost)** | Web Audio API dinamik kazanç (gain) filtresi ile fısıltılı videoları kaliteden ödün vermeden %200'e kadar yükseltme. |
-| 🌐 **Akıllı Altyazı Motoru** | Film adını karmaşık dosya isimlerinden ayıklayıp OpenSubtitles.org aramasını tarayıcıda açar. SRT/VTT, UTF-8 ve Windows-1254 (Türkçe) kodlamalı dosyaları okur. |
-| 🎞️ **Canlı Zaman Çubuğu Önizlemesi** | Zaman çubuğunda (seek bar) gezinirken o saniyenin video karesini YouTube tarzı canlı küçük kutuda (thumbnail canvas) gösterme. |
-| 🌙 **Akıllı Uyku Zamanlayıcısı & PC Standby** | 15–60 dk veya "Video Bitince" seçenekleriyle sesi 3 saniyede kısıp bilgisayarı uyku moduna (`Windows`, `macOS`, `Linux`) alma. |
-| ⚖️ **A/B Karşılaştırma Ekranı** | Eski 144p orijinal görüntü ile AI restore edilmiş görüntüyü gerçek zamanlı yan yana (Split-Screen) kıyaslama. |
-| 🔁 **A-B Tekrar Döngüsü (A-B Repeat)** | Eğitim, dil öğrenme veya müzik videolarında iki zaman damgası arasını kesintisiz döngüye alma. |
-| 🎨 **Canlı Renk & Filtre Laboratuvarı** | Gerçek zamanlı parlaklık, kontrast ve doygunluk ayarları; milisaniyelik `+/- 100ms` altyazı senkronu. |
-| 📸 **4K HD Ekran Görüntüsü (Snapshot)** | Oynatılan karenin tam çözünürlüklü ekran görüntüsünü flaş efektiyle anında kaydetme. |
-| 🪟 **Resim İçinde Resim (PiP)** | Çalışırken videoyu ekranın köşesinde küçük pencerede sabit tutarak izleme. |
-| 📑 **Akıllı Oynatma Listesi (Playlist)** | Çoklu video dosyalarını sıralı oynatma, otomatik sonraki bölüme geçme ve kaldığı yerden devam etme. |
-| 🖥️ **Çapraz Platform & Çerçevesiz Tasarım** | Windows, macOS (Traffic Lights) ve Linux için özel pencere kontrolleri ve donanım hızlandırma. |
+| 🎞️ **libmpv oynatma motoru** | LGPL libmpv + FFmpeg (Windows): ses/altyazı kanalları, bölümler, kare kare, A-B döngü, HDR ton eşleme, donanım çözme (`hwdec=auto-safe`). libmpv DLL'leri yoksa uygulama **HTML5 `<video>` yedeğiyle** açılır: o durumda codec desteği WebView2'ninkiyle sınırlıdır (eski WMV/WMA için Media Foundation dönüştürmesi), ekolayzır/normalizasyon/ses gecikmesi kullanılamaz. |
+| 🎨 **Görüntü filtreleri** (oynatma sırasında) | Parlaklık, kontrast, doygunluk (libmpv'de gama/renk tonu da). "İyileştir" panelindeki **görüntü filtresi** HTML5 motorunda WebGL2 ile FSR 1.0 büyütme + CAS keskinleştirme uygular; libmpv motorunda yalnızca kontrast/doygunluk artırır. **Sinir ağı değildir**, kaybolmuş ayrıntıyı geri getirmez ve videoyu dışa aktarmaz. |
+| 🔊 **Ses filtreleri ve %200'e kadar ses** | Konuşma bandı (+5,5 dB @ 2,4 kHz), 90 Hz–7,5 kHz bant filtresi, kompresör, 10 bant ekolayzır, normalizasyon (DSP; sinir ağı değil). %100'ün üstü doğrusal kazançtır (%200 = 2,5×) ve **her iki motorda da sınırlayıcıyla (limiter) biter**: yüksek sesli içerik kırpılmaz ama sıkıştırılır, yani kayıpsız değildir. Ölçüm: `tests/e2e/audio-limiter.e2e.mjs`. |
+| ⚖️ **A/B karşılaştırma** | Görüntü filtresinin yarım ekran önce/sonra görünümü. Yalnızca filtreyi WebGL2'nin çizdiği **HTML5 motorunda** çalışır; libmpv motorunda düğme devre dışıdır ve nedeni yazar. |
+| ✨ **Fotoğrafı AI ile iyileştir** | Sinir ağıyla (4xRealWebPhoto DAT-2, isteğe bağlı GFPGAN yüz onarımı) 4× büyütme; WebGPU, yoksa WASM. Eklenen ayrıntı **modelin tahminidir**, gerçek ayrıntı kurtarma değildir. Çıktı en fazla 40 MP'dir (büyük fotoğraflar önce küçültülür); PNG olarak kaydedilir, EXIF/ICC ve saydamlık henüz korunmaz. Modeller ilk kullanımda onayla indirilir (internet gerekir), sonra çevrimdışı çalışır. |
+| 🎬 **Video restorasyonu (AI)** | **Henüz hazır değil** (Plan 12). Uygulamada bu adla çalışan bir özellik yoktur. |
+| 🖼️ **Fotoğraf Stüdyosu** | Klasör ızgarası, EXIF, histogram, kırp/döndür/kaydet, karşılaştırma, toplu dönüştürme. HEIC/AVIF Windows codec'lerine bağlıdır; **RAW dosyalarında gömülü JPEG önizlemesi** gösterilir (tam RAW geliştirme yok). |
+| 🧰 **Medya eylemleri** | Kes, dönüştür, GIF, sesi çıkar, kare kaydet (FFmpeg gerekir), etiket/şarkı sözü düzenleme, OCR ve paylaşım (Windows). Ayrıntı: [docs/media-actions.md](docs/media-actions.md). |
+| 🌐 **Altyazı** | SRT/VTT/ASS; UTF-8 ve Windows-1254 (Türkçe). "Online altyazı bul" yalnızca tıkladığınızda OpenSubtitles.org aramasını tarayıcıda açar. |
+| 🌙 **Uyku zamanlayıcısı** | 15–60 dk veya "video bitince": sesi kısıp duraklatır; isteğe bağlı bilgisayarı uyutma (Windows'ta test edildi). |
+| 📸 **Ekran görüntüsü, PiP, oynatma listesi, kaldığın yer** | Ekran görüntüsü videonun kendi çözünürlüğündedir. Resim içinde resim yalnızca HTML5 motorunda. |
 
 ---
 
@@ -42,49 +41,54 @@ Geleneksel medya oynatıcıların hantal ve 90'lardan kalma arayüzlerini geride
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    VHO Media Player (Frontend)                  │
-│       HTML5 Canvas · Web Audio API · Obsidian Glassmorphism     │
+│          Ön yüz: vanilla JS ES modülleri (WebView2)             │
+│   HTML5 <video> yedeği · WebGL2 filtre · Web Audio · ONNX Web   │
 └────────────────────────────────┬────────────────────────────────┘
-                                 │ Tauri IPC Bridge
+                                 │ Tauri IPC
 ┌────────────────────────────────▼────────────────────────────────┐
-│                   Tauri 2.0 Core (Rust Layer)                   │
-│   Windows SetSuspendState · macOS pmset · Linux systemctl       │
+│                   Tauri 2.0 çekirdeği (Rust)                    │
+│  fotoğraf (image/WIC) · medya eylemleri (FFmpeg) · platform     │
 └────────────────────────────────┬────────────────────────────────┘
-                                 │ Native Rendering Loop
+                                 │ dinamik yükleme (Windows)
 ┌────────────────────────────────▼────────────────────────────────┐
-│               libmpv / Direct3D11 / Metal / Vulkan              │
-│       H.264 · HEVC / H.265 · AV1 · VP9 · MKV · MP4 · Subtitles  │
+│        libmpv (LGPL) + FFmpeg (LGPL): gpu-next, D3D11/Vulkan    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-* **Arayüz (Frontend):** Vanilla CSS & JavaScript, donanım hızlandırmalı HTML5 Canvas ve Web Audio API. Hiçbir ağır framework bağımlılığı yoktur, 10 milisaniyede açılır.
-* **Masaüstü Katmanı:** [Tauri 2.0](https://tauri.app/) (Rust tabanlı güvenli, düşük bellek tüketen çalışma ortamı).
-* **Medya Motoru Desteği:** `libmpv` / Chromium Media Core entegrasyonu.
+* **Arayüz:** Vanilla CSS & JavaScript, çerçeve bağımlılığı yok. Açılış süresi ölçülmedi; hız iddiası yapılmaz.
+* **Masaüstü katmanı:** [Tauri 2.0](https://tauri.app/).
+* **Medya motoru:** Windows'ta libmpv ([docs/engine.md](docs/engine.md)); diğer platformlarda şimdilik yalnızca HTML5 yedeği. Yetenekler tek kaynaktan sorgulanır: [docs/platform-support.md](docs/platform-support.md).
 
 ---
 
 ## ⌨️ Klavye Kısayolları (Cheatsheet)
 
+Tüm kısayollar **Ayarlar → Kısayollar**'dan değiştirilebilir; <kbd>?</kbd> yardım penceresini açar.
+
 | Kısayol | İşlev |
 |---|---|
-| <kbd>Boşluk</kbd> | Oynat / Duraklat |
+| <kbd>Boşluk</kbd> | Oynat / Duraklat (fotoğrafta slayt gösterisi) |
 | <kbd>←</kbd> / <kbd>→</kbd> | 5 saniye geri / ileri sar (Shift ile 30 saniye) |
-| <kbd>↑</kbd> / <kbd>↓</kbd> | Ses seviyesini %5 artır / azalt (%0 - %200) |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Ses seviyesini %5 artır / azalt (%0 - %200, %100 üstü sınırlayıcılı) |
 | <kbd>M</kbd> | Sesi Kapat / Aç (Mute) |
-| <kbd>F</kbd> veya **Çift Tıklama** | Tam Ekran (Fullscreen) Aç / Kapat |
-| <kbd>C</kbd> veya <kbd>V</kbd> | Altyazıyı Aç / Gizle (Toggle Subtitles) |
+| <kbd>F</kbd> veya **Çift Tıklama** | Tam Ekran Aç / Kapat |
+| <kbd>C</kbd> veya <kbd>V</kbd> | Altyazıyı Aç / Gizle |
 | <kbd>G</kbd> / <kbd>H</kbd> | Altyazı gecikmesini -50ms / +50ms kaydır |
-| <kbd>S</kbd> | Anlık Ekran Görüntüsü Kaydet (Snapshot) |
-| <kbd>L</kbd> | Oynatma Listesini (Playlist) Aç / Kapat |
-| <kbd>P</kbd> | Resim İçinde Resim (PiP) Modu |
+| <kbd>S</kbd> | Ekran görüntüsü kaydet |
+| <kbd>L</kbd> | Oynatma listesini aç / kapat |
+| <kbd>P</kbd> | Resim içinde resim (yalnızca HTML5 motoru) |
+| <kbd>A</kbd> | Görüntü ve ses filtrelerini aç / kapat |
+| <kbd>B</kbd> | A/B karşılaştırma (yalnızca HTML5 motoru + WebGL2) |
+| <kbd>E</kbd> | Fotoğrafı AI ile iyileştir (fotoğrafta) |
 
 ---
 
 ## 🚀 Kurulum ve Çalıştırma
 
 ### Gereksinimler
-* [Node.js](https://nodejs.org/) (v18 veya üzeri)
+* [Node.js](https://nodejs.org/) 20.19+ veya 22.12+ (Vite 8 gereksinimi; testler Node 24 ile çalıştırıldı)
 * [Rust](https://rustup.rs/) (Cargo)
+* Windows'ta libmpv için LGPL mpv derlemesi (`npm run stage:mpv`, aşağıda); olmadan HTML5 yedeği kullanılır
 
 ### Geliştirme Ortamı (Development)
 ```bash
@@ -93,40 +97,22 @@ git clone https://github.com/hsrts/vho.git
 cd vho
 
 # Bağımlılıkları yükleyin
-npm install
+npm ci
 
-# Geliştirme sunucusunu başlatın
-npm run dev
-```
-
-Masaüstü penceresi olarak başlatmak için:
-```bash
-cargo tauri dev
+# Masaüstü penceresiyle geliştirme
+npm run tauri dev
 ```
 
 ---
 
-## 📦 Dağıtım & Derleme (Production Build)
+## 📦 Dağıtım & Derleme
 
-Tauri çoklu platform desteği sayesinde tek bir komutla işletim sisteminize uygun bağımsız binary çıktısı alabilirsiniz:
-
-### 🪟 Windows (.exe / .msi)
 ```bash
-npm run tauri build
-# Çıktı: src-tauri/target/release/bundle/nsis/vho_0.1.0_x64-setup.exe
+npm run build:release      # src-tauri/target/release/vho.exe (paketsiz)
+npm run stage:mpv          # libmpv DLL'leri + ffmpeg/ffprobe exe'nin yanına
 ```
 
-### 🍎 macOS (.dmg / .app)
-```bash
-npm run tauri build
-# Çıktı: src-tauri/target/release/bundle/dmg/vho_0.1.0_x64.dmg
-```
-
-### 🐧 Linux (.AppImage / .deb)
-```bash
-npm run tauri build
-# Çıktı: src-tauri/target/release/bundle/appimage/vho_0.1.0_amd64.AppImage
-```
+Kurulum paketleri (`npm run tauri build`: NSIS/MSI, DMG, AppImage/deb) henüz temiz makinede doğrulanmadı (Plan 10 / P05). macOS ve Linux paketleri **test edilmedi**; libmpv bu platformlarda henüz gömülmüyor.
 
 ---
 
@@ -174,6 +160,7 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 
 | Dosya | Kapsam |
 |---|---|
+| `audio-limiter.e2e.mjs` | %200 ses + sınırlayıcı: libmpv `af` zinciri aynı LGPL libavfilter'lı `ffmpeg.exe` ile, HTML5 Web Audio sınırlayıcısı `OfflineAudioContext` ile ölçülür (tepe ≤ -0,9 dBFS / tam ölçeğe ulaşan örnek yok; sınırlayıcısız hâlin kırptığı gösterilir) |
 | `smoke.e2e.mjs` | Açılış, boş ekran, Lisanslar penceresi, AI işçi modülü, URL penceresi doğrulaması, paneller, uyumluluk modu onayı, tam ekran, uyku zamanlayıcı penceresi |
 | `video.e2e.mjs` | H.264 oynatma, duraklatma, atlama, ses %150/sessiz, A-B döngü, altyazı (UTF-8 SRT, Windows-1254 SRT, BOM'lu VTT, gecikme), hız/en-boy, renk filtreleri, AI/bölünmüş ekran, ekran görüntüsü, çalma listesi otomatik geçiş, "video bitince" uyku modu |
 | `legacy.e2e.mjs` | WMV9/WMA → Media Foundation dönüştürme → H.264/AAC kareleri çözülüyor (Windows) |
@@ -209,12 +196,12 @@ Bu proje [MIT Lisansı](LICENSE) kapsamında açık kaynak olarak lisanslanmış
 
 ### Üçüncü taraf bileşenler
 
-VHO yalnızca açık kaynak lisanslı (MIT, Apache-2.0, BSD, CC-BY-4.0 vb.) bileşenler kullanır. Tam liste ve lisans metinleri [src/legal/THIRD_PARTY_NOTICES.txt](src/legal/THIRD_PARTY_NOTICES.txt) dosyasında ve uygulamada **AI Restorasyon → Lisanslar ve Teşekkürler** penceresindedir.
+VHO yalnızca açık kaynak lisanslı (MIT, Apache-2.0, BSD, CC-BY-4.0 vb.) bileşenler kullanır. Tam liste ve lisans metinleri [src/legal/THIRD_PARTY_NOTICES.txt](src/legal/THIRD_PARTY_NOTICES.txt) dosyasında ve uygulamada **Ayarlar → Hakkında / Lisanslar** ile **İyileştir → Lisanslar ve Teşekkürler** penceresindedir.
 
 - **Yapay zeka bileşenleri uygulamayla birlikte gelmez.** İlk kullanımda, kullanıcı onayıyla, sabit sürüm/commit adreslerinden indirilir ve SHA-256 ile doğrulanır. Lisans dosyaları da yanlarında saklanır.
   - [ONNX Runtime Web](https://github.com/microsoft/onnxruntime) 1.30.0: Microsoft, MIT
   - [4xRealWebPhoto_v4_dat2](https://huggingface.co/Phips/4xRealWebPhoto_v4_dat2): Philip Hofmann, CC-BY-4.0 (değiştirilmeden kullanılır)
-- GPU görüntü iyileştirici, AMD FidelityFX FSR 1.0'ın (MIT) WebGL2 uyarlamasıdır.
+- GPU görüntü filtresi, AMD FidelityFX FSR 1.0'ın (MIT) WebGL2 uyarlamasıdır (sinir ağı değildir).
 - Rust bağımlılıklarının bildirimleri `cargo-about` ile üretilir. Bağımlılık değiştiğinde `powershell -File legal\generate-notices.ps1` çalıştırın.
 
 ---

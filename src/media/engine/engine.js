@@ -107,21 +107,42 @@ export const EQ_PRESETS = Object.freeze({
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
+/** Peak limit of the booster/limiter stage: -1 dBFS (0.891 linear), both engines. */
+export const LIMITER_CEILING = 0.891;
+
+/** Limiter stage of the libmpv chain (lavfi alimiter, LGPL libavfilter; auto-level off). */
+export const LAVFI_LIMITER = `alimiter=limit=${LIMITER_CEILING}:attack=5:release=50:level=0`;
+
 /**
  * libavfilter chain for mpv's `af` property ("" = no filters).
  * eq: 10 gains in dB; normalize: dynamic loudness normalisation;
- * restore: the AI audio switches { denoise, voice, compressor } mapped to lavfi filters.
+ * restore: the audio filter switches { denoise, voice, compressor } mapped to lavfi filters
+ * (plain DSP, not a neural network);
+ * boost: linear gain above 100 % volume (mpv's own volume stays <= 100 because its curve is
+ * cubic: 200 % would be 8x and clip). Whenever a stage can raise the level (boost, a positive
+ * EQ band, the +5.5 dB voice band) a limiter ends the chain so the output never hard-clips.
  */
-export function audioFilterChain({ eq = [], normalize = false, restore = null } = {}) {
+export function audioFilterChain({ eq = [], normalize = false, restore = null, boost = 1 } = {}) {
   const parts = [];
+  let raises = false;
   if (restore?.denoise) parts.push("highpass=f=90", "lowpass=f=7500");
-  if (restore?.voice) parts.push("equalizer=f=2400:t=q:w=1.1:g=5.5");
+  if (restore?.voice) {
+    parts.push("equalizer=f=2400:t=q:w=1.1:g=5.5");
+    raises = true;
+  }
   EQ_BANDS.forEach((f, i) => {
     const g = clamp(Math.round((Number(eq[i]) || 0) * 10) / 10, -12, 12);
     if (g !== 0) parts.push(`equalizer=f=${f}:t=o:w=1:g=${g}`);
+    if (g > 0) raises = true;
   });
   if (restore?.compressor) parts.push("acompressor=threshold=0.063:ratio=4:attack=3:release=250:knee=4");
   if (normalize) parts.push("dynaudnorm=f=250:g=15:p=0.9");
+  const gain = clamp(Number(boost) || 1, 1, 4);
+  if (gain > 1) {
+    parts.push(`volume=${gain.toFixed(3)}`);
+    raises = true;
+  }
+  if (raises) parts.push(LAVFI_LIMITER);
   return parts.length ? `lavfi=[${parts.join(",")}]` : "";
 }
 

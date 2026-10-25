@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  ENGINE_METHODS, EQ_BANDS, isAudioOnlyMedia, EQ_PRESETS, addBookmark, aspectProps, audioFilterChain, chapterAt,
+  ENGINE_METHODS, EQ_BANDS, isAudioOnlyMedia, EQ_PRESETS, LAVFI_LIMITER, addBookmark, aspectProps, audioFilterChain, chapterAt,
   createEngineFacade, cssViewTransform, engineKindFor, flipFilter, languageName, nextZoom, normalizeChapters,
   normalizeTracks, pictureProps, removeBookmark, subMarginFor, trackLabel,
 } from "../../src/media/engine/engine.js";
@@ -128,7 +128,8 @@ test("audioFilterChain: equalizer bands, normalisation, restoration switches", (
   const bass = audioFilterChain({ eq: EQ_PRESETS.bass.gains });
   assert.match(bass, /^lavfi=\[equalizer=f=31:t=o:w=1:g=6,equalizer=f=62:t=o:w=1:g=5,/);
   assert.equal(bass.split("equalizer").length - 1, 4);
-  assert.equal(audioFilterChain({ eq: [20] }), "lavfi=[equalizer=f=31:t=o:w=1:g=12]"); // clamped
+  assert.equal(audioFilterChain({ eq: [-20] }), "lavfi=[equalizer=f=31:t=o:w=1:g=-12]"); // clamped, cut only: no limiter
+  assert.equal(audioFilterChain({ eq: [20] }), `lavfi=[equalizer=f=31:t=o:w=1:g=12,${LAVFI_LIMITER}]`); // boost -> limiter
   assert.match(audioFilterChain({ normalize: true }), /dynaudnorm/);
   const r = audioFilterChain({ restore: { denoise: true, voice: true, compressor: true } });
   assert.match(r, /highpass=f=90,lowpass=f=7500,equalizer=f=2400.*acompressor/);

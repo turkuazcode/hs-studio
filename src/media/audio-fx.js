@@ -149,7 +149,7 @@ export function createAudioFx(app) {
   // ------------------------------------------------------------------------
   function apply(force = false) {
     if (engine.kind !== "mpv") return;
-    const chain = audioFilterChain({ eq: gains, normalize, restore: app.audio.restoreSwitches });
+    const chain = audioFilterChain({ eq: gains, normalize, restore: app.audio.restoreSwitches, boost: app.audio.boostGain });
     if (!force && chain === lastChain) return;
     lastChain = chain;
     engine.setAudioFilters(chain).catch((e) => {

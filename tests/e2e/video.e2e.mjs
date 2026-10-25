@@ -169,21 +169,33 @@ test("video: H.264 clip + SRT opened from the command line", { timeout: 180000 }
       assert.equal(await app.eval(`${V}.style.filter`), "brightness(100%) contrast(100%) saturate(100%)");
     });
 
-    await t.test("AI restoration (A) and A/B split view (B)", async () => {
+    await t.test("picture/sound filters (A) and A/B split view (B), honest names (S04)", async () => {
+      // video layout: no photo-AI controls, video restoration shown as not ready
+      const shown = (sel) => app.eval(`document.querySelector(${JSON.stringify(sel)}).offsetParent !== null || getComputedStyle(document.querySelector(${JSON.stringify(sel)})).display !== "none"`);
+      await app.click("#btn-toggle-ai-restore");
+      assert.equal(await app.eval(`document.documentElement.dataset.media`), "video");
+      assert.equal(await shown("#btn-deep-enhance"), false, "photo AI hidden for video");
+      assert.equal(await shown("#video-restore-note"), true, "video restoration status shown");
+      assert.match(await app.text("#video-restore-note"), /hazır değil|Not ready/);
+      assert.doesNotMatch(await app.text("#ai-restore-panel h4"), /AI|Restor/i);
+      await app.click("#btn-close-ai-restore");
       await app.key("KeyA");
-      assert.match(await app.text("#ai-master-status"), /^Aktif/);
+      assert.match(await app.text("#ai-master-status"), /^(Açık|On)/);
       assert.equal(await app.eval(`document.getElementById("ai-restore-badge").style.display`), "inline-block");
       const gpu = await app.eval(`document.getElementById("ai-master-status").textContent.includes("GPU")`);
       if (gpu) {
         assert.equal(await has("#video-element", "enhancer-source-hidden"), true);
         await app.key("KeyB");
         assert.equal(await app.eval(`document.getElementById("split-screen-banner").style.display`), "flex");
-        assert.equal(await app.text("#split-view-status"), "Açık");
+        assert.match(await app.text("#split-view-status"), /^(Açık|On)$/);
+        assert.equal(await app.eval(`document.getElementById("btn-toggle-split-view").disabled`), false);
       } else {
+        // no WebGL2: A/B must not look usable
+        assert.equal(await app.eval(`document.getElementById("btn-toggle-split-view").disabled`), true);
         assert.match(await app.eval(`${V}.style.filter`), /contrast\(120%\)/);
       }
       await app.key("KeyA"); // off: also closes the split view
-      assert.equal(await app.text("#ai-master-status"), "Kapalı (Orijinal)");
+      assert.match(await app.text("#ai-master-status"), /^(Kapalı \(orijinal\)|Off \(original\))$/);
       assert.equal(await app.eval(`document.getElementById("split-screen-banner").style.display`), "none");
       assert.equal(await has("#video-element", "enhancer-source-hidden"), false);
     });

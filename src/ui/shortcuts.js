@@ -49,7 +49,7 @@ export function defaultActions(app) {
     { id: "bookmarkAdd", scope: "video", keys: ["KeyY"], run: () => app.playbackMenus.addBookmark() },
     {
       id: "aiVideo", scope: "video", keys: ["KeyR", "KeyA"],
-      run: () => app.panels.toggleAiMaster("AI Restorasyon & Netleştirici Açık ✨", "AI Restorasyon Kapalı"),
+      run: () => app.panels.toggleAiMaster(),
     },
 
     // Photo
@@ -65,7 +65,7 @@ export function defaultActions(app) {
     { id: "zoomReset", scope: "photo", keys: ["Digit0", "Numpad0"], run: () => app.photo.resetTransform() },
     {
       id: "aiPhoto", scope: "photo", keys: ["KeyA"],
-      run: () => app.panels.toggleAiMaster("AI Restorasyon Devrede ✨", "AI Restorasyon Kapalı"),
+      run: () => app.panels.toggleAiMaster(),
     },
   ];
 }

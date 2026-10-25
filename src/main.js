@@ -7,6 +7,7 @@
 // ==========================================================================
 
 import { queryDom } from "./core/dom.js";
+import { createCapabilities } from "./core/capabilities.js";
 import { createEventBus } from "./core/events.js";
 import { createLibrary } from "./core/library.js";
 import { createSettings, defaultAdapter } from "./core/settings.js";
@@ -78,6 +79,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       : null,
   };
   app.engine = createEngineFacade(app.engines);
+  // One capability source for the UI (Plan 10 / P01): what works with this engine / WebView
+  app.capabilities = createCapabilities({ engineKind: () => app.engine.kind, webgl2: () => !!app.filters?.enhancer });
 
   // Leaf services first: everything below may toast / poke the HUD
   Object.assign(app, createToasts(dom));

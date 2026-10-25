@@ -1992,6 +1992,11 @@ html.engine-mpv-video .video-element { display: none !important; }
 html[data-engine="html5"] .mpv-only { display: none !important; }
 html[data-engine="mpv"] .html5-only { display: none !important; }
 
+/* Media-type layouts (enhance panel): photo controls only with a photo, video/sound controls otherwise */
+html[data-media="image"] .video-only { display: none !important; }
+html:not([data-media="image"]) .photo-only { display: none !important; }
+#btn-toggle-split-view:disabled { opacity: 0.55; cursor: not-allowed; }
+
 /* Every panel scrolls when it is taller than the window */
 .effects-panel {
   max-height: calc(100vh - 70px);
