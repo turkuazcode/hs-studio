@@ -11,6 +11,7 @@
 //!   fingerprints; completed items are never repeated and a partial file never counts.
 
 pub mod adapters;
+pub mod external;
 pub mod scheduler;
 pub mod store;
 #[cfg(test)]
@@ -120,6 +121,12 @@ pub mod code {
     pub const NO_FFMPEG: &str = "noFfmpeg";
     pub const UNSUPPORTED: &str = "unsupported";
     pub const FAILED: &str = "failed";
+    /// No webview runner for an AI job (page not loaded); continue runs it again
+    pub const RUNNER_UNAVAILABLE: &str = "runnerUnavailable";
+    /// AI inference: out of (GPU) memory on every backend / tile size
+    pub const MEMORY: &str = "memory";
+    /// AI inference: the model could not be loaded or run (not retried on the CPU)
+    pub const MODEL_FAILED: &str = "modelFailed";
 }
 
 impl JobError {
@@ -361,6 +368,12 @@ pub trait JobEnv: Send + Sync {
     }
     /// A new output file (the webview may show it).
     fn on_output(&self, _path: &Path) {}
+    /// Webview runner messages (`job-run`, `job-stop`) of external jobs (AI, A03).
+    fn emit_runner(&self, _event: &str, _payload: &Value) {}
+    /// Default output folder of AI results (inside the app data, not the user's folders).
+    fn results_dir(&self) -> Option<PathBuf> {
+        None
+    }
 }
 
 struct TauriEnv {
@@ -383,8 +396,20 @@ impl JobEnv for TauriEnv {
     fn model_version(&self, id: &str) -> Option<String> {
         match id {
             "ffmpeg" => test_env("VHO_JOBS_TEST_MODEL_VERSION").or_else(|| crate::actions::ffmpeg::tools_info().version),
+            _ if id.starts_with("ai:") => external::resolve_pin(id, |c| crate::ai::component_version(&self.app, c)),
             _ => None,
         }
+    }
+
+    fn emit_runner(&self, event: &str, payload: &Value) {
+        let _ = self.app.emit(event, payload);
+    }
+
+    fn results_dir(&self) -> Option<PathBuf> {
+        let dir = crate::platform::data_dir(&self.app).ok()?.join("ai-results");
+        std::fs::create_dir_all(&dir).ok()?;
+        let _ = self.app.asset_protocol_scope().allow_directory(&dir, true);
+        Some(dir)
     }
 
     fn free_space(&self, dir: &Path) -> Option<u64> {
@@ -499,4 +524,57 @@ pub async fn jobs_clear_finished(app: AppHandle) -> Result<usize, JobError> {
 /// Folder of a path (helper shared by adapters).
 pub(crate) fn parent_dir(p: &Path) -> PathBuf {
     p.parent().map(Path::to_path_buf).unwrap_or_default()
+}
+
+// ---------------------------------------------------------------------------
+// Webview runner of AI jobs (A03, see external.rs)
+// ---------------------------------------------------------------------------
+
+/// The page (re)loaded and runs these job kinds; runs of an earlier page are lost.
+#[tauri::command]
+pub async fn jobs_runner_ready(app: AppHandle, kinds: Vec<String>) -> Result<(), JobError> {
+    external::runner_ready(&kinds);
+    // opening the queue here also recovers it and starts the worker
+    blocking(app, |_| Ok(())).await
+}
+
+#[tauri::command]
+pub async fn jobs_ext_begin(job_id: String, attempt_id: String, idx: i64) -> Result<(), JobError> {
+    run_blocking(move || external::begin(&job_id, &attempt_id, idx)).await
+}
+
+#[tauri::command]
+pub fn jobs_ext_progress(job_id: String, attempt_id: String, fraction: Option<f64>) -> Result<(), JobError> {
+    external::send(&job_id, &attempt_id, external::Msg::Progress { fraction })
+}
+
+#[tauri::command]
+pub async fn jobs_ext_fail(job_id: String, attempt_id: String, idx: i64, code: String, detail: String) -> Result<(), JobError> {
+    run_blocking(move || external::fail(&job_id, &attempt_id, idx, code, detail)).await
+}
+
+#[tauri::command]
+pub fn jobs_ext_done(job_id: String, attempt_id: String) -> Result<(), JobError> {
+    external::send(&job_id, &attempt_id, external::Msg::Done)
+}
+
+/// Raw RGBA body (binary IPC, no base64); headers `x-job-id`, `x-attempt-id`, `x-idx`,
+/// `x-width`, `x-height`. Returns the final output path.
+#[tauri::command]
+pub async fn jobs_ext_output(request: tauri::ipc::Request<'_>) -> Result<String, JobError> {
+    let header = |k: &str| request.headers().get(k).and_then(|v| v.to_str().ok()).map(str::to_string);
+    let bad = || JobError::new(code::INVALID_REQUEST, "missing x-job-id / x-attempt-id / x-idx / x-width / x-height");
+    let job_id = header("x-job-id").ok_or_else(bad)?;
+    let attempt_id = header("x-attempt-id").ok_or_else(bad)?;
+    let num = |k: &str| header(k).and_then(|v| v.parse::<i64>().ok()).ok_or_else(bad);
+    let (idx, width, height) = (num("x-idx")?, num("x-width")?, num("x-height")?);
+    let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else {
+        return Err(JobError::new(code::INVALID_REQUEST, "expected a binary body"));
+    };
+    let rgba = bytes.clone();
+    run_blocking(move || external::output(&job_id, &attempt_id, idx, width as u32, height as u32, rgba)).await
+}
+
+async fn run_blocking<T: Send + 'static>(f: impl FnOnce() -> Result<T, JobError> + Send + 'static) -> Result<T, JobError> {
+    tauri::async_runtime::spawn_blocking(f).await.map_err(|e| JobError::new(code::FAILED, e.to_string()))?
 }

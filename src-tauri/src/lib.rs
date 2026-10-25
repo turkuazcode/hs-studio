@@ -357,7 +357,13 @@ pub fn run() {
             jobs::jobs_pause,
             jobs::jobs_resume,
             jobs::jobs_remove,
-            jobs::jobs_clear_finished
+            jobs::jobs_clear_finished,
+            jobs::jobs_runner_ready,
+            jobs::jobs_ext_begin,
+            jobs::jobs_ext_progress,
+            jobs::jobs_ext_fail,
+            jobs::jobs_ext_done,
+            jobs::jobs_ext_output
         ])
         .build(context)
         .expect("error while building tauri application");
