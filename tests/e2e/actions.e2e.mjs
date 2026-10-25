@@ -15,7 +15,10 @@ import { dirname, join } from "node:path";
 import { defaultExe, fixture, launchApp } from "./lib/app.mjs";
 import { sleep } from "./lib/cdp.mjs";
 
-const FFMPEG = join(dirname(defaultExe()), "ffmpeg.exe");
+// Same lookup locations as the backend (actions/ffmpeg.rs): next to the exe, exe\mpv\, resources\mpv\.
+const FFMPEG = ["", "mpv", join("resources", "mpv")]
+  .map((sub) => join(dirname(defaultExe()), sub, "ffmpeg.exe"))
+  .find((p) => existsSync(p)) ?? join(dirname(defaultExe()), "ffmpeg.exe");
 const skipFfmpeg = existsSync(FFMPEG) ? false : "ffmpeg.exe not staged next to vho.exe (npm run stage:mpv)";
 const tag = Math.random().toString(36).slice(2, 8);
 
