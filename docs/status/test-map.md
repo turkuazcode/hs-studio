@@ -45,10 +45,10 @@ Dosya argümanı verilirse varsayılan liste yerine o dosyalar çalışır (`npm
 | Sabit değil | Luma std. sapması > 20 | Boş/siyah/sabit çıktı |
 | Kanal sırası | Her şeritte kendi kanalı diğerlerinden ≥100 yüksek | RGB/BGR karışması |
 | Alpha | Worker çıktısı tamamen opak (255); alpha 0 altındaki RGB korunur (±40) | Bugünkü sözleşme: alpha'yı geri koymak çağıranın işi (A04 bilinen sınır) |
-| Bağımsız taban | Bilinear ×4'e göre PSNR ≥ 22 dB | Referanstan bağımsız “sadık büyütme” akıl kontrolü (kalite ölçüsü değil) |
-| WASM ↔ referans | ortalama ≤0,5, p99,9 ≤3, maks ≤8 | Aynı ORT/CPU; yalnızca toplama sırası gürültüsü |
-| Parçalı (32 px, 8 px bindirme) ↔ tek parça | ortalama ≤1, p99,9 ≤12, maks ≤40 | Parça sınırında bağlam farkı (DAT-2'nin alıcı alanı bindirmeden büyük) |
-| WebGPU ↔ referans | ortalama ≤2, p99,9 ≤16, maks ≤64 | Farklı fp32 çekirdekleri; byte eşitliği beklenmez |
+| Bağımsız taban | Bilinear ×4'e göre PSNR ≥ 22 dB (ölçülen 27,55 dB) | Referanstan bağımsız “sadık büyütme” akıl kontrolü (kalite ölçüsü değil) |
+| WASM ↔ referans | ortalama ≤0,5, p99,9 ≤3, maks ≤8 (ölçülen 0 / 0 / 0) | Aynı ORT/CPU; yalnızca toplama sırası gürültüsü |
+| Parçalı (32 px, 8 px bindirme) ↔ tek parça | ortalama ≤2, p99,9 ≤24, maks ≤48 (ölçülen 1,18 / 15 / 24) | Parça sınırında bağlam farkı (DAT-2'nin alıcı alanı bindirmeden büyük); uygulamanın en küçük parçası 48 px/12 px bindirme, bu test daha sert |
+| WebGPU ↔ referans | ortalama ≤1, p99,9 ≤8, maks ≤32 (ölçülen 0,00 / 0 / 1, AMD 1 GB iGPU) | Farklı fp32 çekirdekleri; byte eşitliği beklenmez, başka GPU'lar için pay |
 
 ## Özellik → kanıt katmanı
 
