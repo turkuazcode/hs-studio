@@ -1,0 +1,10 @@
+/* Outfit (SIL Open Font License 1.1, src/assets/fonts/OFL.txt), bundled with the app:
+   the UI never requests fonts from the network (S05, offline). One variable font file
+   covers weights 100-900, including the Turkish letters (latin-ext). */
+@font-face {
+  font-family: "Outfit";
+  src: url("../assets/fonts/Outfit-wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}

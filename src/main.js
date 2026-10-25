@@ -7,7 +7,9 @@
 // ==========================================================================
 
 import { queryDom } from "./core/dom.js";
+import { createCapabilities } from "./core/capabilities.js";
 import { createEventBus } from "./core/events.js";
+import { FALLBACK_LANGUAGE, loadDictionary } from "./core/i18n.js";
 import { createLibrary } from "./core/library.js";
 import { announceStorageStatus, appLibraryAdapter } from "./core/library-db.js";
 import { createSettings, defaultAdapter } from "./core/settings.js";
@@ -59,6 +61,7 @@ function safeLocalStorage() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   const dom = queryDom();
+
   const app = { dom, state: createAppState(), bus: createEventBus() };
 
   // Persistent settings + library (recent files, resume positions, bookmarks, favorites in
@@ -68,6 +71,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     adapter: appLibraryAdapter(invoke, defaultAdapter("library.json", "library")),
     legacyStorage: safeLocalStorage(),
   });
+  // Fallback dictionary (local file) before the modules are built: they render their texts with
+  // t(). Awaited after the settings/library loads started, so it does not delay their first write.
+  await loadDictionary(FALLBACK_LANGUAGE).catch((e) => console.error("[i18n]", e));
   app.resume = {
     get: (key) => (app.settings.get("playback.resume") ? app.library.resume.get(key) : null),
     set: (key, seconds) => app.library.resume.set(key, seconds),
@@ -83,6 +89,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       : null,
   };
   app.engine = createEngineFacade(app.engines);
+  // One capability source for the UI (Plan 10 / P01): what works with this engine / WebView
+  app.capabilities = createCapabilities({ engineKind: () => app.engine.kind, webgl2: () => !!app.filters?.enhancer });
+  // Backend part (engine, photo codecs, OS actions); the AVIF probe must not delay the first paint
+  invoke?.("platform_capabilities")
+    .then((report) => { app.capabilities.setBackend(report); app.bus.emit("capabilities:changed", report); })
+    .catch((e) => console.warn("platform_capabilities", e));
 
   // Leaf services first: everything below may toast / poke the HUD
   Object.assign(app, createToasts(dom));
@@ -129,6 +141,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     get chapters() { return app.engine.chapters(); },
     get audioFilters() { return app.audioFx.chain; },
     get bookmarks() { return app.playbackMenus.bookmarks; },
+    /** Capability matrix as the UI sees it (P01). */
+    get capabilities() { return app.capabilities.all(); },
     /** Same path as the native file drop / open dialog (tests cannot synthesize an OS drop). */
     openPaths: (paths) => app.loader.openPaths(paths),
   };

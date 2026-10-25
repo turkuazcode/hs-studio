@@ -6,6 +6,7 @@
 
 import { appWindow, convertFileSrc, dialogOpen, invoke } from "../core/tauri.js";
 import { classify, DIALOG_FILTERS } from "./classify.js";
+import { t } from "../core/i18n.js";
 
 /**
  * Splits dropped/picked entries into media and subtitles.
@@ -72,7 +73,7 @@ export function createLoader(app) {
    */
   async function openEntries(entries, { playFirstNew = true } = {}) {
     const { media, subs, rejected } = partitionEntries(entries);
-    if (rejected > 0) app.toast(`${rejected} desteklenmeyen öğe atlandı`);
+    if (rejected > 0) app.toast(t("ui.loader.skipped", { n: rejected }));
 
     if (media.length) {
       const firstNewIndex = app.playlist.append(media.map((f) => toPlaylistItem(f)));
@@ -93,7 +94,8 @@ export function createLoader(app) {
       openEntries(await invoke("prepare_media", { paths }), opts);
     } catch (e) {
       console.error("prepare_media", e);
-      app.toast("⚠️ Dosyalar açılamadı");
+      app.toast(t("ui.loader.openFailed"));
+
     }
   }
 

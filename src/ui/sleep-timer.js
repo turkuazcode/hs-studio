@@ -3,6 +3,7 @@
 // optional PC suspend.
 // ==========================================================================
 
+import { t } from "../core/i18n.js";
 import { invoke } from "../core/tauri.js";
 
 export const FADE_STEPS = 12;
@@ -45,8 +46,8 @@ export function createSleepTimer(app) {
         sleepTimerInterval = null;
         isSleepTimerVideoEnd = true;
         sleepBadge.style.display = "inline-block";
-        sleepBadge.textContent = "Bitince";
-        app.toast("Uyku modu: Video bitince kapanacak");
+        sleepBadge.textContent = t("ui.sleep.badgeEnd");
+        app.toast(t("ui.sleep.toastVideoEnd"));
       } else {
         startSleepTimer(parseInt(minVal, 10) * 60);
       }
@@ -62,7 +63,7 @@ export function createSleepTimer(app) {
       btnDisableSleep.style.display = "inline-block";
       sleepTimerModal.classList.remove("active");
     } else {
-      app.toast("Lütfen geçerli bir dakika girin");
+      app.toast(t("ui.sleep.invalidMinutes"));
     }
   });
 
@@ -77,7 +78,7 @@ export function createSleepTimer(app) {
   btnDisableSleep.addEventListener("click", () => {
     resetSleepTimerUi();
     sleepTimerModal.classList.remove("active");
-    app.toast("Uyku zamanlayıcısı kapatıldı");
+    app.toast(t("ui.sleep.toastOff"));
   });
 
   function startSleepTimer(seconds) {
@@ -95,8 +96,8 @@ export function createSleepTimer(app) {
       }
     }, 1000);
 
-    const pcSleepMsg = checkPcSleep && checkPcSleep.checked ? " (+PC Uyku)" : "";
-    app.toast(`Uyku zamanlayıcısı: ${Math.floor(seconds / 60)} dk${pcSleepMsg}`);
+    const key = checkPcSleep && checkPcSleep.checked ? "ui.sleep.toastStartPc" : "ui.sleep.toastStart";
+    app.toast(t(key, { min: Math.floor(seconds / 60) }));
   }
 
   // Cancellable ~3 s fade-out, then pause (and optionally suspend the PC)
@@ -119,7 +120,8 @@ export function createSleepTimer(app) {
         if (checkPcSleep?.checked && invoke) {
           invoke("suspend_system").catch((e) => {
             console.warn("suspend_system", e);
-            app.toast("⚠️ Bilgisayar uyku moduna alınamadı");
+            app.toast(t("ui.sleep.suspendFailed"));
+
           });
         }
       }

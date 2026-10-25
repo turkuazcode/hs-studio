@@ -2,6 +2,9 @@
 // File classification by extension / MIME type (pure functions, no DOM).
 // ==========================================================================
 
+import { t } from "../core/i18n.js";
+
+
 export const VIDEO_EXT = new Set(["mp4", "m4v", "webm", "mkv", "mov", "ogv", "ts", "avi", "wmv", "flv", "3gp", "3g2", "asf", "mpg", "mpeg", "vob", "mts", "m2ts", "divx",
   "mp3", "m4a", "aac", "flac", "wav", "ogg", "opus", "amr", "wma"]);
 export const AUDIO_EXT = new Set(["mp3", "m4a", "aac", "flac", "wav", "ogg", "opus"]);
@@ -40,17 +43,17 @@ export const isAudioOnlyName = (name) => AUDIO_EXT.has(extOf(name));
 export const isRemoteUrl = (src, origin = globalThis.location?.origin) =>
   /^https?:/i.test(src) && !src.startsWith(origin);
 
-/** Native file dialog filters. */
+/** Native file dialog filters (names in the current UI language). */
 export const DIALOG_FILTERS = [
-  { name: "Medya ve Altyazı", extensions: [...VIDEO_EXT, ...IMAGE_EXT, ...DECODE_IMAGE_EXT, ...SUB_EXT] },
-  { name: "Tüm Dosyalar", extensions: ["*"] },
+  { get name() { return t("ui.dialog.media"); }, extensions: [...VIDEO_EXT, ...IMAGE_EXT, ...DECODE_IMAGE_EXT, ...SUB_EXT] },
+  { get name() { return t("ui.dialog.all"); }, extensions: ["*"] },
 ];
 
 /** Playlist entry size in bytes (File, backend entry or unknown). */
 export const itemSize = (item) => item.file?.size ?? item.size ?? 0;
 
 /** Display name for the URL modal: last path segment, decoded. */
-export function nameFromUrl(url, fallback = "Ağ Akışı") {
+export function nameFromUrl(url, fallback = t("ui.playlist.stream")) {
   try {
     return decodeURIComponent(new URL(url).pathname.split("/").pop()) || fallback;
   } catch (_) {

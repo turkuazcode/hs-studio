@@ -5,69 +5,74 @@
 // ==========================================================================
 
 import { batchPreview } from "./logic.js";
+import { t } from "../core/i18n.js";
 
 const PREVIEW_LIMIT = 200;
 
-const TEMPLATE = `
-  <div class="ps-modal-card ps-batch-card" role="dialog" aria-label="Toplu işlem">
+// Built when the dialog is created; texts carry their i18n keys (re-translated on a language switch).
+const tx = (key) => `data-i18n="${key}">${t(key)}`;
+const ti = (key) => `data-i18n-title="${key}" title="${t(key)}"`;
+const ta = (key) => `data-i18n-aria-label="${key}" aria-label="${t(key)}"`;
+const template = () => `
+  <div class="ps-modal-card ps-batch-card" role="dialog" ${ta("ui.studio.batch")}>
     <div class="ps-modal-head">
-      <h3>Toplu İşlem</h3>
+      <h3 ${tx("ui.studio.batch")}</h3>
       <span class="ps-batch-count"></span>
-      <button class="btn-icon-close" data-act="close" title="Kapat">✕</button>
+      <button class="btn-icon-close" data-act="close" ${ti("common.close")}>✕</button>
     </div>
     <div class="ps-batch-body">
       <form class="ps-batch-form" autocomplete="off">
         <fieldset>
-          <legend>Yeniden adlandır</legend>
-          <input name="template" class="modal-input" value="{name}" spellcheck="false" aria-label="Ad deseni">
+          <legend ${tx("studio.batch.rename")}</legend>
+          <input name="template" class="modal-input" value="{name}" spellcheck="false" ${ta("studio.batch.pattern")}>
           <div class="ps-chips ps-token-chips">
             <button type="button" class="ps-chip" data-token="{name}">{name}</button>
             <button type="button" class="ps-chip" data-token="{counter:3}">{counter:3}</button>
             <button type="button" class="ps-chip" data-token="{date}">{date}</button>
             <button type="button" class="ps-chip" data-token="{ext}">{ext}</button>
           </div>
-          <label class="ps-inline">Sayaç başlangıcı <input name="counterStart" type="number" min="0" value="1" class="modal-input ps-num"></label>
+          <label class="ps-inline"><span ${tx("studio.batch.counterStart")}</span> <input name="counterStart" type="number" min="0" value="1" class="modal-input ps-num"></label>
         </fieldset>
         <fieldset>
-          <legend>Dönüştür</legend>
-          <label class="ps-inline">Biçim
+          <legend ${tx("studio.batch.convert")}</legend>
+          <label class="ps-inline"><span ${tx("studio.info.format")}</span>
             <select name="format" class="modal-select">
-              <option value="same">Aynı biçim</option><option value="jpeg">JPEG</option><option value="png">PNG</option>
+              <option value="same" ${tx("studio.batch.sameFormat")}</option><option value="jpeg">JPEG</option><option value="png">PNG</option>
               <option value="webp">WebP</option><option value="avif">AVIF</option>
             </select>
           </label>
-          <label class="ps-inline">Kalite <input name="quality" type="range" min="1" max="100" value="90" class="filter-slider"><output name="qualityOut">90</output></label>
+          <label class="ps-inline"><span ${tx("studio.batch.quality")}</span> <input name="quality" type="range" min="1" max="100" value="90" class="filter-slider"><output name="qualityOut">90</output></label>
         </fieldset>
         <fieldset>
-          <legend>Boyutlandır ve döndür</legend>
+          <legend ${tx("studio.batch.resizeRotate")}</legend>
           <label class="ps-inline">
             <select name="resizeMode" class="modal-select">
-              <option value="none">Boyut değişmesin</option><option value="longEdge">Uzun kenar (px)</option><option value="percent">Yüzde (%)</option>
+              <option value="none" ${tx("studio.batch.noResize")}</option><option value="longEdge" ${tx("studio.batch.longEdge")}</option><option value="percent" ${tx("studio.batch.percent")}</option>
             </select>
             <input name="resizeValue" type="number" min="1" value="1920" class="modal-input ps-num">
           </label>
-          <label class="ps-inline">Döndür
+          <label class="ps-inline"><span ${tx("studio.batch.rotate")}</span>
             <select name="rotate" class="modal-select">
-              <option value="0">Yok</option><option value="90">90° sağa</option><option value="180">180°</option><option value="-90">90° sola</option>
+              <option value="0" ${tx("studio.batch.none")}</option><option value="90" ${tx("studio.batch.rot90r")}</option><option value="180">180°</option><option value="-90" ${tx("studio.batch.rot90l")}</option>
             </select>
           </label>
         </fieldset>
         <fieldset>
-          <legend>Meta veriler ve çıktı</legend>
+          <legend ${tx("studio.batch.metaOutput")}</legend>
           <label class="ps-inline">EXIF
             <select name="metadata" class="modal-select">
-              <option value="keep">Koru</option><option value="stripGps">Konumu (GPS) temizle</option><option value="strip">Tümünü temizle</option>
+              <option value="keep" ${tx("studio.batch.keep")}</option><option value="stripGps" ${tx("studio.batch.stripGps")}</option><option value="strip" ${tx("studio.batch.stripAll")}</option>
             </select>
           </label>
-          <label class="ps-inline">Klasör
-            <select name="dest" class="modal-select"><option value="same">Kaynakla aynı</option><option value="dir">Başka klasör…</option></select>
+          <label class="ps-inline"><span ${tx("studio.batch.folder")}</span>
+            <select name="dest" class="modal-select"><option value="same" ${tx("studio.batch.sameFolder")}</option><option value="dir" ${tx("studio.batch.otherFolder")}</option></select>
           </label>
           <div class="ps-batch-dir" hidden></div>
-          <label class="ps-check"><input type="checkbox" name="removeSource"> Kaynak dosyaları kaldır (taşı / yeniden adlandır)</label>
+          <label class="ps-check"><input type="checkbox" name="removeSource"> <span ${tx("studio.batch.removeSource")}</span></label>
         </fieldset>
       </form>
       <div class="ps-batch-preview">
-        <div class="ps-batch-preview-head">Önizleme</div>
+        <div class="ps-batch-preview-head" ${tx("studio.batch.preview")}</div>
         <ol class="ps-batch-list"></ol>
       </div>
     </div>
@@ -76,9 +81,9 @@ const TEMPLATE = `
       <span class="ps-batch-status" role="status"></span>
     </div>
     <div class="ps-modal-actions">
-      <button class="btn-primary btn-sm" data-act="start">Başlat</button>
-      <button class="btn-secondary btn-sm" data-act="cancel" hidden>İptal</button>
-      <button class="btn-ghost btn-sm" data-act="close">Kapat</button>
+      <button class="btn-primary btn-sm" data-act="start" ${tx("ui.sleep.start")}</button>
+      <button class="btn-secondary btn-sm" data-act="cancel" hidden ${tx("common.cancel")}</button>
+      <button class="btn-ghost btn-sm" data-act="close" ${tx("common.close")}</button>
     </div>
   </div>`;
 
@@ -106,7 +111,7 @@ export function batchJobFromForm(v) {
 
 /** root: modal overlay element. deps: { invoke, listen, dialogOpen, toast, onDone(summary) } */
 export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone }) {
-  root.innerHTML = TEMPLATE;
+  root.innerHTML = template();
   const $ = (s) => root.querySelector(s);
   const form = $(".ps-batch-form");
   const list = $(".ps-batch-list");
@@ -140,10 +145,10 @@ export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone })
       return li;
     }));
     if (items.length > PREVIEW_LIMIT) {
-      list.append(Object.assign(document.createElement("li"), { className: "ps-more", textContent: `… ve ${items.length - PREVIEW_LIMIT} dosya daha` }));
+      list.append(Object.assign(document.createElement("li"), { className: "ps-more", textContent: t("studio.batch.more", { n: items.length - PREVIEW_LIMIT }) }));
     }
     dirEl.hidden = v.dest !== "dir";
-    dirEl.textContent = outDir ?? "Klasör seçilmedi";
+    dirEl.textContent = outDir ?? t("studio.batch.noFolder");
   }
 
   async function chooseDir() {
@@ -166,11 +171,11 @@ export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone })
     if (running || !items.length) return;
     const v = values();
     if (v.dest === "dir" && !outDir) {
-      toast("Önce bir çıktı klasörü seçin");
+      toast(t("studio.batch.pickOutput"));
       return;
     }
     const { ops, output } = batchJobFromForm(v);
-    if (output.removeSource && !window.confirm(`${items.length} kaynak dosya işlemden sonra silinecek (taşıma / yeniden adlandırma). Devam edilsin mi?`)) return;
+    if (output.removeSource && !window.confirm(t("studio.batch.removeConfirm", { n: items.length }))) return;
     const jobId = `batch-${Date.now()}`;
     running = jobId;
     setRunning(true);
@@ -181,7 +186,7 @@ export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone })
       const p = e.payload;
       if (p.jobId !== jobId) return;
       bar.style.width = `${(100 * p.done) / p.total}%`;
-      statusEl.textContent = `${p.done} / ${p.total}${p.error && p.error !== "[cancelled]" ? ` · hata: ${p.input.split(/[\\/]/).pop()}` : ""}`;
+      statusEl.textContent = `${p.done} / ${p.total}${p.error && p.error !== "[cancelled]" ? ` · ${t("studio.batch.errorIn", { name: p.input.split(/[\\/]/).pop() })}` : ""}`;
       root.dataset.done = p.done;
     });
     try {
@@ -189,15 +194,16 @@ export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone })
       root.dataset.summary = JSON.stringify({ total: s.total, succeeded: s.succeeded, failed: s.failed, skipped: s.skipped, cancelled: s.cancelled, elapsedMs: s.elapsedMs });
       const cancelledN = s.results.filter((r) => r.error === "[cancelled]").length;
       statusEl.textContent = [
-        `${s.succeeded} başarılı`, s.failed ? `${s.failed} hatalı` : "", s.skipped ? `${s.skipped} atlandı` : "",
-        s.cancelled ? `${cancelledN} iptal edildi` : "", `${(s.elapsedMs / 1000).toFixed(1)} sn`,
+        t("studio.batch.succeeded", { n: s.succeeded }), s.failed ? t("studio.batch.failed", { n: s.failed }) : "",
+        s.skipped ? t("studio.batch.skipped", { n: s.skipped }) : "",
+        s.cancelled ? t("studio.batch.cancelledN", { n: cancelledN }) : "", t("studio.info.seconds", { v: (s.elapsedMs / 1000).toFixed(1) }),
       ].filter(Boolean).join(" · ");
       const firstError = s.results.find((r) => !r.ok && r.error && r.error !== "[cancelled]");
       if (firstError) statusEl.title = `${firstError.input}: ${firstError.error}`;
-      toast(s.cancelled ? "Toplu işlem iptal edildi" : `Toplu işlem bitti: ${s.succeeded} dosya`);
+      toast(s.cancelled ? t("studio.batch.cancelledToast") : t("studio.batch.doneToast", { n: s.succeeded }));
       onDone?.(s);
     } catch (e) {
-      statusEl.textContent = `Hata: ${e}`;
+      statusEl.textContent = t("studio.batch.error", { error: e });
     } finally {
       un?.();
       running = null;
@@ -209,7 +215,7 @@ export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone })
   async function cancel() {
     const id = running;
     if (!id) return;
-    statusEl.textContent = "İptal ediliyor…";
+    statusEl.textContent = t("studio.batch.cancelling");
     while (running === id) {
       const ok = await invoke("photo_cancel", { id }).catch(() => false);
       if (ok) return;
@@ -245,7 +251,8 @@ export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone })
     statusEl.textContent = "";
     root.dataset.summary = "";
     root.dataset.done = "0";
-    $(".ps-batch-count").textContent = `${items.length} fotoğraf`;
+    $(".ps-batch-count").textContent = t("studio.batch.count", { n: items.length });
+
     updatePreview();
     form.template.focus();
   }
