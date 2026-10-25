@@ -3,7 +3,7 @@
 // Thin UI controller over ai-engine.js (4x upscaler + optional face restore).
 // ==========================================================================
 
-import { upscaleImage, restoreFacesInImage, pendingDownloadBytes, describeHardware, releaseAi, MODELS, FACE_MODEL } from "./ai-engine.js";
+import { upscaleImage, restoreFacesInImage, downloadConsentText, describeHardware, releaseAi, MODELS, FACE_MODEL } from "./ai-engine.js";
 import { invoke } from "../core/tauri.js";
 import { safeFileName } from "../core/format.js";
 
@@ -83,17 +83,15 @@ export function createPhotoAi(app) {
 
     const withFaces = checkDeepFaces.checked;
     const components = withFaces ? ["photo-x4", FACE_MODEL.component] : ["photo-x4"];
-    const pending = await pendingDownloadBytes(...components);
-    if (pending > 0) {
-      const mb = Math.round(pending / 1048576);
-      const ok = window.confirm(
-        `İlk kullanım: yaklaşık ${mb} MB yapay zeka bileşeni indirilecek ve bilgisayarınızda saklanacak.\n\n` +
-        `• ONNX Runtime Web — Microsoft, MIT Lisansı\n` +
-        `• ${MODELS["photo-x4"].title} — ${MODELS["photo-x4"].credit}\n` +
-        (withFaces ? `• ${FACE_MODEL.title} — ${FACE_MODEL.credit}\n` : "") +
-        `\nDevam edilsin mi?`);
-      if (!ok) return;
+    // First use: size, author and license of each missing component (from the manifest)
+    let consent;
+    try {
+      consent = await downloadConsentText(...components);
+    } catch (e) {
+      deepStatus.textContent = `⚠️ ${e?.message || e}`;
+      return;
     }
+    if (consent && !window.confirm(consent)) return;
 
     const gen = loadGen();
     const job = new AbortController();

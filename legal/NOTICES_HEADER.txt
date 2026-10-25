@@ -10,15 +10,16 @@ own license; the full texts are reproduced in this file.
 --------------------------------------------------------------------------
 These files are downloaded from the URLs below (pinned to an exact version/commit,
 SHA-256 verified) only when the user starts an AI feature and confirms the download.
-They are stored unmodified in the app data folder (…\com.vho.app\ai\<component>\),
-together with their license files.
+They are stored unmodified in the app data folder (…\com.vho.app\ai\<component>\<version>\),
+together with their license files. Each file is checked against its SHA-256 before use;
+the components can be verified, repaired or removed in Settings > AI models.
 
 1.1 ONNX Runtime Web 1.30.0 — inference engine (WebGPU / WebAssembly)
     Copyright (c) Microsoft Corporation. MIT License (full text in section 4.1).
     Source: https://github.com/microsoft/onnxruntime (tag v1.30.0)
     Download: https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/
     The third-party notices of ONNX Runtime (ThirdPartyNotices.txt) are downloaded
-    and stored next to the runtime: …\ai\ort-web\ThirdPartyNotices.txt
+    and stored next to the runtime: …\ai\ort-web\1.30.0\ThirdPartyNotices.txt
 
 1.2 "4xRealWebPhoto_v4_dat2" photo restoration model
     Creator: Philip Hofmann (Phhofm)

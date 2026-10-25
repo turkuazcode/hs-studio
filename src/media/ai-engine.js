@@ -9,6 +9,9 @@
 //   smaller tiles first, then the next backend. Speed is secondary to "it always works".
 // ==========================================================================
 
+import { t } from "../core/i18n.js";
+import { consentText, toAiError } from "./ai-status.js";
+
 const tauri = window.__TAURI__;
 
 /** Models the app knows about. Licenses: see THIRD_PARTY_NOTICES.txt */
@@ -54,30 +57,109 @@ function joinPath(dir, name) {
 
 const assetUrl = (path) => tauri.core.convertFileSrc(path);
 
-/** Ensures a component is on disk, downloading it on first use. Returns its directory. */
-export async function ensureComponent(id, onProgress) {
-  let st = await tauri.core.invoke("ai_status", { id });
-  if (st.installed) return st.dir;
+// --------------------------------------------------------------------------
+// Component management (backend: src-tauri/src/ai). Errors arrive as { code, detail };
+// they become Error objects with .code and an i18n message (aiModels.errors.<code>).
+// --------------------------------------------------------------------------
+
+/** Backend error -> Error { code, detail, message (localized) }; "cancelled" is an AbortError. */
+export const aiError = (e) => toAiError(e, t);
+
+const call = (cmd, args) => tauri.core.invoke(cmd, args).catch((e) => { throw aiError(e); });
+const abortError = () => new DOMException(t("aiModels.errors.cancelled"), "AbortError");
+
+let requestSeq = 0;
+const newRequestId = () => globalThis.crypto?.randomUUID?.() ?? `req-${Date.now()}-${++requestSeq}`;
+
+export const componentStatus = (id) => call("ai_status", { id });
+/** Statuses of the given components (all components of the manifest without ids). */
+export const componentStatuses = (ids) => call("ai_status_all", ids ? { ids } : {});
+export const verifyComponent = (id) => call("ai_verify", { id });
+export const removeComponent = (id) => call("ai_remove", { id });
+
+/**
+ * Downloads / repairs a component. Only this request's progress events are followed (a
+ * cancelled earlier request never moves this bar). signal.abort() cancels this request;
+ * the shared download stops once no request follows it any more.
+ * onProgress(fraction, phase): phase = "verify" | "download" | "extract".
+ */
+export async function installComponent(id, { onProgress, signal } = {}) {
+  if (signal?.aborted) throw abortError();
+  const requestId = newRequestId();
+  let pending = true;
   let unlisten = null;
+  const onAbort = async () => {
+    // The request may not be registered yet: retry briefly until the backend knows it
+    for (let i = 0; pending && i < 50; i++) {
+      if (await call("ai_cancel_download", { requestId }).catch(() => false)) return;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  };
   try {
     unlisten = await tauri.event.listen("ai-download", (e) => {
-      if (e.payload.id === id) onProgress?.(e.payload.done / e.payload.total);
+      const p = e.payload;
+      if (p.id === id && p.requests?.includes(requestId) && p.total > 0) onProgress?.(Math.min(1, p.done / p.total), p.phase);
     });
-    st = await tauri.core.invoke("ai_install", { id });
+    signal?.addEventListener("abort", onAbort, { once: true });
+    return await call("ai_install", { id, requestId });
   } finally {
+    pending = false;
+    signal?.removeEventListener("abort", onAbort);
     unlisten?.();
   }
-  return st.dir;
+}
+
+/**
+ * Makes a component usable for one job: downloads it if needed, then the backend verifies
+ * it (full SHA-256 on first use in this session) and leases it, so it cannot be removed while
+ * the job runs. A file damaged since the last check is repaired once. Call release() after.
+ */
+export async function acquireComponent(id, { onProgress, signal } = {}) {
+  const st = await componentStatus(id);
+  if (!st.installed) await installComponent(id, { onProgress, signal });
+  let res;
+  try {
+    res = await call("ai_acquire", { id });
+  } catch (e) {
+    if (e.code !== "checksum" && e.code !== "not-installed") throw e;
+    await installComponent(id, { onProgress, signal });
+    res = await call("ai_acquire", { id });
+  }
+  if (signal?.aborted) {
+    call("ai_release", { lease: res.lease }).catch(() => {});
+    throw abortError();
+  }
+  let released = false;
+  return {
+    dir: res.status.dir,
+    status: res.status,
+    release() {
+      if (released) return;
+      released = true;
+      call("ai_release", { lease: res.lease }).catch(() => {});
+    },
+  };
+}
+
+/** Compatibility: ensures the component is on disk and verified; returns its directory. */
+export async function ensureComponent(id, onProgress) {
+  const c = await acquireComponent(id, { onProgress });
+  c.release();
+  return c.dir;
 }
 
 /** Bytes that still need downloading before the given components can run (0 if ready). */
 export async function pendingDownloadBytes(...componentIds) {
-  let bytes = 0;
-  for (const id of [RUNTIME.component, ...componentIds]) {
-    const st = await tauri.core.invoke("ai_status", { id });
-    if (!st.installed) bytes += st.downloadBytes;
-  }
-  return bytes;
+  const list = await componentStatuses([RUNTIME.component, ...componentIds]);
+  return list.reduce((sum, st) => sum + (st.installed ? 0 : st.downloadBytes), 0);
+}
+
+/**
+ * First-use consent text: size, title, author and license of every component that still has
+ * to be downloaded (from the manifest), or null when everything is already on disk.
+ */
+export async function downloadConsentText(...componentIds) {
+  return consentText(await componentStatuses([RUNTIME.component, ...componentIds]), t);
 }
 
 /** Hardware tier detection. Override for testing: localStorage["vho.ai.backend"] = "wasm". */
@@ -148,14 +230,16 @@ function runInWorker(payload, transfer, onProgress, signal) {
   });
 }
 
-async function runtimeUrls(onProgress) {
-  const rtDir = await ensureComponent(RUNTIME.component, onProgress);
+/** Acquires the inference runtime (lease pushed to `held`) and returns its file URLs. */
+async function runtimeUrls(held, onProgress, signal) {
+  const rt = await acquireComponent(RUNTIME.component, { onProgress, signal });
+  held.push(rt);
   return {
-    entry: assetUrl(joinPath(rtDir, RUNTIME.entry)),
+    entry: assetUrl(joinPath(rt.dir, RUNTIME.entry)),
     // Full per-file URLs: asset URLs encode the whole Windows path as one segment,
     // so a directory prefix would not resolve relative file names correctly.
-    mjs: assetUrl(joinPath(rtDir, RUNTIME.mjs)),
-    wasm: assetUrl(joinPath(rtDir, RUNTIME.wasm)),
+    mjs: assetUrl(joinPath(rt.dir, RUNTIME.mjs)),
+    wasm: assetUrl(joinPath(rt.dir, RUNTIME.wasm)),
   };
 }
 
@@ -164,10 +248,21 @@ async function runtimeUrls(onProgress) {
  * options: { strength, srcScale } — see face-restore.js. Returns { imageData, backend, stats }.
  * onProgress(phase, fraction): phase = "download" | "load" | "faces"
  */
-export async function restoreFacesInImage(source, options, { onProgress, signal, original = null } = {}) {
+export async function restoreFacesInImage(source, options, opts = {}) {
+  const held = []; // leased components: not removable while the job runs
+  try {
+    return await restoreFacesWith(held, source, options, opts);
+  } finally {
+    for (const c of held) c.release();
+  }
+}
+
+async function restoreFacesWith(held, source, options, { onProgress, signal, original = null }) {
   const report = (phase, f) => onProgress?.(phase, f);
-  const runtime = await runtimeUrls((f) => report("download", f * 0.15));
-  const dir = await ensureComponent(FACE_MODEL.component, (f) => report("download", 0.15 + f * 0.85));
+  const runtime = await runtimeUrls(held, (f) => report("download", f * 0.15), signal);
+  const face = await acquireComponent(FACE_MODEL.component, { onProgress: (f) => report("download", 0.15 + f * 0.85), signal });
+  held.push(face);
+  const dir = face.dir;
   const order = await detectBackends();
   let lastError = null;
   for (const backend of order) {
@@ -198,11 +293,22 @@ export async function restoreFacesInImage(source, options, { onProgress, signal,
  * source: ImageData. Returns { imageData, backend, tile, seconds }.
  * onProgress(phase, fraction): phase = "download" | "load" | "run"
  */
-export async function upscaleImage(modelId, source, { onProgress, signal } = {}) {
+export async function upscaleImage(modelId, source, opts = {}) {
+  const held = []; // leased components: not removable while the job runs
+  try {
+    return await upscaleWith(held, modelId, source, opts);
+  } finally {
+    for (const c of held) c.release();
+  }
+}
+
+async function upscaleWith(held, modelId, source, { onProgress, signal }) {
   const m = MODELS[modelId];
   const report = (phase, f) => onProgress?.(phase, f);
-  const runtime = await runtimeUrls((f) => report("download", f * 0.4));
-  const modelDir = await ensureComponent(m.component, (f) => report("download", 0.4 + f * 0.6));
+  const runtime = await runtimeUrls(held, (f) => report("download", f * 0.4), signal);
+  const mc = await acquireComponent(m.component, { onProgress: (f) => report("download", 0.4 + f * 0.6), signal });
+  held.push(mc);
+  const modelDir = mc.dir;
   const model = { url: assetUrl(joinPath(modelDir, m.file)), scale: m.scale, multiple: m.multiple };
   const order = await detectBackends();
   const started = performance.now();

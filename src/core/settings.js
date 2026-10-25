@@ -20,7 +20,7 @@
 import { BASE_FIELDS, defaultValues, migrateSettings, SETTINGS_VERSION, validateValue } from "./settings-schema.js";
 
 /** Settings window tabs, in display order. */
-export const SETTINGS_SECTIONS = ["general", "playback", "subtitle", "audio", "photo", "appearance", "shortcuts", "advanced", "about"];
+export const SETTINGS_SECTIONS = ["general", "playback", "subtitle", "audio", "photo", "appearance", "shortcuts", "components", "advanced", "about"];
 
 const sameJson = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
 const clone = (v) => (v !== null && typeof v === "object" ? JSON.parse(JSON.stringify(v)) : v);

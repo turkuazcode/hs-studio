@@ -56,6 +56,7 @@
       "photo": "Fotoğraf",
       "appearance": "Görünüm",
       "shortcuts": "Kısayollar",
+      "components": "AI modelleri",
       "advanced": "Gelişmiş",
       "about": "Hakkında / Lisanslar"
     },
@@ -486,6 +487,71 @@
       "toolsHeading": "Medya araçları (ffmpeg)",
       "toolsInfo": "{version} · H.264 kodlayıcı: {encoder}",
       "none": "yok"
+    }
+  },
+  "aiModels": {
+    "settings": {
+      "intro": "Yapay zekâ özellikleri bu bileşenleri ilk kullanımda indirir. Her dosya sabitlenmiş bir sürümden gelir ve SHA-256 ile doğrulanır; bozuk dosya kullanılmaz.",
+      "desktopOnly": "AI modelleri yalnızca masaüstü uygulamasında yönetilebilir.",
+      "version": "Sürüm {version}",
+      "byline": "{author} · Lisans: {license}",
+      "size": "İndirme: {download} · Diskte: {disk}",
+      "badFiles": "Bozuk dosyalar: {files}",
+      "confirmRemove": "{title} bilgisayardan silinsin mi? Gerektiğinde yeniden indirilir."
+    },
+    "state": {
+      "missing": "İndirilmedi",
+      "partial": "Eksik",
+      "installed": "İndirildi",
+      "ready": "Hazır (doğrulandı)",
+      "corrupt": "Bozuk",
+      "downloading": "İndiriliyor…",
+      "verifying": "Doğrulanıyor…"
+    },
+    "phase": {
+      "verify": "Dosyalar denetleniyor… %{percent}",
+      "download": "İndiriliyor… %{percent}",
+      "extract": "Arşivden çıkarılıyor… %{percent}"
+    },
+    "actions": {
+      "install": "İndir",
+      "cancel": "İptal",
+      "verify": "Doğrula",
+      "repair": "Onar",
+      "remove": "Kaldır",
+      "source": "Kaynak"
+    },
+    "task": {
+      "runtime": "Çıkarım motoru",
+      "photo-upscale": "Fotoğraf iyileştirme (4x)",
+      "face-restore": "Yüz iyileştirme",
+      "test": "Test bileşeni"
+    },
+    "toasts": {
+      "installed": "{title} indirildi ve doğrulandı",
+      "verified": "{title} doğrulandı: dosyalar sağlam",
+      "damaged": "⚠️ {title} bozuk; Onar ile yeniden indirilebilir",
+      "removed": "{title} kaldırıldı"
+    },
+    "consent": {
+      "intro": "İlk kullanım: yaklaşık {mb} MB yapay zekâ bileşeni indirilecek ve bilgisayarınızda saklanacak.",
+      "item": "• {title} — {author}, {license} ({mb} MB)",
+      "manage": "Bileşenler Ayarlar > AI modelleri bölümünden doğrulanabilir veya kaldırılabilir.",
+      "question": "Devam edilsin mi?"
+    },
+    "errors": {
+      "unknown-component": "Bilinmeyen AI bileşeni.",
+      "not-installed": "AI bileşeni indirilmemiş.",
+      "download-network": "İndirme başarısız: bağlantı kurulamadı veya koptu. Daha sonra yeniden deneyin.",
+      "checksum": "Dosya doğrulanamadı (boyut veya SHA-256 uyuşmuyor); kullanılmadı.",
+      "disk-full": "Diskte yeterli boş alan yok.",
+      "permission": "Veri klasörüne yazma izni yok.",
+      "cancelled": "İptal edildi.",
+      "license-unavailable": "Bileşenin lisans bilgisi yok; indirilmedi.",
+      "in-use": "Bileşen çalışan bir işte kullanılıyor; iş bitince kaldırılabilir.",
+      "busy": "Bileşen şu anda indiriliyor veya doğrulanıyor.",
+      "archive-invalid": "Model arşivi geçersiz veya izin verilmeyen içerik barındırıyor.",
+      "io": "Dosya işlemi başarısız oldu."
     }
   }
 }
