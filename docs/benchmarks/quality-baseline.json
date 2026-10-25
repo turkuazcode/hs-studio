@@ -1,0 +1,531 @@
+{
+ "photo": {
+  "meta": {
+   "date": "2026-10-25",
+   "ffmpeg": "ffmpeg version n8.1.3 Copyright (c) 2000-2026 the FFmpeg developers",
+   "profiles": [
+    "lanczos",
+    "vho-x4",
+    "vho-x4-faces"
+   ],
+   "backends": [
+    "cpu-ffmpeg",
+    "webgpu"
+   ],
+   "models": {
+    "ort-web": {
+     "downloadedBytes": 0,
+     "ms": 0,
+     "version": "1.30.0"
+    },
+    "photo-x4": {
+     "downloadedBytes": 0,
+     "ms": 0,
+     "version": "rwp4-95e9cd5"
+    },
+    "face-restore": {
+     "downloadedBytes": 170521796,
+     "ms": 16108,
+     "version": "yunet2023mar-gfpgan14w16"
+    }
+   }
+  },
+  "metrics": {
+   "p01-face-jpeg|lanczos": {
+    "psnr": 27.2759,
+    "ssim": 0.8168,
+    "gmsd": 0.1296,
+    "sharpnessRatio": 0.0148,
+    "roi0.psnr": 25.6402,
+    "roi0.ssim": 0.7087,
+    "roi0.gmsd": 0.1551,
+    "roi0.sharpnessRatio": 0.0152,
+    "flags": ""
+   },
+   "p01-face-jpeg|vho-x4": {
+    "psnr": 25.7898,
+    "ssim": 0.7293,
+    "gmsd": 0.1566,
+    "sharpnessRatio": 3.6816,
+    "roi0.psnr": 23.4972,
+    "roi0.ssim": 0.5421,
+    "roi0.gmsd": 0.1875,
+    "roi0.sharpnessRatio": 4.3555,
+    "flags": "face-fidelity-drop"
+   },
+   "p01-face-jpeg|vho-x4-faces": {
+    "psnr": 25.2872,
+    "ssim": 0.7653,
+    "gmsd": 0.1456,
+    "sharpnessRatio": 1.4172,
+    "roi0.psnr": 23.2334,
+    "roi0.ssim": 0.6296,
+    "roi0.gmsd": 0.1701,
+    "roi0.sharpnessRatio": 1.39,
+    "flags": "face-fidelity-drop"
+   },
+   "p02-face-lowlight|lanczos": {
+    "psnr": 10.8837,
+    "ssim": 0.3839,
+    "gmsd": 0.222,
+    "sharpnessRatio": 0.0036,
+    "roi0.psnr": 9.3688,
+    "roi0.ssim": 0.2887,
+    "roi0.gmsd": 0.2414,
+    "roi0.sharpnessRatio": 0.003,
+    "flags": ""
+   },
+   "p02-face-lowlight|vho-x4": {
+    "psnr": 11.0192,
+    "ssim": 0.4129,
+    "gmsd": 0.2203,
+    "sharpnessRatio": 0.0501,
+    "roi0.psnr": 9.4541,
+    "roi0.ssim": 0.3047,
+    "roi0.gmsd": 0.2423,
+    "roi0.sharpnessRatio": 0.0387,
+    "flags": ""
+   },
+   "p02-face-lowlight|vho-x4-faces": {
+    "psnr": 10.919,
+    "ssim": 0.392,
+    "gmsd": 0.2075,
+    "sharpnessRatio": 0.2181,
+    "roi0.psnr": 9.2902,
+    "roi0.ssim": 0.2769,
+    "roi0.gmsd": 0.233,
+    "roi0.sharpnessRatio": 0.195,
+    "flags": ""
+   },
+   "p03-face-blur|lanczos": {
+    "psnr": 24.8045,
+    "ssim": 0.7043,
+    "gmsd": 0.1876,
+    "sharpnessRatio": 0.0056,
+    "roi0.psnr": 23.1136,
+    "roi0.ssim": 0.6223,
+    "roi0.gmsd": 0.2023,
+    "roi0.sharpnessRatio": 0.0058,
+    "flags": ""
+   },
+   "p03-face-blur|vho-x4": {
+    "psnr": 25.7916,
+    "ssim": 0.7226,
+    "gmsd": 0.1725,
+    "sharpnessRatio": 0.0544,
+    "roi0.psnr": 24.2252,
+    "roi0.ssim": 0.6469,
+    "roi0.gmsd": 0.1822,
+    "roi0.sharpnessRatio": 0.0605,
+    "flags": ""
+   },
+   "p03-face-blur|vho-x4-faces": {
+    "psnr": 22.4547,
+    "ssim": 0.6645,
+    "gmsd": 0.1899,
+    "sharpnessRatio": 0.7914,
+    "roi0.psnr": 20.5684,
+    "roi0.ssim": 0.5614,
+    "roi0.gmsd": 0.2062,
+    "roi0.sharpnessRatio": 0.9322,
+    "flags": "face-fidelity-drop"
+   },
+   "p04-small-face|lanczos": {
+    "psnr": 23.0506,
+    "ssim": 0.7641,
+    "gmsd": 0.183,
+    "sharpnessRatio": 0.0154,
+    "roi0.psnr": 25.2665,
+    "roi0.ssim": 0.806,
+    "roi0.gmsd": 0.1473,
+    "roi0.sharpnessRatio": 0.023,
+    "flags": ""
+   },
+   "p04-small-face|vho-x4": {
+    "psnr": 21.8247,
+    "ssim": 0.725,
+    "gmsd": 0.2017,
+    "sharpnessRatio": 1.2001,
+    "roi0.psnr": 23.1946,
+    "roi0.ssim": 0.7104,
+    "roi0.gmsd": 0.1792,
+    "roi0.sharpnessRatio": 2.039,
+    "flags": "face-fidelity-drop"
+   },
+   "p04-small-face|vho-x4-faces": {
+    "psnr": 21.8247,
+    "ssim": 0.725,
+    "gmsd": 0.2017,
+    "sharpnessRatio": 1.2001,
+    "roi0.psnr": 23.1946,
+    "roi0.ssim": 0.7104,
+    "roi0.gmsd": 0.1792,
+    "roi0.sharpnessRatio": 2.039,
+    "flags": "face-fidelity-drop"
+   },
+   "p05-scan-scratch|lanczos": {
+    "psnr": 17.8553,
+    "ssim": 0.7402,
+    "gmsd": 0.1583,
+    "sharpnessRatio": 0.0411,
+    "roi0.psnr": 17.4154,
+    "roi0.ssim": 0.6852,
+    "roi0.gmsd": 0.1716,
+    "roi0.sharpnessRatio": 0.0452,
+    "flags": ""
+   },
+   "p05-scan-scratch|vho-x4": {
+    "psnr": 17.5068,
+    "ssim": 0.7413,
+    "gmsd": 0.1663,
+    "sharpnessRatio": 0.5904,
+    "roi0.psnr": 17.0431,
+    "roi0.ssim": 0.6817,
+    "roi0.gmsd": 0.1774,
+    "roi0.sharpnessRatio": 0.6615,
+    "flags": ""
+   },
+   "p05-scan-scratch|vho-x4-faces": {
+    "psnr": 16.0987,
+    "ssim": 0.6571,
+    "gmsd": 0.203,
+    "sharpnessRatio": 1.2027,
+    "roi0.psnr": 15.1065,
+    "roi0.ssim": 0.5488,
+    "roi0.gmsd": 0.224,
+    "roi0.sharpnessRatio": 1.4474,
+    "flags": "face-fidelity-drop"
+   },
+   "p06-lowlight-space|lanczos": {
+    "psnr": 17.3195,
+    "ssim": 0.8308,
+    "gmsd": 0.1557,
+    "sharpnessRatio": 0.0057,
+    "flags": ""
+   },
+   "p06-lowlight-space|vho-x4": {
+    "psnr": 17.3406,
+    "ssim": 0.874,
+    "gmsd": 0.1555,
+    "sharpnessRatio": 0.0417,
+    "flags": ""
+   },
+   "p07-texture-noise|lanczos": {
+    "psnr": 23.0213,
+    "ssim": 0.6756,
+    "gmsd": 0.21,
+    "sharpnessRatio": 0.0181,
+    "flags": ""
+   },
+   "p07-texture-noise|vho-x4": {
+    "psnr": 19.5844,
+    "ssim": 0.6378,
+    "gmsd": 0.2142,
+    "sharpnessRatio": 1.4976,
+    "flags": ""
+   },
+   "p08-text-jpeg|lanczos": {
+    "psnr": 17.0466,
+    "ssim": 0.7979,
+    "gmsd": 0.2391,
+    "sharpnessRatio": 0.0122,
+    "roi0.psnr": 14.9436,
+    "roi0.ssim": 0.3484,
+    "roi0.gmsd": 0.2725,
+    "roi0.sharpnessRatio": 0.0015,
+    "flags": ""
+   },
+   "p08-text-jpeg|vho-x4": {
+    "psnr": 17.065,
+    "ssim": 0.7833,
+    "gmsd": 0.2454,
+    "sharpnessRatio": 0.1601,
+    "roi0.psnr": 15.2534,
+    "roi0.ssim": 0.3907,
+    "roi0.gmsd": 0.3015,
+    "roi0.sharpnessRatio": 0.0146,
+    "flags": ""
+   },
+   "p09-zoneplate|lanczos": {
+    "psnr": 9.2289,
+    "ssim": 0.0676,
+    "gmsd": 0.3109,
+    "sharpnessRatio": 0.0005,
+    "flags": ""
+   },
+   "p09-zoneplate|vho-x4": {
+    "psnr": 9.1506,
+    "ssim": 0.0758,
+    "gmsd": 0.3095,
+    "sharpnessRatio": 0.0103,
+    "flags": ""
+   },
+   "p10-alpha|lanczos": {
+    "psnr": 51.3773,
+    "ssim": 0.9984,
+    "gmsd": 0.0008,
+    "sharpnessRatio": 8.7799,
+    "flags": ""
+   },
+   "p10-alpha|vho-x4": {
+    "psnr": 36.9519,
+    "ssim": 0.9724,
+    "gmsd": 0.0163,
+    "sharpnessRatio": 523.949,
+    "flags": "alpha-lost"
+   },
+   "p11-highres-face|lanczos": {
+    "psnr": 29.1073,
+    "ssim": 0.8357,
+    "gmsd": 0.13,
+    "sharpnessRatio": 0.0153,
+    "roi0.psnr": 30.7394,
+    "roi0.ssim": 0.8008,
+    "roi0.gmsd": 0.1422,
+    "roi0.sharpnessRatio": 0.0064,
+    "flags": ""
+   },
+   "p11-highres-face|vho-x4": {
+    "psnr": 29.2948,
+    "ssim": 0.815,
+    "gmsd": 0.1289,
+    "sharpnessRatio": 0.4792,
+    "roi0.psnr": 30.2155,
+    "roi0.ssim": 0.7598,
+    "roi0.gmsd": 0.1369,
+    "roi0.sharpnessRatio": 0.341,
+    "flags": ""
+   },
+   "p11-highres-face|vho-x4-faces": {
+    "psnr": 28.3403,
+    "ssim": 0.8078,
+    "gmsd": 0.1313,
+    "sharpnessRatio": 0.4813,
+    "roi0.psnr": 28.2556,
+    "roi0.ssim": 0.7355,
+    "roi0.gmsd": 0.132,
+    "roi0.sharpnessRatio": 0.4997,
+    "flags": "face-fidelity-drop"
+   },
+   "r01-lincoln-1863|lanczos": {
+    "sharpness": 6.6585,
+    "noise": 0.2822,
+    "colorfulness": 0,
+    "roi0.sharpness": 7.575,
+    "roi0.noise": 0.2853,
+    "roi0.colorfulness": 0,
+    "flags": ""
+   },
+   "r01-lincoln-1863|vho-x4": {
+    "sharpness": 335.6717,
+    "noise": 2.0862,
+    "colorfulness": 3.0655,
+    "roi0.sharpness": 489.6278,
+    "roi0.noise": 2.7231,
+    "roi0.colorfulness": 3.6005,
+    "flags": ""
+   },
+   "r01-lincoln-1863|vho-x4-faces": {
+    "sharpness": 34.8971,
+    "noise": 0.4414,
+    "colorfulness": 0.126,
+    "roi0.sharpness": 34.0111,
+    "roi0.noise": 0.4671,
+    "roi0.colorfulness": 0.0086,
+    "flags": ""
+   },
+   "r02-douglass-1879|lanczos": {
+    "sharpness": 8.5834,
+    "noise": 0.2855,
+    "colorfulness": 0,
+    "roi0.sharpness": 11.7448,
+    "roi0.noise": 0.2879,
+    "roi0.colorfulness": 0,
+    "flags": ""
+   },
+   "r02-douglass-1879|vho-x4": {
+    "sharpness": 437.592,
+    "noise": 2.4041,
+    "colorfulness": 3.4576,
+    "roi0.sharpness": 598.3476,
+    "roi0.noise": 2.8332,
+    "roi0.colorfulness": 4.0294,
+    "flags": ""
+   },
+   "r02-douglass-1879|vho-x4-faces": {
+    "sharpness": 346.7725,
+    "noise": 1.96,
+    "colorfulness": 1.3986,
+    "roi0.sharpness": 512.8118,
+    "roi0.noise": 2.401,
+    "roi0.colorfulness": 1.0707,
+    "flags": ""
+   },
+   "r03-migrant-1936|lanczos": {
+    "sharpness": 7.5629,
+    "noise": 0.2797,
+    "colorfulness": 0,
+    "roi0.sharpness": 6.5091,
+    "roi0.noise": 0.2798,
+    "roi0.colorfulness": 0,
+    "flags": ""
+   },
+   "r03-migrant-1936|vho-x4": {
+    "sharpness": 142.1374,
+    "noise": 1.3855,
+    "colorfulness": 2.2138,
+    "roi0.sharpness": 55.4068,
+    "roi0.noise": 0.9144,
+    "roi0.colorfulness": 1.8135,
+    "flags": ""
+   },
+   "r03-migrant-1936|vho-x4-faces": {
+    "sharpness": 176.5214,
+    "noise": 1.558,
+    "colorfulness": 1.9884,
+    "roi0.sharpness": 221.5984,
+    "roi0.noise": 1.8926,
+    "roi0.colorfulness": 0.6437,
+    "flags": ""
+   },
+   "r04-newspaper-1918|lanczos": {
+    "sharpness": 163.0852,
+    "noise": 0.3705,
+    "colorfulness": 0,
+    "roi0.sharpness": 206.0767,
+    "roi0.noise": 0.4391,
+    "roi0.colorfulness": 0,
+    "flags": ""
+   },
+   "r04-newspaper-1918|vho-x4": {
+    "sharpness": 3034.9458,
+    "noise": 4.5933,
+    "colorfulness": 10.3853,
+    "roi0.sharpness": 3065.4085,
+    "roi0.noise": 4.5029,
+    "roi0.colorfulness": 11.0851,
+    "flags": ""
+   }
+  }
+ },
+ "video": {
+  "meta": {
+   "date": "2026-10-25",
+   "ffmpeg": "ffmpeg version n8.1.3 Copyright (c) 2000-2026 the FFmpeg developers",
+   "profiles": [
+    "lanczos",
+    "nlmeans-lanczos"
+   ]
+  },
+  "metrics": {
+   "c01-pan-texture|lanczos": {
+    "frames": 75,
+    "psnr": 25.3964,
+    "psnrMin": 22.8803,
+    "ssim": 0.735,
+    "ssimMin": 0.6471,
+    "temporalError": 10.2225,
+    "temporalChange": 8.3638
+   },
+   "c01-pan-texture|nlmeans-lanczos": {
+    "frames": 75,
+    "psnr": 25.4456,
+    "psnrMin": 22.8713,
+    "ssim": 0.7634,
+    "ssimMin": 0.6713,
+    "temporalError": 9.8553,
+    "temporalChange": 7.8214
+   },
+   "c02-face-zoom|lanczos": {
+    "frames": 75,
+    "psnr": 26.1999,
+    "psnrMin": 25.0074,
+    "ssim": 0.8523,
+    "ssimMin": 0.8258,
+    "temporalError": 2.9818,
+    "temporalChange": 1.8336
+   },
+   "c02-face-zoom|nlmeans-lanczos": {
+    "frames": 75,
+    "psnr": 26.2028,
+    "psnrMin": 24.9832,
+    "ssim": 0.861,
+    "ssimMin": 0.835,
+    "temporalError": 2.8631,
+    "temporalChange": 1.7191
+   },
+   "c03-text-motion|lanczos": {
+    "frames": 75,
+    "psnr": 17.7161,
+    "psnrMin": 17.2826,
+    "ssim": 0.8281,
+    "ssimMin": 0.8165,
+    "temporalError": 4.1618,
+    "temporalChange": 3.6183
+   },
+   "c03-text-motion|nlmeans-lanczos": {
+    "frames": 75,
+    "psnr": 17.7396,
+    "psnrMin": 17.3007,
+    "ssim": 0.8355,
+    "ssimMin": 0.8239,
+    "temporalError": 3.9169,
+    "temporalChange": 3.3472
+   },
+   "c04-scene-cut|lanczos": {
+    "frames": 75,
+    "psnr": 26.9088,
+    "psnrMin": 26.201,
+    "ssim": 0.7796,
+    "ssimMin": 0.6749,
+    "temporalError": 6.0495,
+    "temporalChange": 4.9142
+   },
+   "c04-scene-cut|nlmeans-lanczos": {
+    "frames": 75,
+    "psnr": 26.9199,
+    "psnrMin": 26.1945,
+    "ssim": 0.7862,
+    "ssimMin": 0.6779,
+    "temporalError": 5.8903,
+    "temporalChange": 4.6471
+   },
+   "c05-lowlight-noise|lanczos": {
+    "frames": 75,
+    "psnr": 11.6629,
+    "psnrMin": 11.629,
+    "ssim": 0.7519,
+    "ssimMin": 0.7459,
+    "temporalError": 5.6937,
+    "temporalChange": 1.478
+   },
+   "c05-lowlight-noise|nlmeans-lanczos": {
+    "frames": 75,
+    "psnr": 11.6351,
+    "psnrMin": 11.6068,
+    "ssim": 0.7516,
+    "ssimMin": 0.7448,
+    "temporalError": 5.5896,
+    "temporalChange": 1.1613
+   },
+   "c06-fast-motion|lanczos": {
+    "frames": 75,
+    "psnr": 29.8175,
+    "psnrMin": 26.4334,
+    "ssim": 0.6546,
+    "ssimMin": 0.5649,
+    "temporalError": 9.0708,
+    "temporalChange": 12.7075
+   },
+   "c06-fast-motion|nlmeans-lanczos": {
+    "frames": 75,
+    "psnr": 29.7028,
+    "psnrMin": 26.3062,
+    "ssim": 0.6456,
+    "ssimMin": 0.5502,
+    "temporalError": 9.2185,
+    "temporalChange": 11.4862
+   }
+  }
+ }
+}

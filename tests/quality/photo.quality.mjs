@@ -12,7 +12,7 @@
 // whole image and every face/text region; real-old -> no reference (sharpness, noise σ,
 // colourfulness). Red flags (recorded, never averaged away): a face/text region whose SSIM
 // drops by more than 0.05 or whose GMSD rises by more than 0.05 against the lanczos baseline
-// (possible identity / text change), and lost alpha. Failing samples stay in the report.
+// (possible identity / text change), lost alpha, and colour added to a greyscale photo. Failing samples stay in the report.
 //
 // Gates: set integrity (set-lock.json), finite and correctly sized outputs, every metric within
 // tolerance of docs/benchmarks/quality-baseline.json, no new red flag.
@@ -119,6 +119,11 @@ test("photo profiles: every sample, equal output size, finite output", { timeout
       }
       const alpha = alphaPreserved(input, out);
       if (alpha === false) entry.flags.push("alpha-lost");
+      // A greyscale photo must stay greyscale (colourfulness of a neutral image is ~0)
+      const inColor = noReference(input).colorfulness;
+      const outColor = noReference(out).colorfulness;
+      entry.colorfulness = { input: inColor, output: outColor };
+      if (inColor < 1 && outColor > 2) entry.flags.push("color-cast-on-greyscale");
       results.push(entry);
       log(`${p.id} ${profile} (${backend}) ${ms} ms: ${JSON.stringify(roundAll(entry.metrics, 3))}`);
     }
