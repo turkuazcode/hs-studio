@@ -4,6 +4,7 @@ mod capabilities;
 mod engine;
 mod photo;
 mod platform;
+mod restoration;
 mod storage;
 mod transcode;
 
@@ -348,7 +349,9 @@ pub fn run() {
             actions::lyrics_read,
             actions::export_dir,
             storage::library_load,
-            storage::library_save
+            storage::library_save,
+            restoration::restoration_probe,
+            restoration::restoration_recipe
         ])
         .build(context)
         .expect("error while building tauri application");
