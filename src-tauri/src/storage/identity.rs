@@ -8,6 +8,10 @@
 //! 3. size + mtime: a fast pre-filter only, never proof — two different files with the
 //!    same name and size are never merged on that basis.
 
+// The move-matching and capture-time helpers are the API for L02 (scan/EXIF); only the
+// path/identity part is used by L01 itself.
+#![cfg_attr(not(test), allow(dead_code))]
+
 use std::path::{Component, Path, PathBuf};
 use std::time::UNIX_EPOCH;
 
