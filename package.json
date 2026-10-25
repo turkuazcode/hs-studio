@@ -15,7 +15,9 @@
     "bench:media": "node scripts/bench-media.mjs",
     "fixtures": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/fixtures/make-fixtures.ps1",
     "fixtures:engine": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/fixtures/make-engine-fixtures.ps1",
-    "stage:mpv": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stage-mpv.ps1"
+    "stage:mpv": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stage-mpv.ps1",
+    "sbom": "node legal/generate-sbom.mjs",
+    "scan:history": "node scripts/scan-history.mjs"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
