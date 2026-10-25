@@ -168,8 +168,110 @@ CREATE TABLE artifacts (
 CREATE INDEX artifacts_media ON artifacts(media_id);
 "#;
 
+/// v3: persistent library (Plan 13/L02): library folders state, tags, operation log for
+/// file-system changes, FTS5 index over name / title / artist / album / tags.
+///
+/// The FTS index is kept in sync by triggers, so every writer (L01 `upsert_media`, scans,
+/// D1 rename hooks, tag edits) updates it in the same transaction. Its rowid is the rowid of
+/// the `media` row (`media_id` is stored too; [`crate::library::query::rebuild_fts`] repairs
+/// the index should rowids ever change, e.g. after a manual VACUUM).
+const V3_LIBRARY: &str = r#"
+ALTER TABLE folders ADD COLUMN status TEXT NOT NULL DEFAULT 'online' CHECK (status IN ('online', 'offline', 'missing'));
+ALTER TABLE folders ADD COLUMN file_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE folders ADD COLUMN scan_error TEXT;
+
+-- in_library: found by a scan of a library folder (an item that was only opened once is 0)
+ALTER TABLE media ADD COLUMN in_library INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE media ADD COLUMN missing_since INTEGER;
+ALTER TABLE media ADD COLUMN play_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE media ADD COLUMN last_played_at INTEGER;
+CREATE INDEX media_folder_status ON media(folder_id, status);
+CREATE INDEX media_library_kind ON media(kind, added_at) WHERE in_library = 1;
+CREATE INDEX media_rated ON media(rating) WHERE rating > 0;
+
+-- User tags (photo studio / library). tag = as typed, tag_norm = folded for matching.
+CREATE TABLE media_tags (
+  media_id TEXT NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+  tag      TEXT NOT NULL,
+  tag_norm TEXT NOT NULL,
+  PRIMARY KEY (media_id, tag_norm)
+);
+CREATE INDEX media_tags_norm ON media_tags(tag_norm);
+
+-- File-system operations are not atomic with SQLite: an operation is recorded 'pending'
+-- before the rename/trash, finished in the same transaction as the media update, and a
+-- pending entry left by a crash is reconciled on the next start (old/new path checked).
+-- Finished renames/moves also let a stale frontend document (old path / resume key) be
+-- mapped to the new location.
+CREATE TABLE media_ops (
+  id          INTEGER PRIMARY KEY,
+  op          TEXT NOT NULL CHECK (op IN ('rename', 'move', 'trash')),
+  media_id    TEXT,
+  old_path    TEXT NOT NULL,
+  old_norm    TEXT NOT NULL,
+  new_path    TEXT,
+  old_key     TEXT,
+  new_key     TEXT,
+  state       TEXT NOT NULL DEFAULT 'pending' CHECK (state IN ('pending', 'done', 'failed')),
+  created_at  INTEGER NOT NULL,
+  finished_at INTEGER
+);
+CREATE INDEX media_ops_state ON media_ops(state);
+CREATE INDEX media_ops_old ON media_ops(old_norm);
+
+CREATE VIRTUAL TABLE media_fts USING fts5(
+  media_id UNINDEXED, name, title, artist, album, tags,
+  tokenize = 'unicode61 remove_diacritics 2'
+);
+INSERT INTO media_fts (rowid, media_id, name, title, artist, album, tags)
+  SELECT m.rowid, m.id, m.name, a.title, a.artist, a.album,
+         (SELECT group_concat(tag, ' ') FROM media_tags t WHERE t.media_id = m.id)
+  FROM media m LEFT JOIN audio_tags a ON a.media_id = m.id;
+
+CREATE TRIGGER media_fts_insert AFTER INSERT ON media BEGIN
+  INSERT INTO media_fts (rowid, media_id, name, title, artist, album, tags)
+  VALUES (new.rowid, new.id, new.name, NULL, NULL, NULL, NULL);
+END;
+CREATE TRIGGER media_fts_delete AFTER DELETE ON media BEGIN
+  DELETE FROM media_fts WHERE rowid = old.rowid;
+END;
+CREATE TRIGGER media_fts_name AFTER UPDATE OF name ON media BEGIN
+  UPDATE media_fts SET name = new.name WHERE rowid = new.rowid;
+END;
+CREATE TRIGGER media_fts_audio_insert AFTER INSERT ON audio_tags BEGIN
+  UPDATE media_fts SET title = new.title, artist = new.artist, album = new.album
+  WHERE rowid = (SELECT rowid FROM media WHERE id = new.media_id);
+END;
+CREATE TRIGGER media_fts_audio_update AFTER UPDATE ON audio_tags BEGIN
+  UPDATE media_fts SET title = new.title, artist = new.artist, album = new.album
+  WHERE rowid = (SELECT rowid FROM media WHERE id = new.media_id);
+END;
+CREATE TRIGGER media_fts_audio_delete AFTER DELETE ON audio_tags BEGIN
+  UPDATE media_fts SET title = NULL, artist = NULL, album = NULL
+  WHERE rowid = (SELECT rowid FROM media WHERE id = old.media_id);
+END;
+CREATE TRIGGER media_fts_tag_insert AFTER INSERT ON media_tags BEGIN
+  UPDATE media_fts SET tags = (SELECT group_concat(tag, ' ') FROM media_tags WHERE media_id = new.media_id)
+  WHERE rowid = (SELECT rowid FROM media WHERE id = new.media_id);
+END;
+CREATE TRIGGER media_fts_tag_delete AFTER DELETE ON media_tags BEGIN
+  UPDATE media_fts SET tags = (SELECT group_concat(tag, ' ') FROM media_tags WHERE media_id = old.media_id)
+  WHERE rowid = (SELECT rowid FROM media WHERE id = old.media_id);
+END;
+"#;
+
 /// The ordered schema history. Append only.
-pub const MIGRATIONS: &[Migration] = &[Migration { version: 1, name: "core", up: MigrationStep::Sql(V1_CORE) }];
+///
+/// MERGE NOTE (L02 branch): version 2 belongs to A02 ("jobs", another branch). Until that
+/// branch is merged this list carries a no-op stand-in so the list stays contiguous; the
+/// integrator replaces the stand-in with A02's real `Migration { version: 2, name: "jobs" }`.
+/// Its name deliberately differs from "jobs": a test database that applied the stand-in is
+/// refused with `migrationMismatch` by the merged build instead of silently skipping A02.
+pub const MIGRATIONS: &[Migration] = &[
+    Migration { version: 1, name: "core", up: MigrationStep::Sql(V1_CORE) },
+    Migration { version: 2, name: "jobs-pending-merge", up: MigrationStep::Sql("SELECT 1") },
+    Migration { version: 3, name: "library", up: MigrationStep::Sql(V3_LIBRARY) },
+];
 
 /// Highest schema version this build understands.
 #[allow(dead_code)] // diagnostics / A02 tests
@@ -283,7 +385,7 @@ mod tests {
         let t = tables(&c);
         for name in [
             "schema_migrations", "meta", "folders", "media", "audio_tags", "playlists", "playlist_items", "bookmarks",
-            "artifacts", "recent", "resume_positions",
+            "artifacts", "recent", "resume_positions", "media_tags", "media_ops", "media_fts",
         ] {
             assert!(t.contains(&name.to_string()), "missing table {name}: {t:?}");
         }
