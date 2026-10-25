@@ -104,6 +104,39 @@ pub fn unique_path(dir: &Path, stem: &str, suffix: &str, ext: &str, exists: impl
     }
 }
 
+/// Moves a finished `partial` file to `target` WITHOUT replacing an existing file (job queue,
+/// A02). If `target` was taken meanwhile, `stem (2).ext`, `stem (3).ext`... are tried. Uses a
+/// hard link (fails atomically when the name exists) and falls back to exists-check + rename
+/// on file systems without hard links. `partial` must be on the same volume. Returns the
+/// final path; on error `partial` is left in place for the caller to remove.
+pub fn place_no_clobber(partial: &Path, target: &Path) -> Result<PathBuf, String> {
+    let dir = target.parent().ok_or("Geçersiz çıktı yolu")?;
+    let stem = target.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+    let ext = target.extension().map(|e| e.to_string_lossy().into_owned()).unwrap_or_default();
+    let candidate = |n: u32| {
+        let base = if n < 2 { stem.clone() } else { format!("{stem} ({n})") };
+        if ext.is_empty() { dir.join(base) } else { dir.join(format!("{base}.{ext}")) }
+    };
+    for n in 1..10_000u32 {
+        let p = candidate(n);
+        match std::fs::hard_link(partial, &p) {
+            Ok(()) => {
+                let _ = std::fs::remove_file(partial);
+                return Ok(p);
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists || p.exists() => continue,
+            Err(_) => {
+                // no hard links here (FAT/exFAT, some network shares)
+                if p.exists() {
+                    continue;
+                }
+                return std::fs::rename(partial, &p).map(|_| p).map_err(|e| format!("Çıktı yazılamadı: {e}"));
+            }
+        }
+    }
+    Err(format!("{ERR_EXISTS} Boş bir çıktı adı bulunamadı"))
+}
+
 pub fn trash_file(path: &Path) -> Result<(), String> {
     if !path.exists() {
         return Err("Dosya bulunamadı".into());
@@ -182,6 +215,28 @@ mod tests {
         let p = unique_path(dir, "v", "_kesit", "mp4", |p| taken.iter().any(|t| Path::new(t) == p));
         assert_eq!(p, Path::new("/out/v_kesit (3).mp4"));
         assert_eq!(unique_path(dir, "v", "", "gif", |_| false), Path::new("/out/v.gif"));
+    }
+
+    #[test]
+    fn place_no_clobber_never_replaces() {
+        let dir = std::env::temp_dir().join(format!("vho_actions_place_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let target = dir.join("out.mp4");
+        std::fs::write(&target, b"existing").unwrap();
+        std::fs::write(dir.join("out (2).mp4"), b"existing 2").unwrap();
+        let part = dir.join(".part");
+        std::fs::write(&part, b"new").unwrap();
+        let placed = place_no_clobber(&part, &target).unwrap();
+        assert_eq!(placed, dir.join("out (3).mp4"));
+        assert_eq!(std::fs::read(&target).unwrap(), b"existing");
+        assert_eq!(std::fs::read(dir.join("out (2).mp4")).unwrap(), b"existing 2");
+        assert_eq!(std::fs::read(&placed).unwrap(), b"new");
+        assert!(!part.exists());
+        // free name: placed as is
+        std::fs::write(&part, b"x").unwrap();
+        assert_eq!(place_no_clobber(&part, &dir.join("free.mp4")).unwrap(), dir.join("free.mp4"));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

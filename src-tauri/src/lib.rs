@@ -2,6 +2,7 @@ mod actions;
 mod ai;
 mod capabilities;
 mod engine;
+mod jobs;
 mod photo;
 mod platform;
 mod storage;
@@ -348,7 +349,15 @@ pub fn run() {
             actions::lyrics_read,
             actions::export_dir,
             storage::library_load,
-            storage::library_save
+            storage::library_save,
+            jobs::jobs_list,
+            jobs::jobs_get,
+            jobs::jobs_submit,
+            jobs::jobs_cancel,
+            jobs::jobs_pause,
+            jobs::jobs_resume,
+            jobs::jobs_remove,
+            jobs::jobs_clear_finished
         ])
         .build(context)
         .expect("error while building tauri application");

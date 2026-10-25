@@ -515,6 +515,26 @@ mod tests {
     }
 
     #[test]
+    fn l01_database_upgrades_to_jobs_schema_with_backup() {
+        // library.db of the L01 build (schema v1) with user data -> v2 (A02 jobs)
+        let dir = temp_dir("v1tov2");
+        let s = Storage::open_with(&dir, &migrations::MIGRATIONS[..1]).unwrap();
+        s.write(|tx| Ok(tx.execute("INSERT INTO meta VALUES ('probe', 'kept')", [])?)).unwrap();
+        drop(s);
+        let s = Storage::open(&dir).unwrap();
+        assert_eq!(s.report.migrated, vec![2]);
+        assert_eq!(s.report.schema_version, 2);
+        let backup = PathBuf::from(s.report.backup.clone().expect("backup before the jobs migration"));
+        assert!(backup.file_name().unwrap().to_string_lossy().starts_with("library-v1-"));
+        let v: String = s.read(|c| c.query_row("SELECT value FROM meta WHERE key = 'probe'", [], |r| r.get(0))).unwrap();
+        assert_eq!(v, "kept");
+        let n: u32 = s.read(|c| c.query_row("SELECT COUNT(*) FROM jobs", [], |r| r.get(0))).unwrap();
+        assert_eq!(n, 0);
+        drop(s);
+        std::fs::remove_dir_all(&dir).ok();
+    }
+
+    #[test]
     fn newer_schema_is_not_opened_or_changed() {
         use migrations::{Migration, MigrationStep::Sql};
         let dir = temp_dir("newer");
