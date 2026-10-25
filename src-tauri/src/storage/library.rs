@@ -247,7 +247,7 @@ pub fn save_doc(conn: &Connection, doc: &LibraryDoc) -> Result<(), StorageError>
             params![id, e.duration, e.thumb, e.resume_key],
         )?;
         let opened = if e.opened_at.is_finite() && e.opened_at > 0.0 { e.opened_at as i64 } else { 0 };
-        conn.execute("INSERT INTO recent (media_id, position, opened_at) VALUES (?1, ?2, ?3)", params![id, seen.len() - 1, opened])?;
+        conn.execute("INSERT INTO recent (media_id, position, opened_at) VALUES (?1, ?2, ?3)", params![id, (seen.len() - 1) as i64, opened])?;
     }
 
     conn.execute("DELETE FROM resume_positions", [])?;
@@ -260,7 +260,7 @@ pub fn save_doc(conn: &Connection, doc: &LibraryDoc) -> Result<(), StorageError>
                 "INSERT INTO resume_positions (key, media_id, seconds, seq, updated_at) VALUES (?1, {MEDIA_BY_RESUME_KEY}, ?2, ?3, ?4)
                  ON CONFLICT(key) DO UPDATE SET seconds = excluded.seconds, seq = excluded.seq"
             ),
-            params![key, seconds, seq, now],
+            params![key, seconds, seq as i64, now],
         )?;
     }
 
@@ -546,14 +546,19 @@ mod tests {
                 { "id": "C:\\Foto\\a.jpg", "name": "duplicate" }
             ],
             // insertion order: z first, a last (not alphabetical)
-            "resume": { "vho_file_z.mkv_1": 30.5, "vho_file_Tatil ğüş.mp4_1000": 61.2, "bad": -1, "vho_file_a.mkv_2": 9 },
+            "resume": {}, // written below in file order (json! would sort the keys)
             "legacyMigrated": true
         }});
         let settings = json!({ "settings": { "version": 1, "values": {
             "sleep.pcSleep": false,
             "actions.favorites": { "paths": ["C:\\Muzik\\şarkı.mp3", "C:\\Videolar\\Tatil ğüş.mp4", ""] }
         }}});
-        std::fs::write(dir.join("library.json"), serde_json::to_vec_pretty(&lib).unwrap()).unwrap();
+        let text = serde_json::to_string_pretty(&lib).unwrap().replace(
+            "\"resume\": {}",
+            r#""resume": { "vho_file_z.mkv_1": 30.5, "vho_file_Tatil ğüş.mp4_1000": 61.2, "bad": -1, "vho_file_a.mkv_2": 9 }"#,
+        );
+        assert!(text.contains("vho_file_z.mkv_1"));
+        std::fs::write(dir.join("library.json"), text).unwrap();
         std::fs::write(dir.join("settings.json"), serde_json::to_vec_pretty(&settings).unwrap()).unwrap();
         (lib, settings)
     }
