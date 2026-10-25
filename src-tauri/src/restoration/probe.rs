@@ -581,6 +581,7 @@ pub fn probe_source_with(tools: &Tools, path: &Path, cancelled: &dyn Fn() -> boo
     let mut report = parse_streams(&json, fp);
     let start = sample_start(report.duration);
     report.sample_start = start;
+    let mut notes: Vec<String> = vec![];
     let Some(video) = report.video.as_mut() else { return Ok(report) };
     match sample_pts(tools, path, video.index, start) {
         Ok(pts) => {
@@ -590,15 +591,15 @@ pub fn probe_source_with(tools: &Tools, path: &Path, cancelled: &dyn Fn() -> boo
             video.frame_rate.samples = samples;
             video.frame_rate.irregular = irregular;
         }
-        Err(_) => report.notes.push("timestamps-failed".into()),
+        Err(_) => notes.push("timestamps-failed".into()),
     }
     let metadata = video.field_order.metadata;
     match sample_idet(tools, path, video.index, start, cancelled) {
         Ok(counts) => video.field_order = classify_field_order(metadata, Some(counts)),
         Err(e) if e.starts_with(crate::photo::ERR_CANCELLED) && cancelled() => return Err(e),
         Err(_) => {
-            report.notes.push("idet-failed".into());
-            // no analysis: even a progressive flag is not confirmed
+            notes.push("idet-failed".into());
+            // no analysis: an interlaced/unknown flag needs a user choice (a progressive flag is kept)
             let mut fo = classify_field_order(metadata, None);
             if fo.metadata != FieldOrder::Progressive {
                 fo.needs_choice = true;
@@ -607,11 +608,8 @@ pub fn probe_source_with(tools: &Tools, path: &Path, cancelled: &dyn Fn() -> boo
             video.field_order = fo;
         }
     }
+    report.notes.extend(notes);
     Ok(report)
-}
-
-pub fn probe_source(path: &Path, cancelled: &dyn Fn() -> bool) -> Result<SourceReport, String> {
-    probe_source_with(&ffmpeg::locate()?, path, cancelled)
 }
 
 /// Filters of the ffmpeg build (`ffmpeg -filters`), to verify a recipe can run.
