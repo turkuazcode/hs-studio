@@ -105,7 +105,7 @@ fn fnv1a(bytes: &[u8]) -> u64 {
 }
 
 fn transcode_cache_dir(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app.path().app_cache_dir().map_err(|e| e.to_string())?.join("transcode");
+    let dir = crate::platform::cache_dir(app)?.join("transcode");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir)
 }

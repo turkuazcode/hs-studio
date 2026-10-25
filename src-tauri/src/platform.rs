@@ -19,6 +19,15 @@ pub fn data_dir_override() -> Option<PathBuf> {
     std::env::var_os(DATA_DIR_ENV).filter(|v| !v.is_empty()).map(PathBuf::from)
 }
 
+/// Cache root (photo thumbnails, frame grabs, transcodes). With the test override it lives in
+/// `<VHO_DATA_DIR>/cache`, so test runs never write into the user's real cache folder.
+pub fn cache_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
+    match data_dir_override() {
+        Some(d) => Ok(d.join("cache")),
+        None => app.path().app_cache_dir().map_err(|e| e.to_string()),
+    }
+}
+
 /// Stable 64-bit FNV-1a.
 fn fnv1a(bytes: &[u8]) -> u64 {
     bytes.iter().fold(0xcbf29ce484222325u64, |h, b| (h ^ *b as u64).wrapping_mul(0x100000001b3))
