@@ -1,0 +1,100 @@
+# DRAFT (Q01/R02) — not pushed, never run remotely. Review runner images, action versions
+# (pin to full commit SHAs before enabling) and the libmpv staging source first.
+#
+# Layers (docs/status/test-map.md):
+#   unit   — every push/PR, network-free (npm test blocks non-loopback connections)
+#   rust   — every push/PR
+#   e2e    — Windows; needs the LGPL libmpv/ffmpeg build staged next to vho.exe (not available
+#            on a hosted runner yet: manual trigger until P05 publishes that build artifact)
+#   ai     — manual / release candidate; real model downloaded once into a cache keyed by the
+#            AI manifest hash, so a manifest change refreshes it and nothing else does
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      e2e:
+        description: "Run the Windows app E2E layer"
+        type: boolean
+        default: false
+      ai:
+        description: "Run the real-AI smoke layer (downloads ~76 MB once per manifest)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+        env:
+          VHO_TEST_NO_SKIP: "1"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-unit
+          path: tests/.results/
+
+  rust:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: cargo test --release --lib --manifest-path src-tauri/Cargo.toml
+
+  app:
+    if: github.event_name == 'workflow_dispatch' && (inputs.e2e || inputs.ai)
+    runs-on: windows-latest
+    needs: [unit, rust]
+    env:
+      VHO_E2E_PORT_MIN: "10700"
+      VHO_E2E_PORT_MAX: "10799"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - run: npm run build:release
+      # TODO(P05): download the pinned LGPL libmpv/ffmpeg build artifact and verify its sha256,
+      # then: npm run stage:mpv -- -Source <dist>. Without it E2E runs on the HTML5 engine only
+      # and the libmpv tests fail (they are not skipped).
+      - name: E2E
+        if: inputs.e2e
+        run: npm run e2e
+      - name: Restore real-AI model cache
+        if: inputs.ai
+        uses: actions/cache@v4
+        with:
+          path: tests/.cache/ai-smoke/vho-data/ai
+          key: vho-ai-${{ hashFiles('src-tauri/src/ai/manifest.rs') }}
+      - name: Real-AI smoke
+        if: inputs.ai
+        run: npm run test:ai
+        env:
+          VHO_TEST_NO_SKIP: "1"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-app
+          path: tests/.results/
