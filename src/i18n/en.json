@@ -553,5 +553,54 @@
       "archive-invalid": "The model archive is invalid or contains forbidden content.",
       "io": "A file operation failed."
     }
+  },
+  "jobs": {
+    "title": "Jobs",
+    "button": "Background jobs",
+    "clearFinished": "Clear finished",
+    "empty": "No jobs",
+    "waiting": "Waiting in the queue…",
+    "interruptedNotice": "Some jobs were interrupted when the app closed. Use the Jobs button in the title bar to continue them.",
+    "continueHint": "Finished files are not processed again",
+    "items": "{done} / {total}",
+    "kind": {
+      "export": "Export: {name}",
+      "photoOne": "Photo job: {name}",
+      "photoBatch": "Photo batch ({n} files)",
+      "other": "Job"
+    },
+    "state": {
+      "queued": "Queued",
+      "running": "Running",
+      "pausing": "Pausing…",
+      "paused": "Paused",
+      "cancelling": "Cancelling…",
+      "cancelled": "Cancelled",
+      "completed": "Completed",
+      "failed": "Failed",
+      "interrupted": "Interrupted"
+    },
+    "action": {
+      "continue": "Continue",
+      "restart": "Restart",
+      "pause": "Pause",
+      "cancel": "Cancel",
+      "reveal": "Show in folder",
+      "remove": "Remove from list"
+    },
+    "error": {
+      "sourceChanged": "The source file changed; the job can only be restarted.",
+      "sourceMissing": "The source file was not found.",
+      "modelChanged": "The tool/model version changed; the job can only be restarted.",
+      "recipeChanged": "The job settings do not match this version; restart it.",
+      "diskFull": "Not enough free disk space.",
+      "itemsFailed": "{n} file(s) could not be processed.",
+      "noFfmpeg": "ffmpeg was not found.",
+      "unsupported": "This format is not supported.",
+      "invalidState": "The job cannot do that right now.",
+      "notFound": "Job not found.",
+      "storageUnavailable": "The job queue is not available.",
+      "failed": "The job failed."
+    }
   }
 }

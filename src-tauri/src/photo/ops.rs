@@ -815,8 +815,25 @@ fn lossless_jpeg(bytes: &[u8], ops: &[Op], policy: MetadataPolicy) -> Result<Opt
 }
 
 pub fn process_file(src: &Path, index: usize, ops: &[Op], o: &OutputOptions, reserved: &Mutex<HashSet<PathBuf>>) -> FileOutcome {
+    let atomic = |out: &Path, bytes: &[u8]| super::write_atomic(out, bytes).map(|_| out.to_path_buf());
+    process_file_with(src, index, ops, o, reserved, &atomic)
+}
+
+/// Writes the output: `(chosen path, bytes) -> final path`. The job queue (A02) passes a
+/// writer that reserves the name, writes into the job's temp dir and places the file without
+/// replacing anything; `process_file` uses `write_atomic`.
+pub type OutputWriter<'a> = dyn Fn(&Path, &[u8]) -> Result<PathBuf, String> + Sync + 'a;
+
+pub fn process_file_with(
+    src: &Path,
+    index: usize,
+    ops: &[Op],
+    o: &OutputOptions,
+    reserved: &Mutex<HashSet<PathBuf>>,
+    write: &OutputWriter,
+) -> FileOutcome {
     let mut r = FileOutcome { index, input: src.to_string_lossy().into_owned(), ..Default::default() };
-    if let Err(e) = process_inner(src, index, ops, o, reserved, &mut r) {
+    if let Err(e) = process_inner(src, index, ops, o, reserved, write, &mut r) {
         r.ok = false;
         r.error = Some(e);
     }
@@ -829,6 +846,7 @@ fn process_inner(
     ops: &[Op],
     o: &OutputOptions,
     reserved: &Mutex<HashSet<PathBuf>>,
+    write: &OutputWriter,
     r: &mut FileOutcome,
 ) -> Result<(), String> {
     if !src.is_file() {
@@ -892,7 +910,7 @@ fn process_inner(
         }
     };
 
-    super::write_atomic(&out, &bytes)?;
+    let out = write(&out, &bytes)?;
     if o.remove_source && !same_file(&out, src) {
         std::fs::remove_file(src).map_err(|e| format!("Kaynak silinemedi: {e}"))?;
     }

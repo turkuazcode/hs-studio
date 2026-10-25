@@ -8,6 +8,7 @@
 
 import { queryDom } from "./core/dom.js";
 import { createEventBus } from "./core/events.js";
+import { createJobs } from "./core/jobs.js";
 import { createLibrary } from "./core/library.js";
 import { announceStorageStatus, appLibraryAdapter } from "./core/library-db.js";
 import { createSettings, defaultAdapter } from "./core/settings.js";
@@ -41,6 +42,7 @@ import { createToasts } from "./ui/toasts.js";
 import { initPlatform } from "./ui/platform.js";
 import { registerAiModelSettings } from "./ui/ai-models.js";
 import { initWindowControls } from "./ui/window-controls.js";
+import { createJobsPanel } from "./ui/jobs-panel.js";
 
 /** libmpv status from the backend; { available: false } in a browser or without the DLLs. */
 async function engineStatus() {
@@ -83,6 +85,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       : null,
   };
   app.engine = createEngineFacade(app.engines);
+  // Persistent job queue (Plan 11/A02): exports and photo batches survive a restart
+  app.jobs = createJobs({ invoke, listen });
 
   // Leaf services first: everything below may toast / poke the HUD
   Object.assign(app, createToasts(dom));
@@ -136,6 +140,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // File / photo / video / music actions (Plan 06): toolbar, "⋯" + right-click menus, dialogs
   app.mediaActions = createMediaActions(app);
   window.__vhoActions = app.mediaActions;
+  app.jobsPanel = createJobsPanel(app);
 
   // Settings window, recent files, menus, themes, language... then the files passed on
   // the command line ("Open with VHO"), so they open with the restored settings.
@@ -147,6 +152,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       announceStorageStatus(app);
       registerAiModelSettings(app);
       app.mediaActions.registerSettings().catch((e) => console.error("[actions] settings", e));
+      app.jobsPanel?.init();
       invoke?.("initial_files")
         .then((paths) => app.loader.openPaths(paths))
         .catch((e) => console.warn("initial_files", e));
