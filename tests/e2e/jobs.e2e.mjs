@@ -165,7 +165,7 @@ test("jobs: changed source after a kill blocks continue, restart works", { timeo
   const work = mkdtempSync(join(tmpdir(), "vho-e2e-jobs-"));
   const out = join(work, "out");
   execFileSync("cmd", ["/c", "mkdir", out]);
-  const files = photoSet(work, 6);
+  const files = photoSet(work, 24); // more files than worker threads: some stay pending at the kill
   const request = { files, ops: [], output: { format: "png", dir: out } };
   let id;
   try {
@@ -179,6 +179,7 @@ test("jobs: changed source after a kill blocks continue, restart works", { timeo
     }
     // the user edits a file that was not processed yet while VHO is closed
     const pendingIdx = itemStates(dataDir, id).findIndex((s) => s !== "completed");
+    assert.ok(pendingIdx >= 0, "an item was still pending at the kill");
     writeFileSync(files[pendingIdx], Buffer.concat([readFileSync(files[pendingIdx]), Buffer.from("edited")]));
 
     app = await launchApp({ dataDir, env: HTML5_ENGINE });
@@ -198,7 +199,7 @@ test("jobs: changed source after a kill blocks continue, restart works", { timeo
       assert.equal(err, "sourceChanged");
       await app.click(`#vho-jobs-panel button[data-act="restart"][data-id="${id}"]`);
       await waitJob(app, id, ["completed"]);
-      assert.equal(jobRow(dataDir, id).done, 6);
+      assert.equal(jobRow(dataDir, id).done, 24);
     } finally {
       await app.close();
     }
