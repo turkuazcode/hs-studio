@@ -399,6 +399,13 @@ pub struct JobRequest {
     pub output_dir: Option<String>,
     #[serde(flatten)]
     pub kind: JobKind,
+    /// Job queue (A02) only, never from the UI: folder for the partial file (the job's own
+    /// temp dir, same volume as the output)
+    #[serde(skip)]
+    pub temp_dir: Option<PathBuf>,
+    /// Job queue (A02) only: never replace an existing output, pick `name (n)` instead
+    #[serde(skip)]
+    pub no_clobber: bool,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -870,7 +877,7 @@ pub fn run_job(req: &JobRequest, cancelled: &dyn Fn() -> bool, progress: impl Fn
         return Err(format!("{ERR_INVALID} Çıktı kaynak dosyanın üzerine yazamaz"));
     }
     let dir = output.parent().ok_or("Geçersiz çıktı yolu")?;
-    let partial = dir.join(format!(
+    let partial = req.temp_dir.as_deref().unwrap_or(dir).join(format!(
         ".{}.vho-part{}-{}.{}",
         output.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default(),
         std::process::id(),
@@ -894,14 +901,21 @@ pub fn run_job(req: &JobRequest, cancelled: &dyn Fn() -> bool, progress: impl Fn
         let _ = std::fs::remove_file(&partial);
         return Err("ffmpeg boş bir dosya üretti".into());
     }
-    if output.exists() {
-        // explicit output path chosen in a save dialog (the dialog asked about overwriting)
-        let _ = std::fs::remove_file(&output);
-    }
-    std::fs::rename(&partial, &output).map_err(|e| {
-        let _ = std::fs::remove_file(&partial);
-        format!("Çıktı yazılamadı: {e}")
-    })?;
+    let output = if req.no_clobber {
+        super::files::place_no_clobber(&partial, &output).inspect_err(|_| {
+            let _ = std::fs::remove_file(&partial);
+        })?
+    } else {
+        if output.exists() {
+            // explicit output path chosen in a save dialog (the dialog asked about overwriting)
+            let _ = std::fs::remove_file(&output);
+        }
+        std::fs::rename(&partial, &output).map_err(|e| {
+            let _ = std::fs::remove_file(&partial);
+            format!("Çıktı yazılamadı: {e}")
+        })?;
+        output
+    };
     Ok(JobResult { output: output.to_string_lossy().into_owned(), size })
 }
 

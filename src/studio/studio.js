@@ -156,7 +156,7 @@ export function createPhotoStudio(app) {
   const compare = createCompare($("ps-compare"), { invoke, convertFileSrc, onClose: () => restoreFocus() });
 
   const batch = createBatch($("ps-batch"), {
-    invoke, listen, dialogOpen, toast: app.toast,
+    invoke, listen, dialogOpen, toast: app.toast, jobs: app.jobs,
     onDone: (s) => {
       for (const r of s.results) {
         thumbs.forget(r.input);

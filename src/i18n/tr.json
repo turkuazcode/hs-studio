@@ -553,5 +553,54 @@
       "archive-invalid": "Model arşivi geçersiz veya izin verilmeyen içerik barındırıyor.",
       "io": "Dosya işlemi başarısız oldu."
     }
+  },
+  "jobs": {
+    "title": "İşler",
+    "button": "Arka plan işleri",
+    "clearFinished": "Bitenleri temizle",
+    "empty": "İş yok",
+    "waiting": "Sırada bekliyor…",
+    "interruptedNotice": "Uygulama kapanırken yarıda kalan işler var. Devam etmek için başlık çubuğundaki İşler düğmesini kullanın.",
+    "continueHint": "Biten dosyalar tekrar işlenmez",
+    "items": "{done} / {total}",
+    "kind": {
+      "export": "Dışa aktarma: {name}",
+      "photoOne": "Fotoğraf işlemi: {name}",
+      "photoBatch": "Toplu fotoğraf işlemi ({n} dosya)",
+      "other": "İş"
+    },
+    "state": {
+      "queued": "Sırada",
+      "running": "Çalışıyor",
+      "pausing": "Duraklatılıyor…",
+      "paused": "Duraklatıldı",
+      "cancelling": "İptal ediliyor…",
+      "cancelled": "İptal edildi",
+      "completed": "Tamamlandı",
+      "failed": "Hata",
+      "interrupted": "Yarıda kaldı"
+    },
+    "action": {
+      "continue": "Devam et",
+      "restart": "Baştan başlat",
+      "pause": "Duraklat",
+      "cancel": "İptal",
+      "reveal": "Klasörde göster",
+      "remove": "Listeden kaldır"
+    },
+    "error": {
+      "sourceChanged": "Kaynak dosya değişti; yalnızca baştan başlatılabilir.",
+      "sourceMissing": "Kaynak dosya bulunamadı.",
+      "modelChanged": "Kullanılan araç/model sürümü değişti; yalnızca baştan başlatılabilir.",
+      "recipeChanged": "İş ayarları bu sürümle uyuşmuyor; baştan başlatın.",
+      "diskFull": "Diskte yeterli boş alan yok.",
+      "itemsFailed": "{n} dosya işlenemedi.",
+      "noFfmpeg": "ffmpeg bulunamadı.",
+      "unsupported": "Bu biçim desteklenmiyor.",
+      "invalidState": "Bu iş şu an bu işlemi kabul etmiyor.",
+      "notFound": "İş bulunamadı.",
+      "storageUnavailable": "İş kuyruğu kullanılamıyor.",
+      "failed": "İşlem başarısız oldu."
+    }
   }
 }
