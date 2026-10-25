@@ -120,7 +120,6 @@ impl Scheduler {
             // nothing runs now: every reservation and temp dir is stale
             tx.execute("UPDATE job_items SET reserved_path = NULL, reserved_norm = NULL WHERE reserved_norm IS NOT NULL", [])?;
             let dirs = store::temp_dirs(tx, None)?;
-            tx.execute("DELETE FROM job_temp_dirs", [])?;
             // history
             tx.execute(
                 "DELETE FROM jobs WHERE state IN ('completed', 'cancelled') AND id NOT IN (
@@ -129,10 +128,29 @@ impl Scheduler {
             )?;
             Ok(dirs)
         })?;
+        self.cleanup_temp(dirs);
+        Ok(())
+    }
+
+    /// Removes job temp dirs; a dir that could not be removed (locked) stays registered and
+    /// is tried again at the next start.
+    fn cleanup_temp(&self, dirs: Vec<(String, String)>) {
+        let mut gone = Vec::new();
         for (job, dir) in dirs {
             remove_temp_dir(&job, &dir);
+            if !Path::new(&dir).exists() {
+                gone.push((job, dir));
+            }
         }
-        Ok(())
+        if gone.is_empty() {
+            return;
+        }
+        let _ = self.storage.write(|tx| {
+            for (job, dir) in &gone {
+                tx.execute("DELETE FROM job_temp_dirs WHERE job_id = ?1 AND path = ?2", params![job, dir])?;
+            }
+            Ok(())
+        });
     }
 
     pub fn start_worker(self: &Arc<Self>) {
@@ -310,8 +328,7 @@ impl Scheduler {
                     [id],
                 )?;
                 tx.execute("UPDATE jobs SET stage = 'cancelled', finished_at = ?2, fraction = NULL WHERE id = ?1", params![id, now_ms()])?;
-                let cancelled = true;
-                let summary = store::summary(tx, id, cancelled, 0)?;
+                let summary = store::summary(tx, id, true, 0)?;
                 tx.execute("UPDATE jobs SET result = ?2 WHERE id = ?1", params![id, summary.to_string()])?;
                 return Ok(true);
             }
@@ -445,14 +462,9 @@ impl Scheduler {
         if !(row.state.is_terminal() || row.state.needs_decision()) {
             return Err(invalid_state(id, row.state));
         }
-        let dirs = self.storage.write(|tx| {
-            let dirs = store::temp_dirs(tx, Some(id))?;
-            tx.execute("DELETE FROM jobs WHERE id = ?1", [id])?;
-            Ok(dirs)
-        })?;
-        for (job, dir) in dirs {
-            remove_temp_dir(&job, &dir);
-        }
+        let dirs = self.storage.read(|c| store::temp_dirs(c, Some(id)))?;
+        self.cleanup_temp(dirs);
+        self.storage.write(|tx| Ok(tx.execute("DELETE FROM jobs WHERE id = ?1", [id])?))?;
         lock(&self.stops).remove(id);
         Ok(true)
     }
@@ -608,13 +620,9 @@ impl Scheduler {
                     finished
                 ],
             )?;
-            let dirs = store::temp_dirs(tx, Some(id))?;
-            tx.execute("DELETE FROM job_temp_dirs WHERE job_id = ?1", [id])?;
-            Ok(dirs)
+            Ok(store::temp_dirs(tx, Some(id))?)
         })?;
-        for (job, dir) in dirs {
-            remove_temp_dir(&job, &dir);
-        }
+        self.cleanup_temp(dirs);
         Ok(())
     }
 }

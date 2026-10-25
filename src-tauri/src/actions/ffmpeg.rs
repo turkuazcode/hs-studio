@@ -798,6 +798,8 @@ pub fn run_ffmpeg(
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| format!("ffmpeg başlatılamadı: {e}"))?;
+    #[cfg(windows)]
+    tie_to_app(&child);
     let stdout = child.stdout.take().unwrap();
     let mut stderr = child.stderr.take().unwrap();
     let reader = std::thread::spawn(move || {
@@ -843,6 +845,39 @@ pub fn run_ffmpeg(
         return Err(format!("ffmpeg hatası ({status}): {tail}"));
     }
     Ok(err)
+}
+
+/// Windows: ffmpeg children join a job object that closes with VHO (also on a crash or a
+/// forced kill), so an export never keeps running orphaned and its partial file can be
+/// cleaned up by the job queue's recovery (A02) on the next start.
+#[cfg(windows)]
+fn tie_to_app(child: &std::process::Child) {
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::System::JobObjects::{
+        AssignProcessToJobObject, CreateJobObjectW, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+        JobObjectExtendedLimitInformation, SetInformationJobObject,
+    };
+    static JOB: OnceLock<usize> = OnceLock::new();
+    let job = *JOB.get_or_init(|| unsafe {
+        let h = CreateJobObjectW(std::ptr::null(), std::ptr::null());
+        if h.is_null() {
+            return 0;
+        }
+        let mut info: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = std::mem::zeroed();
+        info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        SetInformationJobObject(
+            h,
+            JobObjectExtendedLimitInformation,
+            &info as *const _ as *const std::ffi::c_void,
+            std::mem::size_of_val(&info) as u32,
+        );
+        h as usize // never closed: the OS closes it when VHO exits
+    });
+    if job != 0 {
+        unsafe {
+            AssignProcessToJobObject(job as _, child.as_raw_handle() as _);
+        }
+    }
 }
 
 static PART_SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
