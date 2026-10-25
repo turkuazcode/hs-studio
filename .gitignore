@@ -32,3 +32,7 @@ src-tauri/target/
 # Fixture generator build output
 tests/fixtures/gen/target/
 /mpv/
+
+# Test layers (Q01): real-model cache and per-layer result summaries
+tests/.cache/
+tests/.results/
