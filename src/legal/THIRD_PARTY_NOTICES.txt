@@ -47,7 +47,7 @@ the components can be verified, repaired or removed in Settings > AI models.
     Licensed under the Apache License, Version 2.0 (full text in section 5, "Apache License 2.0").
     Source: https://github.com/TencentARC/GFPGAN
     ONNX export used: https://huggingface.co/opiumuseless/gfpgan-v1.4-w16
-            (commit 996691710925f8f44f0896490b8ff3d7a559398a, Apache-2.0) — the export stores
+            (commit 996691710925f8f44f0896490b8ff3d7a559398a, file GFPGANv1.4-w16.onnx, Apache-2.0) — the export stores
             weights as float16 and casts them to float32 at load.
     GFPGAN's LICENSE lists third-party components (StyleGAN2 CUDA ops under the NVIDIA
     Source Code License, DFDNet under CC BY-NC-SA 4.0). VHO uses neither: v1.4 is the
@@ -5800,6 +5800,17 @@ Public License instead of this License.  But first, please read
     FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
     OTHER DEALINGS IN THE FONT SOFTWARE.
 
+2.9 Material Icons (Google) — the SVG path data of several player icons (play, pause,
+    undo/redo, volume, subtitles, picture-in-picture, fullscreen, rotate) in src/index.html
+    and src/ui/toasts.js is taken from Google's Material Icons.
+    Copyright Google LLC. Licensed under the Apache License, Version 2.0 (full text in
+    section 5, "Apache License 2.0").
+    Source: https://github.com/google/material-design-icons
+
+2.10 Machine-readable inventory: legal/sbom/*.cdx.json (CycloneDX SBOM) and
+    legal/inventory/*.json in the VHO source repository list every component above with
+    version, license and SHA-256.
+
 --------------------------------------------------------------------------
 3. USED BUT NOT DISTRIBUTED BY VHO
 --------------------------------------------------------------------------
@@ -5817,7 +5828,6 @@ Public License instead of this License.  But first, please read
   Component with the Microsoft Store "HEIF Image Extensions", "HEVC Video Extensions",
   "AV1 Video Extension" and "Raw Image Extension"; macOS ImageIO (sips); on Linux the
   libheif command-line tools (LGPL, run as a separate process, not linked or shipped).
-- "Outfit" typeface (SIL Open Font License 1.1), loaded from Google Fonts.
 
 --------------------------------------------------------------------------
 4. LICENSE TEXTS
