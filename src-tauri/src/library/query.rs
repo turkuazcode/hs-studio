@@ -102,7 +102,7 @@ fn build(q: &Query) -> Built {
     let mut w: Vec<String> = Vec::new();
     let mut args: Vec<Value> = Vec::new();
     let view = q.view.as_deref().unwrap_or("all");
-    let mut arg = |v: Value, args: &mut Vec<Value>| {
+    let arg = |v: Value, args: &mut Vec<Value>| {
         args.push(v);
         format!("?{}", args.len())
     };

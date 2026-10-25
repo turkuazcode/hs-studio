@@ -292,11 +292,10 @@ struct Known {
     volume_id: Option<String>,
     file_id: Option<String>,
     content_hash: Option<String>,
-    resume_key: Option<String>,
 }
 
 const KNOWN_COLS: &str =
-    "id, path, path_norm, name, size, mtime_ns, status, folder_id, in_library, volume_id, file_id, content_hash, resume_key";
+    "id, path, path_norm, name, size, mtime_ns, status, folder_id, in_library, volume_id, file_id, content_hash";
 
 fn known_row(r: &rusqlite::Row) -> rusqlite::Result<Known> {
     Ok(Known {
@@ -312,7 +311,6 @@ fn known_row(r: &rusqlite::Row) -> rusqlite::Result<Known> {
         volume_id: r.get(9)?,
         file_id: r.get(10)?,
         content_hash: r.get(11)?,
-        resume_key: r.get(12)?,
     })
 }
 
