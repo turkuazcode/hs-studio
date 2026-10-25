@@ -90,7 +90,6 @@ impl JobState {
 
 pub mod item_state {
     pub const PENDING: &str = "pending";
-    pub const RUNNING: &str = "running";
     pub const COMPLETED: &str = "completed";
     pub const SKIPPED: &str = "skipped";
     pub const FAILED: &str = "failed";
@@ -427,7 +426,10 @@ async fn blocking<T: Send + 'static>(
     app: AppHandle,
     f: impl FnOnce(&Scheduler) -> Result<T, JobError> + Send + 'static,
 ) -> Result<T, JobError> {
-    tauri::async_runtime::spawn_blocking(move || f(&scheduler(&app)?))
+    tauri::async_runtime::spawn_blocking(move || {
+        let s = scheduler(&app)?;
+        f(&s)
+    })
         .await
         .map_err(|e| JobError::new(code::FAILED, e.to_string()))?
 }

@@ -51,7 +51,7 @@ interrupted / paused / failed / cancelled ──(baştan)──► queued (tüm 
 
 ## İptal otoritesi
 
-Tek otorite mevcut `photo::JobGuard` kaydıdır (anahtar = `jobId`). Kuyruk işçisi çalışan denemeyi bu kayda kaydeder; `jobs_cancel(id)` ile eski `media_job_cancel(id)` / `photo_cancel(id)` aynı bayrağı kaldırır. D1 runner yalnızca **kendi** `ffmpeg` alt sürecini öldürür (`Child::kill`); başka işin/sürecin bayrağına dokunulmaz. Duraklatma da aynı bayrağı kullanır, işçi sonucu `paused` olarak kaydeder (fotoğrafta tamamlanan öğeler kalır; dışa aktarmada öğe baştan yapılır).
+Tek otorite mevcut `photo::JobGuard` kaydıdır (anahtar = `jobId`). Kuyruk işçisi çalışan denemeyi bu kayda kaydeder; `jobs_cancel(id)` ile eski `media_job_cancel(id)` / `photo_cancel(id)` aynı bayrağı kaldırır. D1 runner yalnızca **kendi** `ffmpeg` alt sürecini öldürür (`Child::kill`); başka işin/sürecin bayrağına dokunulmaz. Windows'ta `ffmpeg` alt süreçleri, VHO kapanınca (çökme / zorla kapatma dahil) kapanan bir **iş nesnesine** (`JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`) bağlanır; böylece yetim kalan bir dışa aktarma kısmi dosyayı kilitli tutmaz ve açılış kurtarması onu silebilir (silinemeyen geçici dizin kayıtlı kalır, sonraki açılışta yeniden denenir). Duraklatma da aynı bayrağı kullanır, işçi sonucu `paused` olarak kaydeder (fotoğrafta tamamlanan öğeler kalır; dışa aktarmada öğe baştan yapılır).
 
 ## SQL (şema v2, göç adı `jobs`)
 
