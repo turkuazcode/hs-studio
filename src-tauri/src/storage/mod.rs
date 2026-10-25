@@ -250,6 +250,7 @@ impl Storage {
         open_checked(path).map_err(|e| StorageError::Corrupt(format!("cannot create a new database: {e}")))
     }
 
+    #[allow(dead_code)] // API for A02/L02 (diagnostics, reader connections)
     pub fn path(&self) -> &Path {
         &self.path
     }
