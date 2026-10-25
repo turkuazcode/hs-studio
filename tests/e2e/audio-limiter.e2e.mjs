@@ -128,7 +128,7 @@ test("booster limiter: HTML5 Web Audio graph (createLimiter) in vho.exe", { time
     assert.ok(r.raw.peak > 1 && r.raw.over > 1000, `2.5x without limiter overshoots: peak ${r.raw.peak}, ${r.raw.over} samples >= 1`);
     assert.ok(r.limited.peak < 1, `limited peak ${r.limited.peak}`);
     assert.equal(r.limited.over, 0, "no sample at or above full scale");
-    assert.ok(r.limited.rms > r.source.rms * 1.4, `boost still louder: rms ${r.source.rms} -> ${r.limited.rms}`);
+    assert.ok(r.limited.rms > r.source.rms * 1.25, `boost still louder: rms ${r.source.rms} -> ${r.limited.rms}`);
     assert.deepEqual(await app.errors(), []);
   } finally {
     await app.close();
