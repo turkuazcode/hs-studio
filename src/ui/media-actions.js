@@ -228,12 +228,14 @@ export function createMediaActions(app) {
     }
   }
 
-  // Favorites (Settings store until the library database of Plan 05)
-  const favorites = () => app.settings?.get("actions.favorites")?.paths ?? [];
+  // Favorites: library store (library.db, Plan 13/L01). The old "actions.favorites" setting
+  // is imported once by the backend and kept untouched as a fallback copy.
+  const favorites = () => app.library?.favorites?.list() ?? app.settings?.get("actions.favorites")?.paths ?? [];
   const isFavorite = (path) => favorites().includes(path);
   function toggleFav(item) {
     const r = toggleFavorite(favorites(), item.path);
-    app.settings?.set("actions.favorites", { paths: r.paths });
+    if (app.library?.favorites) app.library.favorites.set(r.paths);
+    else app.settings?.set("actions.favorites", { paths: r.paths });
     app.toast(t(r.favorite ? "actions.toast.favoriteAdded" : "actions.toast.favoriteRemoved", { name: item.name }));
     render();
   }
@@ -563,7 +565,7 @@ export function createMediaActions(app) {
         control: "custom", render: (row) => {
           const n = favorites().length;
           row.append(h("span", { class: "vho-field-label", text: t("actions.settings.favorites", { n }) }),
-            h("button", { type: "button", class: "btn-ghost btn-sm", text: t("actions.settings.clearFavorites"), disabled: !n, onclick: (e) => { s.set("actions.favorites", { paths: [] }); e.target.disabled = true; } }));
+            h("button", { type: "button", class: "btn-ghost btn-sm", text: t("actions.settings.clearFavorites"), disabled: !n, onclick: (e) => { if (app.library?.favorites) app.library.favorites.clear(); else s.set("actions.favorites", { paths: [] }); e.target.disabled = true; } }));
         },
       },
     ]);
@@ -606,6 +608,7 @@ export function createMediaActions(app) {
       },
     ]);
     s.subscribe("actions.favorites", () => render());
+    app.library?.favorites?.subscribe(() => render());
   }
 
   const api = {

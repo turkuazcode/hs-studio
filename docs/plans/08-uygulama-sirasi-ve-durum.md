@@ -87,7 +87,8 @@ Takvim bu belgede taahhüt edilmez. S01 sonrası Claude her kart için S (tek od
 | P01–P05 | bekliyor | Windows motoru mevcut; diğer platformların entegrasyonu eksik |
 | A01–A06 | bekliyor | Mevcut inference kodu korunup genişletilecek |
 | V01–V06 | bekliyor | Araştırma kapısı V02 |
-| L01–L04 | bekliyor | Özgün Plan 05 korunuyor |
+| L01 | kod hazır | Dal `wave3/e2-depolama`: `library.db` (rusqlite 0.40.2 + paketli SQLite), tek göç sahibi `src-tauri/src/storage/migrations.rs`, göç öncesi/dönemsel sürümlü yedek, bozulmada karantina + yedekten dönüş / yeniden içe aktarma, yeni şemayı açmama; `library.json` son açılanlar/kaldığı yer + `actions.favorites` + localStorage yer imleri tek seferlik doğrulanmış göç. Birim 127/127, Rust 88/88 (+2 ignored), E2E 139/139 (storage 10). Mimari: [storage-schema.md](../storage-schema.md). Kalan: macOS/Linux'ta platform dosya kimliği denenmedi; ana dala birleştirme |
+| L02–L04 | bekliyor | Özgün Plan 05 korunuyor; L02/A02 tabloları L01 göç listesine eklenir |
 | Q01–Q04, R01–R04 | bekliyor | 24 Ekim baseline aşağıda |
 | F01–F04 | ertelendi | Masaüstü sonrası |
 

@@ -48,12 +48,17 @@ tauri-plugin-window-state = "2"
 trash = "5"
 arboard = { version = "=3.6.1", default-features = false, features = ["image-data"] }
 lofty = "0.22"
+# Shared storage library.db (Plan 13/L01): rusqlite (MIT) with bundled SQLite (public domain);
+# pinned: 0.40.2 released 2026-08-08. uuid (MIT OR Apache-2.0) for media ids.
+rusqlite = { version = "=0.40.2", features = ["bundled", "backup"] }
+uuid = { version = "1", features = ["v4"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [
   "Win32_System_Power",
   "Win32_Foundation",
   "Win32_Graphics_Gdi",
+  "Win32_Storage_FileSystem",
   "Win32_System_LibraryLoader",
   "Win32_UI_Shell",
   "Win32_UI_HiDpi",

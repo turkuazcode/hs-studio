@@ -1,0 +1,102 @@
+# Ortak depolama: library.db (Plan 13/L01)
+
+Plan: [13-kutuphane-muzik-ag-ve-sonraki-faz.md](plans/13-kutuphane-muzik-ag-ve-sonraki-faz.md) (L01) · Özgün plan: [05-kutuphane-muzik-ag.md](plans/05-kutuphane-muzik-ag.md)
+
+Kod: `src-tauri/src/storage/{mod,migrations,library,identity}.rs`, `src/core/library.js`, `src/core/library-db.js`.
+Testler: `cargo test --release --lib storage`, `tests/unit/library-db.test.mjs`, `tests/e2e/storage.e2e.mjs`.
+
+## Dosyalar ve sorumluluk
+
+| Dosya | İçerik | Sahibi |
+|---|---|---|
+| `library.db` (+ `-wal`, `-shm`) | Medya kimlikleri, son açılanlar, kaldığı yer, yer imleri, favoriler; ileride kütüphane/müzik/iş kuyruğu | Rust `storage` modülü |
+| `settings.json` | Yalnızca ayarlar (değişmedi) | `src/core/settings.js` (tauri-plugin-store) |
+| `library.json` | **Eski biçim.** Bir kez içe aktarılır, sonra yazılmaz ve silinmez | yalnızca okuma (göç) / yedek depo |
+| `backups/` | `library-v{şema}-{unix ms}-{neden}.db` (son 5), `library.json.{ms}.pre-db.bak`, `settings.json.{ms}.pre-db.bak` | `storage` modülü |
+| `library.db.corrupt-{ms}` | Bozuk bulunan veritabanı (silinmez, incelemek için) | `storage` modülü |
+
+Hepsi veri klasöründedir: `platform::data_dir` (uygulama yapılandırma klasörü; testlerde `VHO_DATA_DIR`). Plan 05'teki `app_data_dir/library.db` ile aynı klasör (Windows'ta ikisi aynı yerdir); ayarların yanında olması test izolasyonunu tek değişkenle sağlar. Küçük resim/önbellek dosyaları veritabanına blob olarak konmaz; `artifacts.path` / `media.thumb` yol veya küçük data URL tutar.
+
+## Bağlantı ve iş parçacığı modeli
+
+- Tek okuma/yazma bağlantısı (`Mutex<Connection>`), uygulama durumunda `StorageState` içinde; ilk `library_load` çağrısında açılır (başlangıcı bekletmez). Komutlar `spawn_blocking` ile ana iş parçacığı dışında çalışır.
+- `PRAGMA journal_mode=WAL`, `synchronous=FULL`, `foreign_keys=ON`, `busy_timeout=5s`.
+- API (A02/L02 için):
+  - `Storage::read(|conn| ...)` — işlem dışı okuma.
+  - `Storage::write(|tx| ...)` — tek **IMMEDIATE** işlem; hata = tamamen geri alma.
+  - `Storage::write_batches(items, n, |tx, item| ...)` — büyük tarama/içe aktarmada `n` öğelik kısa işlemler; kesilirse tamamlanan partiler tutarlı kalır.
+  - `Storage::open_reader()` — işçi iş parçacığı için ayrı salt okunur bağlantı (WAL sayesinde yazıcıyı engellemez).
+  - `Storage::backup_now(neden)` — sürümlü çevrimiçi yedek.
+  - `library::upsert_media(conn, path, url, kind, name)` — yol/URL için medya satırı bulur ya da UUID ile oluşturur.
+  - `identity::{normalize_path, FileIdentity::of, match_moved, CaptureTime}` — kimlik yardımcıları (aşağıda).
+- Ön yüz: `library_load` → `{ doc, report }`, `library_save(doc)` (tek işlem). `library.js` belgeyi bellekte tutar ve 800 ms gecikmeli kaydeder (eski davranış).
+
+## Göçler (tek sahip)
+
+`migrations.rs` içindeki `MIGRATIONS` listesi şemanın tek sahibidir. Her adım kendi IMMEDIATE işleminde `schema_migrations` satırı ve `PRAGMA user_version` ile birlikte uygulanır; yarıda kesilen adım tamamen geri alınır ve sonraki açılışta yeniden çalışır. Uygulanmış adım değiştirilmez; isim/sıra uyuşmazlığı `migrationMismatch` hatası verir.
+
+**Yeni tablo ekleme (A02 `jobs/job_items/job_checkpoints`, L02 tarama tabloları):** listeye `Migration { version: <son+1>, name: "jobs", up: MigrationStep::Sql(...) }` ekle. Veri dönüştürmesi gerekiyorsa `MigrationStep::Rust(fn(&Transaction))`. İkinci bir göç sistemi veya liste dışında `CREATE TABLE` yok. İki dal aynı sürüm numarasını alırsa birleştirmede biri yeniden numaralanır (henüz yayımlanmadıysa); yayımlanmış numara değişmez.
+
+Açılış sırası: bütünlük denetimi (`PRAGMA quick_check`) → gerekirse kurtarma → bekleyen göç varsa ve şema ≥ 1 ise **önce sürümlü yedek** → göçler → tek seferlik JSON içe aktarma → (7 günden eski yedek varsa / hiç yoksa ve veri varsa) dönemsel yedek.
+
+### Yeni şema / eski uygulama
+
+- Veritabanının şeması bu derlemenin bildiğinden yeniyse (`schema_migrations` en büyük sürüm > son göç) dosya **açılmaz, yazılmaz, düşürülmez** (`schemaNewer`). Ön yüz bu oturumda JSON depoya (`library.json`) döner ve bir kez bilgi verir (`storage.schemaNewer`). Bu durumda görülen veriler göç öncesi JSON kopyasıdır; yeni sürümde yapılan değişiklikler görünmez ama kaybolmaz.
+- L01 öncesi derlemeler `library.db`'yi hiç bilmez ve `library.json`'u okur: göçten sonraki değişiklikleri göremez. Bu bilinçli bir sınırdır (çift yazma yok).
+
+## Tablolar (şema v1)
+
+| Tablo | Amaç | Notlar |
+|---|---|---|
+| `schema_migrations` | Uygulanan göçler | `version`, `name`, `applied_at`, `app_version` |
+| `meta` | Anahtar/değer | `legacy_json_import` (içe aktarma raporu = tek seferlik işaret), `legacy_localstorage_resume`, `legacy_localstorage_bookmarks` |
+| `folders` | Klasörler | L02 izlenen klasör/favori klasör için; şimdilik boş |
+| `media` | Her medya öğesi | `id` UUID (kimlik), `path` + `path_norm` (konum), `url` (akışlar), kimlik yardımcıları, çekim zamanı, `favorite`, `rating`, `thumb`, `resume_key`, `status` (`present/missing/offline/deleted`) |
+| `recent` | Başlangıç ekranı listesi | `media_id`, `position`, `opened_at` |
+| `resume_positions` | Kaldığı yer | `key` = oynatıcının resume anahtarı (ad+boyut veya URL), `seq` = ekleme sırası (en eski önce düşer, en çok 500); bilinen medya varsa `media_id` |
+| `bookmarks` | Video yer imleri | `file_key` (= resume anahtarı), `time`, `label`, isteğe bağlı `media_id` |
+| `audio_tags` | Müzik etiketleri | L03; ReplayGain etiket değerleri (dB / doğrusal tepe), LUFS ölçümü değil |
+| `playlists`, `playlist_items` | Kayıtlı listeler | L02/L03; şimdiki oynatma listesi kalıcı değildi, taşınacak veri yok |
+| `artifacts` | Türetilmiş dosyalar | Dışa aktarma/AI çıktısı/yan dosya yolu + JSON parametre |
+
+Zamanlar Unix milisaniyedir (UTC). `media` silinince `recent`/`audio_tags`/`artifacts` silinir, `resume_positions`/`bookmarks`/`playlist_items` bağlantısı `NULL` olur (veri kaybolmaz).
+
+## Dosya kimliği
+
+- **Kimlik UUID'dir**; yol yalnızca şu anki konumdur. Yeniden adlandırma/taşıma UUID'yi değiştirmez (L02 bu eşlemeyi yapar).
+- `path_norm`: ayraçlar birleşik, `.`/`..` sözcüksel çözülmüş, Windows'ta `\\?\` öneki kaldırılmış ve küçük harf (NTFS büyük/küçük harf duyarsız). macOS'ta Unicode NFC/NFD farkı henüz normalleştirilmiyor (P02 ile ele alınacak).
+- Platform kimliği: Windows birim seri no + dosya indeksi (`GetFileInformationByHandle`, yalnızca meta veri erişimi, tüm paylaşım kipleri), Unix `st_dev` + `st_ino`. Aynı birimde taşımayı kanıtlar.
+- `size` + `mtime_ns` yalnızca hızlandırıcıdır. `match_moved` sonucu: platform kimliği veya içerik özeti tek adayla eşleşirse `Same`; yalnızca boyut+zaman benzerliği `Ambiguous` döner — **aynı ad/boyutlu farklı dosyalar otomatik birleştirilmez**; özet hesaplama veya kullanıcı seçimi gerekir.
+- Çekim zamanı: `taken_local` kameranın yerel saati olarak saklanır; `taken_offset_min` yalnızca dosya bildiriyorsa (EXIF `OffsetTimeOriginal`) dolar; `taken_utc` yalnızca ofset biliniyorsa hesaplanır. Bilinmeyen saat dilimi UTC sayılmaz (`CaptureTime`).
+
+## Eski verinin göçü
+
+| Kaynak | Hedef | Kim, ne zaman |
+|---|---|---|
+| `library.json` → `recent` | `media` + `recent` | Rust, ilk açılışta, tek işlemde |
+| `library.json` → `resume` (sıra korunur), `legacyMigrated` | `resume_positions`, `meta` | Rust, aynı işlem |
+| `settings.json` → `actions.favorites.paths` (Plan 06 favorileri) | `media.favorite` | Rust, aynı işlem; ayar değeri dokunulmadan kalır |
+| localStorage `vho_file_*` / `vho_url_*` (çok eski kaldığı yer) | `resume_positions` | `library.js` (mevcut göç, değişmedi) |
+| localStorage `vho_bm_*` (yer imleri) | `bookmarks` | `library.js` `migrateLegacyBookmarks`, önce depoya yazılır, sonra eski anahtarlar silinir |
+
+Kurallar: içe aktarmadan önce JSON dosyalarının bayt kopyası `backups/` içine alınır; içe aktarma tek işlemdir ve **commit öncesinde doğrulanır** (her eski son açılan, kaldığı yer değeri ve favori veritabanında aynı değerle bulunmalı; aksi halde geri alınır, `importVerify`). İşaret (`meta.legacy_json_import`) aynı işlemde yazılır; bu yüzden yarıda kesilen içe aktarma iz bırakmaz ve sonraki açılışta yeniden çalışır, tamamlanmış olan tekrar çalışmaz. Eski dosyalar silinmez. Okunamayan JSON uyarıyla atlanır (kopyası yine alınır). Fotoğraf Stüdyosu klasör favorileri (`photo.studio.favorites`) şimdilik ayarlarda kalır; L02'de `folders.favorite`'e taşınır.
+
+## Bozulma ve kurtarma
+
+1. Açılışta `quick_check` başarısızsa veya dosya veritabanı değilse dosya (ve `-wal/-shm`) `library.db.corrupt-{ms}` adıyla kenara alınır — silinmez.
+2. `backups/` içindeki en yeni **sağlam** yedek (bütünlük denetimi geçen, şeması bilinen) geri yüklenir → `report.recovered = "backup"`.
+3. Sağlam yedek yoksa yeni veritabanı oluşturulur; içe aktarma işareti olmadığından `library.json`/favoriler yeniden içe aktarılır (yeniden indeksleme) → `"fresh"`.
+4. Ön yüz bir kez bildirir (`storage.recoveredBackup` / `storage.recoveredFresh`). Kilitli dosya, izin hatası gibi bozulma olmayan hatalarda dosyaya dokunulmaz; ön yüz o oturum JSON depoyla çalışır (`storage.unavailable`).
+
+Yedekler SQLite çevrimiçi yedek API'siyle alınır (WAL içeriği dahil tutarlı), `journal_mode=DELETE` ile tek dosya halinde ve bütünlük denetiminden sonra yerine taşınır; en yeni 5 veritabanı yedeği tutulur.
+
+## Lisans
+
+`rusqlite` 0.40.2 (MIT, 2026-08-08 sürümü, sabitlenmiş), `libsqlite3-sys` 0.38.x (MIT) ve paketlenmiş SQLite (kamu malı), `uuid` (MIT OR Apache-2.0). Bildirimler `legal/generate-notices.ps1` ile üretilir.
+
+## Sınırlar / sonraki işler
+
+- L02: klasör tarama, `status` güncellemesi, taşıma eşlemesi (`match_moved` + özet), oynatma listeleri, yeniden adlandırma/silmede favori ve kaldığı yerin medya kimliğine bağlanması (şimdilik yol bazlı, eskisi gibi).
+- A02: iş kuyruğu tabloları göç listesine eklenir; işçiler `open_reader` + kısa `write` işlemleri kullanır.
+- Kaydetme şimdilik belge bazlıdır (son açılanlar ≤20, kaldığı yer ≤500 satır tek işlemde yeniden yazılır); L02'de satır bazlı komutlara geçilebilir.
+- macOS/Linux'ta platform kimliği kodu derlenir ama bu dalda yalnızca Windows'ta test edildi.

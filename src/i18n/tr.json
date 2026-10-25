@@ -38,6 +38,12 @@
       "image": "Fotoğraf"
     }
   },
+  "storage": {
+    "schemaNewer": "Kütüphane veritabanı daha yeni bir VHO sürümüne ait; ona dokunulmadı. Son açılanlar bu oturumda eski kayıttan okunuyor.",
+    "unavailable": "Kütüphane veritabanı açılamadı; son açılanlar bu oturumda eski kayıttan okunuyor.",
+    "recoveredBackup": "Kütüphane veritabanı bozulmuştu; en son yedekten geri yüklendi. Bozuk dosya yedekler klasöründe saklandı.",
+    "recoveredFresh": "Kütüphane veritabanı bozulmuştu ve yedek yoktu; eski kayıtlardan yeniden oluşturuldu. Bozuk dosya saklandı."
+  },
   "settings": {
     "title": "Ayarlar",
     "empty": "Bu bölümde henüz ayar yok.",
