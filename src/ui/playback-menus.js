@@ -11,13 +11,12 @@
 // ==========================================================================
 
 import { formatTime } from "../core/format.js";
-import { loadJson, saveJson } from "../core/storage.js";
 import {
   DEFAULT_VIEW, addBookmark, chapterAt, isAudioOnlyMedia, nextZoom, subMarginFor,
 } from "../media/engine/engine.js";
 import { createPopupMenu } from "./menus.js";
 
-/** Bookmark storage key for the current file (same identity as the resume position). */
+/** localStorage bookmark key of older builds (moved into the library store by library.js). */
 export const bookmarkKey = (fileKey) => (fileKey ? `vho_bm_${fileKey}` : "");
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -184,14 +183,14 @@ export function createPlaybackMenus(app) {
       app.toast("Bu noktada zaten bir yer imi var");
       return;
     }
-    saveJson(bmKey(), bookmarks);
+    app.library.bookmarks.set(state.get("currentFileKey"), bookmarks);
     renderBookmarks();
     app.toast(`Yer imi eklendi: ${formatTime(engine.time)}`);
   }
 
   function clearBookmarks() {
     bookmarks = [];
-    saveJson(bmKey(), bookmarks);
+    app.library.bookmarks.set(state.get("currentFileKey"), bookmarks);
     renderBookmarks();
     app.toast("Yer imleri silindi");
   }
@@ -204,7 +203,7 @@ export function createPlaybackMenus(app) {
     if (kind === "video") {
       // the file key is set by the video player right after this event
       queueMicrotask(() => {
-        bookmarks = loadJson(bmKey(), []);
+        bookmarks = app.library.bookmarks.get(state.get("currentFileKey"));
         renderBookmarks();
         syncLayout();
       });

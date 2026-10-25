@@ -3,6 +3,7 @@ mod ai;
 mod engine;
 mod photo;
 mod platform;
+mod storage;
 mod transcode;
 
 use std::path::{Path, PathBuf};
@@ -254,6 +255,7 @@ pub fn run() {
 
     let app = builder
         .manage(platform::PendingOpen::default())
+        .manage(storage::StorageState::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
@@ -347,7 +349,9 @@ pub fn run() {
             actions::tags_write,
             actions::tags_save_cover,
             actions::lyrics_read,
-            actions::export_dir
+            actions::export_dir,
+            storage::library_load,
+            storage::library_save
         ])
         .build(context)
         .expect("error while building tauri application");

@@ -9,6 +9,7 @@
 import { queryDom } from "./core/dom.js";
 import { createEventBus } from "./core/events.js";
 import { createLibrary } from "./core/library.js";
+import { announceStorageStatus, appLibraryAdapter } from "./core/library-db.js";
 import { createSettings, defaultAdapter } from "./core/settings.js";
 import { createAppState } from "./core/state.js";
 import { convertFileSrc, invoke, listen } from "./core/tauri.js";
@@ -59,10 +60,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   const dom = queryDom();
   const app = { dom, state: createAppState(), bus: createEventBus() };
 
-  // Persistent settings + library (recent files, resume positions); loaded asynchronously,
-  // initPlatform() waits for them before applying values to the UI.
+  // Persistent settings + library (recent files, resume positions, bookmarks, favorites in
+  // library.db; JSON store as fallback); loaded asynchronously, initPlatform() waits for them.
   app.settings = createSettings({ adapter: defaultAdapter("settings.json", "settings") });
-  app.library = createLibrary({ adapter: defaultAdapter("library.json", "library"), legacyStorage: safeLocalStorage() });
+  app.library = createLibrary({
+    adapter: appLibraryAdapter(invoke, defaultAdapter("library.json", "library")),
+    legacyStorage: safeLocalStorage(),
+  });
   app.resume = {
     get: (key) => (app.settings.get("playback.resume") ? app.library.resume.get(key) : null),
     set: (key, seconds) => app.library.resume.set(key, seconds),
@@ -139,6 +143,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     .finally(() => {
       // engine options after the base fields (tab order), once the stored values are loaded
       registerEngineSettings(app);
+      announceStorageStatus(app);
       app.mediaActions.registerSettings().catch((e) => console.error("[actions] settings", e));
       invoke?.("initial_files")
         .then((paths) => app.loader.openPaths(paths))

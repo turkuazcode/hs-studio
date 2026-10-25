@@ -38,6 +38,12 @@
       "image": "Photo"
     }
   },
+  "storage": {
+    "schemaNewer": "The library database belongs to a newer VHO version and was left untouched. Recent files are read from the old store in this session.",
+    "unavailable": "The library database could not be opened; recent files are read from the old store in this session.",
+    "recoveredBackup": "The library database was damaged and has been restored from the latest backup. The damaged file was kept.",
+    "recoveredFresh": "The library database was damaged and no backup existed; it was rebuilt from the old records. The damaged file was kept."
+  },
   "settings": {
     "title": "Settings",
     "empty": "No settings in this section yet.",
