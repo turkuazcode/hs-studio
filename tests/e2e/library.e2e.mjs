@@ -64,8 +64,7 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
     await t.test("start screen entry opens the library; empty state offers a folder", async () => {
       await app.click("#btn-open-library");
       await app.waitFor(`!document.getElementById("library").hidden && document.getElementById("library").dataset.loading === "0"`, { timeoutMs: 8000 });
-      assert.equal(await app.eval(`document.getElementById("lib-empty").hidden`), false);
-      assert.equal(await app.eval(`document.getElementById("lib-empty-add").hidden`), false);
+      await app.waitFor(`!document.getElementById("lib-empty").hidden && !document.getElementById("lib-empty-add").hidden`, { timeoutMs: 8000, message: "empty state" });
       // video and music layouts are separate; lists tab has no media columns
       await app.click('.lib-tab[data-tab="audio"]');
       assert.equal(await app.eval(`document.getElementById("library").dataset.tab`), "audio");
@@ -164,6 +163,8 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
       const { id } = idOf(dataDir, film);
       await app.eval(`(window.__vhoActions.run("favorite"), true)`);
       await waitDb(dataDir, "SELECT favorite FROM media WHERE id = ?", [id], (r) => r.favorite === 1, "favorite saved");
+      // the 3 s clip plays to its end first (the player clears the resume position at the end)
+      await app.waitFor(`window.__vhoEngine.paused && window.__vhoEngine.time > 2`, { timeoutMs: 20000, message: "clip ended" });
       // resume position + bookmark as the player stores them (key = name + size)
       const key = `vho_file_film.mp4_${statSync(film).size}`;
       await app.eval(`(${L}.store.resume.set(${J(key)}, 1.5), ${L}.store.bookmarks.set(${J(key)}, [{ time: 1, label: "b" }]), ${L}.store.flush().then(() => true))`);
@@ -189,21 +190,22 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
 
     await t.test("playlists: export M3U8 with relative paths, import keeps order and marks missing", async () => {
       const a = join(root, "klasör 5", "alt0", "dosya-5-1.mkv");
-      const b = join(root, "klasör 6", "alt1", "dosya-6-4.mp3");
+      const b = join(root, "film yeni ad – ğüşİ.mp4"); // renamed above: a real clip
       const missing = join(root, "yok.mp3");
       const out = join(root, "liste Ş.m3u8");
-      const items = [{ path: b, title: "İkinci" }, { url: "https://radyo.invalid/stream", title: "Radyo" }, { path: missing }, { path: a }];
+      const items = [{ path: b, title: "İkinci" }, { url: "http://127.0.0.1:9/stream", title: "Radyo" }, { path: missing }, { path: a }];
       assert.equal(await app.eval(`${api(`exportPlaylist(${J(out)}, { items: ${J(items)} })`)}`), 4);
       const text = readFileSync(out, "utf8");
       assert.ok(text.startsWith("#EXTM3U"), "no BOM in .m3u8");
-      assert.ok(text.includes("klasör 6\\alt1\\dosya-6-4.mp3") || text.includes("klasör 6/alt1/dosya-6-4.mp3"), text);
+      // relative paths: next to the list / in a sub folder
+      assert.ok(text.includes("\nfilm yeni ad – ğüşİ.mp4") && (text.includes("klasör 5\\alt0\\dosya-5-1.mkv") || text.includes("klasör 5/alt0/dosya-5-1.mkv")), text);
       writeFileSync(join(root, "kötü.m3u"), "﻿#EXTM3U\r\njavascript:alert(1)\r\nklasör 5\\alt0\\dosya-5-1.mkv\r\n");
       const bad = await app.eval(`${api(`importPlaylist(${J(join(root, "kötü.m3u"))})`)}`);
       assert.deepEqual([bad.total, bad.skipped], [1, 1]);
       const r = await app.eval(`${api(`importPlaylist(${J(out)})`)}`);
       assert.deepEqual([r.total, r.missing, r.streams], [4, 1, 1]);
       const pl = await app.eval(`${api(`playlist(${J(r.id)})`)}`);
-      assert.deepEqual(pl.items.map((i) => i.path ?? i.url), [b, "https://radyo.invalid/stream", missing, a]);
+      assert.deepEqual(pl.items.map((i) => i.path ?? i.url), [b, "http://127.0.0.1:9/stream", missing, a]);
       assert.deepEqual(pl.items.map((i) => i.missing), [false, false, true, false]);
       // lists tab shows it; opening plays the existing local items in order, the stream stays a URL
       await app.eval(`(${L}.show("lists"), true)`);
@@ -211,7 +213,7 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
       await app.eval(`${L}.playlists.openSaved(${J(r.id)}, ${L}.openQueue)`);
       await app.waitFor(`document.getElementById("library").hidden`, { timeoutMs: 5000 });
       const queue = await app.eval(`[...document.querySelectorAll("#playlist-items .item-name")].map((e) => e.title)`);
-      assert.deepEqual(queue, ["dosya-6-4.mp3", "Radyo", "dosya-5-1.mkv"]);
+      assert.deepEqual(queue, ["film yeni ad – ğüşİ.mp4", "Radyo", "dosya-5-1.mkv"]);
     });
 
     await t.test("photo studio: star rating is stored in the shared library", async () => {
@@ -220,8 +222,6 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
       await app.click("#btn-photo-studio");
       await app.eval(`(() => { document.getElementById("ps-path-edit").click(); const i = document.getElementById("ps-path"); i.value = ${J(photoDir)}; i.form.requestSubmit(); return true; })()`);
       await app.waitFor(`document.getElementById("ps-grid").dataset.loading === "0" && Number(document.getElementById("ps-grid").dataset.total) > 0`, { timeoutMs: 15000 });
-      await app.eval(`(document.querySelector("#ps-grid .ps-cell").click(), true)`);
-      await app.eval(`document.querySelector("#ps-grid .ps-cell").dispatchEvent(new PointerEvent("pointerdown", { bubbles: true })), true`);
       const path = await app.eval(`document.querySelector("#ps-grid .ps-cell").dataset.path`);
       await app.eval(`(document.getElementById("ps-grid").focus(), window.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true })), true)`);
       await app.eval(`(window.dispatchEvent(new KeyboardEvent("keydown", { key: "4", bubbles: true })), true)`);
