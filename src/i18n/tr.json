@@ -587,7 +587,11 @@
     "deepToast": "✨ Fotoğraf AI ile iyileştirildi",
     "deepCancelled": "İptal edildi.",
     "deepFailed": "⚠️ İyileştirme başarısız: {error}",
-    "deepSaved": "İyileştirilmiş fotoğraf kaydedildi"
+    "deepSaved": "İyileştirilmiş fotoğraf kaydedildi",
+    "deepTooLarge": "Bu fotoğraf {w}×{h}. 4 kat çıktı bu cihazın AI bellek sınırını aşar: giriş {iw}×{ih} boyutuna küçültülecek, sonuç {ow}×{oh} olacak. Devam edilsin mi?",
+    "deepQueued": "Sırada: önceki uzun iş bitince başlayacak…",
+    "deepRunningEta": "İyileştiriliyor… %{pct} — {hw}, yaklaşık {eta} sn kaldı",
+    "deepPaused": "Duraklatıldı (oynatma sırasında veya uygulama kapanırken). Başlık çubuğundaki İşler panelinden devam eder."
   },
   "ui": {
     "docTitle": "VHO - Video Oynatıcı",
@@ -1188,7 +1192,8 @@
       "export": "Dışa aktarma: {name}",
       "photoOne": "Fotoğraf işlemi: {name}",
       "photoBatch": "Toplu fotoğraf işlemi ({n} dosya)",
-      "other": "İş"
+      "other": "İş",
+      "aiPhoto": "AI ile iyileştirme: {name}"
     },
     "state": {
       "queued": "Sırada",
@@ -1221,7 +1226,28 @@
       "invalidState": "Bu iş şu an bu işlemi kabul etmiyor.",
       "notFound": "İş bulunamadı.",
       "storageUnavailable": "İş kuyruğu kullanılamıyor.",
-      "failed": "İşlem başarısız oldu."
+      "failed": "İşlem başarısız oldu.",
+      "memory": "Bellek yetmedi (ekran kartı ve işlemci denendi). Daha küçük bir fotoğrafla deneyin.",
+      "modelFailed": "Model yüklenemedi veya çalıştırılamadı. Ayarlar > AI modelleri'nden onarın.",
+      "runnerUnavailable": "AI çalıştırıcısı hazır değildi; devam ettirerek yeniden deneyin."
+    }
+  },
+  "aiRuntime": {
+    "hwCpu": "İşlemci (WebAssembly)",
+    "hwGpu": "Ekran kartı (WebGPU: {name})",
+    "hwGpuGeneric": "Ekran kartı (WebGPU)",
+    "failed": "Yapay zekâ modeli çalıştırılamadı",
+    "facesFailed": "Yüz iyileştirme çalıştırılamadı",
+    "backend": {
+      "webgpu": "ekran kartı (WebGPU)",
+      "wasm": "işlemci (WebAssembly)"
+    },
+    "settings": {
+      "pauseDuringPlayback": "Video veya müzik oynarken AI işlerini duraklat",
+      "pauseDuringPlaybackHelp": "Oynatma takılmasın diye çalışan AI işi duraklar; oynatma durunca kaldığı işten (doğrulanarak) devam eder.",
+      "lastRun": "Son AI çalışması: {backend}, karo {tile} px, {sec} sn.",
+      "noRun": "Bu oturumda henüz AI çalışması yok.",
+      "fallbacks": "Geri çekilmeler: {list}."
     }
   }
 }
