@@ -58,7 +58,8 @@ test("storage: old JSON stores move into library.db once", { timeout: 150000 }, 
       await t.test("start screen shows the migrated recent files and resume position", async () => {
         await app.waitFor(`document.querySelectorAll("#recent-files .vho-recent-item").length === 2`, { timeoutMs: 8000 });
         assert.deepEqual(await recentNames(app), [PHOTO, VIDEO]);
-        const meta = await app.eval(`document.querySelector('#recent-files .vho-recent-item[data-id=${JSON.stringify(JSON.stringify(VIDEO))}]').textContent`);
+        const sel = `#recent-files .vho-recent-item[data-id=${JSON.stringify(VIDEO)}]`;
+        const meta = await app.eval(`document.querySelector(${JSON.stringify(sel)}).textContent`);
         assert.match(meta, /konumunda kaldı/);
       });
       await t.test("library.db holds recent/resume/favorites; old files kept and backed up", async () => {
