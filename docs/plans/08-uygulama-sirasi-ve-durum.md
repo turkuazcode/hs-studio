@@ -1,0 +1,102 @@
+Plan 08 — Güncel durum, eksiklerin eşlenmesi ve uygulama sırası
+
+Tarih: 25 Ekim 2026. Referans `main=a2092b9`, D1 dalı `wave25/d1-eylemler=9ca04e3`. Bu tarih itibarıyla kaynak/dal incelemesi yenilendi. 24 Ekim testleri referanstır, 25 Ekim'de yeniden çalıştırılmış sayılmaz. Uygulayıcı: Claude; başlangıç [devir talimatı](CLAUDE-DEVIR.md).
+
+Amaç: mevcut 01–07 planlarını tekrar üretmeden eksik ürün, mühendislik ve doğrulama işlerini tamamlamak. İlk hedef güvenilir masaüstü medya uygulaması ve aslına sadık fotoğraf restorasyonu; yüksek kaliteli video restorasyonu ayrı deneysel aşama, mobil sonraki aşamadır. “Tüm sistemler/her format” ifadesinin yerine test edilen sürüm/mimari/codec matrisi konur.
+
+**Mevcut planlara göre durum**
+
+| Özgün plan | Bugünkü kanıt | Kalan iş / yeni plan |
+|---|---|---|
+| [01 — Temel](01-temel-mimari-ve-test.md) | Modüler JS, Node birim testleri ve Windows E2E düzeneği ana dalda | Baştan refactor yok; regresyon tabanı 09, test katmanları 14. Eski satır sayısı hedefi tek başına dosya bölme gerekçesi olmaz. |
+| [02 — Motor](02-oynatma-motoru.md) | LGPL Windows libmpv, motor cephesi ve oynatma özellikleri ana dalda | macOS/Linux gömme ve gerçek platform testi eksik: 10/P01–P04. |
+| [03 — Platform](03-platform-ve-ayarlar.md) §1–§4 | Ayar/son açılanlar/kısayol/tema/i18n temeli var | Tüm metinlerin taşınması, erişilebilirlik ve işletim sistemi davranışları: 09/S05, 10/P04, 14/Q03. |
+| Plan 03 §5 | Kurulum/CI/imza/güncelleme zaten planlı; ana dalda CI workflow görülmedi | Yeniden bağımsız özellik sayılmaz; paketleme ayrıntısı 10/P05, yayın kapısı 14/R01–R03. |
+| [04 — Fotoğraf](04-fotograf-studyosu.md) | Rust fotoğraf altyapısı ve stüdyo ana dalda | AVIF teşhisi 09/S03; metadata/alpha/AI çıktı bağlantısı 11/A04; eksik kütüphane yıldız/etiket bağlantısı 13/L02. |
+| [05 — Kütüphane/müzik/ağ](05-kutuphane-muzik-ag.md) | Ayrıntılı hedefler var; ana dalda tam SQLite kütüphane yok | Planın kendisi uygulanacak; veri göçü, kimlik, test ve ağ sınırları 13'te eklenir. |
+| [06 — Medya eylemleri](06-medya-eylemleri.md) | D1 dalında ana dalda olmayan 7 commit; Windows odaklı uygulama ve test dosyaları mevcut | İlk iş 09/S02 entegrasyon. Dalın belgelerinde paylaşım/OCR/encoder platform sınırları var; hepsi tamamlandı sayılmaz. |
+| [07 — Akıllı düzenleme](07-akilli-duzenleme.md) | LaMa/BiRefNet/DDColor tasarımı ve önceki deney notları mevcut; ana uygulamada entegrasyonu görülmedi | Algoritma tarifi yeniden yazılmaz; model/iş yönetimi ve entegrasyon sırası 11/A01–A03, A06. |
+| Mevcut fotoğraf AI | DAT-2/GFPGAN/YuNet, Worker, WebGPU→WASM, tiled inference kodu var | Kalite/çıktı/model yaşam döngüsü eksikleri: 11. |
+| Mevcut video “AI” | libmpv'de kontrast/doygunluk; HTML5'te WebGL filtreleri | Doğru adlandırma 09/S04; gerçek video AI 12. |
+
+**Analizdeki yeni öneriler nereye gitti?**
+
+| İhtiyaç | Yeni mi? | Görev |
+|---|---|---|
+| README iddiaları/özellik yetenek matrisi | Eksik ayrıntı | S04, P01 |
+| AVIF çalışabilir codec kontrolü | Mevcut kapsamda hata | S03 |
+| Model doğrulama/onarım/iptal/sürüm | Yeni sağlamlaştırma | A01 |
+| Kalıcı iş kuyruğu ve çökmeden dönüş | Yeni ortak altyapı | A02; kalıcı depolama L01 |
+| Orijinal/EXIF/renk/alpha/işlem geçmişi | Fotoğraf planında kısmen var, AI yolunda eksik | A04 |
+| Sadakat/önizleme/ölçek seçimi | Yeni ürün ayrıntısı | A05 |
+| LaMa/BiRefNet/DDColor | Zaten Plan 07'de | A06 entegrasyonu |
+| Video AI, zamansal tutarlılık, kesit önizlemesi | Yeni | V01–V06 |
+| Müzik/SQLite/DLNA/Chromecast | Zaten Plan 05'te | L01–L04 ayrıntıları |
+| Kalite karşılaştırması ve gerçek model testleri | Yeni | Q01–Q02 |
+| Çevrimdışı fontlar, kaynak sınırları, güvenlik | Eksik ayrıntı | S05, Q03–Q04 |
+| Açık kaynak belgeleri/imzalı yayın | Zaten kısmen Plan 03'te | R01–R03 |
+| Mobil, semantik arama, konuşma dökümü | Sonraki faz | F01–F03; 13 |
+| Tam RAW/16 bit/HDR restorasyonu | Sonraki faz | F04; 13 |
+| Kullanıcı araştırması/sürdürülebilirlik | Yeni ürün çalışması | R04; 14 |
+
+**İş paketleri**
+
+| Paket | Belge | Somut sonuç |
+|---|---|---|
+| S | [09 — Entegrasyon ve doğruluk](09-entegrasyon-ve-dogruluk.md) | Mevcut işler birleşmiş, test tabanı ve doğru ürün anlatımı |
+| P | [10 — Çoklu platform ve paketleme](10-platform-ve-paketleme.md) | Test edilebilir platform adaptörleri ve temiz kurulum |
+| A | [11 — AI altyapısı ve fotoğraf](11-ai-altyapisi-ve-fotograf.md) | Doğrulanmış modeller, kalıcı işler, güvenli ve karşılaştırılabilir fotoğraf sonucu |
+| V | [12 — Video restorasyonu](12-video-restorasyonu.md) | Kanıtlanmış model seçimi, kısa kesit önizlemesi, tutarlı dışa aktarma |
+| L/F | [13 — Kütüphane ve mevcut planların devamı](13-kutuphane-muzik-ag-ve-sonraki-faz.md) | Plan 05'in veri göçü ve entegrasyon ayrıntıları; sonraki faz sınırları |
+| Q/R | [14 — Kalite ve açık kaynak yayın](14-kalite-ve-acik-kaynak-yayin.md) | Gerçek model/medya testleri, kaynak ve lisans paketi, beta çıkış kapıları |
+
+**Uygulama sırası**
+
+Bu sıra tek geliştiriciyle de yürütülebilir. Bir ortam eksik olduğunda bağımsız görevler sürdürülür; tamamlanma durumu uydurulmaz.
+
+1. S01 güncel envanter → S02 D1 entegrasyonu → S03 baseline/AVIF → S04 doğru özellik adları.
+2. S05 metin/çevrimdışı temeli; P01 yetenek sözleşmesi ve Q01 test düzeni. P02/P03 için küçük platform denemelerini erken yap; taşınabilirlik belirsizliğini en sona bırakma.
+3. L01 kalıcı depolama çekirdeği → A01 model yönetimi → A02 iş kuyruğu → A03 kaynak yönetimi → A04 güvenli çıktı → A05 fotoğraf deneyimi. Q02 ölçüm veri kümesini bu sırada hazırla.
+4. A06 Plan 07 entegrasyonu. L02 kütüphane → L03 müzik. P02/P03/P04 uygulama ve doğrulaması, P05 paketleme.
+5. V01 kaynak inceleme ve V02 model fizibilitesi → karar kapısı → V03 işlem hattı → V04 önizleme → V05 devam/iptal → V06 regresyon. Fizibilite başarısızsa deneysel kalır; masaüstü beta bundan dolayı durmaz.
+6. Q03 erişilebilirlik, Q04 güvenlik/mahremiyet, R01 topluluk/lisans dosyaları, R02 CI/yayın, R03 beta kapıları. Bunların hazırlığı önceki adımlarda başlamalı, sonunda yalnızca doğrulama kalmalı.
+7. L04 ağ/yayın, R04 kullanıcı geri bildirimi. F01–F04 sonraki sürüm görevleridir; ilk beta bağımlılığı değildir.
+
+Önemli bağımlılıklar: S02→A06/L03/V03; L01→A02/L02; A01+A02+A03+A04→A05; A01+A03+A04→A06; V01+V02+A02+S02→V03; V03→V04/V05→V06. P05 temel kurulum S03+P01 ile Windows'ta başlayabilir; macOS/Linux yayımları P02/P03/P04'ün gerçek testlerini bekler. R03, yayımlanacak platformun P05 ve Q/R koşullarını bekler.
+
+**Sürüm kapsamları ve çıkış koşulları**
+
+| Hedef | Zorunlu işler | Zorunlu olmayanlar |
+|---|---|---|
+| Geliştirici tabanı | S01–S04, yeni binary ile temel testler | Bulut/mobil |
+| Windows fotoğraf alfa | S05, A01–A05, Windows P01/P04/P05, Q01–Q04, yerel R01/R02 hazırlığı | Video AI, LaMa/BiRefNet/DDColor, DLNA |
+| Masaüstü beta | Üç platformun P02–P05 kanıtları, L01–L03, R01–R03 | Video AI ancak V06 geçerse deneysel açılır; ağ ve Plan 07 özellikleri tamamlandıkları ölçüde etiketlenir |
+| Video restorasyon önizlemesi | V01–V06, seçilen cihaz/modelde kalite ve devam testleri | Gerçek zamanlı çalışma iddiası, mobil |
+| Sonraki sürümler | L04, A06'nın kalanları, F01–F04 | İlk beta için bekleme gerekçesi olmaz |
+
+Takvim bu belgede taahhüt edilmez. S01 sonrası Claude her kart için S (tek odaklı değişiklik), M (birkaç alt değişiklik), L (ayrı teslimlere bölünecek) tahmini ve dış ortam ihtiyacı yazar. Özellikle platform yüzeyi ve video AI fizibilitesine ölçüm yapılmadan gün/saat tahmini verilmez.
+
+**Canlı durum kaydı — başlangıçta hiçbir yeni görev tamamlandı sayılmaz**
+
+| Kimlikler | Başlangıç durumu | Kanıt/not |
+|---|---|---|
+| S01–S05 | bekliyor | Envanter planlama için okundu; uygulama başlangıcı yeniden doğrulamalı |
+| P01–P05 | bekliyor | Windows motoru mevcut; diğer platformların entegrasyonu eksik |
+| A01–A06 | bekliyor | Mevcut inference kodu korunup genişletilecek |
+| V01–V06 | bekliyor | Araştırma kapısı V02 |
+| L01–L04 | bekliyor | Özgün Plan 05 korunuyor |
+| Q01–Q04, R01–R04 | bekliyor | 24 Ekim baseline aşağıda |
+| F01–F04 | ertelendi | Masaüstü sonrası |
+
+İlk kart çalışmaya başladığında aralık satırını tekil kart satırlarına ayır; kimlik, durum, commit, test sonucu, ortam ve kalan iş sütunlarını tut. Bu planın hazırlanmasını uygulama ilerlemesi olarak işaretleme.
+
+24 Ekim referans testleri: `npm test`: 111/111; `cargo test --release --lib --offline`: 37 geçti, 1 AVIF başarısız, 2 ignored. E2E ve diğer platformlar bu analizde çalıştırılmadı. Ayrıntı [analiz raporu](../2026-10-24-proje-ve-rekabet-analizi.md).
+
+**Bütün paketlerde bitirme tanımı**
+
+- Kullanıcı akışı çalışır; hata/iptal/yeniden deneme davranışı tanımlı ve ilgili testlerle kanıtlıdır.
+- Test sonuçları gerçek çalıştırmadan gelir; `skip` sonuçları `pass` sayılmaz. Platform/codec eksikliği ve ürün hatası ayrı kaydedilir.
+- Yeni uzun iş ana UI'ı bloke etmez; orijinal dosya varsayılan olarak korunur; kaynak ve çıktı yolları çakışmaz.
+- Yeni kullanıcı metni TR/EN'dir; ana ekran mevcut sadelik ilkesini korur.
+- Bağımlılık ve modellerin lisans/provenans kaydı tamamdır; kabul edilen lisans politikası sessizce değiştirilmez.
+- Uygulanmış modüller ve doküman güncellemeleriyle ilgili testler geçer. İlgisiz görsel/metin değişimi için yapay test yazılmaz; veri kaybı, IPC ve medya dönüşümü gibi davranışlar anlamlı test ister.

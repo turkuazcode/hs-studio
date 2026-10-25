@@ -1,5 +1,7 @@
 # VHO Yol Haritası — Çok Platformlu Video & Fotoğraf Stüdyosu
 
+> **25 Ekim 2026 — Claude uygulama devri:** Önce [CLAUDE-DEVIR.md](CLAUDE-DEVIR.md), ardından [08 — Güncel durum ve uygulama sırası](08-uygulama-sirasi-ve-durum.md) okunmalı. 01–07 planları korunur; 08–14 mevcut işleri eşler, eksikleri ve kabul ölçütlerini ekler. Aşağıdaki genel “AI kapsam dışı” ifadesi önceki dalgaya aittir; yeni AI işleri 11–12'de ayrı kapsam olarak planlandı. Plan 07'deki kullanıcının geliştirdiği “Otomatik iyileştir” algoritmasının sahipliği korunur; ayrıntı Plan 11'dedir. Bu ek yalnızca planlamadır, uygulama/tamamlanma kanıtı değildir.
+
 **Hedef:** Windows, macOS ve Linux'ta her video/fotoğraf formatını açan, modern arayüzlü, video + fotoğraf + müzik bir arada medya stüdyosu.
 **Rakip analizi:** VLC (format/platform), mpv (görüntü kalitesi), PotPlayer (özellik zenginliği), IINA (macOS), XnView MP / IrfanView / FastStone (fotoğraf), Windows Medya Oynatıcı (kütüphane/müzik).
 **Yapay zekâ özellikleri bu yol haritasının dışında** (sonraya bırakıldı; mevcut kod korunur, yeni iş yapılmaz).
@@ -8,7 +10,7 @@
 | Konu | Karar |
 |---|---|
 | Oynatma motoru | **libmpv, LGPL derlemesi** (`-Dgpl=false`) + **FFmpeg LGPL** (`--enable-gpl` YOK). VHO'nun MIT lisansı korunur. Dinamik bağlama (DLL/dylib/so). |
-| Lisans politikası | Kabul: MIT, Apache-2.0, BSD-2/3, ISC, Zlib, MPL-2.0, Unicode, CC0, CC-BY-4.0, **LGPL (yalnızca dinamik bağlama)**. Red: GPL, AGPL, ticari olmayan (NC, S-Lab), lisanssız kod. Her yeni bağımlılık `legal/NOTICES_HEADER.txt` + `legal/generate-notices.ps1` ile bildirime eklenir. |
+| Lisans politikası | Kabul: MIT, Apache-2.0, BSD-2/3, ISC, Zlib, BSL-1.0 (2026-10-25 kullanıcı onayı), MPL-2.0, Unicode, CC0, CC-BY-4.0, **LGPL (yalnızca dinamik bağlama)**. Red: GPL, AGPL, ticari olmayan (NC, S-Lab), lisanssız kod. Her yeni bağımlılık `legal/NOTICES_HEADER.txt` + `legal/generate-notices.ps1` ile bildirime eklenir. |
 | Eski HTML5 `<video>` yolu | libmpv yüklenemezse **yedek motor** olarak kalır (motor soyutlaması arkasında). |
 | Mimari | Ön yüz: vanilla JS **ES modülleri** (çerçeve yok). Arka uç: Rust/Tauri v2. Arayüz motordan bağımsız: `engine` cephesi (facade) üzerinden konuşur. |
 | Platform | Geliştirme/test makinesi: Windows 11 (1 GB dahili AMD GPU). macOS/Linux derleme ve testi: CI (GitHub Actions) — uzak depo kararı kullanıcıda (Dalga 3). |
