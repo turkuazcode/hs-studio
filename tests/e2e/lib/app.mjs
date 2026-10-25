@@ -191,7 +191,11 @@ export async function launchApp({ args = [], exe = defaultExe(), dataDir, env: e
     await mkdir(dataDir, { recursive: true });
   }
   const env = { ...appEnv({ port, userData, dataDir }), ...extraEnv };
+  const spawnedAt = performance.now();
   const proc = spawn(exe, args, { env, stdio: "ignore", windowsHide: false });
+  // Milliseconds since spawn (bench:media startup budget): CDP reachable, first app document
+  // complete (cold start, before the test reload), booted again after the reload
+  const timings = {};
   const exited = new Promise((res) => proc.once("exit", (code) => res(code)));
   debug("launch: pid", proc.pid, "port", port, "args", args);
 
@@ -203,8 +207,10 @@ export async function launchApp({ args = [], exe = defaultExe(), dataDir, env: e
     ]);
     // The page target exists while it is still about:blank: wait for the app document first
     const appLoaded = "location.protocol.startsWith('http') && typeof window.__TAURI__ === 'object' && document.readyState === 'complete'";
+    timings.cdpMs = performance.now() - spawnedAt;
     debug("launch: CDP connected");
-    await cdp.waitFor(appLoaded, { timeoutMs: 30000, message: "app page loaded" });
+    await cdp.waitFor(appLoaded, { timeoutMs: 30000, intervalMs: 20, message: "app page loaded" });
+    timings.loadedMs = performance.now() - spawnedAt;
     debug("launch: app page loaded");
     await cdp.send("Page.enable");
     await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: INVOKE_GUARD + ERROR_COLLECTOR + TEST_STUBS });
@@ -216,6 +222,7 @@ export async function launchApp({ args = [], exe = defaultExe(), dataDir, env: e
     await cdp.waitFor(`!window.__beforeReload && Array.isArray(window.__errs) && ${appLoaded}`, {
       timeoutMs: 20000, message: "app boot after reload",
     });
+    timings.rebootedMs = performance.now() - spawnedAt;
     debug("launch: booted after reload");
     // initial_files is the app's own boot call: wait for it, then prove it went through the guard
     await cdp.waitFor(`Array.isArray(window.__invokeLog) && window.__invokeLog.includes("initial_files")`, {
@@ -239,6 +246,7 @@ export async function launchApp({ args = [], exe = defaultExe(), dataDir, env: e
     dataDir,
     env,
     exe,
+    timings,
     /** Backend commands the guard answered instead of the app (e.g. ["suspend_system"]). */
     blockedCalls: () => cdp.evaluate("window.__blockedCalls"),
     /** Re-checks the invoke guard (throws if a call could reach the backend unseen). */

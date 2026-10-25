@@ -4,127 +4,568 @@
   "sources": {
     "ochoa": {
       "url": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Ellen_Ochoa.jpg",
-      "sha256": "fad48e8e3d1a7e38fa328c2059040fcde95b0cc4b9f6647f48a91274bf8e7928", "bytes": 2785625,
+      "sha256": "fad48e8e3d1a7e38fa328c2059040fcde95b0cc4b9f6647f48a91274bf8e7928",
+      "bytes": 2785625,
       "page": "https://commons.wikimedia.org/wiki/File:Ellen_Ochoa.jpg",
-      "author": "NASA", "date": "2002-02-12", "license": "Public domain (work of NASA, US federal government)"
+      "author": "NASA",
+      "date": "2002-02-12",
+      "license": "Public domain (work of NASA, US federal government)"
     },
     "chawla": {
       "url": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Kalpana_Chawla%2C_NASA_photo_portrait_in_orange_suit.jpg",
-      "sha256": "1934e3673544a04adb45c6a97f5c179c64a7a7f50db033e841a1a1b4457d4303", "bytes": 4692211,
+      "sha256": "1934e3673544a04adb45c6a97f5c179c64a7a7f50db033e841a1a1b4457d4303",
+      "bytes": 4692211,
       "page": "https://commons.wikimedia.org/wiki/File:Kalpana_Chawla,_NASA_photo_portrait_in_orange_suit.jpg",
-      "author": "NASA", "date": "2002-03-08", "license": "Public domain (work of NASA, US federal government)"
+      "author": "NASA",
+      "date": "2002-03-08",
+      "license": "Public domain (work of NASA, US federal government)"
     },
     "johnson": {
       "url": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Katherine_Johnson_1983.jpg",
-      "sha256": "e34b7cdb3bf305fc2e4681a86d48338908c3e19d00c930faa51e1c75c9c8dbd5", "bytes": 3286700,
+      "sha256": "e34b7cdb3bf305fc2e4681a86d48338908c3e19d00c930faa51e1c75c9c8dbd5",
+      "bytes": 3286700,
       "page": "https://commons.wikimedia.org/wiki/File:Katherine_Johnson_1983.jpg",
-      "author": "NASA", "date": "1983", "license": "Public domain (work of NASA, US federal government)"
+      "author": "NASA",
+      "date": "1983",
+      "license": "Public domain (work of NASA, US federal government)"
     },
     "earthrise": {
       "url": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Earth-moon.jpg",
-      "sha256": "df528e70dd7313cbc88c78cc174c9cb5a07eff344431dcad988b2f1f317a9180", "bytes": 995863,
+      "sha256": "df528e70dd7313cbc88c78cc174c9cb5a07eff344431dcad988b2f1f317a9180",
+      "bytes": 995863,
       "page": "https://commons.wikimedia.org/wiki/File:Earth-moon.jpg",
-      "author": "Bill Anders (Apollo 8), NASA", "date": "1968-12-24", "license": "Public domain (work of NASA, US federal government)"
+      "author": "Bill Anders (Apollo 8), NASA",
+      "date": "1968-12-24",
+      "license": "Public domain (work of NASA, US federal government)"
     },
     "aldrin": {
       "url": "https://upload.wikimedia.org/wikipedia/commons/9/98/Aldrin_Apollo_11_original.jpg",
-      "sha256": "17c8216d846ff88b8e8ec8053418cae46028ee95d54c39e21c3b40de125110de", "bytes": 4815461,
+      "sha256": "17c8216d846ff88b8e8ec8053418cae46028ee95d54c39e21c3b40de125110de",
+      "bytes": 4815461,
       "page": "https://commons.wikimedia.org/wiki/File:Aldrin_Apollo_11_original.jpg",
-      "author": "Neil Armstrong (Apollo 11), NASA", "date": "1969-07-21", "license": "Public domain (work of NASA, US federal government)"
+      "author": "Neil Armstrong (Apollo 11), NASA",
+      "date": "1969-07-21",
+      "license": "Public domain (work of NASA, US federal government)"
     },
     "lincoln": {
       "url": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Abraham_Lincoln_O-77_matte_collodion_print.jpg",
-      "sha256": "f5e79a35f74b54e0435dfc87f5956d6917725e2f5b8c17932ecf5bad704e29b2", "bytes": 3898023,
+      "sha256": "f5e79a35f74b54e0435dfc87f5956d6917725e2f5b8c17932ecf5bad704e29b2",
+      "bytes": 3898023,
       "page": "https://commons.wikimedia.org/wiki/File:Abraham_Lincoln_O-77_matte_collodion_print.jpg",
-      "author": "Alexander Gardner", "date": "1863-11-08", "license": "Public domain (published before 1930)"
+      "author": "Alexander Gardner",
+      "date": "1863-11-08",
+      "license": "Public domain (published before 1930)"
     },
     "douglass": {
       "url": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Frederick_Douglass_%28circa_1879%29.jpg",
-      "sha256": "f41225c397a63e6b70148d7e84da3ef4eab004a55750d60309f054b76a7fa5da", "bytes": 1167415,
+      "sha256": "f41225c397a63e6b70148d7e84da3ef4eab004a55750d60309f054b76a7fa5da",
+      "bytes": 1167415,
       "page": "https://commons.wikimedia.org/wiki/File:Frederick_Douglass_(circa_1879).jpg",
-      "author": "George Kendall Warren", "date": "c. 1879", "license": "Public domain (published before 1930)"
+      "author": "George Kendall Warren",
+      "date": "c. 1879",
+      "license": "Public domain (published before 1930)"
     },
     "migrant": {
       "url": "https://upload.wikimedia.org/wikipedia/commons/5/54/Lange-MigrantMother02.jpg",
-      "sha256": "bf7f77f366bd714735a3a7ec54df56caab0e11e9bd8ed6df2afa7147a94fbac7", "bytes": 5835684,
+      "sha256": "bf7f77f366bd714735a3a7ec54df56caab0e11e9bd8ed6df2afa7147a94fbac7",
+      "bytes": 5835684,
       "page": "https://commons.wikimedia.org/wiki/File:Lange-MigrantMother02.jpg",
-      "author": "Dorothea Lange (FSA, Library of Congress)", "date": "1936-03", "license": "Public domain (US government work, LOC: no known restrictions)"
+      "author": "Dorothea Lange (FSA, Library of Congress)",
+      "date": "1936-03",
+      "license": "Public domain (US government work, LOC: no known restrictions)"
     },
     "nyt1918": {
       "url": "https://upload.wikimedia.org/wikipedia/commons/7/75/NYTimes-Page1-11-11-1918.jpg",
-      "sha256": "fefa7da90753b8f8800b1ffcff4801c065a7916288dc3f3d551c3a3362323f18", "bytes": 1242587,
+      "sha256": "fefa7da90753b8f8800b1ffcff4801c065a7916288dc3f3d551c3a3362323f18",
+      "bytes": 1242587,
       "page": "https://commons.wikimedia.org/wiki/File:NYTimes-Page1-11-11-1918.jpg",
-      "author": "The New York Times", "date": "1918-11-11", "license": "Public domain (published before 1930)"
+      "author": "The New York Times",
+      "date": "1918-11-11",
+      "license": "Public domain (published before 1930)"
     }
   },
   "photos": [
-    { "id": "p01-face-jpeg", "split": "dev", "origin": "controlled", "categories": ["face", "jpeg-blocks", "skin-tone"],
-      "source": "ochoa", "crop": { "x": 0.33, "y": 0.06, "w": 0.36 }, "size": 256,
-      "degrade": { "filter": "", "jpegQ": 18 }, "roi": [{ "kind": "face", "x": 0.2, "y": 0.1, "w": 0.6, "h": 0.75 }] },
-    { "id": "p02-face-lowlight", "split": "eval", "origin": "controlled", "categories": ["face", "low-light", "noise", "skin-tone"],
-      "source": "chawla", "crop": { "x": 0.25, "y": 0.1, "w": 0.45 }, "size": 256,
-      "degrade": { "filter": "lutrgb=r=val*0.3:g=val*0.3:b=val*0.3,noise=alls=10:allf=u:all_seed=7", "jpegQ": 6 },
-      "roi": [{ "kind": "face", "x": 0.2, "y": 0.1, "w": 0.6, "h": 0.75 }] },
-    { "id": "p03-face-blur", "split": "eval", "origin": "controlled", "categories": ["face", "blur", "skin-tone"],
-      "source": "johnson", "crop": { "x": 0.2, "y": 0.07, "w": 0.55 }, "size": 256,
-      "degrade": { "filter": "gblur=sigma=0.9", "jpegQ": 4 }, "roi": [{ "kind": "face", "x": 0.2, "y": 0.1, "w": 0.6, "h": 0.75 }] },
-    { "id": "p04-small-face", "split": "eval", "origin": "controlled", "categories": ["small-face", "downscale"],
-      "source": "ochoa", "crop": { "x": 0.0, "y": 0.0, "w": 1.0 }, "size": 256,
-      "degrade": { "filter": "", "jpegQ": 4 }, "roi": [{ "kind": "face", "x": 0.37, "y": 0.06, "w": 0.27, "h": 0.3 }] },
-    { "id": "p05-scan-scratch", "split": "dev", "origin": "controlled", "categories": ["face", "scratch", "scanned-print"],
-      "source": "johnson", "crop": { "x": 0.2, "y": 0.07, "w": 0.55 }, "size": 256,
-      "degrade": { "filter": "colorchannelmixer=.393:.769:.189:0:.349:.686:.168:0:.272:.534:.131,noise=alls=14:allf=u:all_seed=11,drawbox=x=21:y=0:w=1:h=64:color=white@0.8:t=fill,drawbox=x=0:y=40:w=64:h=1:color=white@0.6:t=fill", "jpegQ": 3 },
-      "roi": [{ "kind": "face", "x": 0.2, "y": 0.1, "w": 0.6, "h": 0.75 }] },
-    { "id": "p06-lowlight-space", "split": "eval", "origin": "controlled", "categories": ["low-light", "jpeg-blocks", "texture"],
-      "source": "earthrise", "crop": { "x": 0.4, "y": 0.25, "w": 0.4 }, "size": 256,
-      "degrade": { "filter": "lutrgb=r=val*0.5:g=val*0.5:b=val*0.5", "jpegQ": 20 }, "roi": [] },
-    { "id": "p07-texture-noise", "split": "dev", "origin": "controlled", "categories": ["texture", "noise"],
-      "source": "aldrin", "crop": { "x": 0.05, "y": 0.65, "w": 0.3 }, "size": 256,
-      "degrade": { "filter": "noise=alls=12:allf=u:all_seed=3", "jpegQ": 5 }, "roi": [] },
-    { "id": "p08-text-jpeg", "split": "eval", "origin": "synthetic", "categories": ["text", "jpeg-blocks"],
-      "generator": "lavfi:testsrc2=s=256x256:r=25,trim=start_frame=30:end_frame=31", "size": 256,
-      "degrade": { "filter": "", "jpegQ": 12 }, "roi": [{ "kind": "text", "x": 0.0, "y": 0.0, "w": 1.0, "h": 1.0 }] },
-    { "id": "p09-zoneplate", "split": "dev", "origin": "synthetic", "categories": ["high-frequency", "aliasing"],
-      "generator": "node:zoneplate", "size": 256, "degrade": { "filter": "", "jpegQ": 0 }, "roi": [] },
-    { "id": "p10-alpha", "split": "eval", "origin": "synthetic", "categories": ["alpha"],
-      "generator": "node:alpha", "size": 256, "degrade": { "filter": "", "jpegQ": 0 }, "roi": [] },
-    { "id": "p11-highres-face", "split": "eval", "origin": "controlled", "categories": ["high-resolution", "face", "skin-tone"],
-      "source": "chawla", "crop": { "x": 0.1, "y": 0.04, "w": 0.75 }, "size": 768,
-      "degrade": { "filter": "", "jpegQ": 5 }, "roi": [{ "kind": "face", "x": 0.29, "y": 0.11, "w": 0.38, "h": 0.42 }] },
-    { "id": "r01-lincoln-1863", "split": "eval", "origin": "real-old", "categories": ["face", "real-old", "scanned-print"],
-      "source": "lincoln", "crop": { "x": 0.18, "y": 0.08, "w": 0.6 }, "size": 128,
-      "roi": [{ "kind": "face", "x": 0.15, "y": 0.1, "w": 0.7, "h": 0.8 }] },
-    { "id": "r02-douglass-1879", "split": "eval", "origin": "real-old", "categories": ["face", "real-old", "skin-tone"],
-      "source": "douglass", "crop": { "x": 0.25, "y": 0.15, "w": 0.55 }, "size": 128,
-      "roi": [{ "kind": "face", "x": 0.15, "y": 0.1, "w": 0.7, "h": 0.8 }] },
-    { "id": "r03-migrant-1936", "split": "dev", "origin": "real-old", "categories": ["faces", "real-old", "small-face"],
-      "source": "migrant", "crop": { "x": 0.05, "y": 0.0, "w": 0.9 }, "size": 128,
-      "roi": [{ "kind": "face", "x": 0.3, "y": 0.08, "w": 0.35, "h": 0.4 }] },
-    { "id": "r04-newspaper-1918", "split": "eval", "origin": "real-old", "categories": ["text", "real-old", "scanned-print"],
-      "source": "nyt1918", "crop": { "x": 0.03, "y": 0.09, "w": 0.45 }, "size": 128,
-      "roi": [{ "kind": "text", "x": 0.0, "y": 0.0, "w": 1.0, "h": 0.35 }] }
+    {
+      "id": "p01-face-jpeg",
+      "split": "dev",
+      "origin": "controlled",
+      "categories": [
+        "face",
+        "jpeg-blocks",
+        "skin-tone"
+      ],
+      "source": "ochoa",
+      "crop": {
+        "x": 0.33,
+        "y": 0.06,
+        "w": 0.36
+      },
+      "size": 256,
+      "degrade": {
+        "filter": "",
+        "jpegQ": 18
+      },
+      "roi": [
+        {
+          "kind": "face",
+          "x": 0.2,
+          "y": 0.25,
+          "w": 0.6,
+          "h": 0.7
+        }
+      ]
+    },
+    {
+      "id": "p02-face-lowlight",
+      "split": "eval",
+      "origin": "controlled",
+      "categories": [
+        "face",
+        "low-light",
+        "noise",
+        "skin-tone"
+      ],
+      "source": "chawla",
+      "crop": {
+        "x": 0.25,
+        "y": 0.1,
+        "w": 0.45
+      },
+      "size": 256,
+      "degrade": {
+        "filter": "lutrgb=r=val*0.3:g=val*0.3:b=val*0.3,noise=alls=10:allf=u:all_seed=7",
+        "jpegQ": 6
+      },
+      "roi": [
+        {
+          "kind": "face",
+          "x": 0.25,
+          "y": 0.2,
+          "w": 0.55,
+          "h": 0.7
+        }
+      ]
+    },
+    {
+      "id": "p03-face-blur",
+      "split": "eval",
+      "origin": "controlled",
+      "categories": [
+        "face",
+        "blur",
+        "skin-tone"
+      ],
+      "source": "johnson",
+      "crop": {
+        "x": 0.2,
+        "y": 0.07,
+        "w": 0.55
+      },
+      "size": 256,
+      "degrade": {
+        "filter": "gblur=sigma=0.9",
+        "jpegQ": 4
+      },
+      "roi": [
+        {
+          "kind": "face",
+          "x": 0.22,
+          "y": 0.2,
+          "w": 0.62,
+          "h": 0.75
+        }
+      ]
+    },
+    {
+      "id": "p04-small-face",
+      "split": "eval",
+      "origin": "controlled",
+      "categories": [
+        "small-face",
+        "downscale"
+      ],
+      "source": "ochoa",
+      "crop": {
+        "x": 0,
+        "y": 0,
+        "w": 1
+      },
+      "size": 256,
+      "degrade": {
+        "filter": "",
+        "jpegQ": 4
+      },
+      "roi": [
+        {
+          "kind": "face",
+          "x": 0.38,
+          "y": 0.12,
+          "w": 0.2,
+          "h": 0.28
+        }
+      ]
+    },
+    {
+      "id": "p05-scan-scratch",
+      "split": "dev",
+      "origin": "controlled",
+      "categories": [
+        "face",
+        "scratch",
+        "scanned-print"
+      ],
+      "source": "johnson",
+      "crop": {
+        "x": 0.2,
+        "y": 0.07,
+        "w": 0.55
+      },
+      "size": 256,
+      "degrade": {
+        "filter": "colorchannelmixer=.393:.769:.189:0:.349:.686:.168:0:.272:.534:.131,noise=alls=14:allf=u:all_seed=11,drawbox=x=21:y=0:w=1:h=64:color=white@0.8:t=fill,drawbox=x=0:y=40:w=64:h=1:color=white@0.6:t=fill",
+        "jpegQ": 3
+      },
+      "roi": [
+        {
+          "kind": "face",
+          "x": 0.22,
+          "y": 0.2,
+          "w": 0.62,
+          "h": 0.75
+        }
+      ]
+    },
+    {
+      "id": "p06-lowlight-space",
+      "split": "eval",
+      "origin": "controlled",
+      "categories": [
+        "low-light",
+        "jpeg-blocks",
+        "texture"
+      ],
+      "source": "earthrise",
+      "crop": {
+        "x": 0.4,
+        "y": 0.25,
+        "w": 0.4
+      },
+      "size": 256,
+      "degrade": {
+        "filter": "lutrgb=r=val*0.5:g=val*0.5:b=val*0.5",
+        "jpegQ": 20
+      },
+      "roi": []
+    },
+    {
+      "id": "p07-texture-noise",
+      "split": "dev",
+      "origin": "controlled",
+      "categories": [
+        "texture",
+        "noise"
+      ],
+      "source": "aldrin",
+      "crop": {
+        "x": 0.05,
+        "y": 0.65,
+        "w": 0.3
+      },
+      "size": 256,
+      "degrade": {
+        "filter": "noise=alls=12:allf=u:all_seed=3",
+        "jpegQ": 5
+      },
+      "roi": []
+    },
+    {
+      "id": "p08-text-jpeg",
+      "split": "eval",
+      "origin": "synthetic",
+      "categories": [
+        "text",
+        "jpeg-blocks"
+      ],
+      "generator": "lavfi:testsrc2=s=256x256:r=25,trim=start_frame=30:end_frame=31",
+      "size": 256,
+      "degrade": {
+        "filter": "",
+        "jpegQ": 12
+      },
+      "roi": [
+        {
+          "kind": "text",
+          "x": 0,
+          "y": 0,
+          "w": 0.4,
+          "h": 0.15
+        }
+      ]
+    },
+    {
+      "id": "p09-zoneplate",
+      "split": "dev",
+      "origin": "synthetic",
+      "categories": [
+        "high-frequency",
+        "aliasing"
+      ],
+      "generator": "node:zoneplate",
+      "size": 256,
+      "degrade": {
+        "filter": "",
+        "jpegQ": 0
+      },
+      "roi": []
+    },
+    {
+      "id": "p10-alpha",
+      "split": "eval",
+      "origin": "synthetic",
+      "categories": [
+        "alpha"
+      ],
+      "generator": "node:alpha",
+      "size": 256,
+      "degrade": {
+        "filter": "",
+        "jpegQ": 0
+      },
+      "roi": []
+    },
+    {
+      "id": "p11-highres-face",
+      "split": "eval",
+      "origin": "controlled",
+      "categories": [
+        "high-resolution",
+        "face",
+        "skin-tone"
+      ],
+      "source": "chawla",
+      "crop": {
+        "x": 0.1,
+        "y": 0.04,
+        "w": 0.75
+      },
+      "size": 768,
+      "degrade": {
+        "filter": "",
+        "jpegQ": 5
+      },
+      "roi": [
+        {
+          "kind": "face",
+          "x": 0.36,
+          "y": 0.06,
+          "w": 0.28,
+          "h": 0.32
+        }
+      ]
+    },
+    {
+      "id": "r01-lincoln-1863",
+      "split": "eval",
+      "origin": "real-old",
+      "categories": [
+        "face",
+        "real-old",
+        "scanned-print"
+      ],
+      "source": "lincoln",
+      "crop": {
+        "x": 0.18,
+        "y": 0.08,
+        "w": 0.6
+      },
+      "size": 128,
+      "roi": [
+        {
+          "kind": "face",
+          "x": 0.15,
+          "y": 0.1,
+          "w": 0.7,
+          "h": 0.8
+        }
+      ]
+    },
+    {
+      "id": "r02-douglass-1879",
+      "split": "eval",
+      "origin": "real-old",
+      "categories": [
+        "face",
+        "real-old",
+        "skin-tone"
+      ],
+      "source": "douglass",
+      "crop": {
+        "x": 0.25,
+        "y": 0.15,
+        "w": 0.55
+      },
+      "size": 128,
+      "roi": [
+        {
+          "kind": "face",
+          "x": 0.2,
+          "y": 0.1,
+          "w": 0.65,
+          "h": 0.85
+        }
+      ]
+    },
+    {
+      "id": "r03-migrant-1936",
+      "split": "dev",
+      "origin": "real-old",
+      "categories": [
+        "faces",
+        "real-old",
+        "small-face"
+      ],
+      "source": "migrant",
+      "crop": {
+        "x": 0.05,
+        "y": 0,
+        "w": 0.9
+      },
+      "size": 128,
+      "roi": [
+        {
+          "kind": "face",
+          "x": 0.28,
+          "y": 0.08,
+          "w": 0.34,
+          "h": 0.5
+        }
+      ]
+    },
+    {
+      "id": "r04-newspaper-1918",
+      "split": "eval",
+      "origin": "real-old",
+      "categories": [
+        "text",
+        "real-old",
+        "scanned-print"
+      ],
+      "source": "nyt1918",
+      "crop": {
+        "x": 0.03,
+        "y": 0.09,
+        "w": 0.45
+      },
+      "size": 128,
+      "roi": [
+        {
+          "kind": "text",
+          "x": 0,
+          "y": 0,
+          "w": 1,
+          "h": 0.35
+        }
+      ]
+    }
   ],
   "clips": [
-    { "id": "c01-pan-texture", "split": "eval", "origin": "controlled", "categories": ["camera-motion", "texture"],
-      "graph": "[S:aldrin]scale=1280:-2,loop=loop=-1:size=1,fps=25,crop=320:176:x='80+t*120':y=880" },
-    { "id": "c02-face-zoom", "split": "eval", "origin": "controlled", "categories": ["face", "slow-motion", "skin-tone"],
-      "graph": "[S:ochoa]scale=960:-2,crop=960:528:0:40,loop=loop=-1:size=1,fps=25,zoompan=z='1+0.25*on/75':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=320x176:fps=25" },
-    { "id": "c03-text-motion", "split": "dev", "origin": "synthetic", "categories": ["text", "fast-motion"],
-      "graph": "testsrc2=s=320x176:r=25" },
-    { "id": "c04-scene-cut", "split": "eval", "origin": "controlled", "categories": ["scene-cut", "face"],
-      "graph": "[S:johnson]scale=640:-2,crop=640:352:0:60,loop=loop=-1:size=1,fps=25,crop=320:176:x='60+t*40':y=40,trim=duration=1.52,setpts=PTS-STARTPTS[a];[S:earthrise]scale=960:-2,loop=loop=-1:size=1,fps=25,crop=320:176:x='380+t*30':y=230,trim=duration=1.48,setpts=PTS-STARTPTS[b];[a][b]concat=n=2:v=1" },
-    { "id": "c05-lowlight-noise", "split": "dev", "origin": "controlled", "categories": ["low-light", "noise", "camera-motion"],
+    {
+      "id": "c01-pan-texture",
+      "split": "eval",
+      "origin": "controlled",
+      "categories": [
+        "camera-motion",
+        "texture"
+      ],
+      "graph": "[S:aldrin]scale=1280:-2,loop=loop=-1:size=1,fps=25,crop=320:176:x='80+t*120':y=880"
+    },
+    {
+      "id": "c02-face-zoom",
+      "split": "eval",
+      "origin": "controlled",
+      "categories": [
+        "face",
+        "slow-motion",
+        "skin-tone"
+      ],
+      "graph": "[S:ochoa]scale=960:-2,crop=960:528:0:40,loop=loop=-1:size=1,fps=25,zoompan=z='1+0.25*on/75':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=320x176:fps=25"
+    },
+    {
+      "id": "c03-text-motion",
+      "split": "dev",
+      "origin": "synthetic",
+      "categories": [
+        "text",
+        "fast-motion"
+      ],
+      "graph": "testsrc2=s=320x176:r=25"
+    },
+    {
+      "id": "c04-scene-cut",
+      "split": "eval",
+      "origin": "controlled",
+      "categories": [
+        "scene-cut",
+        "face"
+      ],
+      "graph": "[S:johnson]scale=640:-2,crop=640:352:0:60,loop=loop=-1:size=1,fps=25,crop=320:176:x='60+t*40':y=40,trim=duration=1.52,setpts=PTS-STARTPTS[a];[S:earthrise]scale=960:-2,loop=loop=-1:size=1,fps=25,crop=320:176:x='380+t*30':y=230,trim=duration=1.48,setpts=PTS-STARTPTS[b];[a][b]concat=n=2:v=1"
+    },
+    {
+      "id": "c05-lowlight-noise",
+      "split": "dev",
+      "origin": "controlled",
+      "categories": [
+        "low-light",
+        "noise",
+        "camera-motion"
+      ],
       "graph": "[S:earthrise]scale=960:-2,loop=loop=-1:size=1,fps=25,crop=320:176:x='300+t*50':y=220",
-      "inputFilter": "lutrgb=r=val*0.35:g=val*0.35:b=val*0.35,noise=alls=10:allf=t+u:all_seed=5" },
-    { "id": "c06-fast-motion", "split": "eval", "origin": "controlled", "categories": ["fast-motion", "face"],
-      "graph": "[S:lincoln]scale=1600:-2,loop=loop=-1:size=1,fps=25,crop=320:176:x='t*400':y=420" }
+      "inputFilter": "lutrgb=r=val*0.35:g=val*0.35:b=val*0.35,noise=alls=10:allf=t+u:all_seed=5"
+    },
+    {
+      "id": "c06-fast-motion",
+      "split": "eval",
+      "origin": "controlled",
+      "categories": [
+        "fast-motion",
+        "face"
+      ],
+      "graph": "[S:lincoln]scale=1600:-2,loop=loop=-1:size=1,fps=25,crop=320:176:x='t*400':y=420"
+    }
   ],
   "structural": [
-    { "id": "s01-interlaced-tff", "categories": ["interlaced", "field-order"], "for": ["V01", "V03"],
-      "note": "50p testsrc2 fields woven into 25i, top field first, MPEG-2 interlaced coding" },
-    { "id": "s02-vfr", "categories": ["vfr"], "for": ["V01", "V03"],
-      "note": "30 fps source with every second frame of 0.67-1.33 s dropped, timestamps kept" },
-    { "id": "s03-av-sync", "categories": ["av-sync"], "for": ["V03"],
-      "note": "white flash frame and 1 kHz beep at t = 0, 1, 2 s; measured offset must stay below one frame" }
+    {
+      "id": "s01-interlaced-tff",
+      "categories": [
+        "interlaced",
+        "field-order"
+      ],
+      "for": [
+        "V01",
+        "V03"
+      ],
+      "note": "50p testsrc2 fields woven into 25i, top field first, MPEG-2 interlaced coding"
+    },
+    {
+      "id": "s02-vfr",
+      "categories": [
+        "vfr"
+      ],
+      "for": [
+        "V01",
+        "V03"
+      ],
+      "note": "30 fps source with every second frame of 0.67-1.33 s dropped, timestamps kept"
+    },
+    {
+      "id": "s03-av-sync",
+      "categories": [
+        "av-sync"
+      ],
+      "for": [
+        "V03"
+      ],
+      "note": "white flash frame and 1 kHz beep at t = 0, 1, 2 s; measured offset must stay below one frame"
+    }
   ]
 }
