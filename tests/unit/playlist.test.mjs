@@ -1,3 +1,4 @@
+import "./i18n-setup.mjs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { wrapIndex, hasNextItem, itemMetaText } from "../../src/ui/playlist.js";

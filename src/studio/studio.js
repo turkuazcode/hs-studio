@@ -182,7 +182,9 @@ export function createPhotoStudio(app) {
   listen?.("photo-scan-progress", (e) => {
     const p = e.payload;
     if (p.scanId !== scanId) return;
-    statusEl.textContent = p.phase === "exif" ? `Çekim tarihleri okunuyor… ${p.done} / ${p.total}` : `Taranıyor… ${p.done} dosya`;
+    statusEl.textContent = p.phase === "exif"
+      ? t("studio.status.readingDates", { done: p.done, total: p.total })
+      : t("studio.status.scanningN", { done: p.done });
   });
 
   async function openFolder(path, { focusPath = null, keepScroll = false } = {}) {
@@ -210,7 +212,7 @@ export function createPhotoStudio(app) {
     renderFavorites();
     markTree();
     emptyEl.hidden = true;
-    statusEl.textContent = "Taranıyor…";
+    statusEl.textContent = t("studio.status.scanning");
     try {
       const s = await invoke("photo_scan", {
         dir,
@@ -226,12 +228,12 @@ export function createPhotoStudio(app) {
         syncSelection();
       }
       if (focusPath) focusOn(focusPath);
-      if (!items.length) showEmpty(s.folders.length ? "Bu klasörde fotoğraf yok. Soldaki ağaçtan bir alt klasör seçin." : "Bu klasörde fotoğraf veya video yok.");
+      if (!items.length) showEmpty(t(s.folders.length ? "studio.empty.pickSubfolder" : "studio.empty.none"));
       updateStatus(s.elapsedMs);
     } catch (e) {
       if (id !== scanId) return;
       gridEl.dataset.loading = "0";
-      showEmpty(`Klasör açılamadı: ${String(e).replace(/^\[[a-z-]+\]\s*/, "")}`);
+      showEmpty(t("studio.empty.openFailed", { error: String(e).replace(/^\[[a-z-]+\]\s*/, "") }));
       statusEl.textContent = "";
     }
   }
@@ -272,9 +274,9 @@ export function createPhotoStudio(app) {
   function updateStatus(scanMs) {
     const n = view.length, total = items.length;
     const imgs = view.filter((i) => i.kind !== "video").length;
-    const parts = [n === total ? `${n} öğe` : `${n} / ${total} öğe`];
-    if (n - imgs) parts.push(`${imgs} fotoğraf, ${n - imgs} video`);
-    if (sel.selected.size) parts.push(`${sel.selected.size} seçili`);
+    const parts = [n === total ? t("studio.status.items", { n }) : t("studio.status.itemsOf", { n, total })];
+    if (n - imgs) parts.push(t("studio.status.mix", { photos: imgs, videos: n - imgs }));
+    if (sel.selected.size) parts.push(t("studio.status.selected", { n: sel.selected.size }));
     if (scanMs != null) parts.push(`${scanMs} ms`);
     statusEl.textContent = parts.join(" · ");
     gridEl.dataset.count = n;
@@ -353,20 +355,25 @@ export function createPhotoStudio(app) {
   // Buttons injected into the existing photo HUD (shown only for folder sessions / local files)
   const hudRight = dom.photoHud?.querySelector(".photo-hud-right");
   const hudLeft = dom.photoHud?.querySelector(".photo-hud-left");
-  const mkHudBtn = (id, title, html) => Object.assign(document.createElement("button"), { id, className: "hud-btn", title, innerHTML: html });
-  const backBtn = mkHudBtn("ps-back-to-studio", "Stüdyoya dön (Esc)", '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M3 4h6v6H3zM11 4h6v6h-6zM3 12h6v4H3zM11 12h6v4h-6z"/></svg>');
-  const editBtn = mkHudBtn("ps-viewer-edit", "Düzenle", '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M13.6 2.6a2 2 0 012.8 2.8l-9 9L4 15l.6-3.4 9-9zM3 17h14v1.5H3z"/></svg>');
-  const infoBtn = mkHudBtn("ps-viewer-info", "Ayrıntılar: EXIF, histogram, harita", '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M3 3h14v14H3V3zm2 10v2h2v-2H5zm4-4v6h2V9H9zm4-3v9h2V6h-2z"/></svg>');
+  // title = i18n key (data-i18n-title: re-translated on a language switch)
+  const mkHudBtn = (id, titleKey, html) => {
+    const b = Object.assign(document.createElement("button"), { id, className: "hud-btn", title: t(titleKey), innerHTML: html });
+    b.dataset.i18nTitle = titleKey;
+    return b;
+  };
+  const backBtn = mkHudBtn("ps-back-to-studio", "studio.viewer.back", '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M3 4h6v6H3zM11 4h6v6h-6zM3 12h6v4H3zM11 12h6v4h-6z"/></svg>');
+  const editBtn = mkHudBtn("ps-viewer-edit", "ui.studio.edit", '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M13.6 2.6a2 2 0 012.8 2.8l-9 9L4 15l.6-3.4 9-9zM3 17h14v1.5H3z"/></svg>');
+  const infoBtn = mkHudBtn("ps-viewer-info", "studio.viewer.details", '<svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M3 3h14v14H3V3zm2 10v2h2v-2H5zm4-4v6h2V9H9zm4-3v9h2V6h-2z"/></svg>');
   // Slim viewer toolbar: back + edit visible, the rest behind "⋯" (UI principles)
-  const viewerMoreBtn = mkHudBtn("ps-viewer-more", "Diğer", "⋯");
+  const viewerMoreBtn = mkHudBtn("ps-viewer-more", "studio.viewer.more", "⋯");
   viewerMoreBtn.classList.add("ps-hud-more");
   hudLeft?.prepend(backBtn);
   hudRight?.append(editBtn, viewerMoreBtn);
   const viewerMenu = createMenu([
-    { id: "info", label: "Ayrıntılar (EXIF, histogram, harita)", run: () => infoBtn.click() },
-    { id: "studio", label: "Klasörde göster (Fotoğraf Stüdyosu)", run: () => backToStudio() },
-    { id: "rotateLeft", label: "Sola döndür", run: () => dom.btnPhotoRotateLeft?.click() },
-    { id: "settings", label: "Fotoğraf ayarları…", run: () => app.settingsModal?.open("photo"), enabled: () => !!app.settingsModal },
+    { id: "info", get label() { return t("studio.viewer.detailsMenu"); }, run: () => infoBtn.click() },
+    { id: "studio", get label() { return t("studio.viewer.showInStudio"); }, run: () => backToStudio() },
+    { id: "rotateLeft", get label() { return t("shortcuts.actions.rotateLeft"); }, run: () => dom.btnPhotoRotateLeft?.click() },
+    { id: "settings", get label() { return t("studio.menu.photoSettings"); }, run: () => app.settingsModal?.open("photo"), enabled: () => !!app.settingsModal },
   ]);
   viewerMoreBtn.addEventListener("click", () => (viewerMenu.isOpen ? viewerMenu.close() : viewerMenu.openFor(viewerMoreBtn)));
   function viewerButtons(on) {
@@ -417,7 +424,7 @@ export function createPhotoStudio(app) {
     li.setAttribute("aria-expanded", "false");
     const row = document.createElement("div");
     row.className = "ps-tree-row";
-    const tog = Object.assign(document.createElement("button"), { className: "ps-tree-toggle", title: "Aç / kapat", textContent: "▸" });
+    const tog = Object.assign(document.createElement("button"), { className: "ps-tree-toggle", title: t("studio.tree.toggle"), textContent: "▸" });
     const label = Object.assign(document.createElement("button"), { className: "ps-tree-label", textContent: entry.name, title: entry.path });
     row.append(tog, label);
     li.append(row);
@@ -480,18 +487,19 @@ export function createPhotoStudio(app) {
       li.className = "ps-fav" + (dir && sameDir(p, dir) ? " current" : "");
       li.dataset.path = p;
       const open = Object.assign(document.createElement("button"), { className: "ps-fav-open", textContent: baseName(p) || p, title: p });
-      const rm = Object.assign(document.createElement("button"), { className: "ps-fav-remove", textContent: "✕", title: "Favorilerden çıkar" });
+      const rm = Object.assign(document.createElement("button"), { className: "ps-fav-remove", textContent: "✕", title: t("studio.fav.remove") });
       li.append(open, rm);
       return li;
     }));
     if (!favs.length) {
-      favsEl.append(Object.assign(document.createElement("li"), { className: "ps-fav-empty", textContent: "Klasörü ☆ ile favorilere ekleyin" }));
+      favsEl.append(Object.assign(document.createElement("li"), { className: "ps-fav-empty", textContent: t("studio.fav.empty") }));
     }
     const star = $("ps-fav-toggle");
     const isFav = !!dir && favs.some((p) => sameDir(p, dir));
     star.textContent = isFav ? "★" : "☆";
     star.classList.toggle("active", isFav);
-    star.title = isFav ? "Favorilerden çıkar" : "Favorilere ekle";
+    star.title = t(isFav ? "studio.fav.remove" : "ui.studio.favAdd");
+    star.dataset.i18nTitle = isFav ? "studio.fav.remove" : "ui.studio.favAdd";
     star.disabled = !dir;
   }
 
@@ -604,7 +612,7 @@ export function createPhotoStudio(app) {
   $("ps-act-compare").addEventListener("click", () => {
     const photos = selectedItems().filter((i) => i.kind !== "video");
     if (photos.length >= 2 && photos.length <= 4) compare.open(photos);
-    else app.toast("Karşılaştırma için 2-4 fotoğraf seçin");
+    else app.toast(t("studio.compareNeeds"));
   });
   $("ps-act-batch").addEventListener("click", () => {
     const photos = selectedItems().filter((i) => i.kind !== "video");
@@ -638,10 +646,10 @@ export function createPhotoStudio(app) {
   const cmd = (id) => () => $(id).click();
   const can = (id) => () => !$(id).disabled;
   const studioMenu = createMenu([
-    { id: "open", label: "Aç", run: cmd("ps-act-open"), enabled: can("ps-act-open") },
-    { id: "edit", label: "Düzenle", run: cmd("ps-act-edit"), enabled: can("ps-act-edit") },
-    { id: "compare", label: "Karşılaştır (2-4 fotoğraf)", run: cmd("ps-act-compare"), enabled: can("ps-act-compare") },
-    { id: "batch", label: "Toplu işlem…", run: cmd("ps-act-batch"), enabled: can("ps-act-batch") },
+    { id: "open", get label() { return t("ui.studio.open"); }, run: cmd("ps-act-open"), enabled: can("ps-act-open") },
+    { id: "edit", get label() { return t("ui.studio.edit"); }, run: cmd("ps-act-edit"), enabled: can("ps-act-edit") },
+    { id: "compare", get label() { return t("studio.menu.compare"); }, run: cmd("ps-act-compare"), enabled: can("ps-act-compare") },
+    { id: "batch", get label() { return t("studio.menu.batch"); }, run: cmd("ps-act-batch"), enabled: can("ps-act-batch") },
     { id: "s1", separator: true },
     // File actions (Plan 06, ui/media-actions.js) on the selection
     { id: "s2", separator: true },
@@ -651,10 +659,10 @@ export function createPhotoStudio(app) {
     { id: "reveal", get label() { return t("actions.menu.showInFolder"); }, run: () => app.mediaActions?.forPaths.reveal(selectedPaths()), enabled: hasSelection },
     { id: "delete", get label() { return t("actions.menu.delete"); }, run: () => app.mediaActions?.forPaths.delete(selectedPaths()), enabled: hasSelection },
     { id: "s3", separator: true },
-    { id: "info", label: "Bilgi paneli (EXIF, histogram, harita)", run: cmd("ps-act-info") },
-    { id: "selectAll", label: "Tümünü seç", run: () => { sel = selectAll(paths, sel); syncSelection(); }, enabled: () => paths.length > 0 },
-    { id: "pick", label: "Klasör seç…", run: () => pickFolder(), enabled: () => !!dialogOpen },
-    { id: "settings", label: "Fotoğraf ayarları…", run: () => app.settingsModal?.open("photo"), enabled: () => !!app.settingsModal },
+    { id: "info", get label() { return t("studio.menu.infoPanel"); }, run: cmd("ps-act-info") },
+    { id: "selectAll", get label() { return t("studio.menu.selectAll"); }, run: () => { sel = selectAll(paths, sel); syncSelection(); }, enabled: () => paths.length > 0 },
+    { id: "pick", get label() { return t("ui.studio.pickFolder"); }, run: () => pickFolder(), enabled: () => !!dialogOpen },
+    { id: "settings", get label() { return t("studio.menu.photoSettings"); }, run: () => app.settingsModal?.open("photo"), enabled: () => !!app.settingsModal },
   ]);
   $("ps-more").addEventListener("click", (e) => (studioMenu.isOpen ? studioMenu.close() : studioMenu.openFor(e.currentTarget)));
   gridEl.addEventListener("contextmenu", (e) => {
@@ -759,10 +767,12 @@ export function createPhotoStudio(app) {
   // Address bar: type / paste a folder path (pencil button next to the breadcrumb)
   const pathForm = Object.assign(document.createElement("form"), { className: "ps-path-form", hidden: true });
   const pathInput = Object.assign(document.createElement("input"), {
-    id: "ps-path", className: "ps-input ps-path", type: "text", spellcheck: false, placeholder: "Klasör yolu yazın ve Enter",
+    id: "ps-path", className: "ps-input ps-path", type: "text", spellcheck: false, placeholder: t("studio.path.placeholder"),
   });
+  pathInput.dataset.i18nPlaceholder = "studio.path.placeholder";
   pathForm.append(pathInput);
-  const pathBtn = Object.assign(document.createElement("button"), { id: "ps-path-edit", className: "ps-btn", title: "Yolu yaz / yapıştır", textContent: "✎" });
+  const pathBtn = Object.assign(document.createElement("button"), { id: "ps-path-edit", className: "ps-btn", title: t("studio.path.edit"), textContent: "✎" });
+  pathBtn.dataset.i18nTitle = "studio.path.edit";
   crumbEl.after(pathForm, pathBtn);
   const closePath = () => { pathForm.hidden = true; crumbEl.hidden = false; };
   pathBtn.addEventListener("click", () => {
@@ -796,7 +806,7 @@ export function createPhotoStudio(app) {
     const last = settings.get("lastFolder", "");
     if (!dir && last) openFolder(last, { focusPath });
     else if (dirty && dir) openFolder(dir, { keepScroll: true, focusPath });
-    else if (!dir) showEmpty("Göz atmak için soldan bir klasör seçin.");
+    else if (!dir) showEmpty(t("studio.empty.pickFolder"));
     else if (focusPath) focusOn(focusPath);
     nextFrame(() => { grid.renderNow(); gridEl.focus({ preventScroll: true }); });
   }
@@ -814,15 +824,18 @@ export function createPhotoStudio(app) {
 
   // -------------------------------------------- entry points (titlebar, start)
   const titleBtn = Object.assign(document.createElement("button"), {
-    id: "btn-photo-studio", className: "titlebar-action-btn", title: "Fotoğraf Stüdyosu: klasöre göz at",
-    innerHTML: `${STUDIO_ICON}<span>Fotoğraflar</span>`,
+    id: "btn-photo-studio", className: "titlebar-action-btn", title: t("studio.entry.title"),
+    innerHTML: `${STUDIO_ICON}<span data-i18n="studio.entry.button">${t("studio.entry.button")}</span>`,
   });
+  titleBtn.dataset.i18nTitle = "studio.entry.title";
   dom.titlebar?.querySelector(".titlebar-actions")?.prepend(titleBtn);
   titleBtn.addEventListener("click", () => (root.hidden ? show() : hide()));
 
   const startBtn = Object.assign(document.createElement("button"), {
-    id: "btn-open-studio", className: "btn-secondary", innerHTML: `${STUDIO_ICON} Klasöre Göz At`,
+    id: "btn-open-studio", className: "btn-secondary",
+    innerHTML: `${STUDIO_ICON} <span data-i18n="studio.entry.browse">${t("studio.entry.browse")}</span>`,
   });
+
   dom.dropZone?.querySelector(".drop-actions")?.append(startBtn);
   startBtn.addEventListener("click", () => show());
 

@@ -21,6 +21,7 @@
 // ==========================================================================
 
 import { isAudioOnlyName } from "../classify.js";
+import { t as tr } from "../../core/i18n.js";
 
 export const ENGINE_EVENTS = Object.freeze([
   "loaded", "time", "duration", "playstate", "ended", "error", "tracks", "chapters",
@@ -68,10 +69,10 @@ export function normalizeTracks(list) {
   return out;
 }
 
-/** Menu text: title, else language name, else "Kanal <id>"; codec/language appended. */
+/** Menu text: title, else language name, else "Channel <id>" (i18n); codec/language appended. */
 export function trackLabel(t) {
-  const name = t.title || languageName(t.lang) || `Kanal ${t.id}`;
-  const extra = [t.title && t.lang ? t.lang : "", t.codec ? String(t.codec).toUpperCase() : "", t.external ? "harici" : ""]
+  const name = t.title || languageName(t.lang) || tr("ui.tracks.channel", { id: t.id });
+  const extra = [t.title && t.lang ? t.lang : "", t.codec ? String(t.codec).toUpperCase() : "", t.external ? tr("ui.tracks.external") : ""]
     .filter(Boolean).join(", ");
   return extra ? `${name} (${extra})` : name;
 }
@@ -79,7 +80,7 @@ export function trackLabel(t) {
 /** mpv chapter-list -> [{ index, time, title }] (titles default to "Bölüm n"). */
 export function normalizeChapters(list) {
   return (Array.isArray(list) ? list : [])
-    .map((c, index) => ({ index, time: Number(c.time) || 0, title: c.title || `Bölüm ${index + 1}` }))
+    .map((c, index) => ({ index, time: Number(c.time) || 0, title: c.title || tr("ui.tracks.chapter", { n: index + 1 }) }))
     .sort((a, b) => a.time - b.time);
 }
 
@@ -94,34 +95,55 @@ export function chapterAt(chapters, t) {
 export const EQ_BANDS = Object.freeze([31, 62, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]);
 
 export const EQ_PRESETS = Object.freeze({
-  flat:      { label: "Düz",            gains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
-  bass:      { label: "Bas Güçlendir",  gains: [6, 5, 4, 2, 0, 0, 0, 0, 0, 0] },
-  treble:    { label: "Tiz Güçlendir",  gains: [0, 0, 0, 0, 0, 0, 2, 4, 5, 6] },
-  vocal:     { label: "Konuşma/Vokal",  gains: [-3, -2, -1, 0, 2, 4, 4, 3, 1, 0] },
-  rock:      { label: "Rock",           gains: [5, 4, 2, 0, -1, -1, 1, 3, 4, 5] },
-  pop:       { label: "Pop",            gains: [-1, 1, 3, 4, 3, 0, -1, -1, 1, 2] },
-  classical: { label: "Klasik",         gains: [3, 2, 1, 0, 0, 0, -1, 1, 2, 3] },
-  cinema:    { label: "Sinema",         gains: [4, 3, 1, 0, -1, 0, 1, 2, 3, 2] },
-  night:     { label: "Gece (yumuşak)", gains: [-4, -3, -1, 0, 1, 2, 2, 0, -2, -3] },
+  flat:      { labelKey: "audio.eq.flat", gains: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+  bass:      { labelKey: "audio.eq.bass", gains: [6, 5, 4, 2, 0, 0, 0, 0, 0, 0] },
+  treble:    { labelKey: "audio.eq.treble", gains: [0, 0, 0, 0, 0, 0, 2, 4, 5, 6] },
+  vocal:     { labelKey: "audio.eq.vocal", gains: [-3, -2, -1, 0, 2, 4, 4, 3, 1, 0] },
+  rock:      { labelKey: "audio.eq.rock", gains: [5, 4, 2, 0, -1, -1, 1, 3, 4, 5] },
+  pop:       { labelKey: "audio.eq.pop", gains: [-1, 1, 3, 4, 3, 0, -1, -1, 1, 2] },
+  classical: { labelKey: "audio.eq.classical", gains: [3, 2, 1, 0, 0, 0, -1, 1, 2, 3] },
+  cinema:    { labelKey: "audio.eq.cinema", gains: [4, 3, 1, 0, -1, 0, 1, 2, 3, 2] },
+  night:     { labelKey: "audio.eq.night", gains: [-4, -3, -1, 0, 1, 2, 2, 0, -2, -3] },
 });
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
+/** Peak limit of the booster/limiter stage: -1 dBFS (0.891 linear), both engines. */
+export const LIMITER_CEILING = 0.891;
+
+/** Limiter stage of the libmpv chain (lavfi alimiter, LGPL libavfilter; auto-level off). */
+export const LAVFI_LIMITER = `alimiter=limit=${LIMITER_CEILING}:attack=5:release=50:level=0`;
+
 /**
  * libavfilter chain for mpv's `af` property ("" = no filters).
  * eq: 10 gains in dB; normalize: dynamic loudness normalisation;
- * restore: the AI audio switches { denoise, voice, compressor } mapped to lavfi filters.
+ * restore: the audio filter switches { denoise, voice, compressor } mapped to lavfi filters
+ * (plain DSP, not a neural network);
+ * boost: linear gain above 100 % volume (mpv's own volume stays <= 100 because its curve is
+ * cubic: 200 % would be 8x and clip). Whenever a stage can raise the level (boost, a positive
+ * EQ band, the +5.5 dB voice band) a limiter ends the chain so the output never hard-clips.
  */
-export function audioFilterChain({ eq = [], normalize = false, restore = null } = {}) {
+export function audioFilterChain({ eq = [], normalize = false, restore = null, boost = 1 } = {}) {
   const parts = [];
+  let raises = false;
   if (restore?.denoise) parts.push("highpass=f=90", "lowpass=f=7500");
-  if (restore?.voice) parts.push("equalizer=f=2400:t=q:w=1.1:g=5.5");
+  if (restore?.voice) {
+    parts.push("equalizer=f=2400:t=q:w=1.1:g=5.5");
+    raises = true;
+  }
   EQ_BANDS.forEach((f, i) => {
     const g = clamp(Math.round((Number(eq[i]) || 0) * 10) / 10, -12, 12);
     if (g !== 0) parts.push(`equalizer=f=${f}:t=o:w=1:g=${g}`);
+    if (g > 0) raises = true;
   });
   if (restore?.compressor) parts.push("acompressor=threshold=0.063:ratio=4:attack=3:release=250:knee=4");
   if (normalize) parts.push("dynaudnorm=f=250:g=15:p=0.9");
+  const gain = clamp(Number(boost) || 1, 1, 4);
+  if (gain > 1) {
+    parts.push(`volume=${gain.toFixed(3)}`);
+    raises = true;
+  }
+  if (raises) parts.push(LAVFI_LIMITER);
   return parts.length ? `lavfi=[${parts.join(",")}]` : "";
 }
 

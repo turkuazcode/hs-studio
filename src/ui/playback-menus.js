@@ -11,6 +11,7 @@
 // ==========================================================================
 
 import { formatTime } from "../core/format.js";
+import { i18n, t as tr } from "../core/i18n.js";
 import {
   DEFAULT_VIEW, addBookmark, chapterAt, isAudioOnlyMedia, nextZoom, subMarginFor,
 } from "../media/engine/engine.js";
@@ -20,7 +21,8 @@ import { createPopupMenu } from "./menus.js";
 export const bookmarkKey = (fileKey) => (fileKey ? `vho_bm_${fileKey}` : "");
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
-const ASPECTS = [["contain", "Orijinal"], ["16-9", "16:9"], ["21-9", "21:9"], ["4-3", "4:3"], ["fill", "Ekrana yay"]];
+/** [value, label or i18n key ("ui.*")] */
+const ASPECTS = [["contain", "ui.menu.aspectOriginal"], ["16-9", "16:9"], ["21-9", "21:9"], ["4-3", "4:3"], ["fill", "ui.menu.aspectFill"]];
 
 /**
  * app: { dom, state, bus, engine, toast, hud, timeline, subtitles, video, snapshot, settingsModal }
@@ -47,37 +49,37 @@ export function createPlaybackMenus(app) {
     const r = more.element.getBoundingClientRect();
     more.element.style.top = `${Math.max(4, anchor.y - r.height - 8)}px`;
   }
-  const sub = (items) => () => setTimeout(() => openMenu([{ id: "back", label: "‹ Geri", run: sub(rootItems()) }, { separator: true }, ...items]), 0);
+  const sub = (items) => () => setTimeout(() => openMenu([{ id: "back", label: tr("ui.menu.back"), run: sub(rootItems()) }, { separator: true }, ...items]), 0);
   const check = (on) => (on ? "✓ " : "    ");
 
   function rootItems() {
     const items = [];
     if (tracks.audio.length > 1) {
       const sel = tracks.audio.find((t) => t.selected);
-      items.push({ id: "audio-tracks", label: `Ses kanalı: ${sel ? sel.label : "—"} ›`, run: sub(audioTrackItems()) });
+      items.push({ id: "audio-tracks", label: tr("ui.menu.audioTrack", { label: sel ? sel.label : "—" }), run: sub(audioTrackItems()) });
     }
-    if (chapters.length) items.push({ id: "chapters", label: `Bölümler (${chapters.length}) ›`, run: sub(chapterItems()) });
-    items.push({ id: "bookmarks", label: `Yer imleri${bookmarks.length ? ` (${bookmarks.length})` : ""} ›`, run: sub(bookmarkItems()) });
-    items.push({ id: "speed", label: `Oynatma hızı: ${engine.rate}x ›`, run: sub(speedItems()) });
+    if (chapters.length) items.push({ id: "chapters", label: tr("ui.menu.chapters", { n: chapters.length }), run: sub(chapterItems()) });
+    items.push({ id: "bookmarks", label: bookmarks.length ? tr("ui.menu.bookmarksN", { n: bookmarks.length }) : tr("ui.menu.bookmarks"), run: sub(bookmarkItems()) });
+    items.push({ id: "speed", label: tr("ui.menu.speed", { rate: engine.rate }), run: sub(speedItems()) });
     const loop = app.timeline.loop;
     items.push({
-      id: "ab-loop", label: loop.a === null ? "A-B döngü: A noktası" : loop.b === null ? "A-B döngü: B noktası" : "A-B döngüyü kapat",
+      id: "ab-loop", label: tr(loop.a === null ? "ui.menu.abA" : loop.b === null ? "ui.menu.abB" : "ui.menu.abOff"),
       run: () => dom.btnAbLoop.click(),
     });
     if (!audioOnly()) {
       items.push(
         { separator: true },
-        { id: "aspect", label: `En-boy oranı ›`, run: sub(aspectItems()) },
-        { id: "view", label: "Görüntü: döndür, yansıt, yakınlaştır ›", run: sub(viewItems()) },
-        { id: "snapshot", label: "Ekran görüntüsü", shortcut: "snapshot", run: () => app.snapshot.capture() },
+        { id: "aspect", label: tr("ui.menu.aspect"), run: sub(aspectItems()) },
+        { id: "view", label: tr("ui.menu.view"), run: sub(viewItems()) },
+        { id: "snapshot", label: tr("ui.hud.snapshot"), shortcut: "snapshot", run: () => app.snapshot.capture() },
       );
-      if (engine.caps.pip) items.push({ id: "pip", label: "Resim içinde resim", shortcut: "pip", run: () => app.video.clickPip() });
+      if (engine.caps.pip) items.push({ id: "pip", label: tr("ui.hud.pip"), shortcut: "pip", run: () => app.video.clickPip() });
     }
     items.push({ separator: true });
-    if (!audioOnly()) items.push({ id: "video-settings", label: "Görüntü ayarları…", run: () => dom.btnToggleEffects.click() });
+    if (!audioOnly()) items.push({ id: "video-settings", label: tr("ui.menu.videoSettings"), run: () => dom.btnToggleEffects.click() });
     items.push(
-      { id: "audio-settings", label: "Ses ayarları (ekolayzır, gecikme)…", run: () => dom.btnToggleAudioPanel.click() },
-      { id: "settings", label: "Ayarlar…", shortcut: "settings", run: () => app.settingsModal?.open() },
+      { id: "audio-settings", label: tr("ui.menu.audioSettings"), run: () => dom.btnToggleAudioPanel.click() },
+      { id: "settings", label: tr("menu.settings"), shortcut: "settings", run: () => app.settingsModal?.open() },
     );
     return items;
   }
@@ -121,7 +123,7 @@ export function createPlaybackMenus(app) {
     id: `audio:${t.id}`, label: check(t.selected) + t.label,
     run: () => {
       engine.selectTrack("audio", t.id).catch((e) => console.warn("aid", e));
-      app.toast(`Ses kanalı: ${t.label}`);
+      app.toast(tr("ui.menu.audioTrackToast", { label: t.label }));
     },
   }));
 
@@ -162,16 +164,16 @@ export function createPlaybackMenus(app) {
   let bookmarks = [];
   const bmKey = () => bookmarkKey(state.get("currentFileKey"));
   const renderBookmarks = () =>
-    app.timeline.setMarkers("bookmark", bookmarks.map((b, i) => ({ time: b.time, title: b.label || `Yer imi ${i + 1}` })));
+    app.timeline.setMarkers("bookmark", bookmarks.map((b, i) => ({ time: b.time, title: b.label || tr("ui.menu.bookmarkN", { n: i + 1 }) })));
 
   function bookmarkItems() {
     return [
-      { id: "bookmark-add", label: "+ Yer imi ekle", shortcut: "bookmarkAdd", run: () => addCurrentBookmark() },
+      { id: "bookmark-add", label: tr("ui.menu.bookmarkAdd"), shortcut: "bookmarkAdd", run: () => addCurrentBookmark() },
       ...bookmarks.map((b, i) => ({
-        id: `bookmark:${i}`, label: `${formatTime(b.time)}  ${b.label || `Yer imi ${i + 1}`}`,
+        id: `bookmark:${i}`, label: `${formatTime(b.time)}  ${b.label || tr("ui.menu.bookmarkN", { n: i + 1 })}`,
         run: () => { engine.seek(b.time); app.hud.poke(); },
       })),
-      ...(bookmarks.length ? [{ separator: true }, { id: "bookmark-clear", label: "Yer imlerini sil", run: () => clearBookmarks() }] : []),
+      ...(bookmarks.length ? [{ separator: true }, { id: "bookmark-clear", label: tr("ui.menu.bookmarksClear"), run: () => clearBookmarks() }] : []),
     ];
   }
 
@@ -180,19 +182,19 @@ export function createPlaybackMenus(app) {
     const before = bookmarks.length;
     bookmarks = addBookmark(bookmarks, engine.time);
     if (bookmarks.length === before) {
-      app.toast("Bu noktada zaten bir yer imi var");
+      app.toast(tr("ui.menu.bookmarkExists"));
       return;
     }
     app.library.bookmarks.set(state.get("currentFileKey"), bookmarks);
     renderBookmarks();
-    app.toast(`Yer imi eklendi: ${formatTime(engine.time)}`);
+    app.toast(tr("ui.menu.bookmarkAdded", { time: formatTime(engine.time) }));
   }
 
   function clearBookmarks() {
     bookmarks = [];
     app.library.bookmarks.set(state.get("currentFileKey"), bookmarks);
     renderBookmarks();
-    app.toast("Yer imleri silindi");
+    app.toast(tr("ui.menu.bookmarksCleared"));
   }
 
   app.bus.on("media:loading", ({ item, kind }) => {
@@ -221,7 +223,7 @@ export function createPlaybackMenus(app) {
     run: () => document.querySelector(`#speed-menu [data-speed="${s === 1 ? "1.0" : s === 2 ? "2.0" : s}"]`)?.click(),
   }));
   const aspectItems = () => ASPECTS.map(([value, label]) => ({
-    id: `aspect:${value}`, label: check(state.get("currentAspect") === value) + label,
+    id: `aspect:${value}`, label: check(state.get("currentAspect") === value) + (label.startsWith("ui.") ? tr(label) : label),
     run: () => document.querySelector(`#aspect-menu [data-aspect="${value}"]`)?.click(),
   }));
 
@@ -235,12 +237,12 @@ export function createPlaybackMenus(app) {
     if (msg) app.toast(msg);
   }
   const viewItems = () => [
-    { id: "view:rotate", label: `↻ 90° döndür (şu an ${view.rotate}°)`, run: () => setView({ rotate: (view.rotate + 90) % 360 }, `Döndürme: ${(view.rotate + 90) % 360}°`) },
-    { id: "view:hflip", label: `${check(view.hflip)}Yatay yansıt`, run: () => setView({ hflip: !view.hflip }, view.hflip ? "Yatay yansıtma kapalı" : "Yatay yansıtıldı") },
-    { id: "view:vflip", label: `${check(view.vflip)}Dikey yansıt`, run: () => setView({ vflip: !view.vflip }, view.vflip ? "Dikey yansıtma kapalı" : "Dikey yansıtıldı") },
-    { id: "view:zoom-in", label: "+ Yakınlaştır", keyHint: "Ctrl+tekerlek", run: () => setView({ zoom: nextZoom(view.zoom, -1, 0.25) }, "Yakınlaştırıldı") },
-    { id: "view:zoom-out", label: "− Uzaklaştır", run: () => setView({ zoom: nextZoom(view.zoom, 1, 0.25), ...(view.zoom <= 0.25 ? { panX: 0, panY: 0 } : {}) }, "Uzaklaştırıldı") },
-    { id: "view:reset", label: "⟲ Görüntüyü sıfırla", run: () => setView({ ...DEFAULT_VIEW }, "Görüntü sıfırlandı") },
+    { id: "view:rotate", label: tr("ui.menu.rotate", { deg: view.rotate }), run: () => setView({ rotate: (view.rotate + 90) % 360 }, tr("ui.menu.rotated", { deg: (view.rotate + 90) % 360 })) },
+    { id: "view:hflip", label: `${check(view.hflip)}${tr("ui.menu.hflip")}`, run: () => setView({ hflip: !view.hflip }, tr(view.hflip ? "ui.menu.hflipOff" : "ui.menu.hflipOn")) },
+    { id: "view:vflip", label: `${check(view.vflip)}${tr("ui.menu.vflip")}`, run: () => setView({ vflip: !view.vflip }, tr(view.vflip ? "ui.menu.vflipOff" : "ui.menu.vflipOn")) },
+    { id: "view:zoom-in", label: tr("ui.menu.zoomIn"), keyHint: tr("ui.menu.ctrlWheel"), run: () => setView({ zoom: nextZoom(view.zoom, -1, 0.25) }, tr("ui.menu.zoomedIn")) },
+    { id: "view:zoom-out", label: tr("ui.menu.zoomOut"), run: () => setView({ zoom: nextZoom(view.zoom, 1, 0.25), ...(view.zoom <= 0.25 ? { panX: 0, panY: 0 } : {}) }, tr("ui.menu.zoomedOut")) },
+    { id: "view:reset", label: tr("ui.menu.viewReset"), run: () => setView({ ...DEFAULT_VIEW }, tr("ui.menu.viewResetDone")) },
   ];
 
   // Ctrl + wheel over the picture: zoom; Ctrl + drag: pan while zoomed
@@ -318,10 +320,12 @@ export function createPlaybackMenus(app) {
       engineInfo.textContent = `libmpv (${status.mpvVersion ?? "?"}, FFmpeg ${status.ffmpegVersion ?? "?"})${gpu}`;
     } else {
       engineInfo.textContent = status.available
-        ? "HTML5 <video> (bu öğe için: tarayıcı dosyası)"
-        : `HTML5 <video> yedek motoru${status.error ? ` — libmpv yok: ${status.error}` : ""}`;
+        ? tr("ui.engineInfo.html5ForFile")
+        : status.error ? tr("ui.engineInfo.fallbackError", { error: status.error }) : tr("ui.engineInfo.fallback");
     }
   }
+  i18n.onChange(() => renderEngineInfo());
+
 
   app.bus.on("engine:changed", () => {
     lastMargins = "";

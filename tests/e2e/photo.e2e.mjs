@@ -39,7 +39,7 @@ test("photo: two photos from the command line", { timeout: 120000 }, async (t) =
       await app.key("Minus");
       assert.equal(await app.text("#photo-zoom-level"), "125%");
       await app.key("Digit0");
-      assert.equal(await app.text("#photo-zoom-level"), "Fit");
+      assert.equal(await app.text("#photo-zoom-level"), "Sığdır");
       assert.match(await transform(), /scale\(1\) rotate\(0deg\)/);
     });
 
@@ -92,11 +92,21 @@ test("photo: two photos from the command line", { timeout: 120000 }, async (t) =
       await app.key("Digit0");
     });
 
-    await t.test("AI restoration toggle in photo mode (A) and playlist drawer (L)", async () => {
+    await t.test("picture filter toggle in photo mode (A), photo layout of the enhance panel (S04), playlist drawer (L)", async () => {
+      const laidOut = (sel) => app.eval(`(() => { let el = document.querySelector(${JSON.stringify(sel)}); for (; el; el = el.parentElement) if (getComputedStyle(el).display === "none") return false; return true; })()`);
+      assert.equal(await app.eval(`document.documentElement.dataset.media`), "image");
+      const drawerOpen = await app.eval(`document.getElementById("playlist-drawer").classList.contains("open")`);
+      await app.click("#btn-toggle-ai-restore"); // (opening the panel closes the playlist drawer)
+      assert.equal(await laidOut("#btn-deep-enhance"), true, "Enhance photo with AI shown for photos");
+      assert.match(await app.text("#btn-deep-enhance"), /AI/);
+      assert.equal(await laidOut("#check-ai-voice-clarity"), false, "sound filters hidden for photos");
+      assert.equal(await laidOut("#video-restore-note"), false);
+      await app.click("#btn-close-ai-restore");
+      if (drawerOpen) await app.eval(`document.getElementById("playlist-drawer").classList.add("open"), true`);
       await app.key("KeyA");
-      assert.match(await app.text("#ai-master-status"), /^Aktif/);
+      assert.match(await app.text("#ai-master-status"), /^(Açık|On)/);
       await app.key("KeyA");
-      assert.equal(await app.text("#ai-master-status"), "Kapalı (Orijinal)");
+      assert.match(await app.text("#ai-master-status"), /^(Kapalı \(orijinal\)|Off \(original\))$/);
       await app.key("KeyL");
       assert.equal(await app.eval(`document.getElementById("playlist-drawer").classList.contains("open")`), false);
     });

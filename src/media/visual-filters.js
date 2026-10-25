@@ -5,6 +5,7 @@
 
 import { createGpuEnhancer } from "./gpu-enhancer.js";
 import { pictureProps } from "./engine/engine.js";
+import { t } from "../core/i18n.js";
 
 /** Sharpness level (0-3) -> enhancer shader parameters. */
 export function enhancerLevels(level) {
@@ -91,8 +92,8 @@ export function createVisualFilters(app) {
     if (valHue) valHue.textContent = String(hue);
 
     // libmpv draws the video itself: the colour controls become mpv properties
-    // (brightness/contrast/saturation/gamma/hue); the AI "restoration" adds its contrast/
-    // saturation boost there (no WebGL access to mpv's frames).
+    // (brightness/contrast/saturation/gamma/hue); the enhance filter adds its contrast/
+    // saturation boost there (no WebGL access to mpv's frames: no sharpening, no A/B view).
     if (app.engine?.kind === "mpv" && state.get("currentMediaType") === "video") {
       disableEnhancerVisuals();
       video.style.filter = "";
@@ -147,7 +148,7 @@ export function createVisualFilters(app) {
     state.set("enhancerBlocked", true);
     disableEnhancerVisuals();
     applyVideoFilters();
-    app.toast("⚠️ Bu kaynakta GPU netleştirme kullanılamıyor (CORS). CSS moduna geçildi.");
+    app.toast(t("enhance.gpuCors"));
   });
 
   return {

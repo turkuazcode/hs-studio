@@ -13,7 +13,11 @@ import { renderShortcutEditor } from "./shortcut-editor.js";
 const controlId = (key) => `setting-${key.replace(/[^a-z0-9]+/gi, "-")}`;
 
 /** Text of a descriptor property: i18n key (xxxKey) or literal string. */
-const textOf = (f, prop) => (f[`${prop}Key`] ? t(f[`${prop}Key`]) : f[prop] ?? "");
+const textOf = (f, prop) => (f[`${prop}Key`] ? t(f[`${prop}Key`], f[`${prop}Vars`]) : f[prop] ?? "");
+/** data-i18n attributes of a label/help (vars kept so a language switch re-renders them). */
+const i18nAttrs = (f, prop) => (f[`${prop}Key`]
+  ? { "data-i18n": f[`${prop}Key`], ...(f[`${prop}Vars`] ? { "data-i18n-vars": JSON.stringify(f[`${prop}Vars`]) } : {}) }
+  : {});
 
 function el(tag, attrs = {}, ...children) {
   const e = document.createElement(tag);
@@ -229,8 +233,9 @@ export function createSettingsModal(app) {
     const ctx = { app, settings, t, toast: app.toast };
     const label = (forId) => {
       const l = el(forId ? "label" : "span", { class: "vho-field-label", for: forId });
-      l.append(el("span", { ...(f.labelKey ? { "data-i18n": f.labelKey } : {}), text: textOf(f, "label") }));
-      if (f.helpKey || f.help) l.append(el("small", { ...(f.helpKey ? { "data-i18n": f.helpKey } : {}), text: textOf(f, "help") }));
+      l.append(el("span", { ...i18nAttrs(f, "label"), text: textOf(f, "label") }));
+      if (f.helpKey || f.help) l.append(el("small", { ...i18nAttrs(f, "help"), text: textOf(f, "help") }));
+
       return l;
     };
 

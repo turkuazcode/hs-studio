@@ -1,14 +1,14 @@
 // ==========================================================================
-// Deep AI photo restoration (neural network, downloaded on first use).
-// Thin UI controller over ai-engine.js (4x upscaler + optional face restore).
+// "Enhance photo with AI" (S04 naming): neural network 4x upscaler + optional face
+// restore, models downloaded on first use. Thin UI controller over ai-engine.js.
 // ==========================================================================
 
 import { upscaleImage, restoreFacesInImage, downloadConsentText, describeHardware, releaseAi, MODELS, FACE_MODEL } from "./ai-engine.js";
+import { i18n, t } from "../core/i18n.js";
 import { invoke } from "../core/tauri.js";
 import { safeFileName } from "../core/format.js";
 
 export const DEEP_MAX_OUTPUT_PIXELS = 40e6; // keeps memory sane for already-large photos
-const DEEP_BUTTON_TEXT = "✨ Fotoğrafı İyileştir (4x, E)";
 
 /** Input size so that the 4x output stays under maxOutputPixels (never upscales the input). */
 export function deepInputSize(w, h, maxOutputPixels = DEEP_MAX_OUTPUT_PIXELS) {
@@ -25,11 +25,20 @@ export function createPhotoAi(app) {
     btnDeepEnhance, deepProgress, deepProgressBar, deepStatus, deepResultActions, btnDeepCompare, btnDeepSave,
     checkDeepFaces, imageElement, currentFilename,
   } = dom;
-  const DEEP_IDLE_TEXT = deepStatus.textContent;
   const loadGen = () => state.get("loadGen");
 
   let deepJob = null;    // AbortController of the running job
   let deepResult = null; // { url, blob, originalSrc, showingEnhanced }
+  let statusText = null; // () => current status text (re-rendered on language change)
+
+  const setStatus = (fn) => { statusText = fn; deepStatus.textContent = fn(); };
+  const idleStatus = () => setStatus(() => t("enhance.deepIdle"));
+  const renderButton = () => { btnDeepEnhance.textContent = t(deepJob ? "enhance.deepCancel" : "enhance.deepButton"); };
+  i18n.onChange(() => {
+    renderButton();
+    if (statusText) deepStatus.textContent = statusText();
+    if (deepResult) btnDeepCompare.textContent = t(deepResult.showingEnhanced ? "enhance.showOriginal" : "enhance.showEnhanced");
+  });
 
   function resetDeepEnhance() {
     deepJob?.abort();
@@ -38,14 +47,14 @@ export function createPhotoAi(app) {
     deepResult = null;
     deepProgress.hidden = true;
     deepResultActions.hidden = true;
-    deepStatus.textContent = DEEP_IDLE_TEXT;
-    btnDeepEnhance.textContent = DEEP_BUTTON_TEXT;
+    idleStatus();
+    renderButton();
   }
 
-  function setDeepProgress(text, fraction) {
+  function setDeepProgress(key, vars, fraction) {
     deepProgress.hidden = false;
     deepProgressBar.style.width = `${Math.round(fraction * 100)}%`;
-    deepStatus.textContent = text;
+    setStatus(() => t(key, vars));
   }
 
   /** Reads the original photo pixels, shrinking huge photos so the 4x output stays reasonable. */
@@ -65,15 +74,15 @@ export function createPhotoAi(app) {
       return;
     }
     if (!invoke) {
-      app.toast("Yapay zeka iyileştirme yalnızca masaüstü uygulamasında kullanılabilir");
+      app.toast(t("enhance.deepDesktopOnly"));
       return;
     }
     if (state.get("currentMediaType") !== "image" || !imageElement.naturalWidth) {
-      app.toast("Önce bir fotoğraf açın");
+      app.toast(t("enhance.deepOpenPhoto"));
       return;
     }
     if (state.get("isTaintedSource")) {
-      app.toast("⚠️ Bu uzak görsel CORS izni vermediği için işlenemiyor");
+      app.toast(t("enhance.deepCors"));
       return;
     }
     if (deepResult) { // already done for this photo: just show it
@@ -96,7 +105,7 @@ export function createPhotoAi(app) {
     const gen = loadGen();
     const job = new AbortController();
     deepJob = job;
-    btnDeepEnhance.textContent = "■ İptal Et";
+    renderButton();
     deepResultActions.hidden = true;
     const hw = await describeHardware();
     const originalSrc = imageElement.currentSrc;
@@ -107,15 +116,15 @@ export function createPhotoAi(app) {
       const res = await upscaleImage("photo-x4", pixels, {
         signal: job.signal,
         onProgress: (phase, f) => {
-          if (phase === "download") setDeepProgress(`Bileşen indiriliyor… %${Math.round(f * 100)}`, f);
-          else if (phase === "load") setDeepProgress(`Model hazırlanıyor… (${hw})`, 0);
-          else setDeepProgress(`İyileştiriliyor… %${Math.round(f * 100)} — ${hw}`, f);
+          if (phase === "download") setDeepProgress("enhance.deepDownloading", { pct: Math.round(f * 100) }, f);
+          else if (phase === "load") setDeepProgress("enhance.deepLoading", { hw }, 0);
+          else setDeepProgress("enhance.deepRunning", { pct: Math.round(f * 100), hw }, f);
         },
       });
       if (gen !== loadGen()) return;
 
       let finalImage = res.imageData;
-      let faceNote = "";
+      let faceNote = () => "";
       if (withFaces) {
         try {
           const fr = await restoreFacesInImage(res.imageData, {
@@ -125,18 +134,19 @@ export function createPhotoAi(app) {
             signal: job.signal,
             original: pixels, // faces are cropped from the original, see face-restore.js
             onProgress: (phase, f) => {
-              if (phase === "download") setDeepProgress(`Yüz modeli indiriliyor… %${Math.round(f * 100)}`, f);
-              else if (phase === "load") setDeepProgress("Yüzler aranıyor…", 0);
-              else setDeepProgress(`Yüzler iyileştiriliyor… %${Math.round(f * 100)}`, f);
+              if (phase === "download") setDeepProgress("enhance.faceDownloading", { pct: Math.round(f * 100) }, f);
+              else if (phase === "load") setDeepProgress("enhance.faceSearching", null, 0);
+              else setDeepProgress("enhance.faceRunning", { pct: Math.round(f * 100) }, f);
             },
           });
           if (gen !== loadGen()) return;
           finalImage = fr.imageData;
-          faceNote = fr.stats.found ? ` ${fr.stats.restored}/${fr.stats.found} yüz iyileştirildi.` : " Yüz bulunamadı.";
+          const { restored, found } = fr.stats;
+          faceNote = () => " " + (found ? t("enhance.facesDone", { restored, found }) : t("enhance.facesNone"));
         } catch (e) {
           if (e?.name === "AbortError") throw e;
           console.error("[AI] faces", e);
-          faceNote = " (Yüz iyileştirme başarısız oldu, yalnızca büyütme uygulandı.)";
+          faceNote = () => " " + t("enhance.facesFailed");
         }
       }
 
@@ -148,28 +158,33 @@ export function createPhotoAi(app) {
       if (gen !== loadGen()) return;
 
       deepResult = { url: URL.createObjectURL(blob), blob, originalSrc, showingEnhanced: false };
-      const where = res.backend === "webgpu" ? "ekran kartı" : "işlemci";
-      deepStatus.textContent = `Tamamlandı: ${pixels.width}×${pixels.height} → ${c.width}×${c.height}, ` +
-        `${Math.round((performance.now() - startedAt) / 1000)} sn (${where}).${faceNote} ` +
-        `Model: ${MODELS["photo-x4"].title}, ${MODELS["photo-x4"].credit}` +
-        (withFaces ? `; ${FACE_MODEL.title}, ${FACE_MODEL.credit}.` : ".");
+      const vars = {
+        from: `${pixels.width}×${pixels.height}`, to: `${c.width}×${c.height}`,
+        sec: Math.round((performance.now() - startedAt) / 1000),
+      };
+      const backendKey = res.backend === "webgpu" ? "enhance.onGpu" : "enhance.onCpu";
+      const credits = `${MODELS["photo-x4"].title}, ${MODELS["photo-x4"].credit}` +
+        (withFaces ? `; ${FACE_MODEL.title}, ${FACE_MODEL.credit}` : "");
+      setStatus(() => `${t("enhance.deepDone", { ...vars, where: t(backendKey) })}${faceNote()} ` +
+        `${t("enhance.deepModel", { credits })}`);
       deepProgress.hidden = true;
       deepResultActions.hidden = false;
       showDeepVariant(true);
-      app.toast("✨ Fotoğraf yapay zeka ile iyileştirildi");
+      app.toast(t("enhance.deepToast"));
     } catch (e) {
       if (gen !== loadGen()) return;
       deepProgress.hidden = true;
       if (e?.name === "AbortError") {
-        deepStatus.textContent = "İptal edildi.";
+        setStatus(() => t("enhance.deepCancelled"));
       } else {
         console.error("[AI] deep enhance", e);
-        deepStatus.textContent = `⚠️ İyileştirme başarısız: ${e?.message || e}`;
+        const msg = e?.message || String(e);
+        setStatus(() => t("enhance.deepFailed", { error: msg }));
       }
     } finally {
       releaseAi(); // give the GPU memory back to the player
       if (deepJob === job) deepJob = null;
-      if (gen === loadGen()) btnDeepEnhance.textContent = DEEP_BUTTON_TEXT;
+      if (gen === loadGen()) renderButton();
     }
   }
 
@@ -177,7 +192,7 @@ export function createPhotoAi(app) {
     if (!deepResult) return;
     deepResult.showingEnhanced = enhanced;
     imageElement.src = enhanced ? deepResult.url : deepResult.originalSrc;
-    btnDeepCompare.textContent = enhanced ? "Orijinali Göster" : "İyileştirileni Göster";
+    btnDeepCompare.textContent = t(enhanced ? "enhance.showOriginal" : "enhance.showEnhanced");
   }
 
   // Every new media load drops the previous result / running job
@@ -188,8 +203,11 @@ export function createPhotoAi(app) {
   btnDeepSave?.addEventListener("click", () => {
     if (!deepResult) return;
     const base = safeFileName((currentFilename.textContent || "VHO").replace(/\.[^.]+$/, ""));
-    if (app.snapshot.downloadBlob(deepResult.blob, `${base}_AI_4x.png`)) app.toast("İyileştirilmiş fotoğraf kaydedildi");
+    if (app.snapshot.downloadBlob(deepResult.blob, `${base}_AI_4x.png`)) app.toast(t("enhance.deepSaved"));
   });
 
+  idleStatus();
+  renderButton();
   return { enhance: deepEnhancePhoto, reset: resetDeepEnhance };
+
 }

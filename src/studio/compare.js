@@ -3,22 +3,25 @@
 // ==========================================================================
 
 import { compareColumns, zoomAt } from "./logic.js";
+import { t } from "../core/i18n.js";
 
-const TEMPLATE = `
+const tx = (key) => `data-i18n="${key}">${t(key)}`;
+const ti = (key) => `data-i18n-title="${key}" title="${t(key)}"`;
+const template = () => `
   <div class="ps-compare-bar">
-    <strong>Karşılaştır</strong>
-    <span class="ps-compare-hint">Tekerlek: yakınlaştır · Sürükle: kaydır · Senkron</span>
+    <strong ${tx("ui.studio.compare")}</strong>
+    <span class="ps-compare-hint" ${tx("studio.compare.hint")}</span>
     <span class="ps-spacer"></span>
-    <button class="ps-btn" data-act="out" title="Uzaklaştır (-)">−</button>
-    <button class="ps-btn ps-compare-zoom" data-act="reset" title="Sığdır (0)">Sığdır</button>
-    <button class="ps-btn" data-act="in" title="Yakınlaştır (+)">+</button>
-    <button class="ps-btn" data-act="close" title="Kapat (Esc)">✕ Kapat</button>
+    <button class="ps-btn" data-act="out" ${ti("ui.photo.zoomOutTitle")}>−</button>
+    <button class="ps-btn ps-compare-zoom" data-act="reset" ${ti("studio.compare.fitTitle")}>${t("ui.photo.fit")}</button>
+    <button class="ps-btn" data-act="in" ${ti("ui.photo.zoomInTitle")}>+</button>
+    <button class="ps-btn" data-act="close" ${ti("studio.compare.closeTitle")}>✕ <span ${tx("common.close")}</span></button>
   </div>
   <div class="ps-compare-panes"></div>`;
 
 /** root: overlay element. deps: { invoke, convertFileSrc, onClose } */
 export function createCompare(root, { invoke, convertFileSrc, onClose }) {
-  root.innerHTML = TEMPLATE;
+  root.innerHTML = template();
   const panes = root.querySelector(".ps-compare-panes");
   const zoomBtn = root.querySelector(".ps-compare-zoom");
   let view = { zoom: 1, x: 0, y: 0 };
@@ -28,7 +31,7 @@ export function createCompare(root, { invoke, convertFileSrc, onClose }) {
     for (const img of panes.querySelectorAll("img")) {
       img.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.zoom})`;
     }
-    zoomBtn.textContent = Math.abs(view.zoom - 1) < 0.01 ? "Sığdır" : `${Math.round(view.zoom * 100)}%`;
+    zoomBtn.textContent = Math.abs(view.zoom - 1) < 0.01 ? t("ui.photo.fit") : `${Math.round(view.zoom * 100)}%`;
     root.dataset.zoom = view.zoom.toFixed(3);
     root.dataset.pan = `${Math.round(view.x)},${Math.round(view.y)}`;
   }
@@ -65,7 +68,8 @@ export function createCompare(root, { invoke, convertFileSrc, onClose }) {
         img.src = convertFileSrc(r.path);
         await img.decode().catch(() => {});
       } catch (e) {
-        panes.children[i].querySelector(".ps-compare-label").textContent = `${it.name} — açılamadı`;
+        panes.children[i].querySelector(".ps-compare-label").textContent = t("studio.compare.openFailed", { name: it.name });
+
       }
       root.dataset.loaded = String(++loaded);
     }));

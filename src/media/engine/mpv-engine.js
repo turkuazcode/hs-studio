@@ -5,6 +5,8 @@
 // ==========================================================================
 
 import { normalizeChapters, normalizeTracks, flipFilter } from "./engine.js";
+import { t } from "../../core/i18n.js";
+
 
 /**
  * deps: { invoke, listen, convertFileSrc, status } — status = engine_status() result.
@@ -76,7 +78,8 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
         emit("chapter", value ?? -1);
         break;
       case "volume":
-        if (typeof value === "number") volume = value;
+        // above 100 % mpv stays at 100 and the boost lives in the af chain (limiter)
+        if (typeof value === "number" && !(volume > 100 && value === 100)) volume = value;
         emit("volume", volume);
         break;
       case "speed":
@@ -113,7 +116,7 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
       case "end-file":
         if (ev.reason === "error") {
           loading = false;
-          emit("error", ev.file_error || "dosya açılamadı");
+          emit("error", ev.file_error || t("ui.video.fileOpenFailed"));
         }
         break;
       case "playback-restart":
@@ -204,9 +207,11 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
       quiet(cmd(["stop"]));
       return engine.show(false);
     },
+    /** 0-200: mpv's volume is capped at 100 (its curve is cubic: 200 = 8x, clipping); the part
+     *  above 100 is applied as a linear gain + limiter in the af chain (audioFilterChain boost). */
     setVolume(v) {
       volume = Math.max(0, Math.min(200, v));
-      return quiet(set("volume", volume));
+      return quiet(set("volume", Math.min(volume, 100)));
     },
     setRate(r) {
       rate = r;

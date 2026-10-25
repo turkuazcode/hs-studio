@@ -6,6 +6,7 @@
 // ==========================================================================
 
 import { EQ_BANDS, EQ_PRESETS, audioFilterChain } from "./engine/engine.js";
+import { t } from "../core/i18n.js";
 
 /** "+50 ms" / "0 ms" / "-100 ms" */
 export const formatAudioDelay = (ms) => `${ms > 0 ? "+" : ""}${ms} ms`;
@@ -71,9 +72,13 @@ export function createAudioFx(app) {
   btnCloseAudioPanel.addEventListener("click", () => audioPanel.classList.remove("show"));
 
   for (const [id, p] of Object.entries(EQ_PRESETS)) {
-    selectEqPreset.append(Object.assign(document.createElement("option"), { value: id, textContent: p.label }));
+    const o = Object.assign(document.createElement("option"), { value: id, textContent: t(p.labelKey) });
+    o.dataset.i18n = p.labelKey; // re-translated with the rest of the page
+    selectEqPreset.append(o);
   }
-  selectEqPreset.append(Object.assign(document.createElement("option"), { value: "custom", textContent: "Özel" }));
+  const customOpt = Object.assign(document.createElement("option"), { value: "custom", textContent: t("audio.eq.custom") });
+  customOpt.dataset.i18n = "audio.eq.custom";
+  selectEqPreset.append(customOpt);
 
   const sliders = EQ_BANDS.map((f, i) => {
     const col = document.createElement("label");
@@ -118,14 +123,14 @@ export function createAudioFx(app) {
     render();
     apply();
     persist();
-    app.toast(`Ekolayzır: ${selectEqPreset.selectedOptions[0]?.textContent ?? preset}`);
+    app.toast(t("ui.audioFx.toastPreset", { name: selectEqPreset.selectedOptions[0]?.textContent ?? preset }));
   });
 
   checkAudioNormalize.addEventListener("change", () => {
     normalize = checkAudioNormalize.checked;
     apply();
     persist();
-    app.toast(normalize ? "Ses normalizasyonu açık" : "Ses normalizasyonu kapalı");
+    app.toast(t(normalize ? "ui.audioFx.normalizeOn" : "ui.audioFx.normalizeOff"));
   });
 
   function setDelay(ms) {
@@ -135,13 +140,13 @@ export function createAudioFx(app) {
   }
   const nudge = (d) => {
     setDelay(delayMs + d);
-    app.toast(`Ses gecikmesi: ${formatAudioDelay(delayMs)}`);
+    app.toast(t("ui.audioFx.delay", { delay: formatAudioDelay(delayMs) }));
   };
   btnAudioMinus.addEventListener("click", () => nudge(-50));
   btnAudioPlus.addEventListener("click", () => nudge(50));
   btnAudioReset.addEventListener("click", () => {
     setDelay(0);
-    app.toast("Ses gecikmesi sıfırlandı");
+    app.toast(t("ui.audioFx.delayReset"));
   });
 
   // ------------------------------------------------------------------------
@@ -149,12 +154,13 @@ export function createAudioFx(app) {
   // ------------------------------------------------------------------------
   function apply(force = false) {
     if (engine.kind !== "mpv") return;
-    const chain = audioFilterChain({ eq: gains, normalize, restore: app.audio.restoreSwitches });
+    const chain = audioFilterChain({ eq: gains, normalize, restore: app.audio.restoreSwitches, boost: app.audio.boostGain });
     if (!force && chain === lastChain) return;
     lastChain = chain;
     engine.setAudioFilters(chain).catch((e) => {
       console.warn("af", e);
-      app.toast("⚠️ Ses filtresi uygulanamadı");
+      app.toast(t("ui.audioFx.failed"));
+
     });
   }
   app.audio.onRestoreChange = () => apply();

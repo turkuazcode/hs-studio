@@ -10,7 +10,12 @@ export function createToasts({ snapshotToast, screenFlash, centerRipple }) {
 
   /** Shows a message for 2.8 s (each call restarts the timer). */
   function toast(msg) {
-    if (msg) snapshotToast.querySelector("span").textContent = msg;
+    if (msg) {
+      const span = snapshotToast.querySelector("span");
+      delete span.dataset.i18n; // a message, not the static default text
+      span.textContent = msg;
+    }
+
     snapshotToast.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => snapshotToast.classList.remove("show"), 2800);
