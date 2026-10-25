@@ -1,4 +1,4 @@
-# Contributing to VHO
+# Contributing to HS Studio (formerly VHO)
 
 > **Türkçe özet:** Katkılar memnuniyetle karşılanır. Temiz bir klondan `npm ci` + `npm test` ağ
 > bağlantısı olmadan çalışır (Node 24). Uygulamayı derlemek için Rust 1.85+ gerekir; libmpv
@@ -7,6 +7,9 @@
 > TR + EN metinleri içermeli; yeni bağımlılık lisans politikasına uymalı ve envantere/SBOM'a
 > eklenmeli. Güvenlik açıklarını herkese açık issue olarak değil [SECURITY.md](SECURITY.md)'deki
 > yoldan bildirin. Davranış kuralları: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+> Proje lisansı GPL-3.0-only'dir; ad ve logo ayrıca [TRADEMARKS.md](TRADEMARKS.md) ile korunur.
+> Dış katkılar [CLA](CLA.md) kabulü (taslak, avukat incelemesi bekliyor) ve her commit'te
+> `git commit -s` (DCO) gerektirir.
 
 Thank you for helping. This guide gets you from a clean clone to a passing test run, explains
 where things live, and lists what a change must include to be merged.
@@ -109,17 +112,53 @@ music each keep their own layout; original files are never modified in place.
 - **Formatting**: follow the surrounding code (2-space JS, `cargo fmt` defaults for Rust). There is
   no enforced formatter yet; do not reformat files you do not otherwise change.
 
-By submitting a contribution you agree that it is licensed under the project's license (see
-[LICENSE](LICENSE)).
+## 5. Licensing of contributions
 
-## 5. Pull requests and issues
+HS Studio (formerly VHO) is licensed under the **GNU General Public License v3.0 only**
+([LICENSE](LICENSE)). The name and logo are covered separately by [TRADEMARKS.md](TRADEMARKS.md).
+
+### Contributor License Agreement (CLA)
+
+Before a contribution from outside the project can be merged, its author agrees to the
+[HS Studio Individual CLA](CLA.md) (based on the Harmony HA-CLA-I v1). In short: you keep the
+copyright in your work and grant the project owner a broad license to it, so that the project
+can stay under one license holder (for example to change or add a license later). Your
+contribution always remains available under the license the project used when you contributed.
+
+> The CLA is a **draft awaiting legal review**; the signing mechanism is not set up yet.
+> Until it is, outside contributions cannot be merged. Planned mechanism `[TO BE SET by the
+> owner]`: a CLA bot on the pull request (e.g. CLA Assistant) or the statement below in the
+> pull request description, kept on record by the maintainer:
+>
+> `I have read the HS Studio Individual Contributor License Agreement (CLA.md, version 1.0) and I agree to it for this and my future contributions.`
+
+If you contribute on behalf of your employer or another organization, an Entity CLA is needed
+(not prepared yet: ask first).
+
+### Sign-off (DCO)
+
+Every commit is signed off (`git commit -s`), certifying the
+[Developer Certificate of Origin 1.1](https://developercertificate.org/): that you wrote the
+change or otherwise have the right to submit it. The sign-off line must use your real name and
+an e-mail address you are happy to publish (it becomes part of the public history).
+
+### Third-party code and assets
+
+Do not paste code, icons, images, fonts, model weights or text you did not write unless you
+name its source, author and license in the pull request, and the license is on the accepted list
+above. Such material is not "your" contribution under the CLA: it keeps its own license and is
+recorded in `legal/inventory/` and the notices. Copying from GPL/AGPL projects is not accepted
+even though the project itself is GPL: the dependency policy stays permissive/LGPL so that the
+owner keeps the option to relicense.
+
+## 6. Pull requests and issues
 
 - Use the issue templates (bug report needs steps, expected/actual, OS, VHO version/commit and
   which engine was active: libmpv or HTML5).
 - **Security problems are not reported in public issues**: see [SECURITY.md](SECURITY.md).
 - The PR template has a checklist (tests run, TR/EN strings, license inventory, platforms tested).
 
-## 6. Good first tasks
+## 7. Good first tasks
 
 Small, self-contained items that need no special hardware:
 
@@ -132,6 +171,6 @@ Small, self-contained items that need no special hardware:
 - Linux/macOS: try a build and record the exact result in `docs/platform-support.md`
   (state the device, OS version and what you did, even if it failed).
 
-## 7. Code of conduct
+## 8. Code of conduct
 
 Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
