@@ -6,6 +6,7 @@
 
 import { t } from "../core/i18n.js";
 import { invoke, listen } from "../core/tauri.js";
+import { jobProgress } from "../core/jobs.js";
 import { basename, errorCode, errorText, formatBytes, newJobId } from "../media/actions-logic.js";
 
 /** h("div", { class: "x", onclick: fn }, child...) */
@@ -211,6 +212,35 @@ export function createDialogs(app) {
   })?.catch?.(() => {});
 
   /**
+   * Export through the persistent job queue (Plan 11/A02). Resolves the JobResult like
+   * media_job; rejects with "[cancelled]" / "[no-ffmpeg] ..." / an error text. Falls back
+   * to the direct runner when the queue is unavailable this session.
+   */
+  async function runQueued(queue, request, d, onId) {
+    const show = (job) => {
+      if (job.state === "queued") return d.setStatus(t("jobs.waiting"));
+      if (job.state !== "running") return;
+      const p = jobProgress(job);
+      d.setProgress(p ?? 0);
+      d.setStatus(p == null ? t("actions.job.starting") : t("actions.job.progress", { p: Math.round(p * 100) }));
+    };
+    let job;
+    try {
+      job = await queue.run("export", request, { title: basename(request.input), onSubmitted: (snap) => onId(snap.id), onUpdate: show });
+    } catch (e) {
+      if (e?.code === "storageUnavailable") return invoke("media_job", { job: { ...request, jobId: newJobId("job") } });
+      throw new Error(e?.message ?? String(e));
+    }
+    const item = job.result?.results?.[0];
+    if (job.state === "completed" && item?.output) return { output: item.output, size: item.bytes ?? 0 };
+    if (job.state === "cancelled" || job.state === "paused") throw new Error("[cancelled]");
+    const code = item?.errorCode ?? job.errorCode;
+    if (code === "noFfmpeg") throw new Error(`[no-ffmpeg] ${item?.error ?? ""}`);
+    const known = code && t(`jobs.error.${code}`) !== `jobs.error.${code}` && code !== "failed";
+    throw new Error(known ? t(`jobs.error.${code}`) : (item?.error || job.errorDetail || t("jobs.error.failed")));
+  }
+
+  /**
    * Runs an export with a progress dialog. request: backend JobRequest without jobId.
    * Resolves the JobResult, or null (cancelled / failed). The dialog stays open with the
    * result (show in folder / open / close) unless `quiet`.
@@ -229,14 +259,23 @@ export function createDialogs(app) {
     d.setProgress(0);
     d.setStatus(t("actions.job.starting"));
     running.set(jobId, d);
+    const queue = app.jobs && app.jobs.available !== false ? app.jobs : null;
+    let queueId = null;
+    const setQueueId = (id) => {
+      queueId = id;
+      d.el.dataset.queueJobId = id;
+      if (cancelled) queue.cancel(id).catch(() => {});
+    };
     d.onCancel(() => {
       if (d.el.dataset.state !== "running") return d.close("cancel");
       cancelled = true;
       d.setStatus(t("actions.job.cancelling"));
-      invoke("media_job_cancel", { jobId }).catch(() => {});
+      if (queue) {
+        if (queueId) queue.cancel(queueId).catch(() => {});
+      } else invoke("media_job_cancel", { jobId }).catch(() => {});
     });
     try {
-      const result = await invoke("media_job", { job: { ...request, jobId } });
+      const result = queue ? await runQueued(queue, request, d, setQueueId) : await invoke("media_job", { job: { ...request, jobId } });
       running.delete(jobId);
       d.setBusy(false);
       d.onCancel(null);

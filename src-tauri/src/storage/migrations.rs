@@ -168,8 +168,86 @@ CREATE TABLE artifacts (
 CREATE INDEX artifacts_media ON artifacts(media_id);
 "#;
 
+/// v2: persistent job queue (Plan 11/A02). Columns/indexes are specified in docs/jobs-api.md.
+const V2_JOBS: &str = r#"
+CREATE TABLE jobs (
+  id             TEXT PRIMARY KEY,                -- UUID v4
+  kind           TEXT NOT NULL,                   -- 'export' | 'photo-batch' (later AI / video kinds)
+  schema_version INTEGER NOT NULL,                -- version of the request JSON of this kind
+  state          TEXT NOT NULL CHECK (state IN ('queued','running','pausing','paused','cancelling',
+                                                 'cancelled','completed','failed','interrupted')),
+  title          TEXT NOT NULL DEFAULT '',
+  request        TEXT NOT NULL,                   -- JSON adapter input (local paths; never logged)
+  recipe_hash    TEXT NOT NULL,                   -- SHA-256 hex of the canonical request
+  model          TEXT,                            -- JSON {id, version} pinned at submit
+  attempt_id     TEXT,
+  attempts       INTEGER NOT NULL DEFAULT 0,
+  seq            INTEGER NOT NULL DEFAULT 0,      -- last event sequence number
+  priority       INTEGER NOT NULL DEFAULT 0,
+  stage          TEXT NOT NULL DEFAULT 'queued',
+  done           INTEGER NOT NULL DEFAULT 0,
+  total          INTEGER,                         -- NULL = unknown
+  fraction       REAL,                            -- within the current item; NULL = unknown
+  result         TEXT,                            -- JSON summary
+  error_code     TEXT,
+  error_detail   TEXT,
+  resume_block   TEXT,                            -- why "continue" is not possible
+  created_at     INTEGER NOT NULL,
+  updated_at     INTEGER NOT NULL,
+  started_at     INTEGER,
+  finished_at    INTEGER
+);
+CREATE INDEX jobs_queue ON jobs(state, priority DESC, created_at);
+
+CREATE TABLE job_items (
+  job_id         TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  idx            INTEGER NOT NULL,
+  input_path     TEXT NOT NULL,
+  input_size     INTEGER,
+  input_mtime_ns INTEGER,
+  input_fp       TEXT,
+  media_id       TEXT REFERENCES media(id) ON DELETE SET NULL,
+  state          TEXT NOT NULL CHECK (state IN ('pending','running','completed','skipped','failed','cancelled')),
+  attempt_id     TEXT,
+  reserved_path  TEXT,
+  reserved_norm  TEXT,
+  output_path    TEXT,
+  output_bytes   INTEGER,
+  error_code     TEXT,
+  error_detail   TEXT,
+  started_at     INTEGER,
+  finished_at    INTEGER,
+  PRIMARY KEY (job_id, idx)
+);
+CREATE INDEX job_items_state ON job_items(job_id, state);
+CREATE UNIQUE INDEX job_items_reserved ON job_items(reserved_norm) WHERE reserved_norm IS NOT NULL;
+
+CREATE TABLE job_checkpoints (
+  job_id     TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  kind       TEXT NOT NULL,                       -- 'item' (A02 photo batch), 'segment' (V05)
+  key        TEXT NOT NULL,
+  attempt_id TEXT NOT NULL,
+  data       TEXT NOT NULL,                       -- JSON
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (job_id, kind, key)
+);
+
+CREATE TABLE job_temp_dirs (
+  job_id     TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  path       TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (job_id, path)
+);
+
+ALTER TABLE artifacts ADD COLUMN job_id TEXT REFERENCES jobs(id) ON DELETE SET NULL;
+CREATE INDEX artifacts_job ON artifacts(job_id);
+"#;
+
 /// The ordered schema history. Append only.
-pub const MIGRATIONS: &[Migration] = &[Migration { version: 1, name: "core", up: MigrationStep::Sql(V1_CORE) }];
+pub const MIGRATIONS: &[Migration] = &[
+    Migration { version: 1, name: "core", up: MigrationStep::Sql(V1_CORE) },
+    Migration { version: 2, name: "jobs", up: MigrationStep::Sql(V2_JOBS) },
+];
 
 /// Highest schema version this build understands.
 #[allow(dead_code)] // diagnostics / A02 tests
@@ -283,7 +361,7 @@ mod tests {
         let t = tables(&c);
         for name in [
             "schema_migrations", "meta", "folders", "media", "audio_tags", "playlists", "playlist_items", "bookmarks",
-            "artifacts", "recent", "resume_positions",
+            "artifacts", "recent", "resume_positions", "jobs", "job_items", "job_checkpoints", "job_temp_dirs",
         ] {
             assert!(t.contains(&name.to_string()), "missing table {name}: {t:?}");
         }
@@ -370,6 +448,42 @@ mod tests {
         assert!(matches!(migrate(&mut c, &renamed), Err(StorageError::MigrationMismatch { version: 1, .. })));
         let gap = [Migration { version: 2, name: "x", up: MigrationStep::Sql("SELECT 1") }];
         assert!(matches!(migrate(&mut c, &gap), Err(StorageError::MigrationMismatch { .. })));
+    }
+
+    #[test]
+    fn v2_jobs_upgrade_keeps_v1_data() {
+        // a database of the L01 build (v1) with data -> this build adds the A02 job tables
+        let mut c = mem();
+        migrate(&mut c, &MIGRATIONS[..1]).unwrap();
+        c.execute("INSERT INTO media (id, path, name, added_at, updated_at) VALUES ('m', 'p', 'n', 0, 0)", []).unwrap();
+        c.execute("INSERT INTO artifacts (id, media_id, kind, path, created_at) VALUES ('a', 'm', 'export', 'o.mp4', 1)", []).unwrap();
+        assert_eq!(migrate(&mut c, MIGRATIONS).unwrap(), vec![2]);
+        let (path, job): (String, Option<String>) =
+            c.query_row("SELECT path, job_id FROM artifacts WHERE id = 'a'", [], |r| Ok((r.get(0)?, r.get(1)?))).unwrap();
+        assert_eq!((path.as_str(), job), ("o.mp4", None));
+        // job rows: state check, cascade to items, artifacts keep their file record
+        c.execute(
+            "INSERT INTO jobs (id, kind, schema_version, state, request, recipe_hash, created_at, updated_at)
+             VALUES ('j', 'export', 1, 'queued', '{}', 'h', 0, 0)",
+            [],
+        )
+        .unwrap();
+        assert!(c
+            .execute(
+                "INSERT INTO jobs (id, kind, schema_version, state, request, recipe_hash, created_at, updated_at)
+                 VALUES ('k', 'export', 1, 'sleeping', '{}', 'h', 0, 0)",
+                [],
+            )
+            .is_err());
+        c.execute("INSERT INTO job_items (job_id, idx, input_path, state, reserved_norm) VALUES ('j', 0, 'p', 'running', 'x')", []).unwrap();
+        // two items can never reserve the same output name
+        assert!(c.execute("INSERT INTO job_items (job_id, idx, input_path, state, reserved_norm) VALUES ('j', 1, 'p', 'running', 'x')", []).is_err());
+        c.execute("UPDATE artifacts SET job_id = 'j' WHERE id = 'a'", []).unwrap();
+        c.execute("DELETE FROM jobs WHERE id = 'j'", []).unwrap();
+        let n: u32 = c.query_row("SELECT COUNT(*) FROM job_items", [], |r| r.get(0)).unwrap();
+        assert_eq!(n, 0);
+        let job: Option<String> = c.query_row("SELECT job_id FROM artifacts WHERE id = 'a'", [], |r| r.get(0)).unwrap();
+        assert_eq!(job, None, "artifact stays, link cleared");
     }
 
     #[test]

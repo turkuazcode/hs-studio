@@ -399,6 +399,13 @@ pub struct JobRequest {
     pub output_dir: Option<String>,
     #[serde(flatten)]
     pub kind: JobKind,
+    /// Job queue (A02) only, never from the UI: folder for the partial file (the job's own
+    /// temp dir, same volume as the output)
+    #[serde(skip)]
+    pub temp_dir: Option<PathBuf>,
+    /// Job queue (A02) only: never replace an existing output, pick `name (n)` instead
+    #[serde(skip)]
+    pub no_clobber: bool,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -791,6 +798,8 @@ pub fn run_ffmpeg(
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| format!("ffmpeg başlatılamadı: {e}"))?;
+    #[cfg(windows)]
+    tie_to_app(&child);
     let stdout = child.stdout.take().unwrap();
     let mut stderr = child.stderr.take().unwrap();
     let reader = std::thread::spawn(move || {
@@ -838,6 +847,39 @@ pub fn run_ffmpeg(
     Ok(err)
 }
 
+/// Windows: ffmpeg children join a job object that closes with VHO (also on a crash or a
+/// forced kill), so an export never keeps running orphaned and its partial file can be
+/// cleaned up by the job queue's recovery (A02) on the next start.
+#[cfg(windows)]
+fn tie_to_app(child: &std::process::Child) {
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::System::JobObjects::{
+        AssignProcessToJobObject, CreateJobObjectW, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+        JobObjectExtendedLimitInformation, SetInformationJobObject,
+    };
+    static JOB: OnceLock<usize> = OnceLock::new();
+    let job = *JOB.get_or_init(|| unsafe {
+        let h = CreateJobObjectW(std::ptr::null(), std::ptr::null());
+        if h.is_null() {
+            return 0;
+        }
+        let mut info: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = std::mem::zeroed();
+        info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        SetInformationJobObject(
+            h,
+            JobObjectExtendedLimitInformation,
+            &info as *const _ as *const std::ffi::c_void,
+            std::mem::size_of_val(&info) as u32,
+        );
+        h as usize // never closed: the OS closes it when VHO exits
+    });
+    if job != 0 {
+        unsafe {
+            AssignProcessToJobObject(job as _, child.as_raw_handle() as _);
+        }
+    }
+}
+
 static PART_SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 pub fn run_job(req: &JobRequest, cancelled: &dyn Fn() -> bool, progress: impl Fn(f64) + Send + 'static) -> Result<JobResult, String> {
@@ -870,7 +912,7 @@ pub fn run_job(req: &JobRequest, cancelled: &dyn Fn() -> bool, progress: impl Fn
         return Err(format!("{ERR_INVALID} Çıktı kaynak dosyanın üzerine yazamaz"));
     }
     let dir = output.parent().ok_or("Geçersiz çıktı yolu")?;
-    let partial = dir.join(format!(
+    let partial = req.temp_dir.as_deref().unwrap_or(dir).join(format!(
         ".{}.vho-part{}-{}.{}",
         output.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default(),
         std::process::id(),
@@ -894,14 +936,21 @@ pub fn run_job(req: &JobRequest, cancelled: &dyn Fn() -> bool, progress: impl Fn
         let _ = std::fs::remove_file(&partial);
         return Err("ffmpeg boş bir dosya üretti".into());
     }
-    if output.exists() {
-        // explicit output path chosen in a save dialog (the dialog asked about overwriting)
-        let _ = std::fs::remove_file(&output);
-    }
-    std::fs::rename(&partial, &output).map_err(|e| {
-        let _ = std::fs::remove_file(&partial);
-        format!("Çıktı yazılamadı: {e}")
-    })?;
+    let output = if req.no_clobber {
+        super::files::place_no_clobber(&partial, &output).inspect_err(|_| {
+            let _ = std::fs::remove_file(&partial);
+        })?
+    } else {
+        if output.exists() {
+            // explicit output path chosen in a save dialog (the dialog asked about overwriting)
+            let _ = std::fs::remove_file(&output);
+        }
+        std::fs::rename(&partial, &output).map_err(|e| {
+            let _ = std::fs::remove_file(&partial);
+            format!("Çıktı yazılamadı: {e}")
+        })?;
+        output
+    };
     Ok(JobResult { output: output.to_string_lossy().into_owned(), size })
 }
 
