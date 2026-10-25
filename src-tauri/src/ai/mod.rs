@@ -785,6 +785,11 @@ fn manager(app: &AppHandle) -> AiResult<Arc<Manager>> {
     Ok(MANAGER.get().expect("set above").clone())
 }
 
+/// Manifest version of a component (job queue pins it, A02/A03).
+pub fn component_version(app: &AppHandle, id: &str) -> Option<String> {
+    manager(app).ok()?.status(id).ok().map(|s| s.version)
+}
+
 fn allow_dir(app: &AppHandle, st: &ComponentStatus) -> AiResult<()> {
     app.asset_protocol_scope().allow_directory(&st.dir, true).map_err(|e| AiError::new(ErrorCode::Io, e.to_string()))
 }
