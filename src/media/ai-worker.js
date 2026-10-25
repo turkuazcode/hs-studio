@@ -8,7 +8,9 @@
 //     backend, tile, overlap, image: { width, height, data: ArrayBuffer } }
 // Messages out:
 //   { type: "progress", phase: "load" | "run", fraction }
-//   { type: "done", width, height, data: ArrayBuffer }
+//   { type: "done", width, height, data: ArrayBuffer, stats? }
+//   (run: stats = { nonFinite, min, max } of the raw model output before clamping to 0..255,
+//    so a NaN/Inf or out-of-range output is visible to callers and the real-model smoke test)
 //   { type: "error", message }
 // ==========================================================================
 
@@ -107,6 +109,7 @@ async function run(msg) {
   const cols = Math.max(1, Math.ceil(W / step));
   const rows = Math.max(1, Math.ceil(H / step));
   let done = 0;
+  const stats = { nonFinite: 0, min: Infinity, max: -Infinity };
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -123,6 +126,12 @@ async function run(msg) {
       const od = await o.getData();
       const opw = t.pw * S;
       const oplane = o.dims[2] * o.dims[3];
+      for (let i = 0; i < od.length; i++) {
+        const v = od[i];
+        if (!Number.isFinite(v)) { stats.nonFinite++; continue; }
+        if (v < stats.min) stats.min = v;
+        if (v > stats.max) stats.max = v;
+      }
 
       for (let y = cy0 * S; y < cy1 * S; y++) {
         const row = (y - y0 * S) * opw - x0 * S;
@@ -140,7 +149,7 @@ async function run(msg) {
       postMessage({ type: "progress", phase: "run", fraction: ++done / (rows * cols) });
     }
   }
-  postMessage({ type: "done", width: W * S, height: H * S, data: dst.buffer }, [dst.buffer]);
+  postMessage({ type: "done", width: W * S, height: H * S, data: dst.buffer, stats }, [dst.buffer]);
 }
 
 self.onmessage = (e) => {
