@@ -16,7 +16,7 @@ import { classifyAiError, createSlot, deviceKey, errorCodeForClass, nextAttempt 
 import { consentText, toAiError } from "./ai-status.js";
 import { PROBE_SHAPE, probeData, probeModel } from "./onnx-tiny.js";
 
-const tauri = window.__TAURI__;
+const tauri = globalThis.window?.__TAURI__;
 
 /** Models the app knows about. Licenses: see THIRD_PARTY_NOTICES.txt */
 export const MODELS = {

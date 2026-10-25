@@ -75,9 +75,6 @@ const ALLOWED_TR_LITERALS = [
   // language endonyms (a language is named in its own language)
   { file: "media/engine/engine.js", re: /Türkçe|Français/ },
   { file: "ui/settings-modal.js", re: /Türkçe/ },
-  // AI model management belongs to card A01 (agent E3 works on this file in parallel); its
-  // remaining messages move to i18n with A01 / the error-code adapter
-  { file: "media/ai-engine.js", re: /./ },
 ];
 
 test("i18n coverage: no Turkish UI literals left in the JS modules", () => {
