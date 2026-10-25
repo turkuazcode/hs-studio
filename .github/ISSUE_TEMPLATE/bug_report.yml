@@ -1,0 +1,65 @@
+name: Bug report / Hata bildirimi
+description: Something does not work as expected. / Bir şey beklendiği gibi çalışmıyor.
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Security problems: do not file them here, see SECURITY.md.** / **Güvenlik açıklarını burada değil SECURITY.md'deki yoldan bildirin.**
+        Do not attach personal photos or videos; a small synthetic file is enough. / Kişisel fotoğraf/video eklemeyin.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / Ne oldu?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Yeniden üretme adımları
+      placeholder: "1. Open ...\n2. Click ...\n3. ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result / Beklenen sonuç
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit / Sürüm veya commit
+      placeholder: "0.1.0 / a1b2c3d"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS, version, architecture / İşletim sistemi, sürüm, mimari
+      placeholder: "Windows 11 24H2 x64"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area / Alan
+      options: [Video playback, Music/audio, Photo viewer/studio, Photo AI, Media actions (cut/convert/rename/...), Library, Settings/shortcuts, Installer/startup, Other]
+    validations:
+      required: true
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Playback engine (video/audio only) / Oynatma motoru
+      description: If unsure, choose "Not sure". / Emin değilseniz "bilmiyorum".
+      options: [libmpv, HTML5 fallback, Not sure / bilmiyorum, Not applicable]
+  - type: textarea
+    id: media
+    attributes:
+      label: File details / Dosya bilgisi
+      description: Container/codec/resolution if relevant (e.g. ffprobe output). No personal files.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots / Günlük veya ekran görüntüsü
+      description: Remove personal paths and names before pasting. / Kişisel yol ve adları silin.
