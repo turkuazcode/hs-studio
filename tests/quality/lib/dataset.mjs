@@ -156,7 +156,7 @@ async function buildClip(c, sources, dir) {
 
 async function buildStructural(s, dir) {
   if (s.id === "s01-interlaced-tff") {
-    const out = join(dir, "interlaced-tff.mkv");
+    const out = join(dir, "interlaced-tff.mpg"); // MPEG-PS: ffprobe reports the coded field order (mkv shows "tb")
     await ffmpeg(["-f", "lavfi", "-i", "testsrc2=s=320x176:r=50:d=2", "-vf", "scale=320:88:flags=area,weave=first_field=top,setfield=tff,format=yuv420p",
       "-c:v", "mpeg2video", "-flags", "+ilme+ildct", "-top", "1", "-q:v", "4", out]);
     return [out];
