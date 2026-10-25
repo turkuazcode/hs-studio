@@ -54,7 +54,8 @@
       "shortcuts": "Shortcuts",
       "advanced": "Advanced",
       "about": "About / Licenses",
-      "components": "AI models"
+      "components": "AI models",
+      "library": "Library"
     },
     "headings": {
       "enhance": "Picture filters",
@@ -220,7 +221,8 @@
       "openWith": "Open with",
       "showInFolder": "Show in folder",
       "lyrics": "Lyrics",
-      "tagEditor": "Tags"
+      "tagEditor": "Tags",
+      "library": "Library"
     }
   },
   "actions": {
@@ -1173,6 +1175,111 @@
       "busy": "The component is being downloaded or verified right now.",
       "archive-invalid": "The model archive is invalid or contains forbidden content.",
       "io": "A file operation failed."
+    }
+  },
+  "library": {
+    "title": "Library",
+    "entry": "Library",
+    "search": "Search the library (name, title, artist, tag)…",
+    "viewLabel": "View",
+    "more": "More options",
+    "tabs": {
+      "video": "Videos",
+      "audio": "Music",
+      "lists": "Lists"
+    },
+    "views": {
+      "all": "All",
+      "continue": "Continue watching",
+      "recentlyAdded": "Recently added",
+      "favorites": "Favorites",
+      "missing": "Not found",
+      "mostPlayed": "Most played"
+    },
+    "status": {
+      "offline": "offline",
+      "missing": "not found"
+    },
+    "resumeAt": "stopped at {time}",
+    "count": "{n} items",
+    "empty": {
+      "noFolders": "The library has no folders yet. Add a folder and VHO scans it and keeps it up to date.",
+      "noMatch": "Nothing matches the search.",
+      "none": "Nothing in this view."
+    },
+    "scan": {
+      "running": "Scanning… {n} files",
+      "tags": "Reading music tags…"
+    },
+    "toast": {
+      "nothingToPlay": "No playable file",
+      "offline": "{name}: the disk is offline",
+      "missing": "{name}: file not found",
+      "folder": {
+        "added": "Added to the library: {name}",
+        "exists": "This folder is already in the library: {name}",
+        "covered": "This folder is already inside the library folder {name}"
+      }
+    },
+    "addFolder": "Add folder…",
+    "rescan": "Scan now",
+    "cancelScan": "Stop scanning",
+    "settings": "Library settings",
+    "removeFolder": "Remove from library",
+    "removeConfirm": "Remove \"{name}\" from the library? The files stay on disk; favorites, ratings and tags are kept.",
+    "settingsIntro": "Library folders are scanned and kept up to date. Browsing a folder in the Photo Studio or opening a file does not add it to the library.",
+    "folderStatus": {
+      "online": "connected",
+      "offline": "offline (disk/network not connected)",
+      "missing": "folder not found"
+    },
+    "fields": {
+      "watch": "Watch the folders for changes",
+      "reconcile": "Re-check the folders regularly"
+    },
+    "reconcile": {
+      "off": "Only at start and on request",
+      "m15": "Every 15 minutes",
+      "m30": "Every 30 minutes",
+      "m60": "Every hour",
+      "m240": "Every 4 hours"
+    },
+    "lists": {
+      "import": "Import a list file…",
+      "saveQueue": "Save the play queue…",
+      "count": "{n} items",
+      "play": "Play",
+      "export": "Export…",
+      "delete": "Delete list",
+      "empty": "No saved lists.",
+      "fileType": "Playlist",
+      "saveTitle": "Save list",
+      "name": "List name",
+      "save": "Save",
+      "queueEmpty": "The play queue is empty",
+      "defaultName": "New list",
+      "saved": "\"{name}\" saved ({n} items)",
+      "imported": "\"{name}\" imported: {n} items, {missing} not found",
+      "skippedEntries": "{n} unsupported lines skipped (remote content is never downloaded or run)",
+      "missingItems": "{n} files not found and skipped",
+      "exported": "List saved ({n} items)",
+      "more": "List options",
+      "openFile": "Open a list file…",
+      "exportQueue": "Export (M3U/PLS)…",
+      "manage": "Saved lists…"
+    },
+    "photo": {
+      "rating": "Rating",
+      "ratingClear": "Clear rating",
+      "tags": "Tags…",
+      "tagsTitle": "Tags",
+      "tagsLabel": "Tags (comma separated)",
+      "tagsSaved": "Tags saved",
+      "ratingSaved": "{stars} given to {n} items",
+      "ratingCleared": "Rating cleared",
+      "minRating": "Minimum rating",
+      "anyRating": "All",
+      "tagsInfo": "Tags"
     }
   }
 }

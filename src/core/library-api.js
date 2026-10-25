@@ -100,7 +100,7 @@ export function visibleRange(scrollTop, viewportHeight, rowHeight, total, oversc
   if (!total || rowHeight <= 0) return { start: 0, end: 0 };
   const start = Math.max(0, Math.floor(scrollTop / rowHeight) - overscan);
   const end = Math.min(total, Math.ceil((scrollTop + viewportHeight) / rowHeight) + overscan);
-  return { start, end };
+  return { start: Math.min(start, end), end };
 }
 
 /** Library query of a tab + view + search (shared by the video / music views). */
