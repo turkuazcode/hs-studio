@@ -5,6 +5,7 @@
 // compare and batch dialogs. Markup root: #photo-studio-layer in index.html.
 // ==========================================================================
 
+import { t } from "../core/i18n.js";
 import { convertFileSrc, dialogOpen, invoke, listen } from "../core/tauri.js";
 import { isTextField } from "../ui/shortcuts.js";
 import { createBatch } from "./batch.js";
@@ -623,6 +624,17 @@ export function createPhotoStudio(app) {
   for (const id of ["ps-filter-type", "ps-date-from", "ps-date-to", "ps-recursive"]) $(id).addEventListener("change", markFilter);
 
   // "⋯" menu and right-click on the grid: everything that is not used all the time
+  const selectedPaths = () => selectedItems().map((i) => i.path);
+  const hasSelection = () => !!app.mediaActions && selectedItems().length > 0;
+  // Files deleted / renamed by the media actions: thumbnails and listing are stale
+  const fileChanged = ({ path, newPath }) => {
+    thumbs.forget(path);
+    if (newPath) thumbs.forget(newPath);
+    dirty = true;
+    if (!root.hidden) rescan();
+  };
+  app.bus.on("file:deleted", fileChanged);
+  app.bus.on("file:renamed", fileChanged);
   const cmd = (id) => () => $(id).click();
   const can = (id) => () => !$(id).disabled;
   const studioMenu = createMenu([
@@ -631,6 +643,14 @@ export function createPhotoStudio(app) {
     { id: "compare", label: "Karşılaştır (2-4 fotoğraf)", run: cmd("ps-act-compare"), enabled: can("ps-act-compare") },
     { id: "batch", label: "Toplu işlem…", run: cmd("ps-act-batch"), enabled: can("ps-act-batch") },
     { id: "s1", separator: true },
+    // File actions (Plan 06, ui/media-actions.js) on the selection
+    { id: "s2", separator: true },
+    { id: "addToPlaylist", get label() { return t("actions.menu.addToPlaylist"); }, run: () => app.mediaActions?.forPaths.addToPlaylist(selectedItems()), enabled: hasSelection },
+    { id: "copyFiles", get label() { return t("actions.menu.copyFile"); }, run: () => app.mediaActions?.forPaths.copyFiles(selectedPaths()), enabled: hasSelection },
+    { id: "copyPaths", get label() { return t("actions.menu.copyPath"); }, run: () => app.mediaActions?.forPaths.copyPaths(selectedPaths()), enabled: hasSelection },
+    { id: "reveal", get label() { return t("actions.menu.showInFolder"); }, run: () => app.mediaActions?.forPaths.reveal(selectedPaths()), enabled: hasSelection },
+    { id: "delete", get label() { return t("actions.menu.delete"); }, run: () => app.mediaActions?.forPaths.delete(selectedPaths()), enabled: hasSelection },
+    { id: "s3", separator: true },
     { id: "info", label: "Bilgi paneli (EXIF, histogram, harita)", run: cmd("ps-act-info") },
     { id: "selectAll", label: "Tümünü seç", run: () => { sel = selectAll(paths, sel); syncSelection(); }, enabled: () => paths.length > 0 },
     { id: "pick", label: "Klasör seç…", run: () => pickFolder(), enabled: () => !!dialogOpen },
@@ -671,6 +691,7 @@ export function createPhotoStudio(app) {
         else if (sel.focus >= 0) openIndex(sel.focus);
         break;
       case "Backspace": if (parentDir(dir)) openFolder(parentDir(dir)); break;
+      case "Delete": if (hasSelection()) app.mediaActions.forPaths.delete(selectedPaths()); break;
       case "Escape":
         if (sel.selected.size) { sel = emptySelection(); syncSelection(); } else hide();
         break;

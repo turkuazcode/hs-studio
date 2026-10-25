@@ -43,6 +43,11 @@ libloading = "0.8"
 # Platform: persistent settings + window size/position (MIT OR Apache-2.0)
 tauri-plugin-store = "2"
 tauri-plugin-window-state = "2"
+# Media actions (Plan 06): recycle bin (MIT), clipboard text/image/file list (MIT OR Apache-2.0),
+# music tags + cover art + lyrics (MIT OR Apache-2.0)
+trash = "5"
+arboard = { version = "=3.6.1", default-features = false, features = ["image-data"] }
+lofty = "0.22"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [
@@ -62,7 +67,18 @@ windows = { version = "0.62", features = [
   "Win32_System_Com",
   "Win32_System_Com_StructuredStorage",
   "Win32_System_Variant",
+  "Win32_UI_Shell",
+  "ApplicationModel_DataTransfer",
+  "Foundation",
+  "Foundation_Collections",
+  "Globalization",
+  "Graphics_Imaging",
+  "Media_Ocr",
+  "Storage",
+  "Storage_Streams",
+  "System_UserProfile",
 ] }
+windows-collections = "0.3"
 
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
