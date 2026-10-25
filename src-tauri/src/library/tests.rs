@@ -64,27 +64,31 @@ fn count(s: &Storage, sql: &str) -> i64 {
 }
 
 /// 5,200 media files in nested folders + noise (text files, temp files, empty file).
-fn big_fixture(root: &Path) -> usize {
-    let mut n = 0;
+/// Returns (media files, videos).
+fn big_fixture(root: &Path) -> (usize, usize) {
+    let (mut n, mut videos) = (0, 0);
     for d in 0..26 {
         for i in 0..200 {
             let ext = ["mp4", "mkv", "mp3", "flac", "jpg", "png"][(i + d) % 6];
             write(&root.join(format!("d{d:02}")).join(format!("sub{}", i % 4)).join(format!("file-{d}-{i}.{ext}")), format!("{d}/{i}").as_bytes());
             n += 1;
+            if ext.starts_with('m') && ext != "mp3" {
+                videos += 1;
+            }
         }
     }
     write(&root.join("notes.txt"), b"x");
     write(&root.join("d00").join("movie.mp4.part"), b"partial");
     write(&root.join("d00").join("~$lock.mp4"), b"x");
     write(&root.join("d00").join("empty.mp4"), b"");
-    n
+    (n, videos)
 }
 
 #[test]
 fn scans_5000_files_and_a_second_scan_changes_nothing() {
     let t = tmp("big");
     let root = t.0.join("lib");
-    let n = big_fixture(&root);
+    let (n, videos) = big_fixture(&root);
     let s = open_db(&t);
     assert_eq!(add(&s, &root).status, "added");
     let r1 = scan_all(&s);
@@ -109,7 +113,7 @@ fn scans_5000_files_and_a_second_scan_changes_nothing() {
     let started = std::time::Instant::now();
     let page = s.read(|c| query::query(c, &query::Query { kind: Some("video".into()), limit: 200, ..Default::default() })).unwrap();
     assert_eq!(page.items.len(), 200);
-    assert_eq!(page.total as usize, n / 3);
+    assert_eq!(page.total as usize, videos);
     let hit = s.read(|c| query::query(c, &query::Query { search: Some("file-7-12".into()), ..Default::default() })).unwrap();
     assert!(hit.items.iter().any(|i| i.name == "file-7-12.mp3"), "{:?}", hit.items.iter().map(|i| &i.name).collect::<Vec<_>>());
     eprintln!("[bench] first page + search: {} ms", started.elapsed().as_millis());
