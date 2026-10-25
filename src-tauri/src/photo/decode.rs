@@ -538,12 +538,15 @@ pub fn capabilities() -> Capabilities {
     if !os.heic {
         hints.push(heic::HEIC_HINT);
     }
+    let avif = heic::avif_works();
     if !os.avif {
         hints.push(heic::AVIF_HINT);
+    } else if !avif {
+        hints.push(heic::AVIF_FAILED_HINT);
     }
     Capabilities {
         heic: os.heic,
-        avif_decode: os.avif,
+        avif_decode: avif,
         avif_encode: true,
         webp_lossy: true,
         raw_preview: true,
