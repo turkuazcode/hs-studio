@@ -98,15 +98,17 @@ function renderRow(st, list, app) {
 }
 
 async function refresh(list, app) {
-  // The settings window re-renders its panels (language change...): use the live list
-  if (!list.isConnected) list = document.getElementById("ai-model-list") ?? list;
+  // The settings window re-renders its panels (language change...): after the await, write
+  // into the list that is in the document (a freshly rendered one is attached by then)
+  const live = () => (list.isConnected ? list : document.getElementById("ai-model-list") ?? list);
   try {
     const statuses = await componentStatuses();
+    list = live();
     list.replaceChildren(...statuses.map((st) => renderRow(st, list, app)));
     list.dataset.loaded = "1";
   } catch (e) {
     console.error("[ai-models]", e);
-    list.replaceChildren(el("p", { class: "vho-settings-hint", text: e?.message || String(e) }));
+    live().replaceChildren(el("p", { class: "vho-settings-hint", text: e?.message || String(e) }));
   }
 }
 
