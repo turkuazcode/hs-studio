@@ -56,6 +56,7 @@
       "photo": "Photo",
       "appearance": "Appearance",
       "shortcuts": "Shortcuts",
+      "components": "AI models",
       "advanced": "Advanced",
       "about": "About / Licenses"
     },
@@ -486,6 +487,71 @@
       "toolsHeading": "Media tools (ffmpeg)",
       "toolsInfo": "{version} · H.264 encoder: {encoder}",
       "none": "none"
+    }
+  },
+  "aiModels": {
+    "settings": {
+      "intro": "AI features download these components on first use. Every file comes from a pinned version and is verified with SHA-256; a damaged file is never used.",
+      "desktopOnly": "AI models can only be managed in the desktop app.",
+      "version": "Version {version}",
+      "byline": "{author} · License: {license}",
+      "size": "Download: {download} · On disk: {disk}",
+      "badFiles": "Damaged files: {files}",
+      "confirmRemove": "Remove {title} from this computer? It is downloaded again when needed."
+    },
+    "state": {
+      "missing": "Not downloaded",
+      "partial": "Incomplete",
+      "installed": "Downloaded",
+      "ready": "Ready (verified)",
+      "corrupt": "Damaged",
+      "downloading": "Downloading…",
+      "verifying": "Verifying…"
+    },
+    "phase": {
+      "verify": "Checking files… {percent}%",
+      "download": "Downloading… {percent}%",
+      "extract": "Extracting archive… {percent}%"
+    },
+    "actions": {
+      "install": "Download",
+      "cancel": "Cancel",
+      "verify": "Verify",
+      "repair": "Repair",
+      "remove": "Remove",
+      "source": "Source"
+    },
+    "task": {
+      "runtime": "Inference engine",
+      "photo-upscale": "Photo enhancement (4x)",
+      "face-restore": "Face restoration",
+      "test": "Test component"
+    },
+    "toasts": {
+      "installed": "{title} downloaded and verified",
+      "verified": "{title} verified: files intact",
+      "damaged": "⚠️ {title} is damaged; Repair downloads it again",
+      "removed": "{title} removed"
+    },
+    "consent": {
+      "intro": "First use: about {mb} MB of AI components will be downloaded and kept on this computer.",
+      "item": "• {title} — {author}, {license} ({mb} MB)",
+      "manage": "Components can be verified or removed in Settings > AI models.",
+      "question": "Continue?"
+    },
+    "errors": {
+      "unknown-component": "Unknown AI component.",
+      "not-installed": "The AI component is not downloaded.",
+      "download-network": "Download failed: the connection could not be made or was lost. Try again later.",
+      "checksum": "The file could not be verified (size or SHA-256 mismatch); it was not used.",
+      "disk-full": "Not enough free disk space.",
+      "permission": "No permission to write to the data folder.",
+      "cancelled": "Cancelled.",
+      "license-unavailable": "The component has no license information; it was not downloaded.",
+      "in-use": "The component is used by a running job; remove it when the job is done.",
+      "busy": "The component is being downloaded or verified right now.",
+      "archive-invalid": "The model archive is invalid or contains forbidden content.",
+      "io": "A file operation failed."
     }
   }
 }

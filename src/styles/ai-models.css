@@ -1,0 +1,17 @@
+/* Settings > AI models (src/ui/ai-models.js) */
+.vho-ai-model-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.vho-ai-model {
+  display: flex; flex-direction: column; gap: 3px; padding: 10px 12px;
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.12)); border-radius: 8px;
+}
+.vho-ai-model-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.vho-ai-model-title { font-size: 13px; color: var(--text-pure); }
+.vho-ai-model-state { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+.vho-ai-model-state.is-ready { color: var(--color-success, #4caf50); }
+.vho-ai-model-state.is-corrupt, .vho-ai-model-error { color: var(--color-danger, #e5534b); }
+.vho-ai-model small { font-size: 11px; color: var(--text-secondary); }
+.vho-ai-model small.vho-ai-model-error { color: var(--color-danger, #e5534b); }
+.vho-ai-model-progress[hidden], .vho-ai-model-error[hidden] { display: none; }
+.vho-ai-model-progress-track { height: 4px; border-radius: 4px; background: rgba(127, 127, 127, 0.25); overflow: hidden; margin-top: 4px; }
+.vho-ai-model-progress-bar { width: 0; height: 100%; background: var(--accent-gradient); transition: width 0.2s ease; }
+.vho-ai-model-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }

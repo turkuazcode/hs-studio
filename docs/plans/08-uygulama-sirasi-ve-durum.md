@@ -85,7 +85,8 @@ Takvim bu belgede taahhüt edilmez. S01 sonrası Claude her kart için S (tek od
 | S03 | doğrulandı | [docs/status/test-baseline.md](../status/test-baseline.md); AVIF `0x88982F8B` = codec kurulu ama başlatılamadı → `[codec-failed]` + gerçek çözme yoklaması |
 | S04–S05 | bekliyor | |
 | P01–P05 | bekliyor | Windows motoru mevcut; diğer platformların entegrasyonu eksik |
-| A01–A06 | bekliyor | Mevcut inference kodu korunup genişletilecek |
+| A01 | kod hazır | `wave3/e3-modeller`: tek manifest (sürüm/görev/lisans/yazar/kaynak, çok dosya, zip + iç dosya hash, ONNX external data), sürüm klasörü + eski düzen göçü, oturum başı SHA-256 + değişim önbelleği, bileşen başına tek iş / requestId iptali, Range+ETag ile sürdürme, zaman aşımı + sınırlı retry, disk alanı kontrolü, lease ile kaldırma koruması, kodlu hatalar (i18n), Ayarlar > AI modelleri. Rust `ai::` 21 test, birim 126/126, E2E 140/140 (yeni `ai-models.e2e` yerel fixture sunucusuyla). Kalan: gerçek ağda büyük model indirmesi Q01; Plan 07 modelleri A06 |
+| A02–A06 | bekliyor | Mevcut inference kodu korunup genişletilecek |
 | V01–V06 | bekliyor | Araştırma kapısı V02 |
 | L01 | doğrulandı | `main`e birleşti (`01b38a8`), ana dalda yeniden test: birim 127/127, Rust 88/88 (+2 ignored), E2E 139/139, release uyarısız (2026-10-25). Ayrıntı: `library.db` (rusqlite 0.40.2 + paketli SQLite), tek göç sahibi `src-tauri/src/storage/migrations.rs`, göç öncesi/dönemsel sürümlü yedek, bozulmada karantina + yedekten dönüş / yeniden içe aktarma, yeni şemayı açmama; `library.json` son açılanlar/kaldığı yer + `actions.favorites` + localStorage yer imleri tek seferlik doğrulanmış göç. Birim 127/127, Rust 88/88 (+2 ignored), E2E 139/139 (storage 10). Mimari: [storage-schema.md](../storage-schema.md). Kalan: macOS/Linux'ta platform dosya kimliği denenmedi |
 | L02–L04 | bekliyor | Özgün Plan 05 korunuyor; L02/A02 tabloları L01 göç listesine eklenir |

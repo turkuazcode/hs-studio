@@ -39,6 +39,7 @@ import { createSleepTimer } from "./ui/sleep-timer.js";
 import { createTimeline } from "./ui/timeline.js";
 import { createToasts } from "./ui/toasts.js";
 import { initPlatform } from "./ui/platform.js";
+import { registerAiModelSettings } from "./ui/ai-models.js";
 import { initWindowControls } from "./ui/window-controls.js";
 
 /** libmpv status from the backend; { available: false } in a browser or without the DLLs. */
@@ -144,6 +145,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // engine options after the base fields (tab order), once the stored values are loaded
       registerEngineSettings(app);
       announceStorageStatus(app);
+      registerAiModelSettings(app);
       app.mediaActions.registerSettings().catch((e) => console.error("[actions] settings", e));
       invoke?.("initial_files")
         .then((paths) => app.loader.openPaths(paths))
