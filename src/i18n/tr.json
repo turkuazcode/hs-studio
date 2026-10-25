@@ -483,8 +483,8 @@
     }
   },
   "effects": {
-    "compatOnConfirm": "Uyumluluk modu açılacak ve uygulama yeniden başlayacak. Devam edilsin mi?",
-    "compatOffConfirm": "Uyumluluk modu kapatılacak ve uygulama yeniden başlayacak. Devam edilsin mi?",
+    "compatOnConfirm": "Uyumluluk Modu açılacak ve uygulama yeniden başlayacak. Devam edilsin mi?",
+    "compatOffConfirm": "Uyumluluk Modu kapatılacak ve uygulama yeniden başlayacak. Devam edilsin mi?",
     "compatFailed": "⚠️ Uyumluluk modu değiştirilemedi"
   },
   "enhance": {

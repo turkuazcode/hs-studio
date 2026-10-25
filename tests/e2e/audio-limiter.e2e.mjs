@@ -113,7 +113,7 @@ test("booster limiter: HTML5 Web Audio graph (createLimiter) in vho.exe", { time
         const g = ctx.createGain();
         g.gain.value = gain;
         src.connect(g);
-        if (limiter) { const l = createLimiter(ctx); g.connect(l); l.connect(ctx.destination); }
+        if (limiter) { const l = createLimiter(ctx); g.connect(l.input); l.output.connect(ctx.destination); }
         else g.connect(ctx.destination);
         src.start();
         return stats((await ctx.startRendering()).getChannelData(0));

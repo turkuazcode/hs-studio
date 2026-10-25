@@ -3,7 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { cap, createCapabilities, frontendCapabilities, mergeCapabilities } from "../../src/core/capabilities.js";
 import { LAVFI_LIMITER, audioFilterChain } from "../../src/media/engine/engine.js";
-import { LIMITER_PARAMS, volumeToGain } from "../../src/media/audio-engine.js";
+import { LIMITER_CEILING, LIMITER_PARAMS, softClipCurve, volumeToGain } from "../../src/media/audio-engine.js";
 
 const byId = (list) => Object.fromEntries(list.map((e) => [e.id, e]));
 
@@ -78,6 +78,17 @@ test("booster: libmpv chain ends in a limiter whenever a stage can raise the lev
   // voice band alone (+5.5 dB) also gets the limiter; cuts only do not
   assert.ok(audioFilterChain({ restore: { voice: true } }).includes("alimiter"));
   assert.ok(!audioFilterChain({ restore: { denoise: true, compressor: true } }).includes("alimiter"));
-  // the HTML5 limiter matches the documented ceiling (-1.5 dB threshold, ratio 20, 1 ms attack)
-  assert.deepEqual(LIMITER_PARAMS, { threshold: -1.5, knee: 0, ratio: 20, attack: 0.001, release: 0.08 });
+  assert.deepEqual(LIMITER_PARAMS, { threshold: -3, knee: 0, ratio: 20, attack: 0.001, release: 0.08 });
+});
+
+test("booster: HTML5 soft-clip safety stage never reaches full scale, is transparent below the knee", () => {
+  const c = softClipCurve(2049);
+  const n = c.length;
+  let max = 0;
+  for (const v of c) max = Math.max(max, Math.abs(v));
+  assert.ok(max < LIMITER_CEILING && max > 0.9, `max ${max}`);
+  // curve index for a signal x (after the 0.5 pre-gain): i = (x/2 + 1) / 2 * (n - 1)
+  const at = (x) => c[Math.round(((x / 2 + 1) / 2) * (n - 1))];
+  for (const x of [0, 0.25, 0.5, -0.7]) assert.ok(Math.abs(at(x) - x) < 0.003, `identity at ${x}: ${at(x)}`);
+  for (let i = 1; i < n; i++) assert.ok(c[i] >= c[i - 1], "monotonic");
 });

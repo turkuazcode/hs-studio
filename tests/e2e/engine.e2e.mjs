@@ -55,6 +55,21 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
       assert.match(await app.text("#engine-info"), /^libmpv/);
     });
 
+    await t.test("capability matrix (P01): libmpv present, Windows verified, UI uses the same source", async () => {
+      const r = await app.eval(`__TAURI__.core.invoke("platform_capabilities")`);
+      const c = Object.fromEntries(r.entries.map((e) => [e.id, e]));
+      assert.equal(r.platform.os, "windows");
+      assert.equal(r.platform.verifiedPlatform, true);
+      assert.deepEqual(c["engine.libmpv"], { id: "engine.libmpv", available: true, implementation: "libmpv-lgpl", verified: true, reasonCode: null });
+      assert.equal(c["video.surface"].implementation, "win32-owned-popup");
+      assert.equal(c["system.mediaControls"].reasonCode, "not-implemented");
+      assert.equal(c["actions.share"].reasonCode, "system-changes-disabled"); // E2E guard active
+      const ui = await app.waitFor(`(() => { const m = Object.fromEntries(window.__vhoEngine.capabilities.map((e) => [e.id, e]));
+        return m["engine.libmpv"] && m; })()`, { timeoutMs: 10000, message: "backend capabilities in the UI" });
+      assert.equal(ui["engine.libmpv"].available, true);
+      assert.equal(ui["video.compare"].reasonCode, "engine-mpv");
+    });
+
     await t.test("A/B comparison does not look usable with libmpv; the reason is shown (S04)", async () => {
       assert.equal(await app.eval(`document.getElementById("btn-toggle-split-view").disabled`), true);
       assert.equal(await app.eval(`document.getElementById("split-view-reason").hidden`), false);
@@ -325,6 +340,20 @@ test("engine fallback: VHO_DISABLE_MPV=1 -> HTML5 engine, opaque window", { time
       assert.match(await app.text("#engine-info"), /HTML5 <video> yedek motoru — libmpv yok/);
       assert.notEqual(await app.eval(`getComputedStyle(document.body).backgroundColor`), "rgba(0, 0, 0, 0)");
       assert.equal(await app.eval(`document.getElementById("btn-hud-more").offsetParent !== null`), true);
+    });
+    await t.test("capability matrix (P01): libmpv disabled -> reason engine-disabled, HTML5 + A/B available", async () => {
+      const r = await app.eval(`__TAURI__.core.invoke("platform_capabilities")`);
+      const c = Object.fromEntries(r.entries.map((e) => [e.id, e]));
+      assert.equal(c["engine.libmpv"].available, false);
+      assert.equal(c["engine.libmpv"].reasonCode, "engine-disabled");
+      assert.equal(c["video.surface"].implementation, "webview-video");
+      assert.equal(c["engine.html5"].available, true);
+      const ui = await app.waitFor(`(() => { const m = Object.fromEntries(window.__vhoEngine.capabilities.map((e) => [e.id, e]));
+        return m["engine.libmpv"] && m; })()`, { timeoutMs: 10000, message: "backend capabilities in the UI" });
+      assert.equal(ui["engine.libmpv"].reasonCode, "engine-disabled");
+      const webgl = await app.eval(`!!document.createElement("canvas").getContext("webgl2")`);
+      assert.equal(ui["video.compare"].available, webgl);
+      assert.equal(await app.eval(`document.getElementById("btn-toggle-split-view").disabled`), !webgl);
     });
     await t.test("no uncaught page errors", async () => {
       assert.deepEqual(await app.errors(), []);
