@@ -196,6 +196,7 @@ impl Manager {
         Arc::new(Self { root, components, policy, emit, free_space, inner: Mutex::new(Inner::default()) })
     }
 
+    #[cfg(test)]
     pub fn components(&self) -> &[Component] {
         &self.components
     }

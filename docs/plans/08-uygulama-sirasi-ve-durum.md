@@ -85,7 +85,8 @@ Takvim bu belgede taahhüt edilmez. S01 sonrası Claude her kart için S (tek od
 | S03 | doğrulandı | [docs/status/test-baseline.md](../status/test-baseline.md); AVIF `0x88982F8B` = codec kurulu ama başlatılamadı → `[codec-failed]` + gerçek çözme yoklaması |
 | S04–S05 | bekliyor | |
 | P01–P05 | bekliyor | Windows motoru mevcut; diğer platformların entegrasyonu eksik |
-| A01–A06 | bekliyor | Mevcut inference kodu korunup genişletilecek |
+| A01 | kod hazır | `wave3/e3-modeller`: tek manifest (sürüm/görev/lisans/yazar/kaynak, çok dosya, zip + iç dosya hash, ONNX external data), sürüm klasörü + eski düzen göçü, oturum başı SHA-256 + değişim önbelleği, bileşen başına tek iş / requestId iptali, Range+ETag ile sürdürme, zaman aşımı + sınırlı retry, disk alanı kontrolü, lease ile kaldırma koruması, kodlu hatalar (i18n), Ayarlar > AI modelleri. Rust `ai::` 21 test, birim 126/126, E2E 140/140 (yeni `ai-models.e2e` yerel fixture sunucusuyla). Kalan: gerçek ağda büyük model indirmesi Q01; Plan 07 modelleri A06 |
+| A02–A06 | bekliyor | Mevcut inference kodu korunup genişletilecek |
 | V01–V06 | bekliyor | Araştırma kapısı V02 |
 | L01–L04 | bekliyor | Özgün Plan 05 korunuyor |
 | Q01–Q04, R01–R04 | bekliyor | 24 Ekim baseline aşağıda |
