@@ -2,6 +2,7 @@ mod actions;
 mod ai;
 mod capabilities;
 mod engine;
+mod library;
 mod photo;
 mod platform;
 mod storage;
@@ -246,6 +247,7 @@ pub fn run() {
     let app = builder
         .manage(platform::PendingOpen::default())
         .manage(storage::StorageState::default())
+        .manage(library::LibraryState::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
@@ -348,7 +350,31 @@ pub fn run() {
             actions::lyrics_read,
             actions::export_dir,
             storage::library_load,
-            storage::library_save
+            storage::library_save,
+            library::library_folders,
+            library::library_add_folder,
+            library::library_remove_folder,
+            library::library_rescan,
+            library::library_scan_cancel,
+            library::library_status,
+            library::library_set_options,
+            library::library_query,
+            library::library_music_groups,
+            library::library_media_meta,
+            library::library_set_rating,
+            library::library_set_tags,
+            library::library_tags,
+            library::library_mark_played,
+            library::library_folder_favorites,
+            library::library_set_folder_favorite,
+            library::library_import_folder_favorites,
+            library::library_playlists,
+            library::library_playlist_get,
+            library::library_playlist_save,
+            library::library_playlist_delete,
+            library::library_playlist_import,
+            library::library_playlist_read,
+            library::library_playlist_export
         ])
         .build(context)
         .expect("error while building tauri application");

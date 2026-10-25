@@ -645,10 +645,10 @@ pub fn scan(
     let mut done = 0usize;
     let write = storage.write_batches(changes, BATCH, |tx, c| {
         if done % BATCH == 0 {
+            progress(Progress { phase: "write", done, total });
             if cancel.load(Ordering::Relaxed) {
                 return Err(StorageError::Other("cancelled".into()));
             }
-            progress(Progress { phase: "write", done, total });
         }
         done += 1;
         apply(tx, c, now, &mut audio, &mut moves)
