@@ -1,5 +1,6 @@
 mod actions;
 mod ai;
+mod capabilities;
 mod engine;
 mod photo;
 mod platform;
@@ -311,6 +312,7 @@ pub fn run() {
             platform::settings_dir,
             platform::open_default_apps_settings,
             engine::engine_status,
+            capabilities::platform_capabilities,
             engine::engine_load,
             engine::engine_command,
             engine::engine_set,

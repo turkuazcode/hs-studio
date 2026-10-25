@@ -66,8 +66,8 @@ function detectWebgl2() {
  * `platform_capabilities` ({ platform, entries }) or null; webgl2/webgpu: boolean or getter.
  */
 export function createCapabilities({ engineKind = () => "html5", backend = null, webgl2 = detectWebgl2(), webgpu = !!globalThis.navigator?.gpu } = {}) {
-  const platform = backend?.platform ?? null;
-  const backendEntries = backend?.entries ?? [];
+  let platform = backend?.platform ?? null;
+  let backendEntries = backend?.entries ?? [];
   const val = (v) => (typeof v === "function" ? v() : v);
   const current = () => mergeCapabilities(backendEntries, frontendCapabilities({
     engineKind: engineKind(), webgl2: !!val(webgl2), webgpu: !!val(webgpu), platform,
@@ -76,6 +76,11 @@ export function createCapabilities({ engineKind = () => "html5", backend = null,
     get: (id) => current().get(id) ?? cap(id, false, null, { reasonCode: "unknown" }),
     isAvailable: (id) => !!current().get(id)?.available,
     all: () => [...current().values()],
-    platform,
+    get platform() { return platform; },
+    /** Backend answer arrived (platform_capabilities is loaded after boot, off the start path). */
+    setBackend(report) {
+      platform = report?.platform ?? null;
+      backendEntries = report?.entries ?? [];
+    },
   };
 }

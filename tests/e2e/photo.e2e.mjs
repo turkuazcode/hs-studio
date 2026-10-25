@@ -93,12 +93,12 @@ test("photo: two photos from the command line", { timeout: 120000 }, async (t) =
     });
 
     await t.test("picture filter toggle in photo mode (A), photo layout of the enhance panel (S04), playlist drawer (L)", async () => {
-      const display = (sel) => app.eval(`getComputedStyle(document.querySelector(${JSON.stringify(sel)})).display`);
+      const laidOut = (sel) => app.eval(`(() => { let el = document.querySelector(${JSON.stringify(sel)}); for (; el; el = el.parentElement) if (getComputedStyle(el).display === "none") return false; return true; })()`);
       assert.equal(await app.eval(`document.documentElement.dataset.media`), "image");
-      assert.notEqual(await display("#btn-deep-enhance"), "none", "Enhance photo with AI shown for photos");
+      assert.equal(await laidOut("#btn-deep-enhance"), true, "Enhance photo with AI shown for photos");
       assert.match(await app.text("#btn-deep-enhance"), /AI/);
-      assert.equal(await display("#check-ai-voice-clarity"), "none", "sound filters hidden for photos");
-      assert.equal(await display("#video-restore-note"), "none");
+      assert.equal(await laidOut("#check-ai-voice-clarity"), false, "sound filters hidden for photos");
+      assert.equal(await laidOut("#video-restore-note"), false);
       await app.key("KeyA");
       assert.match(await app.text("#ai-master-status"), /^(Açık|On)/);
       await app.key("KeyA");

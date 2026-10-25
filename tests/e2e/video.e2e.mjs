@@ -171,7 +171,8 @@ test("video: H.264 clip + SRT opened from the command line", { timeout: 180000 }
 
     await t.test("picture/sound filters (A) and A/B split view (B), honest names (S04)", async () => {
       // video layout: no photo-AI controls, video restoration shown as not ready
-      const shown = (sel) => app.eval(`document.querySelector(${JSON.stringify(sel)}).offsetParent !== null || getComputedStyle(document.querySelector(${JSON.stringify(sel)})).display !== "none"`);
+      // laid out = no ancestor with display:none (the panel itself slides, it is never display:none)
+      const shown = (sel) => app.eval(`(() => { let el = document.querySelector(${JSON.stringify(sel)}); for (; el; el = el.parentElement) if (getComputedStyle(el).display === "none") return false; return true; })()`);
       await app.click("#btn-toggle-ai-restore");
       assert.equal(await app.eval(`document.documentElement.dataset.media`), "video");
       assert.equal(await shown("#btn-deep-enhance"), false, "photo AI hidden for video");

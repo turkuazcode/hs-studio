@@ -268,6 +268,7 @@ export function createPanels(app) {
   }
   state.subscribe?.("currentMediaType", (type) => { syncMedia(type); refresh(); });
   app.bus?.on?.("engine:changed", refresh);
+  app.bus?.on?.("capabilities:changed", refresh);
   i18n.onChange(refresh);
   refresh();
 

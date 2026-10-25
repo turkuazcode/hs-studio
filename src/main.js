@@ -81,6 +81,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   app.engine = createEngineFacade(app.engines);
   // One capability source for the UI (Plan 10 / P01): what works with this engine / WebView
   app.capabilities = createCapabilities({ engineKind: () => app.engine.kind, webgl2: () => !!app.filters?.enhancer });
+  // Backend part (engine, photo codecs, OS actions); the AVIF probe must not delay the first paint
+  invoke?.("platform_capabilities")
+    .then((report) => { app.capabilities.setBackend(report); app.bus.emit("capabilities:changed", report); })
+    .catch((e) => console.warn("platform_capabilities", e));
 
   // Leaf services first: everything below may toast / poke the HUD
   Object.assign(app, createToasts(dom));
@@ -127,6 +131,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     get chapters() { return app.engine.chapters(); },
     get audioFilters() { return app.audioFx.chain; },
     get bookmarks() { return app.playbackMenus.bookmarks; },
+    /** Capability matrix as the UI sees it (P01). */
+    get capabilities() { return app.capabilities.all(); },
     /** Same path as the native file drop / open dialog (tests cannot synthesize an OS drop). */
     openPaths: (paths) => app.loader.openPaths(paths),
   };

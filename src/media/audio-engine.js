@@ -10,14 +10,46 @@ import { t } from "../core/i18n.js";
 /** Slider value (0-200) -> gain: 1.0 up to 100%, then up to 2.5 at 200%. */
 export const volumeToGain = (val) => (val <= 100 ? 1.0 : 1.0 + ((val - 100) / 100) * 1.5);
 
-/** Final limiter stage (DynamicsCompressor as a near-brickwall limiter). */
-export const LIMITER_PARAMS = Object.freeze({ threshold: -1.5, knee: 0, ratio: 20, attack: 0.001, release: 0.08 });
+/** Compressor part of the limiter. Web Audio's DynamicsCompressor adds automatic make-up gain
+ *  and lets transients through during its attack (measured: peak 1.02 at 200 %), so a
+ *  soft-clip safety stage follows it (createLimiter). */
+export const LIMITER_PARAMS = Object.freeze({ threshold: -3, knee: 0, ratio: 20, attack: 0.001, release: 0.08 });
 
-/** Creates the limiter on any BaseAudioContext (realtime or offline: the E2E clipping test). */
+/** Output ceiling of the safety stage (~ -0.2 dBFS): nothing reaches full scale. */
+export const LIMITER_CEILING = 0.975;
+
+/**
+ * Soft-clip transfer curve: identity up to `knee`, then a tanh shoulder that approaches
+ * `ceiling` and never reaches it (input range of a WaveShaper is -1..1, so the stage sits
+ * after a 0.5 pre-gain and maps x*0.5 back up: f(u) = shape(2u)).
+ */
+export function softClipCurve(n = 2049, ceiling = LIMITER_CEILING, knee = 0.8) {
+  const curve = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const x = ((i / (n - 1)) * 2 - 1) * 2; // -2..2 (undo the 0.5 pre-gain)
+    const a = Math.abs(x);
+    const y = a <= knee ? a : knee + (ceiling - knee) * Math.tanh((a - knee) / (ceiling - knee));
+    curve[i] = Math.sign(x) * y;
+  }
+  return curve;
+}
+
+/**
+ * Limiter on any BaseAudioContext (realtime or offline: the E2E clipping test):
+ *   compressor -> 0.5 pre-gain -> WaveShaper(soft clip, ceiling 0.975)
+ * Returns { input, output } nodes.
+ */
 export function createLimiter(ctx) {
-  const node = ctx.createDynamicsCompressor();
-  for (const [k, v] of Object.entries(LIMITER_PARAMS)) node[k].value = v;
-  return node;
+  const comp = ctx.createDynamicsCompressor();
+  for (const [k, v] of Object.entries(LIMITER_PARAMS)) comp[k].value = v;
+  const pre = ctx.createGain();
+  pre.gain.value = 0.5;
+  const shaper = ctx.createWaveShaper();
+  shaper.curve = softClipCurve();
+  shaper.oversample = "none";
+  comp.connect(pre);
+  pre.connect(shaper);
+  return { input: comp, output: shaper };
 }
 
 /** Clamped volume step for the arrow keys. */
@@ -83,7 +115,7 @@ export function createAudioEngine({ dom, state, toast, engine = () => null }) {
 
       // Limiter: always last, keeps the 200% boost from hard-clipping
       limiterNode = createLimiter(audioCtx);
-      limiterNode.connect(audioCtx.destination);
+      limiterNode.output.connect(audioCtx.destination);
 
       reconnectAudioPipeline();
       setGain(volumeToGain(parseInt(volumeSlider.value, 10) || 0));
@@ -121,7 +153,8 @@ export function createAudioEngine({ dom, state, toast, engine = () => null }) {
         }
       }
       currentNode.connect(gainNode);
-      gainNode.connect(limiterNode);
+      gainNode.connect(limiterNode.input);
+
     } catch (e) {
       console.warn("Audio pipeline reconnect:", e);
     }
