@@ -172,6 +172,7 @@ CREATE INDEX artifacts_media ON artifacts(media_id);
 pub const MIGRATIONS: &[Migration] = &[Migration { version: 1, name: "core", up: MigrationStep::Sql(V1_CORE) }];
 
 /// Highest schema version this build understands.
+#[allow(dead_code)] // diagnostics / A02 tests
 pub fn latest_version() -> u32 {
     MIGRATIONS.last().map_or(0, |m| m.version)
 }
