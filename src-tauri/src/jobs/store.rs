@@ -81,13 +81,12 @@ pub struct JobRow {
     pub request_text: String,
     pub recipe_hash: String,
     pub model: Option<String>,
-    pub attempt_id: Option<String>,
     pub resume_block: Option<String>,
 }
 
 pub fn row(conn: &Connection, id: &str) -> rusqlite::Result<Option<JobRow>> {
     conn.query_row(
-        "SELECT id, kind, schema_version, state, request, recipe_hash, model, attempt_id, resume_block FROM jobs WHERE id = ?1",
+        "SELECT id, kind, schema_version, state, request, recipe_hash, model, resume_block FROM jobs WHERE id = ?1",
         [id],
         |r| {
             let text: String = r.get(4)?;
@@ -101,8 +100,7 @@ pub fn row(conn: &Connection, id: &str) -> rusqlite::Result<Option<JobRow>> {
                 request_text: text,
                 recipe_hash: r.get(5)?,
                 model: r.get(6)?,
-                attempt_id: r.get(7)?,
-                resume_block: r.get(8)?,
+                resume_block: r.get(7)?,
             })
         },
     )
