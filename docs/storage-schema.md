@@ -46,6 +46,9 @@ Açılış sırası: bütünlük denetimi (`PRAGMA quick_check`) → gerekirse k
 
 ## Tablolar (şema v1)
 
+Şema v2 (`jobs`, Plan 11/A02): `jobs`, `job_items`, `job_checkpoints`, `job_temp_dirs` ve `artifacts.job_id`; ayrıntı [jobs-api.md](jobs-api.md).
+
+
 | Tablo | Amaç | Notlar |
 |---|---|---|
 | `schema_migrations` | Uygulanan göçler | `version`, `name`, `applied_at`, `app_version` |
