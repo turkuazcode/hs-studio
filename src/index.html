@@ -80,12 +80,12 @@
           </button>
 
           <!-- AI Restoration Button -->
-          <button id="btn-toggle-ai-restore" class="titlebar-action-btn btn-ai-action" title="144p Eski Video & Ses Restorasyonu">
+          <button id="btn-toggle-ai-restore" class="titlebar-action-btn btn-ai-action" data-i18n-title="enhance.buttonTitle" title="Oynatma sırasında görüntü ve ses filtreleri; fotoğrafta AI ile iyileştirme">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="color: var(--accent-ruby);">
               <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6.4-4.8-6.4 4.8 2.4-7.2-6-4.8h7.6z"/>
             </svg>
-            <span>AI Restorasyon</span>
-            <span id="ai-restore-badge" class="badge-count" style="display:none;">AÇIK</span>
+            <span data-i18n="enhance.button">İyileştir</span>
+            <span id="ai-restore-badge" class="badge-count" style="display:none;" data-i18n="enhance.badgeOn">AÇIK</span>
           </button>
         </div>
 
@@ -107,9 +107,9 @@
       <main id="viewport" class="viewport">
         <!-- Split Screen A/B Comparison Badges & Vertical Indicator Line -->
         <div id="split-screen-banner" class="split-screen-banner" style="display:none;">
-          <span class="split-label left">Orijinal (144p)</span>
+          <span class="split-label left" data-i18n="enhance.splitOriginal">Orijinal</span>
           <div class="split-divider-line"></div>
-          <span class="split-label right">AI Restorasyon</span>
+          <span class="split-label right" data-i18n="enhance.splitFiltered">Filtreli</span>
         </div>
         <div id="split-screen-line" class="split-divider-indicator" style="display:none;"></div>
 
@@ -134,7 +134,7 @@
           </div>
         </div>
 
-        <!-- WebGL2 GPU Enhancer Output (AI Restorasyon açıkken video/fotoğrafın yerine çizilir) -->
+        <!-- WebGL2 GPU filter output (drawn instead of the video/photo while the picture filter is on) -->
         <canvas id="gpu-canvas" class="gpu-canvas" hidden></canvas>
 
         <!-- Floating Next / Previous Navigation Arrows on Viewport Edge -->
@@ -184,7 +184,7 @@
               <span><kbd>F</kbd> Tam Ekran</span>
               <span><kbd>← / →</kbd> Sonraki</span>
               <span><kbd>Tekerlek</kbd> Zoom</span>
-              <span><kbd>R</kbd> AI Restorasyon / Döndür</span>
+              <span><kbd>A</kbd> <span data-i18n="enhance.hintFilters">Filtreler</span></span>
             </div>
           </div>
         </div>
@@ -574,24 +574,26 @@
           </div>
         </div>
 
-        <!-- AI Video & Audio Restoration Modal Panel -->
+        <!-- Enhance panel (S04): live picture/sound FILTERS while playing (not a neural network),
+             "Enhance photo with AI" (neural network, photo only) and the video-restoration status
+             (not ready). Sections follow the media type: html[data-media] + .video-only / .photo-only -->
         <div id="ai-restore-panel" class="effects-panel ai-restore-panel">
           <div class="effects-header">
             <div class="ai-header-title">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="color: var(--accent-ruby);">
                 <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6.4-4.8-6.4 4.8 2.4-7.2-6-4.8h7.6z"/>
               </svg>
-              <h4>AI Restorasyon & Netleştirici</h4>
+              <h4 data-i18n="enhance.panelTitle">Görüntü filtreleri</h4>
             </div>
-            <button id="btn-close-ai-restore" class="btn-icon-close">✕</button>
+            <button id="btn-close-ai-restore" class="btn-icon-close" data-i18n-title="common.close" title="Kapat">✕</button>
           </div>
-          
+
           <div class="effects-body">
             <!-- Master Toggle Switch -->
             <div class="restore-master-toggle">
               <div class="toggle-info">
-                <strong>Restorasyon Motoru</strong>
-                <span id="ai-master-status" class="toggle-desc">Kapalı (Orijinal)</span>
+                <strong data-i18n="enhance.master">Filtreleri uygula</strong>
+                <span id="ai-master-status" class="toggle-desc">Kapalı (orijinal)</span>
               </div>
               <label class="switch-toggle">
                 <input type="checkbox" id="check-ai-master" />
@@ -600,85 +602,91 @@
             </div>
 
             <!-- Presets Grid -->
-            <div class="restore-presets-label">Hazır Restorasyon Modları:</div>
+            <div class="restore-presets-label" data-i18n="enhance.presets">Hazır ayarlar:</div>
             <div class="restore-presets-grid">
-              <button class="btn-restore-preset active" data-preset="144p">⚡ 144p Kurtarma</button>
-              <button class="btn-restore-preset" data-preset="voice">🎙️ Konuşma Netleştir</button>
-              <button class="btn-restore-preset" data-preset="cinema">🎬 Canlı Renk & Detay</button>
-              <button class="btn-restore-preset" data-preset="custom">🛠️ Özel Ayar</button>
+              <button class="btn-restore-preset active" data-preset="144p" data-i18n="enhance.preset.sharp">Keskin (düşük çözünürlük)</button>
+              <button class="btn-restore-preset video-only" data-preset="voice" data-i18n="enhance.preset.voice">Konuşma netliği</button>
+              <button class="btn-restore-preset" data-preset="cinema" data-i18n="enhance.preset.vivid">Canlı renk</button>
+              <button class="btn-restore-preset" data-preset="custom" data-i18n="enhance.preset.custom">Özel</button>
             </div>
 
-            <!-- Video Enhancements -->
-            <div class="restore-section-title">Görüntü İyileştirme (GPU Shader):</div>
-            
+            <!-- Picture filter -->
+            <div class="restore-section-title" data-i18n="enhance.pictureSection">Görüntü filtresi (oynatma sırasında; sinir ağı değil)</div>
+
             <div class="filter-group">
               <div class="filter-label">
-                <span>Süper Çözünürlük (FSR Büyütme + Keskinlik + Gürültü Azaltma)</span>
-                <span id="val-ai-sharp">Seviye 2</span>
+                <span data-i18n="enhance.sharp">Keskinlik (FSR büyütme + CAS keskinleştirme)</span>
+                <span id="val-ai-sharp">2. seviye</span>
               </div>
               <input id="slider-ai-sharp" type="range" min="0" max="3" value="2" class="filter-slider">
+              <p class="panel-note mpv-only video-only" data-i18n="enhance.sharpMpvNote">libmpv motorunda keskinleştirme yapılmaz: bu seviye yalnızca kontrastı ve doygunluğu artırır.</p>
             </div>
 
             <div class="filter-group">
               <div class="filter-label">
-                <span>Ek Kontrast</span>
+                <span data-i18n="enhance.contrast">Ek kontrast</span>
                 <span id="val-ai-contrast">+8%</span>
               </div>
               <input id="slider-ai-contrast" type="range" min="0" max="40" value="8" class="filter-slider">
             </div>
 
-            <!-- Audio Enhancements -->
-            <div class="restore-section-title">Ses İyileştirme (DSP & Web Audio):</div>
-            
-            <label class="restore-check-row">
+            <!-- Sound filters (video/music only) -->
+            <div class="restore-section-title video-only" data-i18n="enhance.audioSection">Ses filtreleri (DSP; sinir ağı değil)</div>
+
+            <label class="restore-check-row video-only">
               <input type="checkbox" id="check-ai-voice-clarity" checked />
               <div class="check-text">
-                <strong>Diyalog & Konuşma Netleştirici (+5dB)</strong>
-                <span>Boğuk sesleri öne çıkarır, ahize etkisini kırar</span>
+                <strong data-i18n="enhance.voice">Konuşma netliği (+5,5 dB, 2,4 kHz)</strong>
+                <span data-i18n="enhance.voiceDesc">Konuşma frekanslarını öne çıkarır</span>
               </div>
             </label>
 
-            <label class="restore-check-row">
+            <label class="restore-check-row video-only">
               <input type="checkbox" id="check-ai-denoise" checked />
               <div class="check-text">
-                <strong>Dip Gürültü & Tıslama Temizleyici</strong>
-                <span>Uğultuları ve yüksek frekans cızırtısını keser</span>
+                <strong data-i18n="enhance.denoise">Uğultu ve tıslama filtresi (90 Hz – 7,5 kHz)</strong>
+                <span data-i18n="enhance.denoiseDesc">Bu aralığın dışındaki sesi keser; gürültü giderme modeli değildir</span>
               </div>
             </label>
 
-            <label class="restore-check-row">
+            <label class="restore-check-row video-only">
               <input type="checkbox" id="check-ai-compressor" checked />
               <div class="check-text">
-                <strong>Dinamik Ses Dengeleyici (Compressor)</strong>
-                <span>Fısıltıları duyulur yapar, patlamaları sınırlar</span>
+                <strong data-i18n="enhance.compressor">Dinamik ses dengeleyici (kompresör)</strong>
+                <span data-i18n="enhance.compressorDesc">Sessiz bölümleri yükseltir, ani yüksek sesleri bastırır</span>
               </div>
             </label>
 
-            <!-- A/B Comparison / Split View Toggle -->
+            <!-- A/B comparison: only where the WebGL2 filter really draws the picture (capability video.compare) -->
             <button id="btn-toggle-split-view" class="btn-secondary btn-sm" style="width:100%; margin-top: 6px;">
-              <span>A/B Karşılaştırma: <strong id="split-view-status">Kapalı</strong></span>
+              <span><span data-i18n="enhance.compare">A/B karşılaştırma</span>: <strong id="split-view-status">Kapalı</strong></span>
             </button>
+            <p id="split-view-reason" class="panel-note" hidden></p>
 
-            <!-- Deep AI restoration (neural network models, downloaded on first use) -->
-            <div class="restore-section-title">Derin İyileştirme (Yapay Zeka Modeli):</div>
-            <div class="deep-enhance-box">
-              <button id="btn-deep-enhance" class="btn-primary btn-sm" style="width:100%;">✨ Fotoğrafı İyileştir (4x, E)</button>
+            <!-- Video restoration: not ready (Plan 12, V06 gate) -->
+            <div class="restore-section-title video-only" data-i18n="enhance.videoRestoreTitle">Video restorasyonu (yapay zekâ)</div>
+            <p id="video-restore-note" class="panel-note video-only" data-i18n="enhance.videoRestoreNote">Henüz hazır değil. Yukarıdaki filtreler yalnızca oynatma sırasında uygulanır; videoyu iyileştirip kaydetmez.</p>
+
+            <!-- Photo: neural network models, downloaded on first use -->
+            <div class="restore-section-title photo-only" data-i18n="enhance.photoAiSection">Fotoğrafı AI ile iyileştir (sinir ağı)</div>
+            <div class="deep-enhance-box photo-only">
+              <button id="btn-deep-enhance" class="btn-primary btn-sm" style="width:100%;">✨ Fotoğrafı AI ile iyileştir (4x, E)</button>
               <label class="restore-check-row">
                 <input type="checkbox" id="check-deep-faces" checked />
                 <div class="check-text">
-                  <strong>Yüzleri de iyileştir (GFPGAN)</strong>
-                  <span>Bulanık yüzlerde göz, ağız ve hatları yeniden oluşturur</span>
+                  <strong data-i18n="enhance.faces">Yüzleri de iyileştir (GFPGAN)</strong>
+                  <span data-i18n="enhance.facesDesc">Bulanık yüzlerde ayrıntıyı model tahminiyle yeniden çizer; sonuç gerçek ayrıntı değildir</span>
                 </div>
               </label>
               <div id="deep-progress" class="deep-progress" hidden><div id="deep-progress-bar" class="deep-progress-bar"></div></div>
-              <span id="deep-status" class="deep-status">Eski / düşük çözünürlüklü fotoğrafları yapay zeka ile yeniden oluşturur. İlk kullanımda model indirilir.</span>
+              <span id="deep-status" class="deep-status">Fotoğrafı sinir ağıyla 4 kat büyütür; eklenen ayrıntılar modelin tahminidir. İlk kullanımda model indirilir (internet gerekir).</span>
               <div id="deep-result-actions" class="deep-result-actions" hidden>
-                <button id="btn-deep-compare" class="btn-secondary btn-sm">Orijinali Göster</button>
-                <button id="btn-deep-save" class="btn-secondary btn-sm">Kaydet (PNG)</button>
+                <button id="btn-deep-compare" class="btn-secondary btn-sm">Orijinali göster</button>
+                <button id="btn-deep-save" class="btn-secondary btn-sm" data-i18n="enhance.savePng">Kaydet (PNG)</button>
               </div>
             </div>
 
-            <button id="btn-open-licenses" class="btn-ghost btn-sm" style="margin-top: 4px;">Lisanslar ve Teşekkürler</button>
+            <button id="btn-open-licenses" class="btn-ghost btn-sm" style="margin-top: 4px;" data-i18n="menu.licenses">Lisanslar ve Teşekkürler</button>
           </div>
         </div>
 

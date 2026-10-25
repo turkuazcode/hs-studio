@@ -8,7 +8,9 @@ import { enhancerLevels, cssFilterString } from "../../src/media/visual-filters.
 import { rotatedCanvasSize } from "../../src/media/snapshot.js";
 import { pointerFraction, percentOf } from "../../src/ui/timeline.js";
 import { shouldAutoHide } from "../../src/ui/hud.js";
-import { AI_PRESETS, sharpLabel } from "../../src/ui/panels.js";
+import { AI_PRESETS, compareReasonKey, masterStatusKey, sharpLabel } from "../../src/ui/panels.js";
+import { i18n } from "../../src/core/i18n.js";
+import { readFileSync } from "node:fs";
 import { cleanMovieName, buildSubtitleSearchUrl } from "../../src/ui/modals.js";
 import { sleepBadgeText, fadeLevel, FADE_STEPS } from "../../src/ui/sleep-timer.js";
 import { isTextField } from "../../src/ui/shortcuts.js";
@@ -98,11 +100,41 @@ test("HUD auto-hide decision", () => {
   assert.ok(shouldAutoHide({ isPlaying: false, isSlideshowActive: true, mediaType: "none", overlayOpen: false }));
 });
 
-test("AI presets and sharpness labels", () => {
+test("filter presets and sharpness labels (i18n, both languages)", () => {
   assert.deepEqual(Object.keys(AI_PRESETS), ["144p", "voice", "cinema"]);
+  const dict = (l) => JSON.parse(readFileSync(new URL(`../../src/i18n/${l}.json`, import.meta.url), "utf8"));
+  i18n.addDictionary("tr", dict("tr"));
+  i18n.addDictionary("en", dict("en"));
+  i18n.setLanguage("tr");
   assert.equal(sharpLabel(0), "Kapalı");
-  assert.equal(sharpLabel(2), "Seviye 2");
-  assert.equal(sharpLabel(3), "Seviye 3 (Ultra)");
+  assert.equal(sharpLabel(2), "2. seviye");
+  i18n.setLanguage("en");
+  assert.equal(sharpLabel(3), "Level 3");
+  i18n.setLanguage("tr");
+});
+
+test("enhance panel status: filters are never called AI / restoration", () => {
+  assert.equal(masterStatusKey(false, "mpv", false), "enhance.statusOff");
+  assert.equal(masterStatusKey(true, "mpv", true), "enhance.statusMpv");
+  assert.equal(masterStatusKey(true, "html5", true), "enhance.statusGpu");
+  assert.equal(masterStatusKey(true, "html5", false), "enhance.statusCss");
+  for (const l of ["tr", "en"]) {
+    const d = JSON.parse(readFileSync(new URL(`../../src/i18n/${l}.json`, import.meta.url), "utf8"));
+    // live filter texts must not claim AI / restoration / neural processing
+    for (const k of ["panelTitle", "master", "statusMpv", "statusGpu", "statusCss", "pictureSection", "audioSection", "toastOn", "button"]) {
+      assert.doesNotMatch(d.enhance[k], /\bAI\b|restor|yapay/i, `${l} enhance.${k}`);
+    }
+    assert.match(d.enhance.pictureSection, l === "tr" ? /sinir ağı değil/ : /not a neural network/);
+    assert.match(d.enhance.photoAiSection, /AI/);
+    assert.match(d.enhance.videoRestoreNote, l === "tr" ? /hazır değil/ : /Not ready/);
+  }
+});
+
+test("A/B comparison reason follows the capability entry", () => {
+  assert.equal(compareReasonKey({ available: true }), null);
+  assert.equal(compareReasonKey({ available: false, reasonCode: "engine-mpv" }), "enhance.compareMpv");
+  assert.equal(compareReasonKey({ available: false, reasonCode: "no-webgl2" }), "enhance.compareNoWebgl");
+  assert.equal(compareReasonKey(undefined), "enhance.compareNoWebgl");
 });
 
 test("subtitle search query and URL", () => {

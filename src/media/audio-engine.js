@@ -1,11 +1,24 @@
 // ==========================================================================
-// Web Audio booster (up to 200%) & DSP restoration pipeline:
+// Web Audio booster (up to 200%) & DSP filter pipeline (plain filters, not a neural network):
 //   source -> [highpass -> lowpass] -> [speech peaking] -> [compressor] -> gain -> limiter
-// The graph is created lazily, only when boost or DSP is actually needed.
+// The graph is created lazily, only when boost or DSP is actually needed. Boosting is not
+// lossless: loud parts are held under the limiter ceiling (tests/e2e/audio-limiter.e2e.mjs).
 // ==========================================================================
+
+import { t } from "../core/i18n.js";
 
 /** Slider value (0-200) -> gain: 1.0 up to 100%, then up to 2.5 at 200%. */
 export const volumeToGain = (val) => (val <= 100 ? 1.0 : 1.0 + ((val - 100) / 100) * 1.5);
+
+/** Final limiter stage (DynamicsCompressor as a near-brickwall limiter). */
+export const LIMITER_PARAMS = Object.freeze({ threshold: -1.5, knee: 0, ratio: 20, attack: 0.001, release: 0.08 });
+
+/** Creates the limiter on any BaseAudioContext (realtime or offline: the E2E clipping test). */
+export function createLimiter(ctx) {
+  const node = ctx.createDynamicsCompressor();
+  for (const [k, v] of Object.entries(LIMITER_PARAMS)) node[k].value = v;
+  return node;
+}
 
 /** Clamped volume step for the arrow keys. */
 export const stepVolume = (current, delta) => Math.max(0, Math.min(200, current + delta));
@@ -31,6 +44,7 @@ export function createAudioEngine({ dom, state, toast, engine = () => null }) {
   let limiterNode = null;
   let lastNonZeroVolume = 100;
   let onRestoreChange = null;
+  let mpvBoost = 1; // boost last pushed to the libmpv af chain
 
   /** Builds the audio graph on first need. Returns false if the source can't be routed. */
   function ensureAudioGraph() {
@@ -67,13 +81,8 @@ export function createAudioEngine({ dom, state, toast, engine = () => null }) {
       compressorNode.attack.value = 0.003;
       compressorNode.release.value = 0.25;
 
-      // Brickwall limiter: always last, prevents clipping in 200% boost mode
-      limiterNode = audioCtx.createDynamicsCompressor();
-      limiterNode.threshold.value = -1.5;
-      limiterNode.knee.value = 0;
-      limiterNode.ratio.value = 20;
-      limiterNode.attack.value = 0.001;
-      limiterNode.release.value = 0.08;
+      // Limiter: always last, keeps the 200% boost from hard-clipping
+      limiterNode = createLimiter(audioCtx);
       limiterNode.connect(audioCtx.destination);
 
       reconnectAudioPipeline();
@@ -132,7 +141,7 @@ export function createAudioEngine({ dom, state, toast, engine = () => null }) {
       return;
     }
     if (aiAudioWanted() && !ensureAudioGraph()) {
-      toast("⚠️ Bu kaynakta ses iyileştirme kullanılamıyor (CORS)");
+      toast(t("enhance.audioCors"));
     }
     reconnectAudioPipeline();
   }
@@ -148,7 +157,7 @@ export function createAudioEngine({ dom, state, toast, engine = () => null }) {
   function setVolume(val) {
     if (!isMpv() && val > 100 && !ensureAudioGraph()) {
       val = 100;
-      toast("⚠️ Bu kaynakta ses güçlendirici kullanılamıyor (CORS)");
+      toast(t("enhance.boostCors"));
     }
     volumeSlider.value = val;
     volumeBadge.textContent = `${val}%`;
@@ -165,9 +174,15 @@ export function createAudioEngine({ dom, state, toast, engine = () => null }) {
     iconVolHigh.style.display = val > 0 && val <= 100 ? "block" : "none";
     iconVolBoost.style.display = val > 100 ? "block" : "none";
     volumeContainer.classList.toggle("boosted", val > 100);
+    // libmpv: the boost above 100 % is part of the af chain (gain + limiter)
+    if (isMpv() && boostOf(val) !== mpvBoost) {
+      mpvBoost = boostOf(val);
+      onRestoreChange?.();
+    }
   }
 
-  const sliderVolume = () => parseInt(volumeSlider.value, 10);
+  function sliderVolume() { return parseInt(volumeSlider.value, 10); }
+  const boostOf = (v) => (v > 100 ? volumeToGain(v) : 1);
 
   // Pause the AudioContext with playback to save battery
   video.addEventListener("pause", () => {
@@ -196,7 +211,9 @@ export function createAudioEngine({ dom, state, toast, engine = () => null }) {
         ? { denoise: !!checkAiDenoise?.checked, voice: !!checkAiVoiceClarity?.checked, compressor: !!checkAiCompressor?.checked }
         : null;
     },
-    /** Called when the AI audio switches change while libmpv plays (media/audio-fx.js). */
+    /** Linear gain above 100 % for the libmpv af chain (1 = no boost). */
+    get boostGain() { return boostOf(sliderVolume()); },
+    /** Called when the filter switches or the boost change while libmpv plays (media/audio-fx.js). */
     set onRestoreChange(fn) { onRestoreChange = fn; },
     /** Arrow keys: +/- 5 %. */
     nudgeVolume: (delta) => setVolume(stepVolume(sliderVolume(), delta)),
