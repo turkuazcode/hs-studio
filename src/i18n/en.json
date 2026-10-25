@@ -146,7 +146,7 @@
     },
     "about": {
       "description": "Open source media studio for video, photos and music.",
-      "license": "MIT license · Developer: Halil SARITAŞ · TurkuazCode"
+      "license": "GPL-3.0 license · Developer: Halil SARITAŞ · TurkuazCode"
     }
   },
   "shortcuts": {
