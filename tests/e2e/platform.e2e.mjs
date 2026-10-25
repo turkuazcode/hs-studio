@@ -6,6 +6,7 @@ import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fixture, launchApp, makeDataDir, removeDir } from "./lib/app.mjs";
+import { waitLibraryDb } from "./lib/db.mjs";
 import { sleep } from "./lib/cdp.mjs";
 
 const VIDEO = fixture("sample-h264.mp4");
@@ -208,8 +209,9 @@ test("platform: recent files", { timeout: 120000 }, async (t) => {
       await platformReady(app);
       await t.test("opened video is recorded with duration and a thumbnail", async () => {
         await app.waitFor(`window.__vhoEngine.time > 1`, { timeoutMs: 15000, message: "video playing" }); // either engine
-        const lib = await waitStore(dataDir, "library.json", (l) => l.library?.recent?.[0]?.thumb?.startsWith("data:image/jpeg"), "video thumb");
-        const v = lib.library.recent[0];
+        // recent list lives in library.db (Plan 13/L01); no library.json is written any more
+        const lib = await waitLibraryDb(dataDir, (l) => l.recent[0]?.thumb?.startsWith("data:image/jpeg"), "video thumb");
+        const v = lib.recent[0];
         assert.equal(v.name, "sample-h264.mp4");
         assert.equal(v.type, "video");
         assert.ok(v.duration > 2 && v.duration < 4, `duration ${v.duration}`);
@@ -218,8 +220,9 @@ test("platform: recent files", { timeout: 120000 }, async (t) => {
       await t.test("photo is recorded too (most recent first)", async () => {
         await app.eval(`document.querySelectorAll("#playlist-items li")[1].click(), true`);
         await app.waitFor(`document.getElementById("current-filename").textContent === "photo-a.jpg"`, { timeoutMs: 10000 });
-        const lib = await waitStore(dataDir, "library.json", (l) => l.library?.recent?.length === 2, "two entries");
-        assert.deepEqual(lib.library.recent.map((e) => [e.name, e.type]), [["photo-a.jpg", "image"], ["sample-h264.mp4", "video"]]);
+        const lib = await waitLibraryDb(dataDir, (l) => l.recent.length === 2, "two entries");
+        assert.deepEqual(lib.recent.map((e) => [e.name, e.type]), [["photo-a.jpg", "image"], ["sample-h264.mp4", "video"]]);
+        assert.equal(existsSync(join(dataDir, "library.json")), false);
       });
       await t.test("grid and titlebar menu list the entries; remove and clear", async () => {
         assert.equal(await app.eval(`document.querySelectorAll("#recent-files .vho-recent-item").length`), 2);
@@ -232,7 +235,7 @@ test("platform: recent files", { timeout: 120000 }, async (t) => {
         assert.match(await app.toast(), /photo-a\.jpg listeden kaldırıldı/);
         await app.click("#btn-recent-clear");
         assert.equal(await app.eval(`document.getElementById("recent-files").hidden`), true);
-        await waitStore(dataDir, "library.json", (l) => l.library?.recent?.length === 0, "cleared");
+        await waitLibraryDb(dataDir, (l) => l.recent.length === 0, "cleared");
       });
       assert.deepEqual(await app.errors(), []);
     } finally {
