@@ -213,8 +213,9 @@ pub fn parse(text: &str, format: Format, base: &Path) -> Parsed {
 
 /// `path` relative to `base` when both are on the same volume / root.
 pub fn relative_to(base: &Path, path: &Path) -> Option<String> {
-    let b: Vec<Component> = lexical(base).components().collect();
-    let p: Vec<Component> = lexical(path).components().collect();
+    let (base, path) = (lexical(base), lexical(path));
+    let b: Vec<Component> = base.components().collect();
+    let p: Vec<Component> = path.components().collect();
     let same_root = |x: &Component, y: &Component| match (x, y) {
         (Component::Prefix(a), Component::Prefix(b)) => a.as_os_str().to_string_lossy().eq_ignore_ascii_case(&b.as_os_str().to_string_lossy()),
         (a, b) => a == b,

@@ -28,6 +28,7 @@ import { createSnapshot } from "./media/snapshot.js";
 import { createSubtitles } from "./media/subtitles.js";
 import { createVideoPlayer } from "./media/video-player.js";
 import { createVisualFilters } from "./media/visual-filters.js";
+import { createLibraryView } from "./library/library-view.js";
 import { createPhotoStudio } from "./studio/studio.js";
 import { createFullscreen } from "./ui/fullscreen.js";
 import { createHud } from "./ui/hud.js";
@@ -150,6 +151,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // File / photo / video / music actions (Plan 06): toolbar, "⋯" + right-click menus, dialogs
   app.mediaActions = createMediaActions(app);
   window.__vhoActions = app.mediaActions;
+  // Persistent library (Plan 13/L02): video / music views, saved lists, Settings > Library
+  app.libraryView = createLibraryView(app);
+  window.__vhoLibrary = app.libraryView;
 
   // Settings window, recent files, menus, themes, language... then the files passed on
   // the command line ("Open with VHO"), so they open with the restored settings.
