@@ -9,11 +9,11 @@ Test kanıtı: [test-baseline.md](test-baseline.md). Durum değerleri: `ana dald
 | Test düzeni (birim + CDP E2E) | 01 | ana dalda | `tests/unit`, `tests/e2e/lib` | 121 birim, 129 E2E | E2E yalnızca Windows/WebView2 | Q01 |
 | libmpv motoru (LGPL), motor cephesi, HTML5 yedeği | 02 | kısmi/kanıt eksik | `src-tauri/src/engine/*`, `src/media/engine/*` | engine E2E (Windows) | macOS/Linux gömme yok (yol B) | P02–P04 |
 | Ses/altyazı kanalları, EQ, bölümler, ekran görüntüsü | 02 | ana dalda | `src/ui/playback-menus.js`, `src/media/audio-*` | video/engine E2E | Windows | — |
-| %200 ses + sınırlayıcı | 02 / S04 | ayrı dalda (`wave3/e1-dogruluk`) | libmpv: `audioFilterChain` `volume`+`alimiter`; HTML5: `createLimiter` (kompresör + yumuşak kırpma) | `tests/e2e/audio-limiter.e2e.mjs`, `capabilities.test.mjs` | Windows | — |
-| Yetenek matrisi (platform sözleşmesi) | 10 / P01 | ayrı dalda (`wave3/e1-dogruluk`) | `src-tauri/src/capabilities.rs`, `src/core/capabilities.js`, [platform-support](../platform-support.md) | Rust `capabilities::tests`, birim, engine E2E | yalnızca Windows x64 `verified` | P02–P04 |
+| %200 ses + sınırlayıcı | 02 / S04 | ana dalda | libmpv: `audioFilterChain` `volume`+`alimiter`; HTML5: `createLimiter` (kompresör + yumuşak kırpma) | `tests/e2e/audio-limiter.e2e.mjs`, `capabilities.test.mjs` | Windows | — |
+| Yetenek matrisi (platform sözleşmesi) | 10 / P01 | ana dalda | `src-tauri/src/capabilities.rs`, `src/core/capabilities.js`, [platform-support](../platform-support.md) | Rust `capabilities::tests`, birim, engine E2E | yalnızca Windows x64 `verified` | P02–P04 |
 | Ayarlar, son açılanlar, kısayollar, tema, tek örnek | 03 §1–§4 | ana dalda | `src/ui/settings-*`, `src-tauri/src/platform.rs` | platform E2E | dosya ilişkilendirme yalnızca Windows'ta denendi | P04 |
-| i18n altyapısı (TR/EN) | 03 §3 | ayrı dalda (`wave3/e1-dogruluk`, S05) | `src/core/i18n.js`, `src/i18n/*`, `data-i18n*` | `i18n-coverage.test.mjs`, `i18n-offline.e2e.mjs` | `ai-engine.js` metinleri A01'de; Rust hata metinleri Türkçe | Q03 |
-| Çevrimdışı fontlar | 03 | ayrı dalda (`wave3/e1-dogruluk`, S05) | `src/assets/fonts/Outfit-wght.ttf` (OFL-1.1), `styles/fonts.css`, CSP'de font alanı yok | `i18n-offline.e2e.mjs` | — | — |
+| i18n altyapısı (TR/EN) | 03 §3 | ana dalda | `src/core/i18n.js`, `src/i18n/*`, `data-i18n*` | `i18n-coverage.test.mjs`, `i18n-offline.e2e.mjs` | `ai-engine.js` metinleri A01'de; Rust hata metinleri Türkçe | Q03 |
+| Çevrimdışı fontlar | 03 | ana dalda | `src/assets/fonts/Outfit-wght.ttf` (OFL-1.1), `styles/fonts.css`, CSP'de font alanı yok | `i18n-offline.e2e.mjs` | — | — |
 | Kurulum/CI/imza/güncelleme | 03 §5 | yalnızca plan | `.github/` yok | — | — | P05, R02 |
 | Fotoğraf arka ucu (çözme, HEIC/AVIF/RAW, EXIF, küçük resim, toplu iş) | 04 | ana dalda | `src-tauri/src/photo/*` | 33 Rust photo testi, photo E2E | HEIC/AVIF işletim sistemi codec'ine bağlı; AVIF yoklaması S03 | A04 |
 | Fotoğraf stüdyosu (ızgara, düzenleyici, karşılaştırma, harita) | 04 | ana dalda | `src/studio/*` | photo-studio E2E | Windows | L02 (yıldız/etiket) |
