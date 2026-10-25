@@ -58,9 +58,6 @@ function safeLocalStorage() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Fallback dictionary first (local file): modules render their texts with t() while they are
-  // built; the user's language is applied by initPlatform() once the settings are loaded.
-  await loadDictionary(FALLBACK_LANGUAGE).catch((e) => console.error("[i18n]", e));
   const dom = queryDom();
 
   const app = { dom, state: createAppState(), bus: createEventBus() };
@@ -69,6 +66,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // initPlatform() waits for them before applying values to the UI.
   app.settings = createSettings({ adapter: defaultAdapter("settings.json", "settings") });
   app.library = createLibrary({ adapter: defaultAdapter("library.json", "library"), legacyStorage: safeLocalStorage() });
+  // Fallback dictionary (local file) before the modules are built: they render their texts with
+  // t(). Awaited after the settings/library loads started, so it does not delay their first write.
+  await loadDictionary(FALLBACK_LANGUAGE).catch((e) => console.error("[i18n]", e));
   app.resume = {
     get: (key) => (app.settings.get("playback.resume") ? app.library.resume.get(key) : null),
     set: (key, seconds) => app.library.resume.set(key, seconds),
