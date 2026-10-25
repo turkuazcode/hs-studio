@@ -201,7 +201,6 @@
         "pkgbase": "mingw-w64-freetype"
       },
       "license": "FTL OR GPL-2.0-or-later",
-      "concluded": "FTL",
       "policy": "review",
       "upstream": "https://freetype.org",
       "files": [
@@ -210,7 +209,8 @@
           "bytes": 808305,
           "sha256": "19604dde573cbb8a13053fc231eee99b91cd972e0e9a3e1465f44ad6985e83ee"
         }
-      ]
+      ],
+      "note": "Dual-licensed; both options are passed on. FTL alone is not GPL-compatible (FSF), so for the GPL-3.0 app the GPL-2.0-or-later option is the one that makes the combination compatible."
     },
     {
       "id": "harfbuzz",

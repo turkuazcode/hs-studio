@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:13132dec-782e-5e5b-a390-ec8fefdc9cd7",
+ "serialNumber": "urn:uuid:c435104c-afb7-54ad-a308-68cce668de4d",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-25T17:17:46Z",
+  "timestamp": "2026-10-25T17:27:29Z",
   "tools": {
    "components": [
     {
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "eb5aa2e9d59c68795021f38b012ae6110ca25ff9"
+    "value": "0932ccb37298814521af3080274df864db7738c9"
    },
    {
     "name": "vho:native-binaries",
@@ -18661,7 +18661,7 @@
     },
     {
      "name": "vho:license-concluded",
-     "value": "FTL"
+     "value": "FTL OR GPL-2.0-or-later"
     },
     {
      "name": "vho:policy",
