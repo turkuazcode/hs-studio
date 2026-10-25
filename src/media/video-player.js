@@ -5,6 +5,7 @@
 // ==========================================================================
 
 import { formatTime } from "../core/format.js";
+import { t } from "../core/i18n.js";
 import { aspectProps } from "./engine/engine.js";
 import { itemSize } from "./classify.js";
 
@@ -79,7 +80,7 @@ export function createVideoPlayer(app) {
     controlsHud.style.display = "flex";
     timelineContainer.style.display = "flex";
 
-    const name = item.name || "Online Video";
+    const name = item.name || t("ui.video.onlineName");
     state.set("currentFileKey", resumeKey(item));
 
     resumePendingTime = 0;
@@ -87,6 +88,7 @@ export function createVideoPlayer(app) {
     clearTimeout(resumeToastTimer);
     resumeToast.classList.remove("show");
 
+    delete currentFilename.dataset.i18n; // a file name, not a translatable text
     currentFilename.textContent = name;
     dropZone.classList.remove("visible");
     app.subtitles.resetForNewMedia();
@@ -104,7 +106,7 @@ export function createVideoPlayer(app) {
     loading?.catch?.((e) => {
       if (gen !== state.get("loadGen")) return;
       console.warn("engine load", e);
-      app.toast(`⚠️ Video açılamadı: ${e?.message ?? e}`);
+      app.toast(t("ui.video.openFailed", { error: e?.message ?? e }));
     });
   }
 
@@ -116,7 +118,7 @@ export function createVideoPlayer(app) {
 
   engine.on("error", (msg) => {
     if (engine.kind !== "mpv") return; // the HTML5 engine toasts its own diagnostics
-    app.toast(`⚠️ Video açılamadı: ${msg}`);
+    app.toast(t("ui.video.openFailed", { error: msg }));
     setPlayState(false);
   });
 
@@ -131,7 +133,7 @@ export function createVideoPlayer(app) {
     const savedTime = parseFloat(saved);
     if (shouldOfferResume(savedTime, engine.duration)) {
       resumePendingTime = savedTime;
-      resumeTimeText.textContent = `${formatTime(savedTime)} süresinde kalmıştınız`;
+      resumeTimeText.textContent = t("ui.resume.at", { time: formatTime(savedTime) });
       resumeToast.classList.add("show");
       clearTimeout(resumeToastTimer);
       resumeToastTimer = setTimeout(() => resumeToast.classList.remove("show"), 8000);
@@ -223,7 +225,8 @@ export function createVideoPlayer(app) {
   // Picture in Picture (PiP): only the HTML5 engine has a <video> element to detach
   btnPip.addEventListener("click", async () => {
     if (!engine.caps.pip) {
-      app.toast("Resim içinde resim yalnızca HTML5 motorunda kullanılabilir");
+      app.toast(t("ui.video.pipHtml5Only"));
+
       return;
     }
     try {

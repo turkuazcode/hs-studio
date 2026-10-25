@@ -6,6 +6,7 @@
 // ==========================================================================
 
 import { openUrl } from "../core/tauri.js";
+import { t } from "../core/i18n.js";
 
 export const OSM_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 export const OSM_ATTRIBUTION = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
@@ -19,8 +20,9 @@ export function loadLeaflet(doc = document) {
     const css = Object.assign(doc.createElement("link"), { rel: "stylesheet", href: "vendor/leaflet/leaflet.css" });
     doc.head.append(css);
     const s = Object.assign(doc.createElement("script"), { src: "vendor/leaflet/leaflet.js", async: true });
-    s.onload = () => (globalThis.L?.map ? resolve(globalThis.L) : reject(new Error("Leaflet yüklenemedi")));
-    s.onerror = () => { leafletPromise = null; reject(new Error("Leaflet yüklenemedi")); };
+    s.onload = () => (globalThis.L?.map ? resolve(globalThis.L) : reject(new Error(t("studio.map.leafletFailed"))));
+    s.onerror = () => { leafletPromise = null; reject(new Error(t("studio.map.leafletFailed"))); };
+
     doc.head.append(s);
   });
   return leafletPromise;

@@ -9,6 +9,7 @@
 import { queryDom } from "./core/dom.js";
 import { createCapabilities } from "./core/capabilities.js";
 import { createEventBus } from "./core/events.js";
+import { FALLBACK_LANGUAGE, loadDictionary } from "./core/i18n.js";
 import { createLibrary } from "./core/library.js";
 import { createSettings, defaultAdapter } from "./core/settings.js";
 import { createAppState } from "./core/state.js";
@@ -57,7 +58,11 @@ function safeLocalStorage() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Fallback dictionary first (local file): modules render their texts with t() while they are
+  // built; the user's language is applied by initPlatform() once the settings are loaded.
+  await loadDictionary(FALLBACK_LANGUAGE).catch((e) => console.error("[i18n]", e));
   const dom = queryDom();
+
   const app = { dom, state: createAppState(), bus: createEventBus() };
 
   // Persistent settings + library (recent files, resume positions); loaded asynchronously,

@@ -5,6 +5,9 @@
 // backend's ops.rs), crop geometry, undo/redo history, settings adapter.
 // ==========================================================================
 
+import { t } from "../core/i18n.js";
+
+
 /**
  * Runs `fn` on the next animation frame, or after `ms` when frames are throttled
  * (background / occluded window), whichever comes first. Returns a cancel function.
@@ -401,8 +404,8 @@ export function sharpenImageData(data, width, height, amount) {
 
 /** Crop ratio presets (null = free, "orig" = image ratio). */
 export const CROP_RATIOS = [
-  { id: "free", label: "Serbest", ratio: null },
-  { id: "orig", label: "Orijinal", ratio: "orig" },
+  { id: "free", labelKey: "studio.editor.ratioFree", ratio: null },
+  { id: "orig", labelKey: "studio.editor.ratioOriginal", ratio: "orig" },
   { id: "1:1", label: "1:1", ratio: 1 },
   { id: "4:3", label: "4:3", ratio: 4 / 3 },
   { id: "3:2", label: "3:2", ratio: 3 / 2 },
@@ -578,7 +581,7 @@ export function infoRows(info) {
   const ex = info.exif ?? {};
   const camera = [ex.make, ex.model].filter(Boolean).join(" ").replace(/^(\S+) \1 /i, "$1 ");
   const exposure = [
-    ex.exposureTime ? `${ex.exposureTime} sn` : "",
+    ex.exposureTime ? t("studio.info.seconds", { v: ex.exposureTime }) : "",
     ex.fNumber ? `f/${fmtNum(ex.fNumber)}` : "",
     ex.iso ? `ISO ${ex.iso}` : "",
     ex.exposureBias ? `${ex.exposureBias > 0 ? "+" : ""}${fmtNum(ex.exposureBias)} EV` : "",
@@ -587,20 +590,20 @@ export function infoRows(info) {
     ? `${fmtNum(ex.focalLength)} mm${ex.focalLength35mm ? ` (35 mm: ${ex.focalLength35mm} mm)` : ""}` : "";
   const gps = ex.gps ? `${ex.gps.latitude.toFixed(5)}, ${ex.gps.longitude.toFixed(5)}${ex.gps.altitude != null ? ` · ${Math.round(ex.gps.altitude)} m` : ""}` : "";
   const rows = [
-    ["Dosya", info.name],
-    ["Biçim", (info.format ?? "").toUpperCase()],
-    ["Boyutlar", info.width && info.height ? `${info.width} × ${info.height} (${fmtNum(info.width * info.height / 1e6)} MP)` : ""],
-    ["Dosya boyutu", formatBytes(info.size)],
-    ["Çekim tarihi", formatExifDate(ex.dateTaken, ex.dateTakenOffset)],
-    ["Kamera", camera],
-    ["Lens", ex.lens],
-    ["Pozlama", exposure],
-    ["Odak uzaklığı", focal],
-    ["Flaş", ex.flash === "fired" ? "Patladı" : ex.flash === "off" ? "Patlamadı" : ""],
-    ["Yazılım", ex.software],
-    ["Sanatçı", ex.artist],
-    ["Telif", ex.copyright],
-    ["Konum", gps],
+    [t("studio.info.file"), info.name],
+    [t("studio.info.format"), (info.format ?? "").toUpperCase()],
+    [t("studio.info.dimensions"), info.width && info.height ? `${info.width} × ${info.height} (${fmtNum(info.width * info.height / 1e6)} MP)` : ""],
+    [t("studio.info.fileSize"), formatBytes(info.size)],
+    [t("studio.info.dateTaken"), formatExifDate(ex.dateTaken, ex.dateTakenOffset)],
+    [t("studio.info.camera"), camera],
+    [t("studio.info.lens"), ex.lens],
+    [t("studio.info.exposure"), exposure],
+    [t("studio.info.focal"), focal],
+    [t("studio.info.flash"), ex.flash === "fired" ? t("studio.info.flashFired") : ex.flash === "off" ? t("studio.info.flashOff") : ""],
+    [t("studio.info.software"), ex.software],
+    [t("studio.info.artist"), ex.artist],
+    [t("studio.info.copyright"), ex.copyright],
+    [t("studio.info.location"), gps],
   ];
   return rows.filter(([, v]) => v != null && v !== "");
 }

@@ -7,6 +7,7 @@
 //     data-i18n-title="key"        -> title
 //     data-i18n-aria-label="key"   -> aria-label
 //     data-i18n-placeholder="key"  -> placeholder
+//     data-i18n-alt="key"          -> alt
 // Dictionaries: src/i18n/<lang>.json (nested objects, dotted keys). Missing keys fall back
 // to Turkish, then to the key itself. Switching language re-applies without a reload.
 // ==========================================================================
@@ -54,6 +55,7 @@ const ATTRS = [
   ["i18nTitle", "title"],
   ["i18nAriaLabel", "aria-label"],
   ["i18nPlaceholder", "placeholder"],
+  ["i18nAlt", "alt"],
 ];
 
 export function createI18n({ dicts = {}, lang = FALLBACK_LANGUAGE } = {}) {
@@ -75,7 +77,8 @@ export function createI18n({ dicts = {}, lang = FALLBACK_LANGUAGE } = {}) {
 
   function applyTranslations(root = globalThis.document) {
     if (!root?.querySelectorAll) return;
-    const sel = "[data-i18n],[data-i18n-title],[data-i18n-aria-label],[data-i18n-placeholder]";
+    const sel = "[data-i18n],[data-i18n-title],[data-i18n-aria-label],[data-i18n-placeholder],[data-i18n-alt]";
+
     const els = [...(root.matches?.(sel) ? [root] : []), ...root.querySelectorAll(sel)];
     for (const el of els) {
       const vars = varsOf(el);
