@@ -146,7 +146,7 @@
     },
     "about": {
       "description": "Video, fotoğraf ve müzik için açık kaynak medya stüdyosu.",
-      "license": "MIT lisansı · Geliştirici: Halil SARITAŞ · TurkuazCode"
+      "license": "GPL-3.0 lisansı · Geliştirici: Halil SARITAŞ · TurkuazCode"
     }
   },
   "shortcuts": {

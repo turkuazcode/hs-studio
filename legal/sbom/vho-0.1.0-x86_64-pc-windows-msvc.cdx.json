@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:098ca03c-08d9-5d64-8fdb-c5cae0afac20",
+ "serialNumber": "urn:uuid:13132dec-782e-5e5b-a390-ec8fefdc9cd7",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-25T17:14:30Z",
+  "timestamp": "2026-10-25T17:17:46Z",
   "tools": {
    "components": [
     {
@@ -22,7 +22,7 @@
    "description": "VHO (Video H Oynaticisi) - video, photo and music desktop app (Tauri 2)",
    "licenses": [
     {
-     "expression": "MIT"
+     "expression": "GPL-3.0-only"
     }
    ],
    "authors": [
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "b18a27a58ad41ea643a9a95088e49f673fa7a1cc"
+    "value": "eb5aa2e9d59c68795021f38b012ae6110ca25ff9"
    },
    {
     "name": "vho:native-binaries",
@@ -20987,7 +20987,7 @@
    "scope": "required",
    "licenses": [
     {
-     "expression": "LicenseRef-VHO-logo-unconfirmed"
+     "expression": "LicenseRef-HS-Studio-logo"
     }
    ],
    "properties": [
@@ -21207,7 +21207,7 @@
    "scope": "excluded",
    "licenses": [
     {
-     "expression": "MIT"
+     "expression": "GPL-3.0-only"
     }
    ],
    "properties": [
@@ -21283,7 +21283,7 @@
    "scope": "excluded",
    "licenses": [
     {
-     "expression": "MIT"
+     "expression": "GPL-3.0-only"
     }
    ],
    "properties": [
@@ -21327,7 +21327,7 @@
    "scope": "excluded",
    "licenses": [
     {
-     "expression": "MIT"
+     "expression": "GPL-3.0-only"
     }
    ],
    "properties": [
