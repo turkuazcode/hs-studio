@@ -34,3 +34,14 @@ E2E başlatıcısı her zaman `VHO_DATA_DIR` (geçici), `VHO_DISABLE_SYSTEM_SUSP
   - Uzantı yoksa hata `[codec-missing]` olmalı.
   - `photo_wic_init_failure_is_codec_failed`, `0x88982F8B` için sınıflandırmayı ortamdan bağımsız doğrular.
 - **CI notu:** codec'siz runner'da mantık testleri geçer, gerçek çözme testi `[codec-missing]` dalına girer. Gerçek AVIF çözme kanıtı codec kurulu bir runner/makinede alınmalıdır.
+
+## Q01 katman çalıştırması (2026-10-25, `wave3/e6-test-katmanlari`)
+Binary: `src-tauri/target/release/vho.exe` (bu dalda yeniden derlendi, libmpv yerleşik). Ayrıntı: [test-map.md](test-map.md).
+
+| Komut | pass | fail | skip | Not |
+|---|---|---|---|---|
+| `npm test` | 151 | 0 | 0 | ağ koruması etkin; ~2–5 s |
+| `npm run test:rust` | 114 | 0 | 2 ignored | |
+| `npm run e2e` (`VHO_E2E_PORT_MIN/MAX=10700/10799`) | 161 | 0 | 0 | |
+| `npm run test:ai` | 6 | 0 | 0 | ilk çalıştırma: 76 MB indirme ~10 s; sonraki: önbellek + `ai_verify`; WASM ~27 s, WebGPU (AMD 1 GB iGPU) ~18–36 s |
+| `npm run test:quality`, `npm run bench:media` | — | — | — | henüz doldurulmadı (Q02); 0 test, geçti sayılmaz |
