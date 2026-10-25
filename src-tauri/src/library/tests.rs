@@ -115,7 +115,7 @@ fn scans_5000_files_and_a_second_scan_changes_nothing() {
     assert_eq!(page.items.len(), 200);
     assert_eq!(page.total as usize, videos);
     let hit = s.read(|c| query::query(c, &query::Query { search: Some("file-7-12".into()), ..Default::default() })).unwrap();
-    assert!(hit.items.iter().any(|i| i.name == "file-7-12.mp3"), "{:?}", hit.items.iter().map(|i| &i.name).collect::<Vec<_>>());
+    assert!(hit.items.iter().any(|i| i.name == "file-7-12.mkv"), "{:?}", hit.items.iter().map(|i| &i.name).collect::<Vec<_>>());
     eprintln!("[bench] first page + search: {} ms", started.elapsed().as_millis());
 }
 
