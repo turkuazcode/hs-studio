@@ -395,5 +395,7 @@ export function createLibraryView(app) {
     api, playlists, show, hide, openQueue, refreshFolders,
     get isOpen() { return !root.hidden; },
     get total() { return source?.total ?? null; },
+    /** The library document store (recent / resume / bookmarks / favorites); diagnostics + E2E. */
+    get store() { return app.library; },
   };
 }
