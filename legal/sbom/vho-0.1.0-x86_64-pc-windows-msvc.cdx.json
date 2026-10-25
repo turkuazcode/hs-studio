@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:c435104c-afb7-54ad-a308-68cce668de4d",
+ "serialNumber": "urn:uuid:9ad7f63f-36f5-5de0-8f6c-a4515cd3af7c",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-25T17:27:29Z",
+  "timestamp": "2026-10-25T17:29:41Z",
   "tools": {
    "components": [
     {
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "0932ccb37298814521af3080274df864db7738c9"
+    "value": "8d75948def4421962c1a0d4fdbe0d934364e03e5"
    },
    {
     "name": "vho:native-binaries",
@@ -20901,11 +20901,11 @@
     },
     {
      "name": "vho:file-sha256",
-     "value": "a7837102824184820dfa198d1ebcd109ff6d0ff9a2672a074b9a1b4d147d04c6  src/vendor/leaflet/leaflet.css"
+     "value": "337bfca5cabd03b39815b2700febe2b3b7edf55921c59cd49f88ecb328212303  src/vendor/leaflet/leaflet.css"
     },
     {
      "name": "vho:file-sha256",
-     "value": "53e8dc25862014e4324741ca18fbe3611e11d42ef69f59f86ea8c5389647d4cb  src/vendor/leaflet/LICENSE"
+     "value": "bbc959aaef7488b38942e7f05cfd1244351f8bce54261951ea17dd7cf60f894b  src/vendor/leaflet/LICENSE"
     },
     {
      "name": "vho:file-sha256",
@@ -20940,7 +20940,7 @@
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "ecd3b0814749b9670afa8d9f9d96db1200e24007a8c07fc3323d70c4700dcdea"
+     "content": "b8caa9c316e5f44cccfcb475cb0c38de54e5de7f67702116396c9ebdf3e3e4a4"
     }
    ]
   },
@@ -21257,7 +21257,7 @@
     },
     {
      "name": "vho:file-sha256",
-     "value": "c77c94b89a9b15159bef6e06d641ca5c60810d64538fa6d4708abc6a5958ad28  tests/fixtures/sample.srt"
+     "value": "8cdfbd7b93c89236cc643f10b13efd0229fe0ef2c4bda27c24f03f6d9872e70f  tests/fixtures/sample.srt"
     },
     {
      "name": "vho:file-sha256",
@@ -21265,14 +21265,14 @@
     },
     {
      "name": "vho:file-sha256",
-     "value": "8c9ebf6133880c73f3e00e381335976b4c164a8c6ae5d4d8b660072fbc5d58c9  tests/fixtures/sample-1254.srt"
+     "value": "23f6c0b5ab0012a5619875e62c36201be9b43cc2d5390d162d934c4590a58fc8  tests/fixtures/sample-1254.srt"
     }
    ],
    "author": "VHO authors (generated)",
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "2e7909b75fa565365153501c6fbfd41c1af1c880b26e4b238da3f986d5998993"
+     "content": "44b64c2b9a194bb8b3518e9d4aff675dd9e6c5f3e84aa3ff9917f320c2376091"
     }
    ]
   },
