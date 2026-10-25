@@ -27,6 +27,9 @@ serde_json = "1"
 # On-demand AI component downloads (Windows/macOS/Linux native TLS, no extra build tools)
 reqwest = { version = "0.13", default-features = false, features = ["native-tls", "http2", "system-proxy"] }
 sha2 = "0.10"
+# AI component manager: cancellation/timeouts (MIT), model zip archives via deflate (MIT OR Apache-2.0)
+tokio = { version = "1", default-features = false, features = ["sync", "time", "macros"] }
+flate2 = "1"
 # Photo studio backend (src/photo): decode/encode, EXIF, thumbnails. All MIT/Apache/BSD.
 # "avif" = encoder only (ravif + rav1e, pure Rust, no nasm); AVIF/HEIC decoding uses the OS codecs.
 image = { version = "0.25.10", default-features = false, features = ["rayon", "jpeg", "png", "webp", "gif", "bmp", "ico", "tiff", "tga", "pnm", "qoi", "avif"] }
@@ -54,6 +57,7 @@ windows-sys = { version = "0.61", features = [
   "Win32_System_Power",
   "Win32_Foundation",
   "Win32_Graphics_Gdi",
+  "Win32_Storage_FileSystem",
   "Win32_System_LibraryLoader",
   "Win32_UI_Shell",
   "Win32_UI_HiDpi",
@@ -80,6 +84,10 @@ windows = { version = "0.62", features = [
 ] }
 windows-collections = "0.3"
 
+
+[target.'cfg(unix)'.dependencies]
+# Free disk space before AI downloads (statvfs; MIT OR Apache-2.0)
+libc = "0.2"
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 # Second launch with a file opens it in the running window (MIT OR Apache-2.0)

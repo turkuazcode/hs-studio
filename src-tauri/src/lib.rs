@@ -156,17 +156,6 @@ async fn transcode_media(app: AppHandle, path: String) -> Result<String, String>
 }
 
 #[tauri::command]
-fn ai_status(app: AppHandle, id: String) -> Result<ai::ComponentStatus, String> {
-    ai::status(&app, &id)
-}
-
-/// Downloads an AI component on first use (progress via the "ai-download" event).
-#[tauri::command]
-async fn ai_install(app: AppHandle, id: String) -> Result<ai::ComponentStatus, String> {
-    ai::install(&app, &id).await
-}
-
-#[tauri::command]
 fn cancel_transcode() {
     TRANSCODE_JOB.fetch_add(1, Ordering::SeqCst);
 }
@@ -297,8 +286,14 @@ pub fn run() {
             probe_media,
             transcode_media,
             cancel_transcode,
-            ai_status,
-            ai_install,
+            ai::ai_status,
+            ai::ai_status_all,
+            ai::ai_install,
+            ai::ai_cancel_download,
+            ai::ai_verify,
+            ai::ai_remove,
+            ai::ai_acquire,
+            ai::ai_release,
             photo::photo_scan,
             photo::photo_thumb,
             photo::photo_thumbs,
