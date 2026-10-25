@@ -6,7 +6,7 @@ Test kanıtı: [test-baseline.md](test-baseline.md). Durum değerleri: `ana dald
 | Alan | Özgün plan | Durum | Kod kanıtı | Test kanıtı | Platform sınırı | Sonraki görev |
 |---|---|---|---|---|---|---|
 | Modüler ön yüz, olay yolu, ayarlar deposu | 01 | ana dalda | `src/core/*`, `src/ui/*` | birim (core, settings, keymap) + E2E smoke | — | — |
-| Test düzeni: katmanlar (birim/Rust/E2E/gerçek AI/kalite) | 01 / 14-Q01 | ayrı dalda (`wave3/e6-test-katmanlari`, kod hazır) | `scripts/run-tests.mjs`, `tests/lib/*`, `tests/unit`, `tests/e2e/lib`, `tests/ai/*`, [test-map.md](test-map.md) | birim 151, Rust 114 (+2 ignored), E2E 161, gerçek AI 6 (photo-x4, WASM + WebGPU) | E2E/AI yalnızca Windows/WebView2; kalite/perf katmanı boş (Q02) | Q02 |
+| Test düzeni: katmanlar (birim/Rust/E2E/gerçek AI/kalite) | 01 / 14-Q01 | ana dalda | `scripts/run-tests.mjs`, `tests/lib/*`, `tests/unit`, `tests/e2e/lib`, `tests/ai/*`, [test-map.md](test-map.md) | birim 151, Rust 114 (+2 ignored), E2E 161, gerçek AI 6 (photo-x4, WASM + WebGPU) | E2E/AI yalnızca Windows/WebView2; kalite/perf katmanı boş (Q02) | Q02 |
 | libmpv motoru (LGPL), motor cephesi, HTML5 yedeği | 02 | kısmi/kanıt eksik | `src-tauri/src/engine/*`, `src/media/engine/*` | engine E2E (Windows) | macOS/Linux gömme yok (yol B) | P02–P04 |
 | Ses/altyazı kanalları, EQ, bölümler, ekran görüntüsü | 02 | ana dalda | `src/ui/playback-menus.js`, `src/media/audio-*` | video/engine E2E | Windows | — |
 | %200 ses + sınırlayıcı | 02 / S04 | ana dalda | libmpv: `audioFilterChain` `volume`+`alimiter`; HTML5: `createLimiter` (kompresör + yumuşak kırpma) | `tests/e2e/audio-limiter.e2e.mjs`, `capabilities.test.mjs` | Windows | — |
