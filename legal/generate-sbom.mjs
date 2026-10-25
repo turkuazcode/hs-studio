@@ -105,6 +105,13 @@ export function evaluateLicense(expression, ctx = {}) {
 // ----------------------------------------------------------------------------- sources
 const readJson = (p) => JSON.parse(readFileSync(join(ROOT, p), "utf8"));
 const sha256File = (p) => createHash("sha256").update(readFileSync(p)).digest("hex");
+/** Repository text files are hashed with LF line endings so the hash does not depend on the
+ *  checkout's core.autocrlf setting; binary files (containing NUL) are hashed as-is. */
+const sha256RepoFile = (p) => {
+  const b = readFileSync(p);
+  const data = b.includes(0) ? b : Buffer.from(b.toString("latin1").replace(/\r\n/g, "\n"), "latin1");
+  return createHash("sha256").update(data).digest("hex");
+};
 
 /** Parses the AI manifest (src-tauri/src/ai/manifest.rs): components with their pinned files. */
 export function parseAiManifest(src = readFileSync(join(ROOT, "src-tauri/src/ai/manifest.rs"), "utf8")) {
@@ -301,7 +308,7 @@ function assetComponents(assets) {
     if (a.paths.length && a.hashPaths !== false) {
       // one hash per file is not expressible on one component: hash the concatenation of
       // "<sha256>  <path>\n" lines (like sha256sum output), list per-file hashes as properties
-      const lines = a.paths.map((p) => `${sha256File(join(ROOT, p))}  ${p}`);
+      const lines = a.paths.map((p) => `${sha256RepoFile(join(ROOT, p))}  ${p}`);
       c.hashes = [{ alg: "SHA-256", content: createHash("sha256").update(lines.join("\n") + "\n").digest("hex") }];
       lines.forEach((l) => c.properties.push({ name: "vho:file-sha256", value: l }));
     }
