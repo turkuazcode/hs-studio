@@ -290,7 +290,8 @@ async function restoreFacesWith(held, source, options, { onProgress, signal, ori
 
 /**
  * Runs a restoration/upscale model over an image, tile by tile, off the UI thread.
- * source: ImageData. Returns { imageData, backend, tile, seconds }.
+ * source: ImageData. Returns { imageData, backend, tile, seconds, stats }
+ * (stats: { nonFinite, min, max } of the raw model output, see ai-worker.js).
  * onProgress(phase, fraction): phase = "download" | "load" | "run"
  */
 export async function upscaleImage(modelId, source, opts = {}) {
@@ -333,6 +334,7 @@ async function upscaleWith(held, modelId, source, { onProgress, signal }) {
           backend,
           tile: steps[si],
           seconds: (performance.now() - started) / 1000,
+          stats: res.stats,
         };
       } catch (e) {
         if (e?.name === "AbortError") throw e;
