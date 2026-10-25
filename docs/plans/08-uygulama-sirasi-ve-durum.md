@@ -80,7 +80,10 @@ Takvim bu belgede taahhüt edilmez. S01 sonrası Claude her kart için S (tek od
 
 | Kimlikler | Başlangıç durumu | Kanıt/not |
 |---|---|---|
-| S01–S05 | bekliyor | Envanter planlama için okundu; uygulama başlangıcı yeniden doğrulamalı |
+| S01 | doğrulandı | [docs/status/implementation-status.md](../status/implementation-status.md) (2026-10-25) |
+| S02 | doğrulandı | D1 `main`'e birleşti (`35de786`); yeni binary ile birim 121/121, Rust 60/60 (+2 ignored), E2E 129/129; kaynak hash kontrolü eklendi |
+| S03 | doğrulandı | [docs/status/test-baseline.md](../status/test-baseline.md); AVIF `0x88982F8B` = codec kurulu ama başlatılamadı → `[codec-failed]` + gerçek çözme yoklaması |
+| S04–S05 | bekliyor | |
 | P01–P05 | bekliyor | Windows motoru mevcut; diğer platformların entegrasyonu eksik |
 | A01–A06 | bekliyor | Mevcut inference kodu korunup genişletilecek |
 | V01–V06 | bekliyor | Araştırma kapısı V02 |

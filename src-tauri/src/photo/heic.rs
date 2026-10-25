@@ -30,6 +30,7 @@ use super::ERR_CODEC_MISSING;
 
 pub const HEIC_HINT: &str = "HEIC için Microsoft Store'dan 'HEIF Görüntü Uzantıları' ve 'HEVC Video Uzantıları' gerekir.";
 pub const AVIF_HINT: &str = "AVIF küçük resimleri için Microsoft Store'dan 'AV1 Video Uzantısı' gerekir.";
+pub const AVIF_FAILED_HINT: &str = "AV1 Video Uzantısı kurulu ancak bu oturumda çalışmıyor; AVIF küçük resimleri gösterilemez.";
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct OsSupport {
@@ -39,7 +40,7 @@ pub struct OsSupport {
 }
 
 #[cfg(windows)]
-pub use wic::{decode, dimensions, os_support};
+pub use wic::{avif_works, decode, dimensions, os_support};
 #[cfg(windows)]
 pub const OS_CODEC: &str = "wic";
 /// Verified by `photo_heic_wic_roundtrip_or_clear_error`: the WIC HEIF decoder returns
@@ -51,7 +52,7 @@ pub const APPLIES_ORIENTATION: bool = true;
 mod wic {
     use super::{OsSupport, AVIF_HINT, HEIC_HINT};
     use crate::photo::decode::Format;
-    use crate::photo::ERR_CODEC_MISSING;
+    use crate::photo::{ERR_CODEC_FAILED, ERR_CODEC_MISSING};
     use image::DynamicImage;
     use std::path::Path;
     use std::sync::OnceLock;
@@ -83,7 +84,25 @@ mod wic {
         unsafe { CoCreateInstance(&CLSID_WICImagingFactory, None, CLSCTX_INPROC_SERVER) }
     }
 
+    /// WINCODEC_ERR_COMPONENTINITIALIZEFAILURE: the decoder is registered but could not start
+    /// (seen with Store codecs in restricted/sandboxed processes).
+    const COMPONENT_INIT_FAILURE: u32 = 0x88982F8B;
+
     fn codec_error(format: Format, e: &windows::core::Error) -> String {
+        let os = os_support();
+        // HEIF stays "missing": its extension can be present while the HEVC one is not
+        let installed = match format {
+            Format::Avif => os.avif,
+            Format::Raw => os.raw,
+            _ => false,
+        };
+        if installed || e.code().0 as u32 == COMPONENT_INIT_FAILURE {
+            return format!(
+                "{ERR_CODEC_FAILED} Sistem çözücüsü kurulu ancak başlatılamadı ya da bu dosyayı çözemedi (WIC: {:#010X} {})",
+                e.code().0 as u32,
+                e.message()
+            );
+        }
         let hint = match format {
             Format::Heif => HEIC_HINT,
             Format::Avif => AVIF_HINT,
@@ -214,6 +233,42 @@ mod wic {
             OsSupport { heic: has(".heic"), avif: has(".avif"), raw: has(".cr2") || has(".nef") || has(".dng") }
         })
     }
+
+    /// Installed is not the same as working: decodes a tiny AVIF once and caches the result.
+    pub fn avif_works() -> bool {
+        static CACHE: OnceLock<bool> = OnceLock::new();
+        *CACHE.get_or_init(|| {
+            if !os_support().avif {
+                return false;
+            }
+            let p = std::env::temp_dir().join(format!("vho_avif_probe_{}.avif", std::process::id()));
+            let ok = DynamicImage::ImageRgb8(image::RgbImage::new(16, 16)).save(&p).is_ok()
+                && decode(&p, Format::Avif, None).is_ok();
+            let _ = std::fs::remove_file(&p);
+            ok
+        })
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn photo_wic_init_failure_is_codec_failed() {
+            let e = windows::core::Error::from_hresult(windows::core::HRESULT(COMPONENT_INIT_FAILURE as i32));
+            for f in [Format::Heif, Format::Avif, Format::Raw] {
+                let msg = codec_error(f, &e);
+                assert!(msg.starts_with(ERR_CODEC_FAILED), "{msg}");
+                assert!(!msg.contains("Microsoft Store"), "no install hint for an installed codec: {msg}");
+            }
+        }
+    }
+}
+
+/// Non-Windows backends have no separate activation step: listed means usable.
+#[cfg(not(windows))]
+pub fn avif_works() -> bool {
+    os_support().avif
 }
 
 // --------------------------------------------------------------------------- macOS
@@ -427,13 +482,17 @@ mod tests {
         assert_eq!(crate::photo::decode::detect(&p), Format::Avif);
         match crate::photo::decode::decode(&p, Some(64)) {
             Ok(d) => {
+                assert!(avif_works(), "decode works but the capability probe says no");
                 assert_eq!(d.image.width(), 64);
                 assert_eq!(quadrant(*d.image.to_rgb8().get_pixel(4, 4)), "red");
             }
-            Err(e) => {
-                assert!(!os_support().avif, "AV1 extension reported but decode failed: {e}");
-                assert!(e.starts_with(crate::photo::ERR_CODEC_MISSING), "{e}");
+            Err(e) if os_support().avif => {
+                // Installed but not usable in this process (e.g. sandbox: 0x88982F8B)
+                println!("AVIF decoder installed but not working here: {e}");
+                assert!(!avif_works(), "the AVIF probe works but this decode failed: {e}");
+                assert!(e.starts_with(crate::photo::ERR_CODEC_FAILED), "{e}");
             }
+            Err(e) => assert!(e.starts_with(crate::photo::ERR_CODEC_MISSING), "{e}"),
         }
     }
 }

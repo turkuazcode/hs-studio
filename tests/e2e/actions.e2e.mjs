@@ -9,6 +9,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -21,6 +22,8 @@ const FFMPEG = ["", "mpv", join("resources", "mpv")]
   .find((p) => existsSync(p)) ?? join(dirname(defaultExe()), "ffmpeg.exe");
 const skipFfmpeg = existsSync(FFMPEG) ? false : "ffmpeg.exe not staged next to vho.exe (npm run stage:mpv)";
 const tag = Math.random().toString(36).slice(2, 8);
+
+const sha256 = (p) => createHash("sha256").update(readFileSync(p)).digest("hex");
 
 function tempDir() {
   return mkdtempSync(join(tmpdir(), "vho-e2e-actions-"));
@@ -115,6 +118,7 @@ test("actions: video (toolbar, clipboard, cut, extract audio, convert 720p, rena
   // 1280x960 source for the 720p preset (LGPL ffmpeg: native mpeg4 + aac)
   ffmpeg(["-f", "lavfi", "-i", "testsrc=size=1280x960:rate=25:duration=3", "-f", "lavfi", "-i", "sine=frequency=440:duration=3",
     "-c:v", "mpeg4", "-q:v", "6", "-c:a", "aac", "-shortest", hd]);
+  const sourceHashes = [video, hd].map((p) => [p, sha256(p)]);
   const app = await launchApp({ args: [video, victim] });
   const x = helpers(app);
   const E = "window.__vhoEngine";
@@ -236,11 +240,17 @@ test("actions: video (toolbar, clipboard, cut, extract audio, convert 720p, rena
     await t.test("cancel a running export: no partial file left", async () => {
       const long = join(dir, `vho-e2e-uzun-${tag}.mp4`);
       ffmpeg(["-f", "lavfi", "-i", "testsrc=size=1280x720:rate=30:duration=90", "-c:v", "mpeg4", "-q:v", "8", long]);
+      const longHash = sha256(long);
       const job = app.eval(`${inv("media_job", { job: { jobId: "e2e-cancel", input: long, kind: "convert", preset: "1080p" } })}.then(() => "done", (e) => String(e))`, { timeoutMs: 60000 });
       await sleep(700);
       assert.equal(await x.invoke("media_job_cancel", { jobId: "e2e-cancel" }), true);
       assert.match(await job, /^\[cancelled\]/);
       assert.deepEqual(readdirSync(dir).filter((f) => f.includes("vho-part") || f.includes("uzun") && f.includes("_1080p")), []);
+      assert.equal(sha256(long), longHash, "cancelled source unchanged");
+    });
+
+    await t.test("cut / convert / GIF / rotate / subtitles left their sources unchanged", async () => {
+      for (const [p, h] of sourceHashes) assert.equal(sha256(p), h, p);
     });
 
     await t.test("favorite, always on top, mini player", async () => {
