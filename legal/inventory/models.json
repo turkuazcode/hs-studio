@@ -1,0 +1,71 @@
+{
+  "$comment": "License/provenance of every file in the AI manifest (src-tauri/src/ai/manifest.rs, the single source of URLs, sizes and SHA-256). This file adds what the manifest does not carry: weight license vs. code license, architecture, training data, attribution duties. tests/unit/legal-inventory.test.mjs fails if a manifest file is missing here (or vice versa). Nothing here is bundled: files are downloaded on first use after user confirmation. See legal/INVENTORY.md.",
+  "components": [
+    {
+      "component": "ort-web",
+      "kind": "runtime",
+      "files": {
+        "ort.webgpu.min.mjs": { "role": "runtime code (JS)" },
+        "ort-wasm-simd-threaded.asyncify.mjs": { "role": "runtime code (JS glue)" },
+        "ort-wasm-simd-threaded.asyncify.wasm": { "role": "runtime code (WebAssembly, compiled ONNX Runtime)" },
+        "LICENSE": { "role": "license text" },
+        "ThirdPartyNotices.txt": { "role": "third-party notices of ONNX Runtime" }
+      },
+      "name": "ONNX Runtime Web",
+      "version": "1.30.0",
+      "codeLicense": "MIT",
+      "author": "Microsoft Corporation",
+      "upstream": "https://github.com/microsoft/onnxruntime (tag v1.30.0)",
+      "distribution": "npm package onnxruntime-web@1.30.0 via cdn.jsdelivr.net",
+      "policy": "ok",
+      "notes": "The WASM build statically contains ONNX Runtime's own dependencies; their notices are in ThirdPartyNotices.txt, which is downloaded and stored next to the runtime."
+    },
+    {
+      "component": "photo-x4",
+      "kind": "model-weights",
+      "files": {
+        "4xRealWebPhoto_v4_fp32_opset17.onnx": { "role": "model weights + graph (ONNX)" }
+      },
+      "name": "4xRealWebPhoto v4 (DAT-2)",
+      "version": "commit 95e9cd50553951c27d86bafbdc1bc27ca8e750d2",
+      "weightLicense": "CC-BY-4.0",
+      "weightAuthor": "Philip Hofmann (Phhofm)",
+      "upstream": "https://huggingface.co/Phips/4xRealWebPhoto_v4_dat2",
+      "architecture": { "name": "DAT (Dual Aggregation Transformer), Zheng Chen et al.", "codeLicense": "Apache-2.0", "source": "https://github.com/zhengchen1999/DAT" },
+      "trainingData": "Not recorded in VHO. Must be read from the model card / author's release notes and recorded here before a public release (open item).",
+      "attribution": "CC BY 4.0: credit the creator, link the license, state changes. Done in THIRD_PARTY_NOTICES section 1.2 and Settings > AI models.",
+      "modifications": "File kept byte-identical on disk. At load, in memory only, two symbolic output dimension names are renamed (WebGPU workaround); weights and computation unchanged.",
+      "policy": "ok"
+    },
+    {
+      "component": "face-restore",
+      "kind": "model-weights",
+      "files": {
+        "face_detection_yunet_2023mar.onnx": {
+          "role": "face detector weights (ONNX)",
+          "name": "YuNet (2023mar)",
+          "weightLicense": "MIT",
+          "weightAuthor": "Shiqi Yu (libfacedetection) / OpenCV",
+          "upstream": "https://huggingface.co/opencv/face_detection_yunet (commit 3cc26e7f1014a5ee5d74a42acee58bafc9d0a310)",
+          "trainingCode": "https://github.com/ShiqiYu/libfacedetection.train",
+          "trainingData": "Reported upstream as trained on WIDER FACE, whose own terms restrict the dataset to non-commercial research. Whether dataset terms reach the MIT-licensed weights is legally unsettled: user decision (legal/INVENTORY.md, open items). To be re-verified from the official repository before release."
+        },
+        "GFPGANv1.4-w16.onnx": {
+          "role": "face restoration weights (ONNX export, float16-stored weights)",
+          "name": "GFPGAN v1.4",
+          "weightLicense": "Apache-2.0",
+          "weightAuthor": "Tencent ARC (THL A29 Limited)",
+          "upstream": "https://github.com/TencentARC/GFPGAN",
+          "exportedBy": "https://huggingface.co/opiumuseless/gfpgan-v1.4-w16 (commit 996691710925f8f44f0896490b8ff3d7a559398a, Apache-2.0)",
+          "trainingData": "GFPGAN is trained on FFHQ (NVIDIA; dataset distributed under CC BY-NC-SA 4.0, images under their own licenses). Same open question as YuNet: user decision before release. To be re-verified from the official repository.",
+          "excludedParts": "GFPGAN's LICENSE also lists StyleGAN2 CUDA ops (NVIDIA Source Code License) and DFDNet (CC BY-NC-SA 4.0). VHO uses neither (v1.4 'clean' architecture, no DFDNet)."
+        }
+      },
+      "name": "GFPGAN v1.4 + YuNet",
+      "version": "yunet2023mar-gfpgan14w16",
+      "weightLicense": "Apache-2.0 AND MIT",
+      "policy": "review",
+      "notes": "Weight licenses are permissive; flagged 'review' only because of the training-data question above."
+    }
+  ]
+}
