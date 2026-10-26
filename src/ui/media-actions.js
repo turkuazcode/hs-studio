@@ -608,7 +608,8 @@ export function createMediaActions(app) {
           row.append(p);
           invoke?.("media_tools").then((m) => {
             p.textContent = m.available
-              ? t("actions.settings.toolsInfo", { version: m.version ?? "", encoder: m.h264Available ? m.h264Encoder : t("actions.settings.none") })
+              ? t("actions.settings.toolsInfo", { version: m.version ?? "", encoder: m.h264Available ? m.h264Encoder
+                : m.videoEncoder?.fallback ? t("actions.settings.fallbackEncoder", { name: m.videoEncoder.encoder.name }) : t("actions.settings.none") })
               : t("actions.job.noFfmpeg");
           }).catch(() => { p.textContent = t("actions.job.noFfmpeg"); });
         },

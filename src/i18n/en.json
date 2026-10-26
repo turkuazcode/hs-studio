@@ -500,6 +500,7 @@
       "ocrNoLanguage": "No text recognition language found on this computer.",
       "toolsHeading": "Media tools (ffmpeg)",
       "toolsInfo": "{version} · H.264 encoder: {encoder}",
+      "fallbackEncoder": "{name} (no H.264, fallback encoder)",
       "none": "none"
     }
   },

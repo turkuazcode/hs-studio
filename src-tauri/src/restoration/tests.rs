@@ -378,21 +378,7 @@ fn filter_list_parsing() {
 // ---------------------------------------------------------------------------
 
 fn tools() -> Tools {
-    let mut dirs: Vec<PathBuf> = vec![];
-    if let Some(p) = std::env::var_os("VHO_FFMPEG").filter(|v| !v.is_empty()) {
-        let p = PathBuf::from(p);
-        dirs.push(if p.is_file() { p.parent().unwrap().to_path_buf() } else { p });
-    }
-    let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
-    dirs.push(manifest.join("target").join("release"));
-    dirs.push(manifest.join("target").join("debug"));
-    let exe = if cfg!(windows) { ".exe" } else { "" };
-    dirs.into_iter()
-        .find_map(|d| {
-            let (ffmpeg, ffprobe) = (d.join(format!("ffmpeg{exe}")), d.join(format!("ffprobe{exe}")));
-            (ffmpeg.is_file() && ffprobe.is_file()).then_some(Tools { ffmpeg, ffprobe })
-        })
-        .expect("ffmpeg/ffprobe not found: run `npm run stage:mpv` (copies them to src-tauri/target/release) or set VHO_FFMPEG")
+    crate::actions::ffmpeg::test_tools()
 }
 
 struct TempDir(PathBuf);

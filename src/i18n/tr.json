@@ -500,6 +500,7 @@
       "ocrNoLanguage": "Bu bilgisayarda metin tanıma dili bulunamadı.",
       "toolsHeading": "Medya araçları (ffmpeg)",
       "toolsInfo": "{version} · H.264 kodlayıcı: {encoder}",
+      "fallbackEncoder": "{name} (H.264 yok, yedek kodlayıcı)",
       "none": "yok"
     }
   },
