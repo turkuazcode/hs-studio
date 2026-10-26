@@ -174,3 +174,13 @@ Small, self-contained items that need no special hardware:
 ## 8. Code of conduct
 
 Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## 9. Release builds (maintainers)
+
+- Build published binaries only from a clean clone in a **neutral path without your user name**
+  (e.g. `C:\build\hs-studio`), with `--remap-path-prefix` for Rust: build tools embed absolute
+  paths into exe/DLL files. Details and checks: [docs/release/build-path.md](docs/release/build-path.md).
+- After building the libmpv/FFmpeg set, refresh its hashes and the SBOM (`npm run sbom`) and
+  archive the corresponding source ([legal/INVENTORY.md](legal/INVENTORY.md)).
+- The first public push is made from the cleaned history only:
+  [docs/release/history-cleanup.md](docs/release/history-cleanup.md).
