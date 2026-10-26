@@ -5,6 +5,7 @@ mod engine;
 mod jobs;
 mod photo;
 mod platform;
+mod restoration;
 mod storage;
 mod transcode;
 
@@ -357,7 +358,9 @@ pub fn run() {
             jobs::jobs_pause,
             jobs::jobs_resume,
             jobs::jobs_remove,
-            jobs::jobs_clear_finished
+            jobs::jobs_clear_finished,
+            restoration::restoration_probe,
+            restoration::restoration_recipe
         ])
         .build(context)
         .expect("error while building tauri application");
