@@ -210,13 +210,15 @@ function processMemoryMb() {
 
 test("measurement: UI responsiveness and memory while AI runs on the CPU", { timeout: 900000 }, async (t) => {
   if (!ready) return t.skip("blocked: model cache empty");
+  // CPU backend for this measurement (the backend order is decided once per page session)
+  await app.eval(`localStorage.setItem("vho.ai.backend", "wasm"), location.reload(), true`);
+  await app.waitFor(`document.documentElement.dataset.platformReady === "1"`, { timeoutMs: 20000 });
   const idleMb = processMemoryMb();
   // event-loop lag of the page (16 ms timer) while a WASM run of a 4x bigger input happens
   const pending = app.eval(`(async () => {
     const eng = await import(new URL("/media/ai-engine.js", location.href).href);
     const w = 88, h = 56, px = new Uint8ClampedArray(w * h * 4);
     for (let i = 0; i < px.length; i += 4) { px[i] = (i * 7) % 255; px[i + 1] = (i * 13) % 255; px[i + 2] = (i * 3) % 255; px[i + 3] = 255; }
-    localStorage.setItem("vho.ai.backend", "wasm");
     const lags = [];
     let last = performance.now();
     const timer = setInterval(() => { const now = performance.now(); lags.push(now - last - 16); last = now; }, 16);
@@ -232,12 +234,15 @@ test("measurement: UI responsiveness and memory while AI runs on the CPU", { tim
   await new Promise((r) => setTimeout(r, 1500));
   const busyMb = processMemoryMb();
   const r = await pending;
+  await app.eval(`location.reload(), true`);
+  await app.waitFor(`document.documentElement.dataset.platformReady === "1"`, { timeoutMs: 20000 });
   const lags = r.lags.sort((a, b) => a - b);
   const p95 = lags[Math.floor(lags.length * 0.95)] ?? 0;
   const max = lags.at(-1) ?? 0;
   const result = { idleMb, busyMb, seconds: r.seconds, backend: r.backend, lagP95Ms: Math.round(p95), lagMaxMs: Math.round(max), samples: lags.length };
   log(`measurement ${JSON.stringify(result)}`);
   writeFileSync(join(OUT_DIR, "ai-runtime-measurement.json"), JSON.stringify(result, null, 2));
+  assert.equal(r.backend, "wasm");
   t.diagnostic(`idle ${idleMb} MB, during AI ${busyMb} MB; UI lag p95 ${result.lagP95Ms} ms, max ${result.lagMaxMs} ms (${r.backend}, ${r.seconds.toFixed(1)} s)`);
   // inference is off the UI thread: the page keeps answering
   assert.ok(p95 < 250, `UI event loop p95 lag ${p95} ms while AI runs`);
