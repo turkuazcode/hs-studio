@@ -76,3 +76,14 @@ Toplam **4,5 oturum**. Bütçe dolduğunda sonuç ne olursa olsun karar kaydı y
 **Bekliyor (A03/Q02).** Hazır olanlar: V01 reçetesi/ölçümleri, aday tablosu ve lisans kaynakları, taban çizgisi CPU ölçümü, bütçe. Kalan: Q02 klipleri, A03 bellek/GPU bütçesi, aday 2–5 ölçümleri, ağırlık lisansı teyitleri (RealBasicVSR, BasicVSR++ REDS, realesr-general-x4v3).
 
 ## Ölçüm kaydı
+
+**2026-10-26, aday 1, CPU (geliştirme makinesi, `-threads 2 -filter_threads 2`, ffmpeg n8.1.3 LGPL):** üretilmiş 10 s 720×576 TFF (SAR 16:15) → bwdif alan hızı (500 kare 50p) → 960×720 lanczos → BT.601→BT.709 `colorspace` → yuv420p, çıktı null (kodlama hariç).
+
+| Zincir | Süre | Kare | Hız |
+|---|---|---|---|
+| deinterlace + ölçek | 2,2 s | 500 | 228 fps |
+| + atadenoise | 2,3 s | 500 | 222 fps |
+| + fftdnoiz (sigma 6) | 7,1 s | 500 | 71 fps |
+| + nlmeans (s=3, p=7, r=15) | 89,3 s | 500 | 5,6 fps |
+
+Sonuç: taban çizgisi (nlmeans hariç) gerçek zamanın çok üstünde; nlmeans SD'de ~gerçek zamanın 1/9'u — bir saatlik video için ~9 saat (2 iş parçacığıyla), yalnızca kısa kesit/önizleme veya güçlü cihaz için uygun. Sentetik kaynak gerçek gürültü içermez; kalite ölçümü değildir (Q02).
