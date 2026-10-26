@@ -315,7 +315,7 @@ fn decode_os(path: &Path, format: Format, target: Option<u32>) -> Result<Decoded
     } else {
         os_orientation.or_else(|| exif::read_path(path).orientation())
     };
-    Ok(Decoded { image: orient(img, orientation), source: "os", icc: None })
+    Ok(Decoded { image: orient(img, orientation), source: "os", icc: heic::icc_profile(path, format) })
 }
 
 /// Stored (not orientation-corrected) pixel size from the file header.
