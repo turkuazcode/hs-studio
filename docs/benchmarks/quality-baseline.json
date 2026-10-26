@@ -24,8 +24,8 @@
      "version": "rwp4-95e9cd5"
     },
     "face-restore": {
-     "downloadedBytes": 170521796,
-     "ms": 16108,
+     "downloadedBytes": 0,
+     "ms": 0,
      "version": "yunet2023mar-gfpgan14w16"
     }
    }
@@ -117,7 +117,7 @@
     "roi0.ssim": 0.6469,
     "roi0.gmsd": 0.1822,
     "roi0.sharpnessRatio": 0.0605,
-    "flags": ""
+    "flags": "color-cast-on-greyscale"
    },
    "p03-face-blur|vho-x4-faces": {
     "psnr": 22.4547,
@@ -258,7 +258,7 @@
     "ssim": 0.0758,
     "gmsd": 0.3095,
     "sharpnessRatio": 0.0103,
-    "flags": ""
+    "flags": "color-cast-on-greyscale"
    },
    "p10-alpha|lanczos": {
     "psnr": 51.3773,
@@ -323,7 +323,7 @@
     "roi0.sharpness": 489.6278,
     "roi0.noise": 2.7231,
     "roi0.colorfulness": 3.6005,
-    "flags": ""
+    "flags": "color-cast-on-greyscale"
    },
    "r01-lincoln-1863|vho-x4-faces": {
     "sharpness": 34.8971,
@@ -350,7 +350,7 @@
     "roi0.sharpness": 598.3476,
     "roi0.noise": 2.8332,
     "roi0.colorfulness": 4.0294,
-    "flags": ""
+    "flags": "color-cast-on-greyscale"
    },
    "r02-douglass-1879|vho-x4-faces": {
     "sharpness": 346.7725,
@@ -377,7 +377,7 @@
     "roi0.sharpness": 55.4068,
     "roi0.noise": 0.9144,
     "roi0.colorfulness": 1.8135,
-    "flags": ""
+    "flags": "color-cast-on-greyscale"
    },
    "r03-migrant-1936|vho-x4-faces": {
     "sharpness": 176.5214,
@@ -404,7 +404,7 @@
     "roi0.sharpness": 3065.4085,
     "roi0.noise": 4.5029,
     "roi0.colorfulness": 11.0851,
-    "flags": ""
+    "flags": "color-cast-on-greyscale"
    }
   }
  },
