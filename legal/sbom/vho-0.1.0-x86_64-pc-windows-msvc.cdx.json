@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:9ad7f63f-36f5-5de0-8f6c-a4515cd3af7c",
+ "serialNumber": "urn:uuid:34c70cdf-d4f7-5f42-b570-1c118d62c0c5",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-25T17:29:41Z",
+  "timestamp": "2026-10-26T06:04:22Z",
   "tools": {
    "components": [
     {
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "8d75948def4421962c1a0d4fdbe0d934364e03e5"
+    "value": "00012388ee040837de8560f53d223cce6639a0b6"
    },
    {
     "name": "vho:native-binaries",
@@ -46,7 +46,7 @@
    },
    {
     "name": "vho:policy",
-    "value": "docs/plans/00-YOL-HARITASI.md; vho:policy per component = ok | review | reject"
+    "value": "docs/plans/00-YOL-HARITASI.md; vho:policy per component = ok | review | reject; vho:acknowledged = owner decision on a review item"
    }
   ]
  },
@@ -18668,6 +18668,10 @@
      "value": "review"
     },
     {
+     "name": "vho:acknowledged",
+     "value": "2026-10-25 owner: acknowledged (FTL OR GPL-2.0-or-later; GPL-2.0-or-later option makes it GPL-3.0-compatible)"
+    },
+    {
      "name": "vho:bytes",
      "value": "808305"
     },
@@ -19522,6 +19526,10 @@
      "value": "review"
     },
     {
+     "name": "vho:acknowledged",
+     "value": "2026-10-25 owner: acknowledged (permissive; IJG credit is in the notices)"
+    },
+    {
      "name": "vho:bytes",
      "value": "967184"
     },
@@ -19642,6 +19650,10 @@
     {
      "name": "vho:policy",
      "value": "review"
+    },
+    {
+     "name": "vho:acknowledged",
+     "value": "2026-10-25 owner: acknowledged (permissive)"
     },
     {
      "name": "vho:bytes",
@@ -19766,6 +19778,10 @@
      "value": "review"
     },
     {
+     "name": "vho:acknowledged",
+     "value": "2026-10-25 owner: acknowledged (permissive)"
+    },
+    {
      "name": "vho:bytes",
      "value": "107741"
     },
@@ -19825,6 +19841,10 @@
     {
      "name": "vho:policy",
      "value": "review"
+    },
+    {
+     "name": "vho:acknowledged",
+     "value": "2026-10-25 owner: acknowledged (permissive)"
     },
     {
      "name": "vho:bytes",
@@ -20132,6 +20152,10 @@
      "value": "review"
     },
     {
+     "name": "vho:acknowledged",
+     "value": "2026-10-25 owner: acknowledged (permissive MIT/HPND-style text)"
+    },
+    {
      "name": "vho:bytes",
      "value": "505833"
     },
@@ -20254,6 +20278,10 @@
      "value": "review"
     },
     {
+     "name": "vho:acknowledged",
+     "value": "2026-10-25 owner: acknowledged (permissive MIT AND ZPL-2.1)"
+    },
+    {
      "name": "vho:bytes",
      "value": "68731"
     },
@@ -20315,6 +20343,10 @@
      "value": "review"
     },
     {
+     "name": "vho:acknowledged",
+     "value": "2026-10-25 owner: acknowledged (GCC Runtime Library Exception)"
+    },
+    {
      "name": "vho:bytes",
      "value": "150537"
     },
@@ -20374,6 +20406,10 @@
     {
      "name": "vho:policy",
      "value": "review"
+    },
+    {
+     "name": "vho:acknowledged",
+     "value": "2026-10-25 owner: acknowledged (GCC Runtime Library Exception)"
     },
     {
      "name": "vho:bytes",
@@ -20756,6 +20792,10 @@
      "value": "review"
     },
     {
+     "name": "vho:acknowledged",
+     "value": "2026-10-25 owner decision: GFPGAN and YuNet stay in the app (quality first). The non-commercial training-data question (WIDER FACE / FFHQ) is an accepted, owner-decided risk; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
+    },
+    {
      "name": "vho:training-data",
      "value": "Reported upstream as trained on WIDER FACE, whose own terms restrict the dataset to non-commercial research. Whether dataset terms reach the MIT-licensed weights is legally unsettled: user decision (legal/INVENTORY.md, open items). To be re-verified from the official repository before release."
     }
@@ -20810,6 +20850,10 @@
     {
      "name": "vho:policy",
      "value": "review"
+    },
+    {
+     "name": "vho:acknowledged",
+     "value": "2026-10-25 owner decision: GFPGAN and YuNet stay in the app (quality first). The non-commercial training-data question (WIDER FACE / FFHQ) is an accepted, owner-decided risk; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
     },
     {
      "name": "vho:training-data",

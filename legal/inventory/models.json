@@ -5,11 +5,21 @@
       "component": "ort-web",
       "kind": "runtime",
       "files": {
-        "ort.webgpu.min.mjs": { "role": "runtime code (JS)" },
-        "ort-wasm-simd-threaded.asyncify.mjs": { "role": "runtime code (JS glue)" },
-        "ort-wasm-simd-threaded.asyncify.wasm": { "role": "runtime code (WebAssembly, compiled ONNX Runtime)" },
-        "LICENSE": { "role": "license text" },
-        "ThirdPartyNotices.txt": { "role": "third-party notices of ONNX Runtime" }
+        "ort.webgpu.min.mjs": {
+          "role": "runtime code (JS)"
+        },
+        "ort-wasm-simd-threaded.asyncify.mjs": {
+          "role": "runtime code (JS glue)"
+        },
+        "ort-wasm-simd-threaded.asyncify.wasm": {
+          "role": "runtime code (WebAssembly, compiled ONNX Runtime)"
+        },
+        "LICENSE": {
+          "role": "license text"
+        },
+        "ThirdPartyNotices.txt": {
+          "role": "third-party notices of ONNX Runtime"
+        }
       },
       "name": "ONNX Runtime Web",
       "version": "1.30.0",
@@ -24,14 +34,20 @@
       "component": "photo-x4",
       "kind": "model-weights",
       "files": {
-        "4xRealWebPhoto_v4_fp32_opset17.onnx": { "role": "model weights + graph (ONNX)" }
+        "4xRealWebPhoto_v4_fp32_opset17.onnx": {
+          "role": "model weights + graph (ONNX)"
+        }
       },
       "name": "4xRealWebPhoto v4 (DAT-2)",
       "version": "commit 95e9cd50553951c27d86bafbdc1bc27ca8e750d2",
       "weightLicense": "CC-BY-4.0",
       "weightAuthor": "Philip Hofmann (Phhofm)",
       "upstream": "https://huggingface.co/Phips/4xRealWebPhoto_v4_dat2",
-      "architecture": { "name": "DAT (Dual Aggregation Transformer), Zheng Chen et al.", "codeLicense": "Apache-2.0", "source": "https://github.com/zhengchen1999/DAT" },
+      "architecture": {
+        "name": "DAT (Dual Aggregation Transformer), Zheng Chen et al.",
+        "codeLicense": "Apache-2.0",
+        "source": "https://github.com/zhengchen1999/DAT"
+      },
       "trainingData": "Not recorded in VHO. Must be read from the model card / author's release notes and recorded here before a public release (open item).",
       "attribution": "CC BY 4.0: credit the creator, link the license, state changes. Done in THIRD_PARTY_NOTICES section 1.2 and Settings > AI models.",
       "modifications": "File kept byte-identical on disk. At load, in memory only, two symbolic output dimension names are renamed (WebGPU workaround); weights and computation unchanged.",
@@ -65,7 +81,8 @@
       "version": "yunet2023mar-gfpgan14w16",
       "weightLicense": "Apache-2.0 AND MIT",
       "policy": "review",
-      "notes": "Weight licenses are permissive; flagged 'review' only because of the training-data question above."
+      "notes": "Weight licenses are permissive. Status review because of the training-data question; accepted by the owner on 2026-10-25 (see acknowledged).",
+      "acknowledged": "2026-10-25 owner decision: GFPGAN and YuNet stay in the app (quality first). The non-commercial training-data question (WIDER FACE / FFHQ) is an accepted, owner-decided risk; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
     }
   ]
 }

@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Security problems: do not file them here, see SECURITY.md.** / **Güvenlik açıklarını burada değil SECURITY.md'deki yoldan bildirin.**
+        **Security problems: do not file them here; e-mail turkuazcode@gmail.com (see SECURITY.md).** / **Güvenlik açıklarını burada değil SECURITY.md'deki yoldan bildirin.**
         Do not attach personal photos or videos; a small synthetic file is enough. / Kişisel fotoğraf/video eklemeyin.
   - type: textarea
     id: what
