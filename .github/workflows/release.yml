@@ -1,0 +1,172 @@
+# Release build (plan 14/R02). Not pushed and never run remotely yet.
+# Produces artifacts only — it does NOT publish a GitHub release (that is a separate, manual step):
+#   installer (NSIS, per-user) + .sha256, package manifest, SBOM, notices, source offer, SHA256SUMS.txt
+# Built on a GitHub runner, i.e. from a neutral path (docs/release/build-path.md).
+#
+# Code signing: SignPath Foundation (free OSS program, user decision 2026-10-26). The signing
+# steps run only when the repository variable SIGNPATH_ENABLED is 'true' (set it after SignPath
+# accepted the project and the secrets/variables below exist). Without it the artifacts are
+# UNSIGNED and named so.
+#   secrets.SIGNPATH_API_TOKEN, vars.SIGNPATH_ORGANIZATION_ID, vars.SIGNPATH_PROJECT_SLUG,
+#   vars.SIGNPATH_POLICY_SLUG (e.g. release-signing), vars.SIGNPATH_EXE_CONFIG, vars.SIGNPATH_INSTALLER_CONFIG
+# Updater artifacts: only when vars.UPDATER_ENABLED is 'true' and secrets.TAURI_SIGNING_PRIVATE_KEY
+# (+ _PASSWORD) exist; requires the updater plugin in the app (docs/release/signing-and-updates.md).
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build (must equal src-tauri/tauri.conf.json version)"
+        required: true
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  actions: read # SignPath reads the uploaded artifact (docs.signpath.io/trusted-build-systems/github)
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  RUST_TOOLCHAIN: "1.99.1"
+  NODE_VERSION: "24"
+
+jobs:
+  native:
+    uses: ./.github/workflows/native-windows.yml
+
+  windows:
+    runs-on: windows-latest
+    needs: native
+    timeout-minutes: 120
+    env:
+      VERSION: ${{ inputs.version || github.ref_name }}
+      SIGNED: ${{ vars.SIGNPATH_ENABLED == 'true' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master 2026-10
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+      # no build cache for release builds: every crate is compiled from the locked sources
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: mpv-windows-x64
+          path: mpv-build
+      - name: Version check
+        shell: pwsh
+        run: |
+          $v = $env:VERSION -replace '^v', ''
+          $conf = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          if ($v -ne $conf) { throw "requested $v but tauri.conf.json has $conf" }
+          "VERSION=$v" >> $env:GITHUB_ENV
+      - run: npm ci
+      - run: npm test
+        env:
+          VHO_TEST_NO_SKIP: "1"
+      - run: cargo test --release --lib --locked --manifest-path src-tauri/Cargo.toml
+
+      # ---------------- unsigned path (default)
+      - name: Package (unsigned)
+        if: env.SIGNED != 'true'
+        shell: pwsh
+        run: >
+          ./scripts/package-windows.ps1 -MpvDist mpv-build/dist -MpvBin mpv-build/prefix/bin
+          -SourceUrl "${{ github.server_url }}/${{ github.repository }}/tree/${{ github.sha }}"
+          ${{ vars.UPDATER_ENABLED == 'true' && '-Updater' || '' }}
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      # ---------------- signed path (SignPath; disabled until the project is accepted)
+      - name: Build exe (to be signed)
+        if: env.SIGNED == 'true'
+        shell: pwsh
+        run: >
+          ./scripts/package-windows.ps1 -Phase build -MpvDist mpv-build/dist -MpvBin mpv-build/prefix/bin
+          -SourceUrl "${{ github.server_url }}/${{ github.repository }}/tree/${{ github.sha }}"
+      - id: upload-exe
+        if: env.SIGNED == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unsigned-exe
+          path: src-tauri/target/release/vho.exe
+      - name: Sign exe (SignPath)
+        if: env.SIGNED == 'true'
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_EXE_CONFIG }}
+          github-artifact-id: ${{ steps.upload-exe.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-exe
+      - name: Bundle signed exe
+        if: env.SIGNED == 'true'
+        shell: pwsh
+        run: |
+          Copy-Item signed-exe/vho.exe src-tauri/target/release/vho.exe -Force
+          ./scripts/package-windows.ps1 -Phase bundle -MpvDist mpv-build/dist -MpvBin mpv-build/prefix/bin `
+            -SourceUrl "${{ github.server_url }}/${{ github.repository }}/tree/${{ github.sha }}"
+      - id: upload-installer
+        if: env.SIGNED == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unsigned-installer
+          path: src-tauri/target/release/bundle/nsis/*-setup.exe
+      - name: Sign installer (SignPath)
+        if: env.SIGNED == 'true'
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_INSTALLER_CONFIG }}
+          github-artifact-id: ${{ steps.upload-installer.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-installer
+      - name: Replace installer with the signed one
+        if: env.SIGNED == 'true'
+        shell: pwsh
+        run: |
+          $i = Get-ChildItem src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
+          Copy-Item (Join-Path signed-installer $i.Name) $i.FullName -Force
+          $h = (Get-FileHash -Algorithm SHA256 $i.FullName).Hash.ToLowerInvariant()
+          Set-Content -NoNewline -Encoding ascii "$($i.FullName).sha256" "$h  $($i.Name)`n"
+
+      # ---------------- checksums + artifacts
+      - name: Collect release files
+        shell: pwsh
+        run: |
+          $out = New-Item -ItemType Directory -Force release-out
+          $tag = if ($env:SIGNED -eq 'true') { '' } else { '-UNSIGNED' }
+          Get-ChildItem src-tauri/target/release/bundle/nsis -File | ForEach-Object {
+            $name = $_.Name -replace '-setup\.exe$', "$tag-setup.exe"
+            Copy-Item $_.FullName (Join-Path $out $name)
+          }
+          Copy-Item src-tauri/target/package-staging/legal/sbom.cdx.json (Join-Path $out "vho-$env:VERSION.cdx.json")
+          Copy-Item src-tauri/target/package-staging/legal/THIRD_PARTY_NOTICES.txt $out
+          Copy-Item src-tauri/target/package-staging/legal/SOURCE-OFFER.txt $out
+          Copy-Item LICENSE (Join-Path $out 'LICENSE.txt')
+          Get-ChildItem $out -File | Where-Object { $_.Extension -ne '.sha256' } | Sort-Object Name | ForEach-Object {
+            "$((Get-FileHash -Algorithm SHA256 $_.FullName).Hash.ToLowerInvariant())  $($_.Name)"
+          } | Set-Content -Encoding ascii (Join-Path $out 'SHA256SUMS.txt')
+          Get-Content (Join-Path $out 'SHA256SUMS.txt')
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-windows-x64-${{ env.VERSION }}
+          path: release-out/
+          retention-days: 90
+
+  # Publishing (GitHub Release draft, updater latest.json) is intentionally not automated yet:
+  # it needs `contents: write`, the final repository URL and the owner's go-ahead (plan 14/R02-R03).
