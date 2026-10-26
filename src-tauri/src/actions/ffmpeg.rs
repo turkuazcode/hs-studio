@@ -82,7 +82,7 @@ pub fn locate() -> Result<Tools, String> {
     Err(format!("{ERR_NO_FFMPEG} ffmpeg.exe bulunamadı (npm run stage:mpv)"))
 }
 
-fn command(exe: &Path) -> Command {
+pub(crate) fn command(exe: &Path) -> Command {
     let mut c = Command::new(exe);
     c.stdin(Stdio::null());
     #[cfg(windows)]
