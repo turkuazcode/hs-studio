@@ -37,10 +37,6 @@
       "max": 260,
       "measuredMedian": 173
     },
-    "grid5000.peakTreeRamMB": {
-      "max": 0,
-      "measuredMedian": 0
-    },
     "playback.html5.1080pH264.cpuPercentOfOneCore": {
       "max": 24,
       "measuredMedian": 15.5

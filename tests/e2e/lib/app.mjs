@@ -6,7 +6,7 @@
 // single-instance lock, so a test VHO never forwards files to the user's own VHO (or
 // another agent's). Only the process started here is ever stopped.
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { mkdir, mkdtemp, rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -152,6 +152,31 @@ export const HTML5_ENGINE = Object.freeze({ VHO_DISABLE_MPV: "1" });
 export const mpvStaged = (exe = defaultExe()) =>
   ["", "mpv", join("resources", "mpv")].some((sub) => existsSync(join(dirname(exe), sub, "libmpv-2.dll")));
 
+/**
+ * Identifier of a test instance: platform.rs `test_identifier` appends
+ * `.test<fnv1a-64(lowercase VHO_DATA_DIR)>` to the app identifier. Tauri derives the app's
+ * own folders (%APPDATA%\<id>, %LOCALAPPDATA%\<id>) from it, so every test data dir leaves
+ * its own pair behind unless the harness removes them (see removeIdentityDirs).
+ */
+export function testIdentity(dataDir) {
+  const base = JSON.parse(readFileSync(join(REPO_ROOT, "src-tauri", "tauri.conf.json"), "utf8")).identifier;
+  let h = 0xcbf29ce484222325n;
+  for (const b of Buffer.from(String(dataDir).toLowerCase(), "utf8")) h = ((h ^ BigInt(b)) * 0x100000001b3n) & 0xffffffffffffffffn;
+  return `${base}.test${h.toString(16).padStart(16, "0")}`;
+}
+
+/** The per-identity app folders of a test data dir (only those that exist). */
+export function identityDirs(dataDir) {
+  const id = testIdentity(dataDir);
+  if (!/^[a-z0-9.]+\.test[0-9a-f]{16}$/.test(id)) throw new Error(`unexpected test identity ${id}`);
+  return [process.env.APPDATA, process.env.LOCALAPPDATA].filter(Boolean).map((root) => join(root, id)).filter((p) => existsSync(p));
+}
+
+/** Removes the %APPDATA% / %LOCALAPPDATA% folders this test data dir caused (never others). */
+export async function removeIdentityDirs(dataDir) {
+  for (const dir of identityDirs(dataDir)) await rm(dir, { recursive: true, force: true, maxRetries: 15, retryDelay: 400 }).catch(() => {});
+}
+
 /** A temporary data folder for VHO_DATA_DIR that outlives one launch (restart tests). */
 export const makeDataDir = () => mkdtemp(join(tmpdir(), "vho-e2e-data-"));
 export const removeDir = (dir) => rm(dir, { recursive: true, force: true, maxRetries: 15, retryDelay: 400 }).catch(() => {});
@@ -235,6 +260,7 @@ export async function launchApp({ args = [], exe = defaultExe(), dataDir, env: e
     proc.kill();
     await waitExit(proc, 5000);
     await rm(userData, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }).catch(() => {});
+    await removeIdentityDirs(dataDir);
     throw e;
   }
 
@@ -303,6 +329,9 @@ export async function launchApp({ args = [], exe = defaultExe(), dataDir, env: e
       await sleep(300);
       await rm(userData, { recursive: true, force: true, maxRetries: 15, retryDelay: 400 })
         .catch((e) => debug("close: profile not removed:", e.message));
+      // %APPDATA% / %LOCALAPPDATA%\<identifier>.test<hash> of this data dir (recreated if the
+      // same data dir is launched again, e.g. restart tests)
+      await removeIdentityDirs(dataDir);
       debug("close: done");
     },
   };
