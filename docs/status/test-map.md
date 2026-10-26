@@ -72,6 +72,7 @@ Dosya argümanı verilirse varsayılan liste yerine o dosyalar çalışır (`npm
 | Fotoğraf AI ×4 (DAT-2, WebGPU→WASM, parçalı çıkarım) | `onnx-patch` | — | `smoke` (worker modülü yüklenir) | **`photo-x4.ai`**: boyut/sonlu/sabit değil/kanal/alpha/referans | Q02 (yok) | Alpha 255'e sabit, EXIF/ICC korunmuyor (A04) |
 | Yüz iyileştirme (GFPGAN + YuNet) | — | — | — | **kanıt yok** | Q02 (yok) | Sonraki gerçek AI smoke adayı (170 MB model) |
 | Video “AI” restorasyonu | — | — | `video` (“hazır değil” etiketi) | — | — | V01–V06 |
+| Video restorasyonu V01: kaynak ölçümü (alan sırası/idet, CFR/VFR, SAR/rotation, renk/HDR, çoklu ses) + reçete/hash | — | `restoration::tests` (saf kurallar + ffmpeg lavfi ile üretilen fixture'lar; ffmpeg `VHO_FFMPEG` ya da `src-tauri/target/release` içinde **olmalı**, yoksa test başarısız) | `restoration` (IPC, üretilmiş fixture'lar) | — | taban çizgisi CPU hızı: `experiments/video-restoration/baseline-speed.ps1` (Q02 değil) | UI yok (V04) |
 | Kalite karşılaştırması, hız/bellek bütçeleri | — | — | — | — | **HENÜZ DOLDURULMADI** | Q02 |
 | İş kuyruğu (A02), kütüphane UI (L02) | paralel dallarda ekleniyor | | | | | Testleri kendi katmanına eklenir; bu harita birleştirmede güncellenir |
 
