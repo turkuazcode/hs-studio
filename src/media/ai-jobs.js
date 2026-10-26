@@ -38,6 +38,16 @@ export function enhanceFraction(phase, f, faces) {
   return null;
 }
 
+/**
+ * Playback vs AI jobs: video/music starts -> pause the running AI jobs (when enabled);
+ * playback stops -> continue the jobs this rule paused (the user's own pauses stay).
+ */
+export function playbackAction({ playing, media, enabled, running = [], paused = [] }) {
+  if (playing && media !== "image" && enabled) return { pause: running.filter((id) => !paused.includes(id)), resume: [] };
+  if (!playing) return { pause: [], resume: paused };
+  return { pause: [], resume: [] };
+}
+
 /** Decodes a local photo (HEIC/RAW through the backend's display copy) at the given size. */
 async function loadPixels(invoke, convertFileSrc, path, width, height) {
   const d = await invoke("photo_decode", { path, maxSize: null });
@@ -135,17 +145,16 @@ export function createAiJobRunner(app, { invoke, listen, convertFileSrc }) {
   // ---- pause while a video / music plays (Settings > AI models) ----
   const pauseEnabled = () => app.settings?.get?.("ai.pauseDuringPlayback") !== false;
   app.state?.subscribe?.("isPlaying", (playing) => {
-    const media = app.state.get("currentMediaType");
-    if (playing && media !== "image" && pauseEnabled()) {
-      for (const id of runs.keys()) {
-        pausedByPlayback.add(id);
-        app.jobs?.pause(id).catch(() => pausedByPlayback.delete(id));
-      }
-    } else if (!playing && pausedByPlayback.size) {
-      for (const id of [...pausedByPlayback]) {
-        pausedByPlayback.delete(id);
-        app.jobs?.resume(id, "continue").catch(() => {});
-      }
+    const { pause, resume } = playbackAction({
+      playing, media: app.state.get("currentMediaType"), enabled: pauseEnabled(), running: [...runs.keys()], paused: [...pausedByPlayback],
+    });
+    for (const id of pause) {
+      pausedByPlayback.add(id);
+      app.jobs?.pause(id).catch(() => pausedByPlayback.delete(id));
+    }
+    for (const id of resume) {
+      pausedByPlayback.delete(id);
+      app.jobs?.resume(id, "continue").catch(() => {});
     }
   });
 

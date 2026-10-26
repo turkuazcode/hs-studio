@@ -8,7 +8,7 @@ import {
   nextAttempt, planInput,
 } from "../../src/media/ai-policy.js";
 import { PROBE_SHAPE, probeData, probeModel } from "../../src/media/onnx-tiny.js";
-import { enhanceFraction, photoEnhanceRequest } from "../../src/media/ai-jobs.js";
+import { enhanceFraction, photoEnhanceRequest, playbackAction } from "../../src/media/ai-jobs.js";
 
 test("ai policy: error classes", () => {
   const c = (m) => classifyAiError(new Error(m));
@@ -156,4 +156,12 @@ test("AI photo job request and progress mapping", () => {
   assert.equal(enhanceFraction("run", 0.5, false), 0.5);
   assert.equal(enhanceFraction("run", 1, true), 0.8);
   assert.ok(Math.abs(enhanceFraction("faces", 0.5, true) - 0.9) < 1e-9);
+});
+
+test("AI jobs pause while video/music plays and continue afterwards", () => {
+  assert.deepEqual(playbackAction({ playing: true, media: "video", enabled: true, running: ["a"], paused: [] }), { pause: ["a"], resume: [] });
+  assert.deepEqual(playbackAction({ playing: true, media: "video", enabled: false, running: ["a"] }), { pause: [], resume: [] }, "setting off");
+  assert.deepEqual(playbackAction({ playing: true, media: "image", enabled: true, running: ["a"] }), { pause: [], resume: [] }, "slideshow");
+  assert.deepEqual(playbackAction({ playing: false, media: "video", enabled: true, running: [], paused: ["a"] }), { pause: [], resume: ["a"] });
+  assert.deepEqual(playbackAction({ playing: true, media: "video", enabled: true, running: ["a"], paused: ["a"] }), { pause: [], resume: [] }, "not twice");
 });
