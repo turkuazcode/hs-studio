@@ -40,7 +40,14 @@ pub struct OsSupport {
 }
 
 #[cfg(windows)]
-pub use wic::{avif_works, decode, dimensions, os_support};
+pub use wic::{avif_works, decode, dimensions, icc_profile, os_support};
+
+/// ICC profile through the OS decoder: not read on macOS (`sips`) / Linux (`heif-dec`) yet
+/// (capability `photo.colorProfile`, reason `os-decoder-icc-dropped`).
+#[cfg(not(windows))]
+pub fn icc_profile(_path: &Path, _format: Format) -> Option<Vec<u8>> {
+    None
+}
 #[cfg(windows)]
 pub const OS_CODEC: &str = "wic";
 /// Verified by `photo_heic_wic_roundtrip_or_clear_error`: the WIC HEIF decoder returns
@@ -183,6 +190,41 @@ mod wic {
         }
     }
 
+    /// Embedded ICC profile of the first frame (HEIC `colr`/AVIF/RAW through WIC), so the
+    /// display copy and exports keep the source colours (e.g. iPhone Display P3 HEIC) instead
+    /// of being shown as sRGB.
+    pub fn icc_profile(path: &Path, format: Format) -> Option<Vec<u8>> {
+        let _com = Com::init();
+        let factory = factory().ok()?;
+        let frame = open(&factory, path, format).ok()?;
+        unsafe {
+            let mut count = 0u32;
+            frame.GetColorContexts(&mut [], &mut count).ok()?;
+            if count == 0 || count > 16 {
+                return None;
+            }
+            let mut contexts: Vec<Option<IWICColorContext>> = (0..count).map(|_| factory.CreateColorContext().ok()).collect();
+            if contexts.iter().any(Option::is_none) {
+                return None;
+            }
+            frame.GetColorContexts(&mut contexts, &mut count).ok()?;
+            contexts.into_iter().flatten().find_map(|c| {
+                if c.GetType().ok()? != WICColorContextProfile {
+                    return None;
+                }
+                let mut len = 0u32;
+                c.GetProfileBytes(&mut [], &mut len).ok()?;
+                if len < 128 || len > 16 * 1024 * 1024 {
+                    return None;
+                }
+                let mut buf = vec![0u8; len as usize];
+                c.GetProfileBytes(&mut buf, &mut len).ok()?;
+                buf.truncate(len as usize);
+                Some(buf)
+            })
+        }
+    }
+
     pub fn dimensions(path: &Path) -> Option<(u32, u32)> {
         let _com = Com::init();
         let factory = factory().ok()?;
@@ -252,6 +294,30 @@ mod wic {
     #[cfg(test)]
     mod tests {
         use super::*;
+
+        /// WIC returns the embedded ICC profile (same code path as HEIC/AVIF; the test image is
+        /// a JPEG because HEIC encoding depends on Store codecs). Profile: the system sRGB one.
+        #[test]
+        fn photo_wic_reads_embedded_icc() {
+            use image::ImageEncoder;
+            let root = std::env::var("SystemRoot").unwrap_or_else(|_| r"C:\Windows".into());
+            let icc = std::fs::read(Path::new(&root).join(r"System32\spool\drivers\color\sRGB Color Space Profile.icm")).unwrap();
+            let dir = std::env::temp_dir().join(format!("vho-icc-test-{}", std::process::id()));
+            std::fs::create_dir_all(&dir).unwrap();
+            let (with, without) = (dir.join("with.jpg"), dir.join("without.jpg"));
+            let img = image::RgbImage::from_pixel(32, 24, image::Rgb([200, 40, 40]));
+            let mut buf = Vec::new();
+            let mut enc = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut buf, 90);
+            enc.set_icc_profile(icc.clone()).unwrap();
+            enc.write_image(&img, 32, 24, image::ExtendedColorType::Rgb8).unwrap();
+            std::fs::write(&with, &buf).unwrap();
+            image::DynamicImage::ImageRgb8(img).save(&without).unwrap();
+            let got = icc_profile(&with, Format::Jpeg);
+            let none = icc_profile(&without, Format::Jpeg);
+            let _ = std::fs::remove_dir_all(&dir);
+            assert_eq!(got.as_deref(), Some(icc.as_slice()));
+            assert_eq!(none, None);
+        }
 
         #[test]
         fn photo_wic_init_failure_is_codec_failed() {
