@@ -300,6 +300,7 @@ function runInWorker(payload, transfer, onProgress, signal) {
       else if (m.type === "error") { cleanup(); reject(new Error(m.message)); }
     };
     const onErr = (e) => {
+      e.preventDefault?.(); // handled here (fresh worker / next backend), not a page error
       cleanup();
       killWorker();
       reject(new Error(`AI worker crashed: ${e.message || ""}`));

@@ -51,15 +51,16 @@ export function playbackAction({ playing, media, enabled, running = [], paused =
 /** Decodes a local photo (HEIC/RAW through the backend's display copy) at the given size. */
 async function loadPixels(invoke, convertFileSrc, path, width, height) {
   const d = await invoke("photo_decode", { path, maxSize: null });
-  const img = new Image();
-  img.decoding = "async";
-  img.src = convertFileSrc(d.path);
-  await img.decode();
+  // fetch + ImageBitmap: same-origin pixels (an <img> from the asset protocol taints the
+  // canvas); EXIF orientation applied once, colours converted to sRGB by the browser
+  const blob = await (await fetch(convertFileSrc(d.path))).blob();
+  const img = await createImageBitmap(blob, { imageOrientation: "from-image", colorSpaceConversion: "default", premultiplyAlpha: "none" });
   const c = document.createElement("canvas");
-  c.width = width || img.naturalWidth;
-  c.height = height || img.naturalHeight;
+  c.width = width || img.width;
+  c.height = height || img.height;
   const ctx = c.getContext("2d", { willReadFrequently: true });
   ctx.drawImage(img, 0, 0, c.width, c.height);
+  img.close();
   return ctx.getImageData(0, 0, c.width, c.height);
 }
 
