@@ -228,7 +228,7 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
       const focused = await app.eval(`document.querySelector("#ps-grid .ps-cell.focused")?.dataset.path ?? null`);
       const target = focused ?? path;
       await waitDb(dataDir, "SELECT rating FROM media WHERE path = ?", [target], (r) => r.rating === 4, "rating stored");
-      const rated = await app.eval(`${api(`query({ kind: "image", minRating: 4 })`)}`);
+      const rated = await app.eval(`${api(`query({ minRating: 4 })`)}`);
       assert.ok(rated.items.some((i) => i.path === target), J({ target, rated, row: { ...dbGet(dataDir, "SELECT path, kind, status, in_library, rating FROM media WHERE path = ?", target) } }));
       await app.click("#ps-close");
     });
