@@ -29,7 +29,12 @@ param(
   [string]$Version,
   [string]$SourceUrl,
   [switch]$RemapPaths,
-  [switch]$NoRemapPaths
+  [switch]$NoRemapPaths,
+  # all: stage + build + bundle. build: stage + exe only (then sign vho.exe, e.g. SignPath).
+  # bundle: bundle the existing (signed) exe with the payload staged by a previous 'build' phase.
+  [ValidateSet('all', 'build', 'bundle')][string]$Phase = 'all',
+  # merge src-tauri/packaging/updater.conf.json (needs TAURI_SIGNING_PRIVATE_KEY; docs/release/signing-and-updates.md)
+  [switch]$Updater
 )
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
@@ -52,12 +57,15 @@ $native = Get-Content (Join-Path $root 'legal\inventory\native-windows-x64.json'
 
 # ---------------------------------------------------------------- 1. stage payload
 $stage = Join-Path $tauriDir 'target\package-staging'
+$mismatch = @()
+if ($Phase -eq 'bundle') {
+  if (-not (Test-Path (Join-Path $stage 'mpv\libmpv-2.dll'))) { throw "no staged payload in $stage (run -Phase build first)" }
+} else {
 if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
 $stageMpv = New-Item -ItemType Directory -Force (Join-Path $stage 'mpv')
 $stageLegal = New-Item -ItemType Directory -Force (Join-Path $stage 'legal')
 
 Write-Host "== native set: $MpvDist (+ $MpvBin)"
-$mismatch = @()
 foreach ($c in $native.components) {
   foreach ($f in $c.files) {
     $src = if ($f.name -like '*.exe') { Join-Path $MpvBin $f.name } else { Join-Path $MpvDist $f.name }
@@ -90,10 +98,15 @@ foreach ($k in $repl.Keys) { $offer = $offer.Replace($k, [string]$repl[$k]) }
 # SBOM of exactly this package (written to the staging folder, the repository copy is untouched)
 & node (Join-Path $root 'legal\generate-sbom.mjs') --out (Join-Path $stageLegal 'sbom.cdx.json') | Out-Host
 if ($LASTEXITCODE -ne 0) { throw 'SBOM generation / license policy check failed' }
+}
 
 # ---------------------------------------------------------------- 2. build + bundle
 $configs = @('--config', (Join-Path $packDir 'nsis.conf.json'))
 if ($Variant -eq 'test') { $configs += @('--config', (Join-Path $packDir 'nsis.test.conf.json')) }
+if ($Updater) {
+  if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { throw '-Updater needs TAURI_SIGNING_PRIVATE_KEY (and _PASSWORD) in the environment' }
+  $configs += @('--config', (Join-Path $tauriDir 'packaging\updater.conf.json'))
+}
 if ($Version -ne $conf.version) {
   $vfile = Join-Path $stage 'version.conf.json'
   [IO.File]::WriteAllText($vfile, "{`"version`": `"$Version`"}", (New-Object Text.UTF8Encoding $false))
@@ -109,9 +122,17 @@ $bundleDir = Join-Path $tauriDir 'target\release\bundle\nsis'
 $started = Get-Date
 Push-Location $root
 try {
-  & npx tauri build --bundles nsis @configs
-  if ($LASTEXITCODE -ne 0) { throw "tauri build failed ($LASTEXITCODE)" }
+  switch ($Phase) {
+    'all' { & npx tauri build --bundles nsis @configs }
+    'build' { & npx tauri build --no-bundle @configs }
+    'bundle' { & npx tauri bundle --bundles nsis @configs }
+  }
+  if ($LASTEXITCODE -ne 0) { throw "tauri $Phase failed ($LASTEXITCODE)" }
 } finally { Pop-Location; $env:RUSTFLAGS = $oldFlags }
+if ($Phase -eq 'build') {
+  Write-Host "`n== built $(Join-Path $tauriDir 'target\release\vho.exe'); sign it, then run -Phase bundle"
+  return
+}
 
 $installer = Get-ChildItem $bundleDir -Filter *-setup.exe | Where-Object { $_.LastWriteTime -ge $started } | Sort-Object LastWriteTime | Select-Object -Last 1
 if (-not $installer) { throw "no new installer in $bundleDir" }
