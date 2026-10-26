@@ -198,27 +198,32 @@ mod wic {
         let factory = factory().ok()?;
         let frame = open(&factory, path, format).ok()?;
         unsafe {
-            let mut count = 0u32;
-            frame.GetColorContexts(&mut [], &mut count).ok()?;
-            if count == 0 || count > 16 {
-                return None;
-            }
-            let mut contexts: Vec<Option<IWICColorContext>> = (0..count).map(|_| factory.CreateColorContext().ok()).collect();
+            // One call with pre-created contexts (a zero-length query with a non-null pointer
+            // is rejected by some WIC decoders); frames carry at most a few profiles.
+            let mut contexts: Vec<Option<IWICColorContext>> = (0..4).map(|_| factory.CreateColorContext().ok()).collect();
             if contexts.iter().any(Option::is_none) {
                 return None;
             }
+            let mut count = 0u32;
             frame.GetColorContexts(&mut contexts, &mut count).ok()?;
+            contexts.truncate(count.min(4) as usize);
             contexts.into_iter().flatten().find_map(|c| {
                 if c.GetType().ok()? != WICColorContextProfile {
                     return None;
                 }
                 let mut len = 0u32;
-                c.GetProfileBytes(&mut [], &mut len).ok()?;
-                if len < 128 || len > 16 * 1024 * 1024 {
+                let mut buf = vec![0u8; 1 << 20];
+                if c.GetProfileBytes(&mut buf, &mut len).is_err() {
+                    // larger than 1 MiB: ask again with the reported size
+                    if len <= buf.len() as u32 || len > 16 * 1024 * 1024 {
+                        return None;
+                    }
+                    buf = vec![0u8; len as usize];
+                    c.GetProfileBytes(&mut buf, &mut len).ok()?;
+                }
+                if len < 128 {
                     return None;
                 }
-                let mut buf = vec![0u8; len as usize];
-                c.GetProfileBytes(&mut buf, &mut len).ok()?;
                 buf.truncate(len as usize);
                 Some(buf)
             })
