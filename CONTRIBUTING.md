@@ -7,9 +7,9 @@
 > TR + EN metinleri içermeli; yeni bağımlılık lisans politikasına uymalı ve envantere/SBOM'a
 > eklenmeli. Güvenlik açıklarını herkese açık issue olarak değil [SECURITY.md](SECURITY.md)'deki
 > yoldan bildirin. Davranış kuralları: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
-> Proje lisansı GPL-3.0-only'dir; ad ve logo ayrıca [TRADEMARKS.md](TRADEMARKS.md) ile korunur.
-> Dış katkılar [CLA](CLA.md) kabulü (taslak, avukat incelemesi bekliyor) ve her commit'te
-> `git commit -s` (DCO) gerektirir.
+> Proje lisansı Apache-2.0'dır ([NOTICE](NOTICE) ile birlikte); ad ve logo ayrıca
+> [TRADEMARKS.md](TRADEMARKS.md) ile korunur. Katkılar aynı lisansla gelir (Apache-2.0 §5) ve her
+> commit'te `git commit -s` (DCO) gerekir; ayrı bir CLA yoktur.
 
 Thank you for helping. This guide gets you from a clean clone to a passing test run, explains
 where things live, and lists what a change must include to be merged.
@@ -114,44 +114,29 @@ music each keep their own layout; original files are never modified in place.
 
 ## 5. Licensing of contributions
 
-HS Studio (formerly VHO) is licensed under the **GNU General Public License v3.0 only**
-([LICENSE](LICENSE)). The name and logo are covered separately by [TRADEMARKS.md](TRADEMARKS.md).
+HS Studio (formerly VHO) is licensed under the **Apache License 2.0** ([LICENSE](LICENSE),
+[NOTICE](NOTICE)). The name and logo are covered separately by [TRADEMARKS.md](TRADEMARKS.md).
 
-### Contributor License Agreement (CLA)
-
-Before a contribution from outside the project can be merged, its author agrees to the
-[HS Studio Individual CLA](CLA.md) (based on the Harmony HA-CLA-I v1, outbound "Option Three").
-In short: you keep the copyright in your work and grant the project owner a broad license to it,
-so that the project can stay under one license holder (for example to move to a later GPL version
-or another open-source license). Your contribution can only be licensed under the project's
-license at the time you contributed or under OSI-approved open-source licenses — **never under a
-proprietary or commercial-only license**.
-
-> The CLA is a **draft awaiting legal review**; the signing mechanism is not set up yet.
-> Until it is, outside contributions cannot be merged. Planned mechanism `[TO BE SET by the
-> owner]`: a CLA bot on the pull request (e.g. CLA Assistant) or the statement below in the
-> pull request description, kept on record by the maintainer:
->
-> `I have read the HS Studio Individual Contributor License Agreement (CLA.md, version 1.1) and I agree to it for this and my future contributions.`
-
-If you contribute on behalf of your employer or another organization, an Entity CLA is needed
-(not prepared yet: ask first).
+**Inbound = outbound.** Contributions are accepted under the same Apache License 2.0 (section 5 of
+the license: anything you intentionally submit is under its terms unless you state otherwise).
+There is no separate contributor license agreement. If your change adds a notable attribution that
+redistributors must keep, add it to `NOTICE` in the same pull request.
 
 ### Sign-off (DCO)
 
 Every commit is signed off (`git commit -s`), certifying the
 [Developer Certificate of Origin 1.1](https://developercertificate.org/): that you wrote the
-change or otherwise have the right to submit it. The sign-off line must use your real name and
-an e-mail address you are happy to publish (it becomes part of the public history).
+change or otherwise have the right to submit it under the project's license. The sign-off line
+must use your real name and an e-mail address you are happy to publish (it becomes part of the
+public history).
 
 ### Third-party code and assets
 
 Do not paste code, icons, images, fonts, model weights or text you did not write unless you
 name its source, author and license in the pull request, and the license is on the accepted list
-above. Such material is not "your" contribution under the CLA: it keeps its own license and is
-recorded in `legal/inventory/` and the notices. Copying from GPL/AGPL projects is not accepted
-even though the project itself is GPL: the dependency policy stays permissive/LGPL so that the
-project keeps the option to relicense under another open-source license.
+above. Such material keeps its own license and is recorded in `legal/inventory/` and the
+notices. Code from GPL/AGPL projects cannot be used: it would not be compatible with distributing
+HS Studio under Apache-2.0.
 
 ## 6. Pull requests and issues
 
