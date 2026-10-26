@@ -158,6 +158,7 @@ jobs:
           Copy-Item src-tauri/target/package-staging/legal/THIRD_PARTY_NOTICES.txt $out
           Copy-Item src-tauri/target/package-staging/legal/SOURCE-OFFER.txt $out
           Copy-Item LICENSE (Join-Path $out 'LICENSE.txt')
+          Copy-Item NOTICE (Join-Path $out 'NOTICE.txt')
           Get-ChildItem $out -File | Where-Object { $_.Extension -ne '.sha256' } | Sort-Object Name | ForEach-Object {
             "$((Get-FileHash -Algorithm SHA256 $_.FullName).Hash.ToLowerInvariant())  $($_.Name)"
           } | Set-Content -Encoding ascii (Join-Path $out 'SHA256SUMS.txt')

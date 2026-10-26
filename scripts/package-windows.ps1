@@ -14,7 +14,7 @@
 
   Layout inside the install folder (what engine/mod.rs and actions/ffmpeg.rs look for):
     <install>\vho.exe (main binary), <install>\mpv\libmpv-2.dll + dependent DLLs + ffmpeg.exe +
-    ffprobe.exe, <install>\legal\{LICENSE.txt, THIRD_PARTY_NOTICES.txt, SOURCE-OFFER.txt,
+    ffprobe.exe, <install>\legal\{LICENSE.txt, NOTICE.txt, THIRD_PARTY_NOTICES.txt, SOURCE-OFFER.txt,
     native-inventory.json, sbom.cdx.json}, uninstall.exe.
   Output: src-tauri\target\release\bundle\nsis\*.exe + .sha256 + package-manifest.json
   (every packaged file with size and SHA-256).
@@ -84,6 +84,7 @@ if ($mismatch) {
 }
 
 Copy-Item (Join-Path $root 'LICENSE') (Join-Path $stageLegal 'LICENSE.txt')
+Copy-Item (Join-Path $root 'NOTICE') (Join-Path $stageLegal 'NOTICE.txt')
 Copy-Item (Join-Path $root 'src\legal\THIRD_PARTY_NOTICES.txt') (Join-Path $stageLegal 'THIRD_PARTY_NOTICES.txt')
 Copy-Item (Join-Path $root 'legal\inventory\native-windows-x64.json') (Join-Path $stageLegal 'native-inventory.json')
 Copy-Item (Join-Path $root 'TRADEMARKS.md') (Join-Path $stageLegal 'TRADEMARKS.md')

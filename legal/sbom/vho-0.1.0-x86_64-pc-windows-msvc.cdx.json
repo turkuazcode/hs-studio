@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:34c70cdf-d4f7-5f42-b570-1c118d62c0c5",
+ "serialNumber": "urn:uuid:54df4a0e-2353-5d0c-bc12-19fc66a838b4",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-26T06:04:22Z",
+  "timestamp": "2026-10-26T07:29:08Z",
   "tools": {
    "components": [
     {
@@ -22,7 +22,7 @@
    "description": "VHO (Video H Oynaticisi) - video, photo and music desktop app (Tauri 2)",
    "licenses": [
     {
-     "expression": "GPL-3.0-only"
+     "expression": "Apache-2.0"
     }
    ],
    "authors": [
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "00012388ee040837de8560f53d223cce6639a0b6"
+    "value": "423cf0e5157552a78a136eda677c5877875a8e14"
    },
    {
     "name": "vho:native-binaries",
@@ -21251,7 +21251,7 @@
    "scope": "excluded",
    "licenses": [
     {
-     "expression": "GPL-3.0-only"
+     "expression": "Apache-2.0"
     }
    ],
    "properties": [
@@ -21327,7 +21327,7 @@
    "scope": "excluded",
    "licenses": [
     {
-     "expression": "GPL-3.0-only"
+     "expression": "Apache-2.0"
     }
    ],
    "properties": [
@@ -21371,7 +21371,7 @@
    "scope": "excluded",
    "licenses": [
     {
-     "expression": "GPL-3.0-only"
+     "expression": "Apache-2.0"
     }
    ],
    "properties": [
