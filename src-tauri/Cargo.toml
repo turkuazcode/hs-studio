@@ -3,7 +3,7 @@ name = "vho"
 version = "0.1.0"
 description = "VHO - Video H Oynatıcısı: video & fotoğraf medya stüdyosu"
 authors = ["Halil SARITAŞ (hsrts)"]
-license = "GPL-3.0-only"
+license = "Apache-2.0"
 edition = "2024"
 publish = false
 

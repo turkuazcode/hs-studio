@@ -104,7 +104,7 @@ try {
   Check 'installer exit code 0' ($code -eq 0) "($code)"
   $exe = MainExe $installDir
   Check 'main exe installed' ([bool]$exe) "$($exe.FullName)"
-  foreach ($f in 'mpv\libmpv-2.dll', 'mpv\ffmpeg.exe', 'mpv\ffprobe.exe', 'mpv\avcodec-62.dll', 'legal\LICENSE.txt', 'legal\THIRD_PARTY_NOTICES.txt', 'legal\SOURCE-OFFER.txt', 'legal\sbom.cdx.json', 'uninstall.exe') {
+  foreach ($f in 'mpv\libmpv-2.dll', 'mpv\ffmpeg.exe', 'mpv\ffprobe.exe', 'mpv\avcodec-62.dll', 'legal\LICENSE.txt', 'legal\NOTICE.txt','legal\THIRD_PARTY_NOTICES.txt', 'legal\SOURCE-OFFER.txt', 'legal\sbom.cdx.json', 'uninstall.exe') {
     Check "file $f" (Test-Path (Join-Path $installDir $f))
   }
   Check 'registered under HKCU (per-user, no admin)' (Test-Path $uninstKey)
