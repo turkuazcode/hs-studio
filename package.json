@@ -14,6 +14,7 @@
     "test:quality": "node scripts/run-tests.mjs quality",
     "bench:media": "node scripts/bench-media.mjs",
     "quality:ab": "node scripts/quality-ab.mjs",
+    "clean:test-artifacts": "node scripts/clean-test-artifacts.mjs",
     "fixtures": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/fixtures/make-fixtures.ps1",
     "fixtures:engine": "powershell -NoProfile -ExecutionPolicy Bypass -File tests/fixtures/make-engine-fixtures.ps1",
     "stage:mpv": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stage-mpv.ps1"
