@@ -5,12 +5,13 @@
 > DLL'leri), indirilebilir AI bileşenleri (kod lisansı ≠ ağırlık lisansı), font/ikon/vendored JS ve
 > test dosyaları. `npm run sbom` CycloneDX 1.6 SBOM'u üretir ve lisans politikasını denetler;
 > `npm test` envanter, bildirim ve SBOM'un tutarlı olduğunu doğrular. Proje lisansı
-> **GPL-3.0-only**; tüm bağımlılıkların GPL-3.0 uyumluluğu aşağıdaki tabloda. Yayından önce
+> **Apache-2.0** + [NOTICE](../NOTICE) (2026-10-26); bağımlılıkların uyumu aşağıdaki tabloda. Yayından önce
 > kullanıcının vermesi gereken kararlar en altta ("Open items"). Bu belge hukuki görüş değildir.
 
-Project license: **GPL-3.0-only** ([LICENSE](../LICENSE), set in `src-tauri/Cargo.toml` and
-`package.json`; owner decision 2026-10-25, previously MIT). Name and logo: [TRADEMARKS.md](../TRADEMARKS.md).
-Dependency policy (unchanged by the license switch, to keep relicensing possible):
+Project license: **Apache-2.0** with a root [NOTICE](../NOTICE) file ([LICENSE](../LICENSE), set in
+`src-tauri/Cargo.toml` and `package.json`; owner decision 2026-10-26 — history: MIT → GPL-3.0-only
+(2026-10-25, never released) → Apache-2.0). Name and logo: [TRADEMARKS.md](../TRADEMARKS.md).
+Dependency policy (unchanged):
 [docs/plans/00-YOL-HARITASI.md](../docs/plans/00-YOL-HARITASI.md) — accepted MIT, Apache-2.0,
 BSD-2/3, ISC, Zlib, BSL-1.0, MPL-2.0, Unicode, CC0, public domain, CC-BY-4.0, OFL-1.1 (fonts
 only); LGPL only as a separate DLL/process; no GPL/AGPL/non-commercial dependencies.
@@ -58,7 +59,7 @@ files, 8 AI files, 10 asset groups. **0 rejected.** 12 `review` items; **11 ackn
 
 | Item | License | Why review | Status |
 |---|---|---|---|
-| libfreetype-6.dll | FTL OR GPL-2.0-or-later | FTL not on the explicit list; see GPL note below | acknowledged |
+| libfreetype-6.dll | FTL OR GPL-2.0-or-later | FTL not on the explicit list (permissive, credit required: in the notices) | acknowledged |
 | libjpeg-8.dll | IJG AND BSD-3-Clause AND Zlib | IJG not on the explicit list (permissive; requires credit in docs) | acknowledged |
 | libpng16-16.dll | libpng-2.0 | permissive, not on the list | acknowledged |
 | libbz2-1.dll | bzip2-1.0.6 | permissive (BSD-style), not on the list | acknowledged |
@@ -69,38 +70,39 @@ files, 8 AI files, 10 asset groups. **0 rejected.** 12 `review` items; **11 ackn
 | YuNet, GFPGAN weights | MIT, Apache-2.0 | weights fine; **training data** (WIDER FACE / FFHQ) has non-commercial terms | **accepted risk, owner decision 2026-10-25** ("kaliteyi önceliyoruz"): models stay; lawyer review later; re-verify training data before each release |
 | App logo/icons | not yet stated | owner must confirm authorship/rights | **open** (see [docs/legal/on-arastirma.md](../docs/legal/on-arastirma.md)) |
 
-## GPL-3.0 compatibility (project license since 2026-10-25)
+## Compatibility with distributing HS Studio under Apache-2.0 (since 2026-10-26)
 
-Statically linked code becomes part of the GPL-3.0 work and must be GPL-3.0-compatible.
-Separately loaded DLLs are treated conservatively as part of the combined work as well. Separate
-processes, downloaded data and OS components are aggregates.
+Apache-2.0 is permissive, so the question is only whether every shipped component may be
+redistributed together with an Apache-2.0 application and what each one requires.
 
-| Group | Licenses | GPL-3.0-only compatible? | Notes |
+| Group | Licenses | OK? | What it requires |
 |---|---|---|---|
-| Rust crates compiled into the exe (372) | MIT, Apache-2.0, BSD-2/3, ISC, Zlib, BSL-1.0, Unicode-3.0, CC0, Unlicense, 0BSD, MPL-2.0 (5 crates: cssparser, cssparser-macros, selectors, dtoa-short, option-ext) | **yes** | Apache-2.0 is compatible with GPLv3 (not GPLv2). MPL-2.0 via its secondary-license clause; none of the 5 crates carries the "Incompatible With Secondary Licenses" notice (checked in the crate sources). `ring` 0.17.14 is Apache-2.0 AND ISC (no OpenSSL-license code). |
-| C code inside crates | libwebp (BSD-3-Clause), SQLite (public domain), rav1e/AV1 (BSD-2-Clause + AOM patent license) | **yes** | |
-| libmpv, FFmpeg, FriBidi, GLib, libintl, libiconv, libplacebo, uchardet (LGPL option) | LGPL-2.1-or-later | **yes** | LGPL code may be used in a GPL work. Kept as separate replaceable DLLs anyway (policy + LGPL §6 relinking). |
-| Other DLLs | ISC, MIT, BSD-2/3, Apache-2.0, Zlib, libpng-2.0, bzip2-1.0.6, 0BSD, IJG, HPND-style, MIT AND ZPL-2.1, MPL-2.0 option (Graphite2), BSD-3 + PCRE2 exception | **yes** | Listed as GPL-compatible by the FSF (IJG, libpng, zlib, Expat, ZPL-2.x, X11/HPND-style) or plain permissive. |
-| libfreetype-6.dll | FTL OR GPL-2.0-or-later | **yes, via the GPL-2.0-or-later option** | FTL alone is GPL-incompatible (FSF: credit clause). Both options are passed on; the notices should say so (done in the inventory note). |
-| GCC runtime DLLs | GPL-3.0-or-later WITH GCC-exception-3.1 | **yes** | |
-| ffmpeg.exe / ffprobe.exe | LGPL-2.1-or-later | **yes** (separate processes) | |
-| ONNX Runtime Web (download) | MIT (+ its ThirdPartyNotices) | **yes** | Downloaded at runtime, not part of the shipped program. |
-| Model weights (download) | CC-BY-4.0 (photo-x4), Apache-2.0 (GFPGAN), MIT (YuNet) | **yes / not part of the program** | Data fetched at runtime. FSF lists CC BY 4.0 as GPLv3-compatible. Training-data terms are a separate, open question (below). |
-| Outfit font | OFL-1.1 | **acceptable as a separate font file** | OFL is not GPL-compatible for merging code, but a font shipped as its own file is aggregation; keep it unmodified with its license, never embed it into program code. |
-| Leaflet, Material Icons path data, AMD FSR port | BSD-2-Clause, Apache-2.0, MIT | **yes** | |
-| npm dev tools | MIT, Apache-2.0, ISC, BSD-3, MPL-2.0 (lightningcss) | not shipped | |
-| WebView2, Media Foundation, WIC codecs, Windows OCR/share | OS components | **yes** (system library exception) | |
-| OpenStreetMap tiles | ODbL (data, service) | not distributed | attribution shown in the map |
+| Rust crates compiled into the exe (372) | MIT, Apache-2.0, BSD-2/3, ISC, Zlib, BSL-1.0, Unicode-3.0, CC0, Unlicense, 0BSD, MPL-2.0 (cssparser, cssparser-macros, selectors, dtoa-short, option-ext) | **yes** | Notices (cargo-about, section 5 of the notices). MPL-2.0: file-level copyleft — the source of those 5 crates is public on crates.io; modified MPL files would have to be published |
+| C code inside crates | libwebp (BSD-3-Clause), SQLite (public domain), rav1e/AV1 (BSD-2-Clause + AOM patent license) | **yes** | Notices |
+| libmpv, FFmpeg, FriBidi, GLib, libintl, libiconv, libplacebo, uchardet (LGPL option) | LGPL-2.1-or-later | **yes, as separate replaceable DLLs** | LGPL text, replaceability, corresponding-source offer (section below, `legal/SOURCE-OFFER.txt`) |
+| Other DLLs | ISC, MIT, BSD-2/3, Apache-2.0, Zlib, FTL (FreeType), libpng-2.0, bzip2-1.0.6, 0BSD, IJG, HPND-style, MIT AND ZPL-2.1, MPL-2.0 option (Graphite2), BSD-3 + PCRE2 exception | **yes** | Notices; FTL and IJG require a credit in the documentation (done in the notices) |
+| GCC runtime DLLs | GPL-3.0-or-later WITH GCC-exception-3.1 | **yes** | The runtime exception allows shipping them with software under any license |
+| ffmpeg.exe / ffprobe.exe | LGPL-2.1-or-later | **yes** (separate processes) | As LGPL DLLs |
+| ONNX Runtime Web (download) | MIT (+ its ThirdPartyNotices) | **yes** | Downloaded with its notices |
+| Model weights (download) | CC-BY-4.0 (photo-x4), Apache-2.0 (GFPGAN), MIT (YuNet) | **yes** | Attribution (notices + Settings > AI models); training-data question accepted by the owner |
+| Outfit font | OFL-1.1 | **yes** | Ship unmodified with OFL.txt, never sell the font alone |
+| Leaflet, Material Icons path data, AMD FSR port | BSD-2-Clause, Apache-2.0, MIT | **yes** | Notices |
+| npm dev tools | MIT, Apache-2.0, ISC, BSD-3, MPL-2.0 (lightningcss) | not shipped | — |
+| WebView2, Media Foundation, WIC codecs, Windows OCR/share | OS components | **yes** | — |
+| OpenStreetMap tiles | ODbL (data, service) | not distributed | Attribution shown in the map |
 
-**Nothing incompatible was found.** Consequences of the license switch to keep in mind:
+**Nothing incompatible was found.** Consequences of the license choice:
 
-- GPL-3.0-only (not "or later"): a future GPL v4 cannot be adopted without relicensing — possible
-  only because of the CLA.
-- GPLv3 binaries must come with the Corresponding Source of the whole app (section 6): publish
-  the exact tagged source with every release, ship `LICENSE`, and keep the notices window.
-- Some app stores' terms are widely considered incompatible with GPLv3 (notably Apple's App
-  Store); check store terms before planning store releases (plan 10/P05).
-- The dependency policy still excludes GPL/AGPL libraries, so the owner can relicense (CLA) later.
+- Redistributors (including closed forks) must keep LICENSE, the copyright notices and the
+  attribution notices of [NOTICE](../NOTICE) (Apache-2.0 section 4); the NOTICE is the first block
+  of the in-app notices window and ships as `legal\NOTICE.txt` in the installer.
+- The name and logo stay protected by [TRADEMARKS.md](../TRADEMARKS.md) (Apache-2.0 section 6
+  grants no trademark rights).
+- No CLA is needed (inbound = outbound Apache-2.0 + DCO sign-off). SignPath's "no commercial
+  dual-licensing" rule is not affected. Apple App Store distribution has no license conflict for
+  the app's own code (the LGPL DLLs would need a separate review for a store build).
+- The dependency policy (no GPL/AGPL libraries, LGPL only as separate files) stays, so the whole
+  package can be redistributed under Apache-2.0 terms.
 
 ## LGPL obligations and corresponding source (native binaries)
 
@@ -124,8 +126,8 @@ embed the local build prefix (`--prefix=C:/Users/<user>/…`, visible in `ffmpeg
 build releases from a neutral path.
 
 Linux "system GPL fallback" (plan 02/B): distributions often ship mpv/FFmpeg built with
-`--enable-gpl`. Loading a GPL libmpv into the GPL-3.0 app is license-compatible now, but it
-conflicts with the "no GPL dependency" policy (relicensing option) — decide before shipping Linux.
+`--enable-gpl`. Loading a GPL libmpv into the Apache-2.0 app would make the combination subject to
+the GPL and conflicts with the "no GPL dependency" policy — decide before shipping Linux.
 
 ## AI models: code license ≠ weight license
 
@@ -140,12 +142,12 @@ user confirms, pinned to a commit URL and checked against SHA-256 (A01).
 1. ~~Security contact~~ — **done 2026-10-25**: turkuazcode@gmail.com in SECURITY.md,
    CODE_OF_CONDUCT.md, TRADEMARKS.md and the issue templates. Add the repository's security-policy
    link to `.github/ISSUE_TEMPLATE/config.yml` once the URL exists.
-2. **CLA** (pre-research for the lawyer: [docs/legal/on-arastirma.md](../docs/legal/on-arastirma.md)): lawyer review of [CLA.md](../CLA.md) (Harmony-based draft, Option Three: OSI-approved licenses only, since 2026-10-26), fill the
-   jurisdiction, confirm the media license, choose the signing mechanism (CLA bot or PR
-   statement + record keeping), and decide whether an Entity CLA is needed.
+2. ~~CLA~~ — **not needed since 2026-10-26** (Apache-2.0, inbound = outbound + DCO). Still open:
+   the project URL and final copyright holder line in [NOTICE](../NOTICE) (currently
+   "Halil SARITAŞ (hsrts)", as in the commits).
 3. **Trademark**: lawyer review of [TRADEMARKS.md](../TRADEMARKS.md); decide on registration;
    confirm the logo's authorship/rights (`inventory/assets.json`, `app-icons`) and whether the logo
-   files are also offered under GPL-3.0 as copyright while the mark stays protected.
+   files are also offered under Apache-2.0 as copyright while the mark stays protected.
 4. **Repository URL**: README links to `github.com/hsrts/vho` (not verified to exist); the notices
    promise source "from the project repository" — set the final URL.
 5. **History cleanup** — **approved 2026-10-25**, runs only right before the first push after all

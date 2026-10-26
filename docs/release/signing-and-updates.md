@@ -42,9 +42,9 @@ Windows'ta yayıncı olarak "SignPath Foundation" görünür.
 **Başvuru koşulları** (<https://signpath.org/>, <https://signpath.org/terms>,
 <https://about.signpath.io/product/open-source>; başvuru sırasında güncel hâli kontrol edilmeli):
 
-1. OSI onaylı bir lisans kullanılmalı. GPL-3.0-only bu şartı karşılar.
-2. **Hiçbir bileşen için ticari çift lisans olmamalı.** Bunun için CLA, Harmony "Option Three"e (yalnızca OSI lisansları)
-   daraltıldı ([CLA.md](../../CLA.md), 2026-10-26).
+1. OSI onaylı bir lisans kullanılmalı. Apache-2.0 bu şartı karşılar (2026-10-26'dan beri proje lisansı).
+2. **Hiçbir bileşen için ticari çift lisans olmamalı.** Proje tek lisanslıdır (Apache-2.0), CLA yoktur ve katkılar
+   aynı lisansla gelir. Bu yüzden çatışma yoktur.
 3. Tescilli bileşen olmamalı. Sistem kütüphaneleri hariçtir. LGPL DLL'ler açık kaynaktır. Uygulama içindeki
    bağımlılıkların tamamı açık kaynak ([legal/INVENTORY.md](../../legal/INVENTORY.md)).
 4. Proje aktif olmalı ve imzalanacak biçimde **zaten yayımlanmış** olmalı. İndirme sayfasında özellikler anlatılmalı.

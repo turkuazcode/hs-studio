@@ -24,12 +24,12 @@ MSI, temiz kurulum testi yapılana kadar yayımlanmaz (Plan 10 kararı).
 
 | Yol (kurulum klasörü) | Ne | Kaynak |
 |---|---|---|
-| `vho.exe` | Uygulama (GPL-3.0-only) | `cargo build --release` (Tauri) |
+| `vho.exe` | Uygulama (Apache-2.0) | `cargo build --release` (Tauri) |
 | `mpv\libmpv-2.dll` + 37 DLL | LGPL libmpv + FFmpeg ve bağımlılıkları; çalışma anında yüklenir, değiştirilebilir | `third_party/mpv/build-windows.sh` çıktısı (`_build/dist`) |
 | `mpv\ffmpeg.exe`, `mpv\ffprobe.exe` | Aynı LGPL FFmpeg derlemesi; ayrı süreç olarak çalışır | `_build/prefix/bin` |
-| `legal\LICENSE.txt` | GPL-3.0 metni | `LICENSE` |
+| `legal\LICENSE.txt`, `legal\NOTICE.txt` | Apache-2.0 metni ve atıf bildirimi (NOTICE ayrıca Lisanslar penceresinin en üstünde) | `LICENSE`, `NOTICE` |
 | `legal\THIRD_PARTY_NOTICES.txt` | Bildirimler + tam lisans metinleri (uygulama içindeki Lisanslar penceresiyle aynı) | `src/legal/` |
-| `legal\SOURCE-OFFER.txt` | GPL/LGPL kaynak kod teklifi (3 yıl, turkuazcode@gmail.com) | `legal/SOURCE-OFFER.txt` (sürüm/commit dolduruluyor) |
+| `legal\SOURCE-OFFER.txt` | LGPL bileşenler (libmpv/FFmpeg ve LGPL DLL'ler) için kaynak kod teklifi (3 yıl, turkuazcode@gmail.com) | `legal/SOURCE-OFFER.txt` (sürüm/commit dolduruluyor) |
 | `legal\native-inventory.json`, `legal\sbom.cdx.json` | DLL sürüm/commit/SHA-256 listesi; bu paketin SBOM'u | `legal/inventory/`, `legal/generate-sbom.mjs` |
 | `legal\TRADEMARKS.md` | Ad ve logo politikası | `TRADEMARKS.md` |
 | `uninstall.exe` | NSIS kaldırıcısı | Tauri |

@@ -5,7 +5,7 @@
 
 [![Tauri 2.0](https://img.shields.io/badge/Tauri-2.0-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app/)
 [![Rust](https://img.shields.io/badge/Rust-1.85+-orange?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg?style=for-the-badge)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg?style=for-the-badge)](LICENSE)
 [![Platform](https://img.shields.io/badge/Test%20edilen-Windows%2011%20x64-lightgrey?style=for-the-badge)](docs/platform-support.md)
 [![Developer](https://img.shields.io/badge/Developer-Halil%20SARITAŞ%20(hsrts)-E11D48?style=for-the-badge)](https://github.com/hsrts)
 
@@ -180,18 +180,18 @@ Tamamı sentetik ve depoya dahildir (toplam ~185 KB); `tests/fixtures/make-fixtu
 
 ## 🤝 Katkıda Bulunma (Contributing)
 
-Katkılar memnuniyetle karşılanır. Temiz klondan kurulum, test katmanları, mimari, lisans/i18n beklentileri ve küçük ilk görevler: **[CONTRIBUTING.md](CONTRIBUTING.md)** (EN, Türkçe özetli). Dış katkılar [CLA](CLA.md) kabulü ve `git commit -s` (DCO) gerektirir. Davranış kuralları: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Güvenlik açıkları herkese açık issue olarak değil, [SECURITY.md](SECURITY.md)'deki yoldan bildirilir. Değişiklik geçmişi: [CHANGELOG.md](CHANGELOG.md).
+Katkılar memnuniyetle karşılanır. Temiz klondan kurulum, test katmanları, mimari, lisans/i18n beklentileri ve küçük ilk görevler: **[CONTRIBUTING.md](CONTRIBUTING.md)** (EN, Türkçe özetli). Katkılar Apache-2.0 ile gelir ve `git commit -s` (DCO) gerektirir. Davranış kuralları: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Güvenlik açıkları herkese açık issue olarak değil, [SECURITY.md](SECURITY.md)'deki yoldan bildirilir. Değişiklik geçmişi: [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
 ## 📄 Lisans
 
 <!-- license-section: the only README place that states the project license (with the badge above) -->
-**HS Studio** (eski çalışma adı **VHO**) — Copyright (C) 2026 Halil SARITAŞ. [GNU General Public License v3.0 only](LICENSE) (GPL-3.0-only) ile lisanslanmış özgür yazılımdır: kullanabilir, inceleyebilir, değiştirebilir ve dağıtabilirsiniz; değiştirilmiş sürümü dağıtırsanız kaynak kodunu da aynı lisansla açmanız gerekir. Garanti verilmez.
+**HS Studio** (eski çalışma adı **VHO**) — Copyright 2026 Halil SARITAŞ. [Apache License 2.0](LICENSE) ile lisanslanmış açık kaynak yazılımdır: kullanabilir, inceleyebilir, değiştirebilir ve (değiştirilmiş hâliyle de) dağıtabilirsiniz. Dağıtırken lisans metnini ve **[NOTICE](NOTICE)** dosyasındaki atıfları korumanız gerekir; kullanıcılara görünür tutmanız rica edilir (örn. Hakkında/Lisanslar ekranı). Garanti verilmez.
 
-*HS Studio (formerly VHO) is free software under the GNU GPL v3.0 only; it comes with no warranty.*
+*HS Studio (formerly VHO) is open source under the Apache License 2.0; keep the NOTICE when you redistribute it. No warranty.*
 
-**Ad ve logo:** "HS Studio" adı ve logosu GPL kapsamında değildir; değiştirilmiş sürümler farklı bir ad ve logo kullanmalıdır. Ayrıntı: [TRADEMARKS.md](TRADEMARKS.md) (tescilli marka iddiası yoktur).
+**Ad ve logo:** "HS Studio" adı ve logosu Apache lisansı kapsamında değildir (lisansın 6. maddesi); değiştirilmiş sürümler farklı bir ad ve logo kullanmalıdır. Ayrıntı: [TRADEMARKS.md](TRADEMARKS.md) (tescilli marka iddiası yoktur).
 <!-- /license-section -->
 
 ### Üçüncü taraf bileşenler

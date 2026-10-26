@@ -4,7 +4,7 @@
     "active": true,
     "targets": ["app", "dmg"],
     "publisher": "Halil SARITAŞ (TurkuazCode)",
-    "copyright": "Copyright (C) 2026 Halil SARITAŞ. GPL-3.0-only.",
+    "copyright": "Copyright 2026 Halil SARITAŞ. Apache-2.0.",
     "category": "Video",
     "shortDescription": "Video, photo and music player and studio",
     "licenseFile": "../LICENSE",
