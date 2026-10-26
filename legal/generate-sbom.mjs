@@ -244,6 +244,7 @@ function nativeComponents(native) {
           { name: "vho:linking", value: linking === "process" ? "separate process" : "separate DLL loaded at runtime (replaceable)" },
           { name: "vho:license-concluded", value: concluded },
           { name: "vho:policy", value: status },
+          ...(comp.acknowledged ? [{ name: "vho:acknowledged", value: comp.acknowledged }] : []),
           { name: "vho:bytes", value: String(f.bytes) },
           ...(comp.msys2 ? [{ name: "vho:msys2-package", value: `${comp.msys2.package} ${comp.msys2.version}` }] : []),
         ],
@@ -278,6 +279,7 @@ function modelComponents(manifest, inventory) {
           { name: "vho:kind", value: inv.kind },
           { name: "vho:bytes", value: String(f.bytes) },
           { name: "vho:policy", value: inv.policy === "review" ? "review" : evaluateLicense(license, { linking: "download" }) },
+          ...(inv.acknowledged ? [{ name: "vho:acknowledged", value: inv.acknowledged }] : []),
           ...(fi.trainingData || inv.trainingData ? [{ name: "vho:training-data", value: fi.trainingData || inv.trainingData }] : []),
           ...(inv.architecture ? [{ name: "vho:architecture", value: `${inv.architecture.name} (${inv.architecture.codeLicense}, ${inv.architecture.source})` }] : []),
         ],
@@ -298,6 +300,7 @@ function assetComponents(assets) {
         { name: "vho:origin", value: "repository" },
         { name: "vho:category", value: a.category },
         { name: "vho:policy", value: a.policy === "review" ? "review" : evaluateLicense(a.license, { linking, category: a.category }) },
+        ...(a.acknowledged ? [{ name: "vho:acknowledged", value: a.acknowledged }] : []),
         ...(a.paths.length ? [{ name: "vho:paths", value: a.paths.join(", ") }] : []),
       ],
     };
@@ -402,7 +405,7 @@ function main() {
         { name: "vho:target", value: target },
         { name: "vho:source-commit", value: commit || "unknown" },
         { name: "vho:native-binaries", value: windowsX64 ? "included (legal/inventory/native-windows-x64.json)" : "not inventoried for this target" },
-        { name: "vho:policy", value: "docs/plans/00-YOL-HARITASI.md; vho:policy per component = ok | review | reject" },
+        { name: "vho:policy", value: "docs/plans/00-YOL-HARITASI.md; vho:policy per component = ok | review | reject; vho:acknowledged = owner decision on a review item" },
       ],
     },
     components,
@@ -421,8 +424,10 @@ function main() {
   console.log(`SBOM ${out}`);
   console.log(`  target ${target} · project license ${projectLicense}`);
   console.log(`  rust ${rust.components.length} (${count((c) => c.purl?.startsWith("pkg:cargo") && c.scope === "required")} linked, rest build-time) · npm ${count((c) => c.purl?.startsWith("pkg:npm/") && !c["bom-ref"].startsWith("asset:"))} · native ${count((c) => c["bom-ref"].startsWith("native:"))} · ai ${count((c) => c["bom-ref"].startsWith("ai:"))} · assets ${count((c) => c["bom-ref"].startsWith("asset:"))}`);
-  console.log(`  policy: ok ${by("ok").length} · review ${by("review").length} · reject ${by("reject").length}`);
-  for (const c of by("review")) console.log(`    review  ${c.group ? c.group + " / " : ""}${c.name}${c.version ? "@" + c.version : ""}  ${c.licenses[0].expression}`);
+  const acked = (c) => c.properties.some((p) => p.name === "vho:acknowledged");
+  const open = by("review").filter((c) => !acked(c));
+  console.log(`  policy: ok ${by("ok").length} · review ${by("review").length} (acknowledged ${by("review").length - open.length}, open ${open.length}) · reject ${by("reject").length}`);
+  for (const c of by("review")) console.log(`    ${acked(c) ? "review/ack" : "REVIEW/OPEN"}  ${c.group ? c.group + " / " : ""}${c.name}${c.version ? "@" + c.version : ""}  ${c.licenses[0].expression}`);
   for (const c of by("reject")) console.log(`    REJECT  ${c.name}${c.version ? "@" + c.version : ""}  ${c.licenses[0].expression}`);
   if (by("reject").length) process.exitCode = 1;
 }

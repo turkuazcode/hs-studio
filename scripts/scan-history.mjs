@@ -5,7 +5,7 @@
 //   - large blobs (default >= 1 MiB)
 //   - personal data hints: absolute user-profile paths, e-mail addresses in file contents
 //
-//   node scripts/scan-history.mjs [--min-mb 1] [--json out.json]
+//   node scripts/scan-history.mjs [--min-mb 1] [--json out.json] [--repo <git dir or worktree>]
 //
 // Nothing is modified: the script only runs `git rev-list` / `git cat-file`. Secret VALUES are
 // never printed — only blob id, path, rule and line number — so the output can be shared.
@@ -15,12 +15,13 @@ import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
 const opt = (name, def) => {
   const i = args.indexOf(name);
   return i >= 0 ? args[i + 1] : def;
 };
+// --repo scans another repository (e.g. the cleaned mirror of scripts/prepare-public-history.ps1)
+const ROOT = resolve(opt("--repo", resolve(dirname(fileURLToPath(import.meta.url)), "..")));
 const MIN_BYTES = Number(opt("--min-mb", "1")) * 1024 * 1024;
 const JSON_OUT = opt("--json", null);
 const MAX_TEXT_BYTES = 8 * 1024 * 1024; // larger blobs are reported as large, not grepped

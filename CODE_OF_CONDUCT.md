@@ -1,7 +1,7 @@
-<!-- Contributor Covenant 2.1, unmodified except the reporting contact (placeholder). Text retrieved from https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md on 2026-10-25. -->
+<!-- Contributor Covenant 2.1, unmodified except the reporting contact. Text retrieved from https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md on 2026-10-25. -->
 > **Türkçe özet:** Bu proje Contributor Covenant 2.1 davranış kurallarını uygular: herkese
 > saygılı, taciz ve ayrımcılıktan uzak bir topluluk. İhlaller aşağıdaki iletişim yoluyla
-> (henüz tanımlanmadı) proje sahibine bildirilir. Türkçe çeviri:
+> (turkuazcode@gmail.com) proje sahibine bildirilir. Türkçe çeviri:
 > https://www.contributor-covenant.org/translations
 
 # Contributor Covenant Code of Conduct
@@ -42,7 +42,7 @@ This Code of Conduct applies within all community spaces, and also applies when 
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at **[TO BE SET by the project owner before the first public release — see SECURITY.md; until then, contact the repository owner privately through their profile]**. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at **turkuazcode@gmail.com**. All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the reporter of any incident.
 

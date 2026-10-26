@@ -59,7 +59,7 @@ Rename the application and replace the icons before you distribute it. In practi
 
 ## Questions and permission requests
 
-`[TO BE SET: contact channel — the same channel as SECURITY.md once it exists]`
+E-mail **turkuazcode@gmail.com** (subject starting with `TRADEMARK:`).
 
 This policy may be updated; the version in the default branch of the official repository
 applies. It does not limit any right that the GPL-3.0 gives you for the code.
