@@ -78,3 +78,11 @@ test("AI smoke reference: x4 size of the fixture; compareRgb measures difference
   const d = compareRgb(ref, shifted);
   assert.ok(d.meanAbs > 1.5 && d.meanAbs <= 2 && d.maxAbs === 2 && d.p999 === 2);
 });
+
+test("E2E harness derives the same test identity as platform.rs (vector shared with the Rust test)", async () => {
+  const { testIdentity } = await import("../e2e/lib/app.mjs");
+  // src-tauri/src/platform.rs tests::test_identifier_matches_the_e2e_harness
+  assert.equal(testIdentity(String.raw`C:\Users\Test\AppData\Local\Temp\vho-e2e-ABC\vho-data`), "com.vho.app.test784bc84e15c2ff8b");
+  // case-insensitive like the Rust side (to_lowercase before hashing)
+  assert.equal(testIdentity(String.raw`C:\USERS\TEST\APPDATA\LOCAL\TEMP\VHO-E2E-ABC\VHO-DATA`), "com.vho.app.test784bc84e15c2ff8b");
+});

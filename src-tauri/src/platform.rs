@@ -38,10 +38,16 @@ fn fnv1a(bytes: &[u8]) -> u64 {
 /// or receives files from, the user's own VHO.
 pub fn apply_test_isolation<R: Runtime>(context: &mut tauri::Context<R>) {
     if let Some(dir) = data_dir_override() {
-        let suffix = fnv1a(dir.to_string_lossy().to_lowercase().as_bytes());
         let config = context.config_mut();
-        config.identifier = format!("{}.test{suffix:016x}", config.identifier);
+        config.identifier = test_identifier(&config.identifier, &dir);
     }
+}
+
+/// `<identifier>.test<fnv1a(lowercase data dir)>`. The E2E harness derives the same name
+/// (tests/e2e/lib/app.mjs `testIdentity`) to remove the app folders a test instance created.
+pub fn test_identifier(base: &str, data_dir: &Path) -> String {
+    let suffix = fnv1a(data_dir.to_string_lossy().to_lowercase().as_bytes());
+    format!("{base}.test{suffix:016x}")
 }
 
 /// Folder for settings.json / library.json: VHO_DATA_DIR or the app config dir.
@@ -164,6 +170,13 @@ mod tests {
         assert_eq!(got.len(), 2);
         assert!(got.iter().all(|p| Path::new(p).is_absolute() && p.ends_with("a.mp4")));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_identifier_matches_the_e2e_harness() {
+        // Same vector as tests/unit/test-layers.test.mjs (JS side of the derivation)
+        let dir = Path::new(r"C:\Users\Test\AppData\Local\Temp\vho-e2e-ABC\vho-data");
+        assert_eq!(test_identifier("com.vho.app", dir), "com.vho.app.test784bc84e15c2ff8b");
     }
 
     #[test]

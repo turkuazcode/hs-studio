@@ -63,7 +63,7 @@ function sampler(pid) {
 }
 
 const median = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : null; };
-const stats = (a) => ({ median: median(a), min: Math.min(...a), max: Math.max(...a), runs: a.map((v) => Math.round(v * 10) / 10) });
+const stats = (a) => (!a.length ? { median: null, min: null, max: null, runs: [] } : { median: median(a), min: Math.min(...a), max: Math.max(...a), runs: a.map((v) => Math.round(v * 10) / 10) });
 const MB = (b) => Math.round((b / 1048576) * 10) / 10;
 
 async function gpuName() {
@@ -140,6 +140,7 @@ async function benchGrid() {
     for (let i = 0; i < RUNS; i++) {
       const app = await launchApp();
       const s = sampler(app.proc.pid);
+      await sleep(3000); // the PowerShell sampler needs ~1-2 s before its first sample
       await app.click("#btn-photo-studio");
       await app.waitFor(`document.querySelectorAll("#ps-tree .ps-tree-node").length > 0`, { message: "folder tree" });
       const t0 = Date.now();
@@ -152,8 +153,9 @@ async function benchGrid() {
       thumbs.push(Date.now() - t0);
       paint.push(Number(await app.eval(`document.getElementById("ps-grid").dataset.firstPaintMs`)));
       scan.push(Number(await app.eval(`document.getElementById("ps-grid").dataset.scanMs`)));
+      await sleep(1500); // thumbnails of the first screen are still being written
       const r = await s.stop();
-      if (r) ram.push(MB(r.peakWorkingSetBytes));
+      if (r?.samples > 0) ram.push(MB(r.peakWorkingSetBytes));
       await app.close();
       await sleep(1000);
     }
@@ -182,7 +184,7 @@ async function benchPlayback(video) {
         ? Number(await app.eval(`__TAURI__.core.invoke("engine_get", { name: "frame-drop-count" }).catch(() => 0)`)) +
           Number(await app.eval(`__TAURI__.core.invoke("engine_get", { name: "decoder-frame-drop-count" }).catch(() => 0)`))
         : Number(await app.eval(`document.getElementById("video-element").getVideoPlaybackQuality().droppedVideoFrames`));
-      if (r) { cpu.push((r.cpuSeconds / Math.max(secs, 1)) * 100); ram.push(MB(r.peakWorkingSetBytes)); }
+      if (r?.samples > 0) { cpu.push((r.cpuSeconds / Math.max(secs, 1)) * 100); ram.push(MB(r.peakWorkingSetBytes)); }
       drops.push(dropped || 0);
       await app.close();
       await sleep(1000);
@@ -221,7 +223,7 @@ async function benchAi() {
       const r = await s.stop();
       used = a.backend;
       cold.push(a.upMs); warm.push(b.upMs);
-      if (r) { ram.push(MB(r.peakWorkingSetBytes)); gpuDed.push(MB(r.peakGpuDedicatedBytes)); gpuShared.push(MB(r.peakGpuSharedBytes)); }
+      if (r?.samples > 0) { ram.push(MB(r.peakWorkingSetBytes)); gpuDed.push(MB(r.peakGpuDedicatedBytes)); gpuShared.push(MB(r.peakGpuSharedBytes)); }
       await ai.app.eval(`localStorage.removeItem("vho.ai.backend"), true`);
       await ai.app.close();
       await sleep(1000);
