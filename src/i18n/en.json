@@ -414,7 +414,7 @@
       "found": "{n} lines recognized · the text is selectable",
       "none": "No text found",
       "copyAll": "Copy all",
-      "noLanguage": "No text recognition language installed in Windows (Settings > Language)",
+      "noLanguage": "No text recognition language installed (Windows: Settings > Language; Linux: the tesseract-ocr-<lang> package)",
       "unsupported": "Text recognition is not available for this file / system"
     },
     "props": {
