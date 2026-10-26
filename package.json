@@ -8,6 +8,7 @@
     "dev": "vite src --port 3000",
     "tauri": "tauri",
     "build:release": "tauri build --no-bundle",
+    "package:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-windows.ps1",
     "test": "node scripts/run-tests.mjs unit",
     "test:rust": "cargo test --release --lib --manifest-path src-tauri/Cargo.toml",
     "e2e": "node scripts/run-tests.mjs e2e",
