@@ -535,8 +535,13 @@ mod tests {
         let doc = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/platform-support.md")).unwrap();
         for &(id, w, m, l) in SUPPORT {
             let tick = format!("(`{id}`)");
-            let row = doc.lines().find(|r| r.starts_with('|') && r.contains(&tick)).unwrap_or_else(|| panic!("docs: no row for {id}"));
-            let cells: Vec<&str> = row.split('|').map(str::trim).collect();
+            // the matrix row: first cell "<name> (`id`)" and five cells (reason-code rows also mention ids)
+            let cells: Vec<&str> = doc
+                .lines()
+                .filter(|r| r.starts_with('|'))
+                .map(|r| r.split('|').map(str::trim).collect::<Vec<_>>())
+                .find(|c| c.len() == 7 && c[1].ends_with(&tick))
+                .unwrap_or_else(|| panic!("docs: no matrix row for {id}"));
             for (k, sup) in [(2, w), (3, m), (4, l)] {
                 assert!(cells[k].starts_with(sup.doc()), "docs {id} column {k}: '{}' should start with '{}'", cells[k], sup.doc());
                 // "destekli/test" must not match "destekli/testli" and vice versa
