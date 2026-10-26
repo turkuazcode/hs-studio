@@ -86,3 +86,14 @@ test("E2E harness derives the same test identity as platform.rs (vector shared w
   // case-insensitive like the Rust side (to_lowercase before hashing)
   assert.equal(testIdentity(String.raw`C:\USERS\TEST\APPDATA\LOCAL\TEMP\VHO-E2E-ABC\VHO-DATA`), "com.vho.app.test784bc84e15c2ff8b");
 });
+
+test("clean-test-artifacts only matches exact test identities, never the user's app folder", async () => {
+  const { TEST_ID, PACKAGE_TEST_ID } = await import("../lib/test-identity.mjs");
+  const match = (n) => TEST_ID.test(n) || PACKAGE_TEST_ID.test(n);
+  assert.ok(match("com.vho.app.test784bc84e15c2ff8b"));
+  assert.ok(match("com.vho.app.packagetest"));
+  for (const n of ["com.vho.app", "com.vho.app.test", "com.vho.app.test784bc84e15c2ff8", "com.vho.app.test784BC84E15C2FF8B",
+    "com.vho.app.test784bc84e15c2ff8b.bak", "com.vho.mpvspike", "x.com.vho.app.test784bc84e15c2ff8b", "com.vho.app.testing"]) {
+    assert.ok(!match(n), n);
+  }
+});
