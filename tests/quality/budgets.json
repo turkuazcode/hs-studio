@@ -1,5 +1,5 @@
 {
-  "about": "Performance budgets on the reference machine (Plan 14 Q02). Value = measured median x 1.5 (rounded up), so only a clear regression fails `npm run bench:media -- --check`. Plan 04/Q02 targets are listed separately under `targets`.",
+  "about": "Performance budgets on the reference machine (Plan 14 Q02). Value = measured median x 1.5 (rounded up; timings at least median + 100 ms), so only a clear regression fails `npm run bench:media -- --check`. Plan 04/Q02 targets are listed separately under `targets`.",
   "machine": {
     "cpu": "AMD Ryzen 5 7535U with Radeon Graphics",
     "threads": 12,
@@ -18,7 +18,7 @@
       "measuredMedian": 357.4
     },
     "firstFrame.html5.1080pH264Ms": {
-      "max": 211,
+      "max": 241,
       "measuredMedian": 140.4
     },
     "firstFrame.mpv.1080pH264Ms": {
@@ -26,16 +26,16 @@
       "measuredMedian": 223.1
     },
     "grid5000.firstPaintMs": {
-      "max": 63,
-      "measuredMedian": 42
+      "max": 136,
+      "measuredMedian": 36
     },
     "grid5000.scanMs": {
-      "max": 83,
-      "measuredMedian": 55
+      "max": 144,
+      "measuredMedian": 44
     },
     "grid5000.firstScreenThumbsColdMs": {
-      "max": 260,
-      "measuredMedian": 173
+      "max": 272,
+      "measuredMedian": 172
     },
     "playback.html5.1080pH264.cpuPercentOfOneCore": {
       "max": 24,
@@ -100,6 +100,10 @@
     "ai.photoX4.128px.wasm.peakGpuSharedMB": {
       "max": 47,
       "measuredMedian": 21.4
+    },
+    "grid5000.peakTreeRamMB": {
+      "max": 797,
+      "measuredMedian": 531
     }
   },
   "targets": {

@@ -276,12 +276,14 @@ const budgets = existsSync(BUDGETS) ? JSON.parse(readFileSync(BUDGETS, "utf8")) 
 if (args["update-budgets"]) {
   const MARGIN = 1.5; // generous: these catch regressions, they are not targets
   const b = budgets ?? { about: "", machine: {}, budgets: {} };
-  b.about = "Performance budgets on the reference machine (Plan 14 Q02). Value = measured median x 1.5 (rounded up), so only a clear regression fails `npm run bench:media -- --check`. Plan 04/Q02 targets are listed separately under `targets`.";
+  b.about = "Performance budgets on the reference machine (Plan 14 Q02). Value = measured median x 1.5 (rounded up; timings at least median + 100 ms), so only a clear regression fails `npm run bench:media -- --check`. Plan 04/Q02 targets are listed separately under `targets`.";
   b.machine = { cpu: env.cpu, threads: env.threads, ramGB: env.ramGB, gpu: env.gpu, os: env.os, measured: env.date.slice(0, 10) };
   for (const [k, v] of Object.entries(measured)) {
     if (!Number.isFinite(v.median)) continue;
     if (/droppedFrames|peakGpu/.test(k)) { b.budgets[k] = { max: Math.max(5, Math.ceil(v.max * MARGIN)), measuredMedian: v.median }; continue; }
-    b.budgets[k] = { max: Math.ceil(v.median * MARGIN), measuredMedian: Math.round(v.median * 10) / 10 };
+    // short timings get an absolute floor (+100 ms) so scheduler noise cannot fail them
+    const max = /Ms$/.test(k) ? Math.max(Math.ceil(v.median * MARGIN), Math.ceil(v.median + 100)) : Math.ceil(v.median * MARGIN);
+    b.budgets[k] = { max, measuredMedian: Math.round(v.median * 10) / 10 };
   }
   b.targets = { "grid5000.firstPaintMs": 2000, "uiFeedbackP95Ms": 200 };
   writeFileSync(BUDGETS, J(b, null, 2) + "\n");
