@@ -1,4 +1,4 @@
-# HS Studio Individual Contributor License Agreement (version 1.0 — DRAFT)
+# HS Studio Individual Contributor License Agreement (version 1.1 — DRAFT)
 
 > **DRAFT — not yet in force.** This agreement has not been reviewed by a lawyer. The project
 > owner must have it reviewed (including the placeholders marked `[TO BE SET]`) before the
@@ -7,16 +7,19 @@
 >
 > **Türkçe özet:** Bu, katkı yapanların katkılarının telif ve patent haklarını (sahipliği kendilerinde
 > kalarak) proje sahibine süresiz, devredilebilir ve alt lisanslanabilir şekilde lisansladığı
-> sözleşmedir (Harmony HA-CLA-I v1, "Option Five"). Böylece proje sahibi katkıları GPL-3.0'ın
-> yanında başka lisanslarla da (ileride yeniden lisanslama dahil) dağıtabilir; ancak katkıyı her
-> zaman katkı tarihindeki proje lisansıyla da sunmak zorundadır. Avukat incelemesinden önce
+> sözleşmedir (Harmony HA-CLA-I v1, "Option Three"). Proje sahibi katkıları yalnızca katkı
+> tarihindeki proje lisansıyla veya **OSI onaylı açık kaynak lisanslarla** (copyleft ya da
+> permissive) dağıtabilir; **tescilli/ticari lisansla yeniden lisanslama yoktur** (2026-10-26
+> kullanıcı kararı: SignPath'in ücretsiz açık kaynak imzalama programı "ticari çift lisans yok"
+> şartı koyar). Avukat incelemesinden önce
 > yürürlükte değildir. Kurumsal (şirket adına) katkı için ayrı "Entity" sürümü gerekir.
 
 Why a CLA: HS Studio is published under GPL-3.0-only so that modified versions stay open. The
 CLA lets the project owner keep the licensing of the whole project in one hand (for example to
-change the license later, or to grant an additional license), which the GPL alone would not allow
-once outside contributions are merged. Your contribution always stays available under the
-license the project used when you contributed it (Section 2.3).
+move to a later GPL version or another OSI-approved open-source license), which the GPL alone
+would not allow once outside contributions are merged. Your contribution can only ever be
+licensed under the license the project used when you contributed it or under OSI-approved
+open-source licenses — never under a proprietary or commercial-only license (Section 2.3).
 
 How to agree: see [CONTRIBUTING.md](CONTRIBUTING.md#contributor-license-agreement-cla).
 
@@ -89,11 +92,12 @@ that this license is conditioned upon compliance with Section 2.3.
 
 ### 2.3 Outbound License
 
-Based on the grant of rights in Sections 2.1 and 2.2, if We include Your Contribution in a
-Material, We may license the Contribution under any license, including copyleft, permissive,
-commercial, or proprietary licenses. As a condition on the exercise of this right, We agree to
-also license the Contribution under the terms of the license or licenses which We are using for
-the Material on the Submission Date.
+As a condition on the grant of rights in Sections 2.1 and 2.2, We agree to license the
+Contribution only under the terms of the license or licenses which We are using on the
+Submission Date for the Material or any licenses which are approved by the Open Source Initiative
+on or after the Effective Date, including both permissive and copyleft licenses, whether or not
+such licenses are subsequently disapproved (including any right to adopt any future version of a
+license if permitted).
 
 In addition, We may use the following licenses for Media in the Contribution: Creative Commons
 Attribution 4.0 International (CC-BY-4.0) `[TO BE CONFIRMED]` (including any right to adopt any
@@ -180,7 +184,8 @@ limited remedy to the maximum extent possible under law.
 Agreement* (HA-CLA-I, version 1.0, file `ha-cla-i-v1.odt` from
 <https://www.harmonyagreements.org/agreements.html>, retrieved 2026-10-25), © Project Harmony,
 licensed under the [Creative Commons Attribution 3.0 Unported License](https://creativecommons.org/licenses/by/3.0/).
-Changes: project name, party and reference placeholders filled in; outbound license "Option Five"
-selected and Options One–Four removed; the bracketed "[or Your Affiliates]" removed (individual
+Changes: project name, party and reference placeholders filled in; outbound license "Option Three"
+(OSI-approved licenses only) selected and the other options removed (version 1.0 of this draft used
+"Option Five"; narrowed on 2026-10-26 before any contribution was accepted); the bracketed "[or Your Affiliates]" removed (individual
 agreement); signature blocks replaced by the agreement mechanism in CONTRIBUTING.md; headings
 formatted as Markdown. Project Harmony does not endorse this adaptation.

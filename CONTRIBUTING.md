@@ -120,17 +120,19 @@ HS Studio (formerly VHO) is licensed under the **GNU General Public License v3.0
 ### Contributor License Agreement (CLA)
 
 Before a contribution from outside the project can be merged, its author agrees to the
-[HS Studio Individual CLA](CLA.md) (based on the Harmony HA-CLA-I v1). In short: you keep the
-copyright in your work and grant the project owner a broad license to it, so that the project
-can stay under one license holder (for example to change or add a license later). Your
-contribution always remains available under the license the project used when you contributed.
+[HS Studio Individual CLA](CLA.md) (based on the Harmony HA-CLA-I v1, outbound "Option Three").
+In short: you keep the copyright in your work and grant the project owner a broad license to it,
+so that the project can stay under one license holder (for example to move to a later GPL version
+or another open-source license). Your contribution can only be licensed under the project's
+license at the time you contributed or under OSI-approved open-source licenses — **never under a
+proprietary or commercial-only license**.
 
 > The CLA is a **draft awaiting legal review**; the signing mechanism is not set up yet.
 > Until it is, outside contributions cannot be merged. Planned mechanism `[TO BE SET by the
 > owner]`: a CLA bot on the pull request (e.g. CLA Assistant) or the statement below in the
 > pull request description, kept on record by the maintainer:
 >
-> `I have read the HS Studio Individual Contributor License Agreement (CLA.md, version 1.0) and I agree to it for this and my future contributions.`
+> `I have read the HS Studio Individual Contributor License Agreement (CLA.md, version 1.1) and I agree to it for this and my future contributions.`
 
 If you contribute on behalf of your employer or another organization, an Entity CLA is needed
 (not prepared yet: ask first).
@@ -149,7 +151,7 @@ name its source, author and license in the pull request, and the license is on t
 above. Such material is not "your" contribution under the CLA: it keeps its own license and is
 recorded in `legal/inventory/` and the notices. Copying from GPL/AGPL projects is not accepted
 even though the project itself is GPL: the dependency policy stays permissive/LGPL so that the
-owner keeps the option to relicense.
+project keeps the option to relicense under another open-source license.
 
 ## 6. Pull requests and issues
 
