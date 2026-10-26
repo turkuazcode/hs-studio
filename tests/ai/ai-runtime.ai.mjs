@@ -15,7 +15,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { mkdir, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { REPO_ROOT, launchApp, removeDir } from "../e2e/lib/app.mjs";
-import { compareRgb, decodePng } from "./lib/image.mjs";
+import { compareRgb, decodePng, encodePng } from "./lib/image.mjs";
 
 const CACHE_ROOT = process.env.VHO_TEST_AI_CACHE || join(REPO_ROOT, "tests", ".cache", "ai-smoke");
 const DATA_DIR = join(CACHE_ROOT, "vho-data");
@@ -178,8 +178,11 @@ test("two jobs racing: one heavy AI job at a time, both correct", { timeout: 900
 
 test("queue job: ai-photo-enhance through the Rust queue and the webview runner", { timeout: 900000 }, async (t) => {
   if (!ready) return t.skip("blocked: model cache empty");
+  // opaque copy (same RGB): a canvas drops the colour under alpha 0, which the reference keeps;
+  // transparency through the queue is A04's test
   const src = join(DATA_DIR, "job-fixture.png");
-  writeFileSync(src, readFileSync(FIXTURE_PNG));
+  const opaque = { ...fixture, data: Uint8Array.from(fixture.data, (v, i) => (i % 4 === 3 ? 255 : v)) };
+  writeFileSync(src, encodePng(opaque));
   const snap = await app.eval(`__TAURI__.core.invoke("jobs_submit", { job: { kind: "ai-photo-enhance", request: {
     input: ${JSON.stringify(src)}, components: ["ort-web", "photo-x4"], model: "photo-x4", faces: false,
     inputWidth: ${fixture.width}, inputHeight: ${fixture.height} } } })`);
