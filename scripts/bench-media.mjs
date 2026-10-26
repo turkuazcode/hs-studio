@@ -203,12 +203,21 @@ async function benchAi() {
     let used = null;
     for (let i = 0; i < RUNS; i++) {
       const ai = await launchAiApp();
+      let exitCode = null;
+      ai.app.proc.once("exit", (c) => { exitCode = c; });
       await ai.ensureComponents(["ort-web", "photo-x4"]);
       if (backend === "wasm") await ai.app.eval(`localStorage.setItem("vho.ai.backend", "wasm"), true`);
       else await ai.app.eval(`localStorage.removeItem("vho.ai.backend"), true`);
       const s = sampler(ai.app.proc.pid);
-      const a = await ai.upscale(input);
-      const b = await ai.upscale(input);
+      let a, b;
+      try {
+        a = await ai.upscale(input);
+        b = await ai.upscale(input);
+      } catch (e) {
+        await s.stop();
+        await sleep(500);
+        throw new Error(`photo-x4 on ${backend} run ${i + 1}: ${e.message} (vho.exe ${exitCode === null ? "still running" : `exited with ${exitCode}`})`);
+      }
       const r = await s.stop();
       used = a.backend;
       cold.push(a.upMs); warm.push(b.upMs);
@@ -241,18 +250,25 @@ log(`machine: ${env.cpu} (${env.threads} threads), ${env.ramGB} GB RAM, GPU ${en
 const video = await makeVideo();
 const measured = {};
 const steps = { startup: benchStartup, "first-frame": () => benchFirstFrame(video), grid: benchGrid, playback: () => benchPlayback(video), ai: benchAi };
+const failures = {};
 for (const [name, fn] of Object.entries(steps)) {
   if (!ONLY.has(name)) continue;
   const t0 = Date.now();
   log(`${name}…`);
-  Object.assign(measured, await fn());
-  log(`${name} done in ${((Date.now() - t0) / 1000).toFixed(0)} s`);
+  try {
+    Object.assign(measured, await fn());
+    log(`${name} done in ${((Date.now() - t0) / 1000).toFixed(0)} s`);
+  } catch (e) {
+    // A failed step is reported (and fails the run) but does not hide the other measurements
+    failures[name] = String(e?.message ?? e).split("\n")[0];
+    log(`${name} FAILED: ${failures[name]}`);
+  }
 }
 for (const [k, v] of Object.entries(measured)) log(`${k}: median ${v.median?.toFixed?.(1) ?? v.median} (min ${v.min?.toFixed?.(1)}, max ${v.max?.toFixed?.(1)})`);
 
 mkdirSync(OUT_DIR, { recursive: true });
 const stamp = env.date.slice(0, 19).replace(/[:T]/g, "-");
-writeFileSync(join(OUT_DIR, `bench-${stamp}.json`), J({ env, measured }, null, 2));
+writeFileSync(join(OUT_DIR, `bench-${stamp}.json`), J({ env, measured, failures }, null, 2));
 
 const budgets = existsSync(BUDGETS) ? JSON.parse(readFileSync(BUDGETS, "utf8")) : null;
 if (args["update-budgets"]) {
@@ -261,6 +277,7 @@ if (args["update-budgets"]) {
   b.about = "Performance budgets on the reference machine (Plan 14 Q02). Value = measured median x 1.5 (rounded up), so only a clear regression fails `npm run bench:media -- --check`. Plan 04/Q02 targets are listed separately under `targets`.";
   b.machine = { cpu: env.cpu, threads: env.threads, ramGB: env.ramGB, gpu: env.gpu, os: env.os, measured: env.date.slice(0, 10) };
   for (const [k, v] of Object.entries(measured)) {
+    if (!Number.isFinite(v.median)) continue;
     if (/droppedFrames|peakGpu/.test(k)) { b.budgets[k] = { max: Math.max(5, Math.ceil(v.max * MARGIN)), measuredMedian: v.median }; continue; }
     b.budgets[k] = { max: Math.ceil(v.median * MARGIN), measuredMedian: Math.round(v.median * 10) / 10 };
   }
@@ -268,7 +285,7 @@ if (args["update-budgets"]) {
   writeFileSync(BUDGETS, J(b, null, 2) + "\n");
   log(`budgets written: ${BUDGETS}`);
 }
-let over = [];
+let over = Object.entries(failures).map(([k, v]) => `${k}: failed (${v})`);
 if (budgets && args.check) {
   for (const [k, v] of Object.entries(measured)) {
     const b = budgets.budgets[k];
@@ -278,6 +295,6 @@ if (budgets && args.check) {
 }
 console.log("=".repeat(78));
 console.log(`bench:media: ${Object.keys(measured).length} measurements, ${RUNS} runs each; results tests/.results/bench/bench-${stamp}.json`);
-if (args.check) console.log(over.length ? `OVER BUDGET:\n  ${over.join("\n  ")}` : "all medians within budget");
+if (args.check || over.length) console.log(over.length ? `OVER BUDGET / FAILED:\n  ${over.join("\n  ")}` : "all medians within budget");
 console.log("=".repeat(78));
 process.exit(over.length ? 1 : 0);
