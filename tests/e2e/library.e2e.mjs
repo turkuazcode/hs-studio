@@ -140,11 +140,11 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
     await t.test("missed events (watcher off) are repaired by the rescan", async () => {
       await app.eval(`${api("setOptions({ watch: false, reconcileMinutes: 0 })")}`);
       await sleep(500);
-      const a = join(root, "klasör 3", "alt0", "dosya-3-0.mp3");
+      const a = join(root, "klasör 3", "alt0", "dosya-3-5.mp3");
       const gone = join(root, "klasör 3", "alt0", "dosya-3-3.mp4");
       const aId = idOf(dataDir, a).id;
       const goneId = idOf(dataDir, gone).id;
-      const moved = join(root, "klasör 4", "dosya-3-0 yeni.mp3");
+      const moved = join(root, "klasör 4", "dosya-3-5 yeni.mp3");
       renameSync(a, moved);
       unlinkSync(gone);
       await sleep(2500);
@@ -180,7 +180,7 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
       assert.ok(existsSync(newPath));
       await sleep(1500); // past the document save debounce: the old path must not come back
       assert.equal(dbGet(dataDir, "SELECT COUNT(*) AS n FROM media WHERE path = ?", film).n, 0);
-      assert.deepEqual(dbGet(dataDir, "SELECT op, state FROM media_ops WHERE op = 'rename' ORDER BY id DESC LIMIT 1"), { op: "rename", state: "done" });
+      assert.deepEqual({ ...dbGet(dataDir, "SELECT op, state FROM media_ops WHERE op = 'rename' ORDER BY id DESC LIMIT 1") }, { op: "rename", state: "done" });
       const newKey = `vho_file_${newName}_${statSync(newPath).size}`;
       assert.equal(dbGet(dataDir, "SELECT seconds FROM resume_positions WHERE key = ?", newKey)?.seconds, 1.5);
       assert.equal(dbGet(dataDir, "SELECT COUNT(*) AS n FROM resume_positions WHERE key = ?", key).n, 0);
@@ -189,7 +189,7 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
     });
 
     await t.test("playlists: export M3U8 with relative paths, import keeps order and marks missing", async () => {
-      const a = join(root, "klasör 5", "alt0", "dosya-5-1.mkv");
+      const a = join(root, "klasör 5", "alt2", "dosya-5-1.mp4");
       const b = join(root, "film yeni ad – ğüşİ.mp4"); // renamed above: a real clip
       const missing = join(root, "yok.mp3");
       const out = join(root, "liste Ş.m3u8");
@@ -198,8 +198,8 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
       const text = readFileSync(out, "utf8");
       assert.ok(text.startsWith("#EXTM3U"), "no BOM in .m3u8");
       // relative paths: next to the list / in a sub folder
-      assert.ok(text.includes("\nfilm yeni ad – ğüşİ.mp4") && (text.includes("klasör 5\\alt0\\dosya-5-1.mkv") || text.includes("klasör 5/alt0/dosya-5-1.mkv")), text);
-      writeFileSync(join(root, "kötü.m3u"), "﻿#EXTM3U\r\njavascript:alert(1)\r\nklasör 5\\alt0\\dosya-5-1.mkv\r\n");
+      assert.ok(text.includes("\nfilm yeni ad – ğüşİ.mp4") && (text.includes("klasör 5\\alt2\\dosya-5-1.mp4") || text.includes("klasör 5/alt2/dosya-5-1.mp4")), text);
+      writeFileSync(join(root, "kötü.m3u"), "﻿#EXTM3U\r\njavascript:alert(1)\r\nklasör 5\\alt2\\dosya-5-1.mp4\r\n");
       const bad = await app.eval(`${api(`importPlaylist(${J(join(root, "kötü.m3u"))})`)}`);
       assert.deepEqual([bad.total, bad.skipped], [1, 1]);
       const r = await app.eval(`${api(`importPlaylist(${J(out)})`)}`);
@@ -213,7 +213,7 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
       await app.eval(`${L}.playlists.openSaved(${J(r.id)}, ${L}.openQueue)`);
       await app.waitFor(`document.getElementById("library").hidden`, { timeoutMs: 5000 });
       const queue = await app.eval(`[...document.querySelectorAll("#playlist-items .item-name")].map((e) => e.title)`);
-      assert.deepEqual(queue, ["film yeni ad – ğüşİ.mp4", "Radyo", "dosya-5-1.mkv"]);
+      assert.deepEqual(queue, ["film yeni ad – ğüşİ.mp4", "Radyo", "dosya-5-1.mp4"]);
     });
 
     await t.test("photo studio: star rating is stored in the shared library", async () => {
@@ -229,7 +229,7 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
       const target = focused ?? path;
       await waitDb(dataDir, "SELECT rating FROM media WHERE path = ?", [target], (r) => r.rating === 4, "rating stored");
       const rated = await app.eval(`${api(`query({ kind: "image", minRating: 4 })`)}`);
-      assert.ok(rated.items.some((i) => i.path === target));
+      assert.ok(rated.items.some((i) => i.path === target), J({ target, rated, row: { ...dbGet(dataDir, "SELECT path, kind, status, in_library, rating FROM media WHERE path = ?", target) } }));
       await app.click("#ps-close");
     });
 
