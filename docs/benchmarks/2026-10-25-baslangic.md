@@ -84,16 +84,17 @@ Gerçek eski taramalar (referans yok; keskinlik = Laplasyen varyansı, gürült�
 
 V02 adayları bu tabloya `tests/.cache/quality/candidates/<ad>/` üzerinden eklenir. Yapısal fikstürler (TFF, VFR, A/V senkron ≤ 1 kare) geçti.
 
-## Performans (`npm run bench:media`, 3 tekrar, medyan [min–maks])
+## Performans (`npm run bench:media`, 3 tekrar, medyan [min–maks]; ızgara satırları RAM örneklemesi düzeltildikten sonraki ikinci koşudan)
 
-| ölçüm | medyan | aralık | bütçe (×1,5) |
+| ölçüm | medyan | aralık | bütçe (×1,5, süre ≥ medyan+100 ms) |
 |---|---|---|---|
 | Açılış: spawn → ilk uygulama belgesi (soğuk WebView2 profili) | 668 ms | 644–676 | 1003 |
-| İlk kare 1080p H.264, HTML5 | 140 ms | 139–168 | 211 |
+| İlk kare 1080p H.264, HTML5 | 140 ms | 139–168 | 241 |
 | İlk kare 1080p H.264, libmpv | 223 ms | 125–248 | 335 |
-| 5.000 dosya: ilk ızgara boyaması (Plan 04 hedefi < 2 s) | 42 ms | 29–44 | 63 |
-| 5.000 dosya: tarama | 55 ms | 52–57 | 83 |
-| 5.000 dosya: ilk ekran küçük resimleri (soğuk önbellek) | 173 ms | 170–186 | 260 |
+| 5.000 dosya: ilk ızgara boyaması (Plan 04 hedefi < 2 s) | 36 ms | 29–40 | 136 |
+| 5.000 dosya: tarama | 44 ms | 40–48 | 144 |
+| 5.000 dosya: ilk ekran küçük resimleri (soğuk önbellek) | 172 ms | 169–187 | 272 |
+| 5.000 dosya: tepe ağaç RAM | 531 MB | 529–533 | 797 |
 | Oynatma 10 s 1080p, HTML5: CPU (tek çekirdeğin %'si) / tepe RAM / düşen kare | %15,5 / 640 MB / 1 | %12,8–17,2 | |
 | Oynatma 10 s 1080p, libmpv: CPU / tepe RAM / düşen kare | %21,5 / 641 MB / 0 | %19,1–25,4 | |
 | photo-x4 128×128, WebGPU: soğuk / sıcak | 25,9 s / 11,4 s | 24,6–28,6 / 11,0–11,5 | |
