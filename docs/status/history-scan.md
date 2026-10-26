@@ -9,8 +9,9 @@ nothing was removed. Secret values would never be printed by the tool (only rule
 > görseller/videolar sentetik test desenleri veya uygulama ikonları. Bulgular: (1) bir commit'te
 > yanlışlıkla eklenip sonraki commit'te çıkarılan ~70 MB derleme çıktısı (`tests/fixtures/gen/target/`)
 > geçmişte duruyor; (2) deney kayıtlarında geliştiricinin Windows kullanıcı klasörü yolu (726
-> yerde) var; (3) commit kimliği (ad + kişisel e-posta) herkese açık olacak. Hangisinin
-> temizleneceği kullanıcı kararıdır; geçmiş yeniden yazılmadı.
+> yerde) var; (3) commit kimliği (ad + kişisel e-posta) herkese açık olacak. Kullanıcı üçünün de
+> ilk push'tan hemen önce temizlenmesini onayladı (2026-10-25); araç ve adımlar:
+> [history-cleanup.md](../release/history-cleanup.md). Geçmiş henüz yeniden yazılmadı.
 
 ## Results
 
@@ -32,16 +33,19 @@ nothing was removed. Secret values would never be printed by the tool (only rule
    (compiled `windows`/`syn` crates, MIT/Apache) in the public history. No secrets inside.
    Options: leave it (simplest), or publish a fresh history / filtered copy (`git filter-repo
    --path tests/fixtures/gen/target --invert-paths`) **before the first push** — a rewrite after
-   publishing breaks all clones. Owner decision.
+   publishing breaks all clones. **Decision 2026-10-25: remove before the first push**
+   ([docs/release/history-cleanup.md](../release/history-cleanup.md)).
 2. **Local user path** — `C:\Users\<developer>\…` appears 726 times, almost all in
-   `experiments/mpv-spike/results/*.log.jsonl` and `*.samples.csv` (spike logs), and in
-   `third_party/mpv/evidence/windows/*` (FFmpeg `--prefix`, which is also embedded in the built
-   `ffmpeg.exe`/DLLs). Reveals the Windows account name and folder layout only. Option: drop or
-   sanitize `experiments/mpv-spike/results/` before publishing; build release binaries from a
-   neutral path.
+   the 14 `experiments/mpv-spike/results/*.log.jsonl` spike logs and in `.d`/`.rlib` files of the
+   build output of finding 1; the spike screenshots (`results/captures/*.png`) show it as image
+   text. The committed `third_party/mpv/evidence/windows/*` copies are sanitized, but the local
+   FFmpeg build embeds its `--prefix` in the built `ffmpeg.exe`/DLLs. Reveals the Windows account
+   name and folder layout only. **Decision 2026-10-25: clean before the first push** —
+   [docs/release/history-cleanup.md](../release/history-cleanup.md); build release binaries from a
+   neutral path ([docs/release/build-path.md](../release/build-path.md)).
 3. **Commit identity** — all 107 commits use one identity: the owner's name with a personal
-   e-mail address. It becomes public with the history. Option: keep, or publish with a
-   no-reply/project address (requires rewriting author metadata before the first push).
+   e-mail address. It becomes public with the history. **Decision 2026-10-25: rewrite before the
+   first push** to an address the owner chooses (`-NewEmail` of `scripts/prepare-public-history.ps1`).
 4. Third-party e-mail addresses (FreeType, zlib, libjpeg, crate authors…) occur only inside
    license texts in the notices files: expected, no action.
 5. `C:\Users\me` in `tests/unit/studio.test.mjs` is a fake test path: no action.

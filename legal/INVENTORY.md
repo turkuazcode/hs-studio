@@ -52,20 +52,22 @@ in, OFL outside fonts).
 ## Current result (Windows x64, 2026-10-25)
 
 394 Rust crates (372 compiled into the exe, 22 build-time only), 52 npm dev packages, 40 native
-files, 8 AI files, 10 asset groups. **0 rejected.** 12 `review` items:
+files, 8 AI files, 10 asset groups. **0 rejected.** 12 `review` items; **11 acknowledged by the owner on
+2026-10-25** (recorded as `acknowledged` in the inventories and as `vho:acknowledged` in the SBOM),
+**1 still open** (logo). `legal-inventory.test.mjs` fails if a new review item appears without a decision.
 
-| Item | License | Why review |
-|---|---|---|
-| libfreetype-6.dll | FTL OR GPL-2.0-or-later | FTL not on the explicit list; see GPL note below |
-| libjpeg-8.dll | IJG AND BSD-3-Clause AND Zlib | IJG not on the explicit list (permissive; requires credit in docs) |
-| libpng16-16.dll | libpng-2.0 | permissive, not on the list |
-| libbz2-1.dll | bzip2-1.0.6 | permissive (BSD-style), not on the list |
-| liblzma-5.dll | 0BSD | permissive, not on the list |
-| libfontconfig-1.dll | fontconfig license (MIT/HPND-style) | custom permissive text |
-| libwinpthread-1.dll | MIT AND ZPL-2.1 | ZPL-2.1 permissive, not on the list |
-| libgcc_s_seh-1.dll, libstdc++-6.dll | GPL-3.0-or-later WITH GCC-exception-3.1 | GCC Runtime Library Exception (permits use with any license); acknowledge |
-| YuNet, GFPGAN weights | MIT, Apache-2.0 | weights fine; **training data** (WIDER FACE / FFHQ) has non-commercial terms — open question |
-| App logo/icons | not yet stated | owner must confirm authorship/rights |
+| Item | License | Why review | Status |
+|---|---|---|---|
+| libfreetype-6.dll | FTL OR GPL-2.0-or-later | FTL not on the explicit list; see GPL note below | acknowledged |
+| libjpeg-8.dll | IJG AND BSD-3-Clause AND Zlib | IJG not on the explicit list (permissive; requires credit in docs) | acknowledged |
+| libpng16-16.dll | libpng-2.0 | permissive, not on the list | acknowledged |
+| libbz2-1.dll | bzip2-1.0.6 | permissive (BSD-style), not on the list | acknowledged |
+| liblzma-5.dll | 0BSD | permissive, not on the list | acknowledged |
+| libfontconfig-1.dll | fontconfig license (MIT/HPND-style) | custom permissive text | acknowledged |
+| libwinpthread-1.dll | MIT AND ZPL-2.1 | ZPL-2.1 permissive, not on the list | acknowledged |
+| libgcc_s_seh-1.dll, libstdc++-6.dll | GPL-3.0-or-later WITH GCC-exception-3.1 | GCC Runtime Library Exception (permits use with any license); acknowledge | acknowledged |
+| YuNet, GFPGAN weights | MIT, Apache-2.0 | weights fine; **training data** (WIDER FACE / FFHQ) has non-commercial terms | **accepted risk, owner decision 2026-10-25** ("kaliteyi önceliyoruz"): models stay; lawyer review later; re-verify training data before each release |
+| App logo/icons | not yet stated | owner must confirm authorship/rights | **open** (see [docs/legal/on-arastirma.md](../docs/legal/on-arastirma.md)) |
 
 ## GPL-3.0 compatibility (project license since 2026-10-25)
 
@@ -135,10 +137,10 @@ user confirms, pinned to a commit URL and checked against SHA-256 (A01).
 
 ## Open items before a public release (owner decisions / inputs)
 
-1. **Security contact**: set a real private reporting channel in SECURITY.md (e.g. GitHub private
-   vulnerability reporting on the published repo) and the same contact in CODE_OF_CONDUCT.md and
-   TRADEMARKS.md; add it to `.github/ISSUE_TEMPLATE/config.yml`.
-2. **CLA**: lawyer review of [CLA.md](../CLA.md) (Harmony-based draft, Option Five), fill the
+1. ~~Security contact~~ — **done 2026-10-25**: turkuazcode@gmail.com in SECURITY.md,
+   CODE_OF_CONDUCT.md, TRADEMARKS.md and the issue templates. Add the repository's security-policy
+   link to `.github/ISSUE_TEMPLATE/config.yml` once the URL exists.
+2. **CLA** (pre-research for the lawyer: [docs/legal/on-arastirma.md](../docs/legal/on-arastirma.md)): lawyer review of [CLA.md](../CLA.md) (Harmony-based draft, Option Five), fill the
    jurisdiction, confirm the media license, choose the signing mechanism (CLA bot or PR
    statement + record keeping), and decide whether an Entity CLA is needed.
 3. **Trademark**: lawyer review of [TRADEMARKS.md](../TRADEMARKS.md); decide on registration;
@@ -146,13 +148,16 @@ user confirms, pinned to a commit URL and checked against SHA-256 (A01).
    files are also offered under GPL-3.0 as copyright while the mark stays protected.
 4. **Repository URL**: README links to `github.com/hsrts/vho` (not verified to exist); the notices
    promise source "from the project repository" — set the final URL.
-5. **Commit identity**: the public history will show the author name and e-mail of all commits
-   (see `docs/status/history-scan.md`); decide whether that address may be public before pushing.
-6. **Corresponding source archive** of all native DLLs (section above) + re-hash of the release DLL set.
-7. **Training data** of YuNet (WIDER FACE) and GFPGAN (FFHQ) has non-commercial dataset terms;
-   the weights are MIT/Apache-2.0. Decide whether to ship these models (legal risk acceptance) —
-   and record the 4xRealWebPhoto training data from its model card.
-8. **Review list**: acknowledge the 12 `review` items above (or extend the policy list).
+5. **History cleanup** — **approved 2026-10-25**, runs only right before the first push after all
+   branches are merged: [docs/release/history-cleanup.md](../docs/release/history-cleanup.md)
+   (`scripts/prepare-public-history.ps1`: build output, logs with the local path, commit e-mail).
+   Owner still chooses the public commit e-mail.
+6. **Corresponding source archive** of all native DLLs (section above) + re-hash of the release DLL set,
+   built from a neutral path ([docs/release/build-path.md](../docs/release/build-path.md)).
+7. **Training data** of YuNet (WIDER FACE) and GFPGAN (FFHQ): **decided 2026-10-25 — models are
+   kept** (accepted risk, lawyer review later). Still open: record the 4xRealWebPhoto training data
+   from its model card; re-verify all training-data notes before each release.
+8. ~~Review list~~ — **done 2026-10-25**: 11 of 12 acknowledged; the logo stays open (item 3).
 9. **Product rename** to HS Studio in code (window title, exe, bundle id, i18n, notices title) —
    integrator, after all branches merge; then regenerate notices and the SBOM.
 10. Codec patents (H.264/HEVC/AAC decoders in FFmpeg, AV1 patent license) are a jurisdiction
