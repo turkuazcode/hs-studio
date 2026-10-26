@@ -1,0 +1,112 @@
+# Paketleme (P05)
+
+> **English summary:** The Windows package is a per-user NSIS installer. It needs no admin rights and
+> installs to `%LOCALAPPDATA%\<productName>`. It is built by `npm run package:windows` and ships the
+> LGPL libmpv/FFmpeg set in `<install>\mpv\`. License files, the source offer and the SBOM go in
+> `<install>\legal\`. User data lives outside the install folder: uninstall keeps it unless the user
+> ticks "delete app data", and upgrades never touch it. `scripts/test-installer.ps1` tests the package
+> safely with a separate test identity. macOS and Linux have configs and recipes but no device to test
+> on yet (**ortam bekliyor**).
+
+## Windows: neden NSIS?
+
+| | NSIS (seçilen) | MSI (WiX) |
+|---|---|---|
+| Yönetici izni | Gerekmez: `installMode: currentUser`, `%LOCALAPPDATA%\VHO` | Tauri'nin WiX şablonu makine geneli kurar ve UAC ister |
+| Tek kullanıcı + güncelleme | Tauri updater (R02) NSIS'i doğrudan destekler. `/UPDATE` ve `/P` (pasif) bayrakları var | Desteklenir ama makine geneli kurulum gerekir |
+| Kaldırırken veriyi koruma | Kaldırıcıda "uygulama verilerini sil" kutusu vardır, **varsayılan olarak işaretsizdir** | Ayrıca yazılması gerekir |
+| Dil | Türkçe + İngilizce kurulum ekranları | WiX'te dil başına ayrı MSI |
+| Kurumsal dağıtım (GPO/Intune) | Sessiz kurulum: `/S` | MSI daha alışılmış. Gerekirse ileride ikincil paket olur |
+
+MSI, temiz kurulum testi yapılana kadar yayımlanmaz (Plan 10 kararı).
+
+## Paket içeriği
+
+| Yol (kurulum klasörü) | Ne | Kaynak |
+|---|---|---|
+| `vho.exe` | Uygulama (GPL-3.0-only) | `cargo build --release` (Tauri) |
+| `mpv\libmpv-2.dll` + 37 DLL | LGPL libmpv + FFmpeg ve bağımlılıkları; çalışma anında yüklenir, değiştirilebilir | `third_party/mpv/build-windows.sh` çıktısı (`_build/dist`) |
+| `mpv\ffmpeg.exe`, `mpv\ffprobe.exe` | Aynı LGPL FFmpeg derlemesi; ayrı süreç olarak çalışır | `_build/prefix/bin` |
+| `legal\LICENSE.txt` | GPL-3.0 metni | `LICENSE` |
+| `legal\THIRD_PARTY_NOTICES.txt` | Bildirimler + tam lisans metinleri (uygulama içindeki Lisanslar penceresiyle aynı) | `src/legal/` |
+| `legal\SOURCE-OFFER.txt` | GPL/LGPL kaynak kod teklifi (3 yıl, turkuazcode@gmail.com) | `legal/SOURCE-OFFER.txt` (sürüm/commit dolduruluyor) |
+| `legal\native-inventory.json`, `legal\sbom.cdx.json` | DLL sürüm/commit/SHA-256 listesi; bu paketin SBOM'u | `legal/inventory/`, `legal/generate-sbom.mjs` |
+| `legal\TRADEMARKS.md` | Ad ve logo politikası | `TRADEMARKS.md` |
+| `uninstall.exe` | NSIS kaldırıcısı | Tauri |
+
+`engine/mod.rs`, `libmpv-2.dll` dosyasını `<exe>\mpv\` ve `<resources>\mpv\` altında arar. `actions/ffmpeg.rs`, ffmpeg için
+`<exe>\mpv\` klasörüne bakar. Kurulum klasöründe her ikisi de bulunur ve ek PATH gerekmez. Bağımlı DLL'ler
+`LOAD_WITH_ALTERED_SEARCH_PATH` ile aynı klasörden çözülür.
+
+Kurulum paketinin yanında şunlar da üretilir: `*.exe.sha256` ve `package-manifest-<variant>-<version>.json`. Manifest,
+pakete giren her dosyanın boyutunu ve SHA-256 değerini içerir.
+
+## Komutlar
+
+```powershell
+# Yayın paketi. Nötr bir yoldan çalıştır (docs/release/build-path.md); DLL'ler envanterle birebir aynı olmalı.
+npm run package:windows -- -MpvDist C:\build\hs-studio\third_party\mpv\_build\dist -SourceUrl https://<repo>/tree/v0.1.0
+# Test kimliğiyle ("VHO PackageTest", com.vho.app.packagetest, dosya ilişkilendirmesi yok)
+powershell -File scripts\package-windows.ps1 -Variant test -MpvDist <dist> [-Version 0.1.1]
+# Güvenli kurulum testi (yalnızca test kimliği)
+powershell -File scripts\test-installer.ps1 -Installer "src-tauri\target\release\bundle\nsis\VHO PackageTest_0.1.0_x64-setup.exe" [-UpgradeInstaller ...0.1.1...]
+```
+
+Yapılandırma: `src-tauri/packaging/windows/nsis.conf.json`. Bu dosya `tauri build --config` ile birleştirilir. Ana
+`tauri.conf.json` dosyasındaki `resources` boş kalır, böylece `npm run build:release` ve geliştirici derlemeleri
+DLL'siz de çalışır. Ürün adının değişmesi (HS Studio) için `tauri.conf.json` içindeki `productName`, `identifier`
+ve pencere başlığı ile bu dosyalardaki `publisher` ve `copyright` alanlarını güncellemek yeterlidir.
+
+İlk `tauri build --bundles nsis` çalıştırması NSIS araç takımını ve `nsis_tauri_utils` eklentisini
+`%LOCALAPPDATA%\tauri\` altına indirir. Bu, Tauri'nin kullanıcı düzeyindeki önbelleğidir; sisteme kurulum yapılmaz.
+
+## Kullanıcı verisi, yükseltme, kaldırma
+
+- Ayarlar, `library.db` ve AI modelleri uygulamanın veri klasöründedir (Tauri uygulama dizinleri ya da `VHO_DATA_DIR`).
+  Kurulum klasöründe değildir.
+- **Yükseltme:** yeni kurulum paketi aynı klasöre yazar; veri klasörüne dokunmaz. Şema göçünü L01 üstlenir
+  (yedek alıp göç eder).
+- **Kaldırma:** "Uygulama verilerini sil" kutusu varsayılan olarak işaretsizdir; veri kalır. Kutu işaretlenirse
+  `%APPDATA%\<identifier>` ve `%LOCALAPPDATA%\<identifier>` silinir. Bunlara AI modelleri ve kütüphane de dahildir.
+- Tauri, kaldırma sırasında "verileri sil" seçilmediyse `HKCU\Software\<publisher>\<productName>` anahtarını
+  (kurulum dili ve klasörü) bırakır. Bu, Tauri'nin tasarımıdır; sonraki kurulum aynı klasörü önerir.
+
+## Güvenli kurulum testi (bu makinede)
+
+`scripts/test-installer.ps1` gerçek bir kurulumu ve gerçek kullanıcı ortamını değiştirmemek için şunları uygular:
+
+- Yalnızca `-Variant test` paketini kabul eder. Bu pakette ürün adı, kimlik ve kayıt defteri anahtarları farklıdır;
+  dosya ilişkilendirmesi yoktur.
+- Kurulum sessiz yapılır (`/S`), kısayol oluşturulmaz (`/NS`). Hedef, adında boşluk ve Türkçe karakter bulunan bir
+  geçici klasördür. Kurulum kullanıcı düzeyindedir (HKCU) ve yönetici izni istemez.
+- Önce ve sonra anlık görüntü alınıp karşılaştırılır: HKCU Uninstall, HKCU\Software\Classes, HKCU Run, Başlat menüsü
+  ve masaüstü.
+- E2E testleri (smoke + engine) **kurulan exe** ile çalışır (`VHO_EXE`). PATH en aza indirilir (System32 + node),
+  yani MSYS2 veya geliştirici araçları görünmez. Veri ve WebView2 profili ayrıdır. Portlar 10900–10999 aralığındadır.
+- Yükseltmede veri dosyalarının özetleri karşılaştırılır. Kaldırmadan sonra kayıt defteri anahtarı ve klasör kontrol
+  edilir; verinin kaldığı doğrulanır. Ardından yalnızca test kimliğine ait artıklar temizlenir.
+
+Sonuçlar: [aşağıda](#test-sonuçları-windows-11-x64).
+
+## macOS ve Linux: ortam bekliyor
+
+Bu makinede Mac veya Linux yok. Yapılandırmalar ve tarifler hazırdır ama **test edilmedi**:
+
+- **macOS:** `src-tauri/packaging/macos/dmg.conf.json` (`app` + `dmg`, en düşük macOS 11).
+  - Derleme: `npx tauri build --bundles app,dmg --config src-tauri/packaging/macos/dmg.conf.json`. Gerekenler:
+    Xcode komut satırı araçları, Rust hedefi `aarch64-apple-darwin` ve/veya `x86_64-apple-darwin`.
+  - libmpv macOS'ta henüz gömülmüyor (Plan 02 yol B). ffmpeg kullanıcının sistemindekiyle çalışır.
+  - İmza ve notarization R02'de; hesap bekliyor.
+- **Linux:** `src-tauri/packaging/linux/appimage-deb.conf.json` (AppImage + deb; bağımlılıklar `libwebkit2gtk-4.1-0`,
+  `libgtk-3-0`).
+  - Derleme Ubuntu 22.04+ üzerinde yapılır: `sudo apt install libwebkit2gtk-4.1-dev build-essential libssl-dev librsvg2-dev`,
+    ardından `npx tauri build --bundles appimage,deb --config ...`.
+  - libmpv gömülmüyor. Dağıtımların GPL derlemeli mpv/ffmpeg paketlerine bağımlılık **bilerek eklenmedi**
+    (bağımlılık politikası; [legal/INVENTORY.md](../../legal/INVENTORY.md)).
+- İki platformda da `legal/` klasörünün hazırlanması `package-windows.ps1` içindeki adımla aynıdır (LICENSE,
+  bildirimler, kaynak teklifi, SBOM). Bunun platformdan bağımsız bir betiğe taşınması P02/P03 gerçek testleriyle
+  birlikte yapılacak.
+
+## Test sonuçları (Windows 11 x64)
+
+_(aşağıda doldurulur)_
