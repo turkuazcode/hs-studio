@@ -26,6 +26,7 @@ try {
     'deint+fftdnoiz+scale'   = "$base,fftdnoiz=sigma=6,$tail"
     'deint+nlmeans+scale'    = "$base,nlmeans=s=3:p=7:r=15,$tail"
   }
+  $ErrorActionPreference = 'Continue'  # ffmpeg logs to stderr (PS 5.1 would turn it into errors)
   foreach ($k in $chains.Keys) {
     $sw = [Diagnostics.Stopwatch]::StartNew()
     $log = & $ff -hide_banner -nostdin -threads 2 -filter_threads 2 -i $src -vf $chains[$k] -f null - 2>&1 | Out-String
