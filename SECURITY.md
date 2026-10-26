@@ -1,8 +1,7 @@
 # Security policy
 
 > **Türkçe özet:** Güvenlik açıklarını herkese açık issue/PR/tartışma olarak paylaşmayın.
-> Özel bildirim kanalı **henüz tanımlanmadı** (aşağıdaki yer tutucu); ilk herkese açık sürümden
-> önce proje sahibi tarafından doldurulacak. Bildirimde etkilenen sürüm/commit, işletim sistemi,
+> Özel bildirim adresi: **turkuazcode@gmail.com** (e-posta konusu "SECURITY:" ile başlasın). Bildirimde etkilenen sürüm/commit, işletim sistemi,
 > yeniden üretme adımları ve etkisi olsun; kişisel medya dosyası göndermeyin.
 
 ## Supported versions
@@ -18,12 +17,9 @@ receives fixes. This table will list supported release lines once releases exist
 
 **Please do not open a public issue, pull request or discussion for a security problem.**
 
-> **PLACEHOLDER — private reporting channel not set up yet.**
-> Before the first public release the maintainer must replace this block with one real channel,
-> for example GitHub private vulnerability reporting ("Security" tab → "Report a vulnerability")
-> on the published repository, or a dedicated security mailbox. Until then there is no
-> confidential channel; do not post details publicly — contact the maintainer through the
-> repository owner's profile and ask for a private channel first.
+Report privately by e-mail to **turkuazcode@gmail.com**, with a subject starting with
+`SECURITY:`. Once the repository is published, GitHub private vulnerability reporting
+("Security" tab → "Report a vulnerability") may be enabled as a second channel.
 
 Please include:
 

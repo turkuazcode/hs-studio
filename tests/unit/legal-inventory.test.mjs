@@ -116,6 +116,11 @@ test("committed SBOM matches the inventories (regenerate with npm run sbom)", ()
   for (const a of assets.items) assert.ok(byRef.has(`asset:${a.id}`), `SBOM has asset ${a.id}`);
   const rejected = bom.components.filter((c) => c.properties?.some((p) => p.name === "vho:policy" && p.value === "reject"));
   assert.deepEqual(rejected.map((c) => c.name), [], "no component rejected by the license policy");
+  // every "review" item carries an owner acknowledgement, except the ones still open by decision
+  const STILL_OPEN = ["asset:app-icons"]; // logo authorship/rights: owner + lawyer (legal/INVENTORY.md)
+  const openReview = bom.components.filter((c) => c.properties?.some((p) => p.name === "vho:policy" && p.value === "review")
+    && !c.properties.some((p) => p.name === "vho:acknowledged")).map((c) => c["bom-ref"]);
+  assert.deepEqual(openReview.sort(), STILL_OPEN, "new review item: decide it and record 'acknowledged' in legal/inventory");
   // Rust deps in the SBOM are exactly the locked versions
   const lock = read("src-tauri/Cargo.lock");
   for (const c of bom.components.filter((x) => x.purl?.startsWith("pkg:cargo/")).slice(0, 400)) {
