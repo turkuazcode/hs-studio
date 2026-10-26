@@ -1,0 +1,31 @@
+name: Feature request / Özellik önerisi
+description: Suggest an improvement. / Bir iyileştirme önerin.
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        HS Studio keeps the main screens minimal: rarely used options belong in Settings, and video, photo and music keep separate layouts.
+        Arayüz sade kalır: nadir seçenekler Ayarlar'a gider; video, fotoğraf ve müzik ayrı düzenlerdedir.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve / Çözülecek sorun
+      description: What are you trying to do, and what is hard today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal / Öneri
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or other apps / Alternatifler veya başka uygulamalar
+  - type: textarea
+    id: licensing
+    attributes:
+      label: Libraries or models involved / Kullanılacak kütüphane veya modeller
+      description: If it needs a library or AI model, name it with its license (GPL/AGPL/non-commercial cannot be used; see CONTRIBUTING.md).

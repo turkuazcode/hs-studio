@@ -1,0 +1,790 @@
+{
+  "$comment": "Native binaries VHO ships on Windows x64 next to VHO.exe (staged by scripts/stage-mpv.ps1). Edited by hand when the libmpv build changes; hashes are refreshed with: node legal/generate-sbom.mjs --native-dist <dist> --native-bin <prefix/bin> --update-native. See legal/INVENTORY.md.",
+  "platform": "windows-x86_64",
+  "delivery": "Separate files next to VHO.exe. libmpv-2.dll is loaded at runtime (libloading) and may be replaced by the user; ffmpeg.exe/ffprobe.exe run as separate processes. Nothing here is linked into VHO.exe.",
+  "build": {
+    "recipe": "third_party/mpv/build-windows.sh",
+    "doc": "third_party/mpv/build-windows.md",
+    "evidence": "third_party/mpv/evidence/windows/",
+    "toolchain": "MSYS2 UCRT64, mingw-w64-ucrt-x86_64-gcc 16.2.0-6",
+    "builtOn": "2026-10-23",
+    "reproducible": false,
+    "hashesNote": "sha256/bytes are those of the local reference build of 2026-10-23 (the DLL set used by the E2E tests). The build is not bit-for-bit reproducible: a release build must refresh them (--update-native) and ship exactly the hashed files."
+  },
+  "sources": {
+    "ffmpeg": {
+      "tag": "n8.1.3",
+      "commit": "1041abdc962f4cc4f394aa8de9dc5236c0c3b9e7",
+      "localPatches": "none (clean checkout)",
+      "repository": "https://git.ffmpeg.org/ffmpeg.git",
+      "mirror": "https://github.com/FFmpeg/FFmpeg",
+      "configure": [
+        "--target-os=mingw32",
+        "--arch=x86_64",
+        "--enable-shared",
+        "--disable-static",
+        "--disable-doc",
+        "--disable-debug",
+        "--disable-ffplay",
+        "--enable-libdav1d",
+        "--enable-d3d11va",
+        "--enable-dxva2",
+        "--enable-d3d12va",
+        "--enable-mediafoundation",
+        "--enable-zlib",
+        "--enable-iconv",
+        "--enable-schannel",
+        "--disable-sdl2",
+        "--disable-libxcb"
+      ],
+      "licenseEvidence": "third_party/mpv/evidence/windows/ffmpeg-buildconf.txt (no --enable-gpl / --enable-version3 / --enable-nonfree), ffmpeg-L.txt (LGPL 2.1+)"
+    },
+    "mpv": {
+      "tag": "v0.41.0",
+      "commit": "41f6a645068483470267271e1d09966ca3b9f413",
+      "localPatches": "none (clean checkout)",
+      "repository": "https://github.com/mpv-player/mpv",
+      "meson": [
+        "--buildtype=release",
+        "--default-library=shared",
+        "-Dgpl=false",
+        "-Dlibmpv=true",
+        "-Dcplayer=true",
+        "-Dd3d11=enabled",
+        "-Dshaderc=enabled",
+        "-Dspirv-cross=enabled",
+        "-Duchardet=enabled",
+        "-Dlcms2=enabled",
+        "-Djpeg=enabled",
+        "-Diconv=enabled",
+        "-Dlua=disabled",
+        "-Djavascript=disabled",
+        "-Drubberband=disabled",
+        "-Dcdda=disabled",
+        "-Ddvdnav=disabled",
+        "-Dlibbluray=disabled",
+        "-Dlibarchive=disabled",
+        "-Dvapoursynth=disabled",
+        "-Dzimg=disabled",
+        "-Dsdl2-audio=disabled",
+        "-Dsdl2-video=disabled",
+        "-Dsdl2-gamepad=disabled",
+        "-Dmanpage-build=disabled",
+        "-Dhtml-build=disabled",
+        "-Dpdf-build=disabled"
+      ],
+      "licenseEvidence": "third_party/mpv/evidence/windows/mpv-buildoptions-user.json (gpl: false), mpv-meson-setup.txt"
+    },
+    "msys2": {
+      "packageList": "third_party/mpv/evidence/windows/msys2-packages.txt",
+      "sourcePackages": "https://repo.msys2.org/mingw/sources/<pkgbase>-<version>.src.tar.zst (PKGBUILD + upstream tarball + MSYS2 patches)",
+      "recipes": "https://github.com/msys2/MINGW-packages/tree/<commit>/<pkgbase>",
+      "note": "URL pattern and pkgbase names not verified online in R01. Before a release, download the source packages of every LGPL DLL (preferably of all DLLs) at exactly these versions and archive them with the release (legal/INVENTORY.md, 'Corresponding source')."
+    }
+  },
+  "components": [
+    {
+      "id": "mpv",
+      "name": "mpv / libmpv",
+      "origin": "built-from-source",
+      "version": "0.41.0",
+      "build": "mpv",
+      "license": "LGPL-2.1-or-later",
+      "policy": "lgpl-dynamic",
+      "upstream": "https://github.com/mpv-player/mpv",
+      "files": [
+        {
+          "name": "libmpv-2.dll",
+          "bytes": 3197183,
+          "sha256": "66c1f6ac1daf9c2948cda7ffa682ecdf6a02e7a1b7238cafe2e72991a60787d7"
+        }
+      ]
+    },
+    {
+      "id": "ffmpeg",
+      "name": "FFmpeg (libraries)",
+      "origin": "built-from-source",
+      "version": "8.1.3",
+      "build": "ffmpeg",
+      "license": "LGPL-2.1-or-later",
+      "policy": "lgpl-dynamic",
+      "upstream": "https://ffmpeg.org",
+      "files": [
+        {
+          "name": "avcodec-62.dll",
+          "bytes": 19383808,
+          "sha256": "9158d6e8e67974204452f72f0ee853d89802d0327a8c0a99e81e1a9482e3c3bd"
+        },
+        {
+          "name": "avdevice-62.dll",
+          "bytes": 150016,
+          "sha256": "ed65d030f5974ecc6caa4ffa04ee2186f82608f77c00ce7f11b4bbebc7de037c"
+        },
+        {
+          "name": "avfilter-11.dll",
+          "bytes": 5864960,
+          "sha256": "efb031741d48d7d705a5e782aceb4d020f72d9bb3f4191b9997c29e5c89d5497"
+        },
+        {
+          "name": "avformat-62.dll",
+          "bytes": 2836992,
+          "sha256": "392913ca7facd066ea90249e58c99a53caeaa62c240a85cf119cb2e60e5e1f15"
+        },
+        {
+          "name": "avutil-60.dll",
+          "bytes": 1184768,
+          "sha256": "f445a291a57fd98d8d823084613e4373bf077e163d409be721b527b04c807677"
+        },
+        {
+          "name": "swresample-6.dll",
+          "bytes": 175104,
+          "sha256": "4bf877f46f3723d3227d086c8f14121ee03431ae5903b9b79ed772e09074e83c"
+        },
+        {
+          "name": "swscale-9.dll",
+          "bytes": 2063872,
+          "sha256": "cdfb4977a31b23579f4625d46ef2dfd35590422dabaa32114dafa89d45f4efa4"
+        }
+      ]
+    },
+    {
+      "id": "ffmpeg-tools",
+      "name": "FFmpeg (command-line tools)",
+      "origin": "built-from-source",
+      "version": "8.1.3",
+      "build": "ffmpeg",
+      "license": "LGPL-2.1-or-later",
+      "policy": "lgpl-separate-process",
+      "upstream": "https://ffmpeg.org",
+      "files": [
+        {
+          "name": "ffmpeg.exe",
+          "bytes": 464384,
+          "sha256": "a5c8981144ff74a7dce4e42424d89dffc936f467e8d5f08f5c02e9238220c22a"
+        },
+        {
+          "name": "ffprobe.exe",
+          "bytes": 210432,
+          "sha256": "13158674b260616fea01d8b571335550dded005d32126966a861d15aaa6e3efa"
+        }
+      ]
+    },
+    {
+      "id": "libass",
+      "name": "libass",
+      "version": "0.17.5-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-libass",
+        "version": "0.17.5-1",
+        "pkgbase": "mingw-w64-libass"
+      },
+      "license": "ISC",
+      "policy": "ok",
+      "upstream": "https://github.com/libass/libass",
+      "files": [
+        {
+          "name": "libass-9.dll",
+          "bytes": 345174,
+          "sha256": "cb2b46133b3bd9630384148bd7229e987af9703208d4329fc2215f4170b8dc6b"
+        }
+      ]
+    },
+    {
+      "id": "freetype",
+      "name": "FreeType",
+      "version": "2.15.0-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-freetype",
+        "version": "2.15.0-1",
+        "pkgbase": "mingw-w64-freetype"
+      },
+      "license": "FTL OR GPL-2.0-or-later",
+      "policy": "review",
+      "upstream": "https://freetype.org",
+      "files": [
+        {
+          "name": "libfreetype-6.dll",
+          "bytes": 808305,
+          "sha256": "19604dde573cbb8a13053fc231eee99b91cd972e0e9a3e1465f44ad6985e83ee"
+        }
+      ],
+      "note": "Dual-licensed; both options are passed on. FTL alone is not GPL-compatible (FSF), so for the GPL-3.0 app the GPL-2.0-or-later option is the one that makes the combination compatible."
+    },
+    {
+      "id": "harfbuzz",
+      "name": "HarfBuzz",
+      "version": "14.6.0-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-harfbuzz",
+        "version": "14.6.0-1",
+        "pkgbase": "mingw-w64-harfbuzz"
+      },
+      "license": "MIT",
+      "policy": "ok",
+      "upstream": "https://github.com/harfbuzz/harfbuzz",
+      "files": [
+        {
+          "name": "libharfbuzz-0.dll",
+          "bytes": 1612472,
+          "sha256": "842d73ce2dd9ee506ef68f4d3e9ca29b62c87e34999cd2720505bf3c9d3f575c"
+        }
+      ]
+    },
+    {
+      "id": "fribidi",
+      "name": "GNU FriBidi",
+      "version": "1.0.17-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-fribidi",
+        "version": "1.0.17-1",
+        "pkgbase": "mingw-w64-fribidi"
+      },
+      "license": "LGPL-2.1-or-later",
+      "policy": "lgpl-dynamic",
+      "upstream": "https://github.com/fribidi/fribidi",
+      "files": [
+        {
+          "name": "libfribidi-0.dll",
+          "bytes": 152541,
+          "sha256": "14bd0ed4c24d0068434bc23cd4f39e8dc0edcf56f2c9996b6fe39b39ffc54673"
+        }
+      ]
+    },
+    {
+      "id": "glib2",
+      "name": "GLib",
+      "version": "2.90.1-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-glib2",
+        "version": "2.90.1-1",
+        "pkgbase": "mingw-w64-glib2"
+      },
+      "license": "LGPL-2.1-or-later",
+      "policy": "lgpl-dynamic",
+      "upstream": "https://gitlab.gnome.org/GNOME/glib",
+      "files": [
+        {
+          "name": "libglib-2.0-0.dll",
+          "bytes": 1568604,
+          "sha256": "3a1abec0184b238db54399cb9243393d9436d96b8fdb9bd9f2875da207c5b458"
+        }
+      ]
+    },
+    {
+      "id": "gettext-runtime",
+      "name": "GNU gettext runtime (libintl)",
+      "version": "1.0-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-gettext-runtime",
+        "version": "1.0-1",
+        "pkgbase": "mingw-w64-gettext"
+      },
+      "license": "LGPL-2.1-or-later",
+      "policy": "lgpl-dynamic",
+      "upstream": "https://www.gnu.org/software/gettext/",
+      "files": [
+        {
+          "name": "libintl-8.dll",
+          "bytes": 298164,
+          "sha256": "0e5a178731e6be6d115442a6ade3df7f03265cd1fc4338f8b6f86a8001cbf582"
+        }
+      ]
+    },
+    {
+      "id": "libiconv",
+      "name": "GNU libiconv",
+      "version": "1.19-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-libiconv",
+        "version": "1.19-1",
+        "pkgbase": "mingw-w64-libiconv"
+      },
+      "license": "LGPL-2.1-or-later",
+      "policy": "lgpl-dynamic",
+      "upstream": "https://www.gnu.org/software/libiconv/",
+      "files": [
+        {
+          "name": "libiconv-2.dll",
+          "bytes": 1141951,
+          "sha256": "94ec68fb8d342b6c91b6b48a8d95092819cdcd006a7166e0b68062f946afd08a"
+        }
+      ]
+    },
+    {
+      "id": "graphite2",
+      "name": "Graphite2",
+      "version": "1.3.15-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-graphite2",
+        "version": "1.3.15-1",
+        "pkgbase": "mingw-w64-graphite2"
+      },
+      "license": "LGPL-2.1-or-later OR MPL-2.0 OR GPL-2.0-or-later",
+      "concluded": "MPL-2.0",
+      "policy": "ok",
+      "upstream": "https://github.com/silnrsi/graphite",
+      "files": [
+        {
+          "name": "libgraphite2.dll",
+          "bytes": 167857,
+          "sha256": "93953e4744bcfce9a7bc439b956544bc213095cb1349c3602a58370f32b25c18"
+        }
+      ]
+    },
+    {
+      "id": "libplacebo",
+      "name": "libplacebo",
+      "version": "7.360.1-2",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-libplacebo",
+        "version": "7.360.1-2",
+        "pkgbase": "mingw-w64-libplacebo"
+      },
+      "license": "LGPL-2.1-or-later",
+      "policy": "lgpl-dynamic",
+      "upstream": "https://code.videolan.org/videolan/libplacebo",
+      "files": [
+        {
+          "name": "libplacebo-360.dll",
+          "bytes": 1235613,
+          "sha256": "8eb2c3fe24a124d9dbf0383d60ac7dde6c0dd5607b2451cad0d924271e46d5b8"
+        }
+      ]
+    },
+    {
+      "id": "libdovi",
+      "name": "libdovi (dovi_tool)",
+      "version": "3.4.0-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-libdovi",
+        "version": "3.4.0-1",
+        "pkgbase": "mingw-w64-libdovi"
+      },
+      "license": "MIT",
+      "policy": "ok",
+      "upstream": "https://github.com/quietvoid/dovi_tool",
+      "files": [
+        {
+          "name": "libdovi.dll",
+          "bytes": 1370861,
+          "sha256": "75988509f0d2166e2060ed548913bd7b34556bc16b3f9a02469de1dd2347a7fb"
+        }
+      ]
+    },
+    {
+      "id": "dav1d",
+      "name": "dav1d",
+      "version": "1.5.4-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-dav1d",
+        "version": "1.5.4-1",
+        "pkgbase": "mingw-w64-dav1d"
+      },
+      "license": "BSD-2-Clause",
+      "policy": "ok",
+      "upstream": "https://code.videolan.org/videolan/dav1d",
+      "files": [
+        {
+          "name": "libdav1d-7.dll",
+          "bytes": 1929830,
+          "sha256": "bbe67862f77c22f6f509684207b5363542e5b52c1a1faa354e12a11d072ad766"
+        }
+      ]
+    },
+    {
+      "id": "shaderc",
+      "name": "shaderc",
+      "version": "2026.4-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-shaderc",
+        "version": "2026.4-1",
+        "pkgbase": "mingw-w64-shaderc"
+      },
+      "license": "Apache-2.0",
+      "policy": "ok",
+      "upstream": "https://github.com/google/shaderc",
+      "files": [
+        {
+          "name": "libshaderc_shared.dll",
+          "bytes": 10657197,
+          "sha256": "331df8a45983735b823c893a9b872c3414af6eadca9fa189d0b6dfe97960b3cf"
+        }
+      ]
+    },
+    {
+      "id": "spirv-cross",
+      "name": "SPIRV-Cross",
+      "version": "1~1.4.363.0-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-spirv-cross",
+        "version": "1~1.4.363.0-1",
+        "pkgbase": "mingw-w64-spirv-cross"
+      },
+      "license": "Apache-2.0",
+      "policy": "ok",
+      "upstream": "https://github.com/KhronosGroup/SPIRV-Cross",
+      "files": [
+        {
+          "name": "libspirv-cross-c-shared.dll",
+          "bytes": 3433687,
+          "sha256": "bc4bdcf63b9bbf60777bc10340050ae6edfbb3be3faf3fa636af53ecf7d2bbc8"
+        }
+      ]
+    },
+    {
+      "id": "vulkan-loader",
+      "name": "Vulkan Loader",
+      "version": "1~1.4.363.0-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-vulkan-loader",
+        "version": "1~1.4.363.0-1",
+        "pkgbase": "mingw-w64-vulkan-loader"
+      },
+      "license": "Apache-2.0",
+      "policy": "ok",
+      "upstream": "https://github.com/KhronosGroup/Vulkan-Loader",
+      "files": [
+        {
+          "name": "vulkan-1.dll",
+          "bytes": 724189,
+          "sha256": "31862137c4179dcdbba782760f3e401f9fb526477947079d7f63987864f9b0eb"
+        }
+      ]
+    },
+    {
+      "id": "lcms2",
+      "name": "Little CMS",
+      "version": "2.19.1-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-lcms2",
+        "version": "2.19.1-1",
+        "pkgbase": "mingw-w64-lcms2"
+      },
+      "license": "MIT",
+      "policy": "ok",
+      "upstream": "https://github.com/mm2/Little-CMS",
+      "files": [
+        {
+          "name": "liblcms2-2.dll",
+          "bytes": 448202,
+          "sha256": "03314471fadd04cdd63c108472ff85d058903d236a0356c14eda363f0e1ccb65"
+        }
+      ]
+    },
+    {
+      "id": "libjpeg-turbo",
+      "name": "libjpeg-turbo",
+      "version": "3.2.0-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-libjpeg-turbo",
+        "version": "3.2.0-1",
+        "pkgbase": "mingw-w64-libjpeg-turbo"
+      },
+      "license": "IJG AND BSD-3-Clause AND Zlib",
+      "policy": "review",
+      "upstream": "https://libjpeg-turbo.org",
+      "files": [
+        {
+          "name": "libjpeg-8.dll",
+          "bytes": 967184,
+          "sha256": "c63acd5a3231725aa96aa35444b74cd8d607a6fbdab1dd18b0e0ada7e39476d4"
+        }
+      ]
+    },
+    {
+      "id": "uchardet",
+      "name": "uchardet",
+      "version": "0.0.8-2",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-uchardet",
+        "version": "0.0.8-2",
+        "pkgbase": "mingw-w64-uchardet"
+      },
+      "license": "MPL-1.1 OR GPL-2.0-or-later OR LGPL-2.1-or-later",
+      "concluded": "LGPL-2.1-or-later",
+      "policy": "lgpl-dynamic",
+      "upstream": "https://www.freedesktop.org/wiki/Software/uchardet/",
+      "files": [
+        {
+          "name": "libuchardet.dll",
+          "bytes": 202040,
+          "sha256": "75f34913b3c3fe264c4471a47f4f3e3a14fed397824122936f1ba40a7712a7a4"
+        }
+      ]
+    },
+    {
+      "id": "libpng",
+      "name": "libpng",
+      "version": "1.6.59-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-libpng",
+        "version": "1.6.59-1",
+        "pkgbase": "mingw-w64-libpng"
+      },
+      "license": "libpng-2.0",
+      "policy": "review",
+      "upstream": "http://www.libpng.org/pub/png/libpng.html",
+      "files": [
+        {
+          "name": "libpng16-16.dll",
+          "bytes": 254777,
+          "sha256": "7f425fd2b41d83869bb31bf761b4fb315f11040d55540661f96e582e1ec79a36"
+        }
+      ]
+    },
+    {
+      "id": "zlib",
+      "name": "zlib",
+      "version": "1.3.2-2",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-zlib",
+        "version": "1.3.2-2",
+        "pkgbase": "mingw-w64-zlib"
+      },
+      "license": "Zlib",
+      "policy": "ok",
+      "upstream": "https://zlib.net",
+      "files": [
+        {
+          "name": "zlib1.dll",
+          "bytes": 127291,
+          "sha256": "11cd91171765cd65f1c3362e3df67e5f5a618a6b88c8cdec899b802eaf1c7b0d"
+        }
+      ]
+    },
+    {
+      "id": "bzip2",
+      "name": "bzip2",
+      "version": "1.0.8-4",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-bzip2",
+        "version": "1.0.8-4",
+        "pkgbase": "mingw-w64-bzip2"
+      },
+      "license": "bzip2-1.0.6",
+      "policy": "review",
+      "upstream": "https://sourceware.org/bzip2/",
+      "files": [
+        {
+          "name": "libbz2-1.dll",
+          "bytes": 107741,
+          "sha256": "1790bf6473c9d48db14c1f0ee8124142327556d281299ea2a72ee361118ee01a"
+        }
+      ]
+    },
+    {
+      "id": "xz",
+      "name": "XZ Utils (liblzma)",
+      "version": "5.8.4-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-xz",
+        "version": "5.8.4-1",
+        "pkgbase": "mingw-w64-xz"
+      },
+      "license": "0BSD",
+      "policy": "review",
+      "upstream": "https://tukaani.org/xz/",
+      "files": [
+        {
+          "name": "liblzma-5.dll",
+          "bytes": 190872,
+          "sha256": "d97a260b8bb4f6affc34ec47249429240068b94bb6f7dc30c4d64daaafb3ac69"
+        }
+      ]
+    },
+    {
+      "id": "brotli",
+      "name": "Brotli",
+      "version": "1.2.0-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-brotli",
+        "version": "1.2.0-1",
+        "pkgbase": "mingw-w64-brotli"
+      },
+      "license": "MIT",
+      "policy": "ok",
+      "upstream": "https://github.com/google/brotli",
+      "files": [
+        {
+          "name": "libbrotlicommon.dll",
+          "bytes": 144565,
+          "sha256": "c62c08223e450dfc2fff33c752cc228505ffd9d755201958ba800d5d30481a2c"
+        },
+        {
+          "name": "libbrotlidec.dll",
+          "bytes": 62619,
+          "sha256": "e270b6e576594ee8ee6e33ccc54e34a54304616dd6225652e11e49d6f17ef896"
+        }
+      ]
+    },
+    {
+      "id": "pcre2",
+      "name": "PCRE2",
+      "version": "10.49-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-pcre2",
+        "version": "10.49-1",
+        "pkgbase": "mingw-w64-pcre2"
+      },
+      "license": "BSD-3-Clause WITH PCRE2-exception",
+      "policy": "ok",
+      "upstream": "https://github.com/PCRE2Project/pcre2",
+      "files": [
+        {
+          "name": "libpcre2-8-0.dll",
+          "bytes": 706022,
+          "sha256": "1f609cde2ce432efb7d2b0c7b84a14a6dbfc9622d1ac1a3cbadf51c5b0b4dada"
+        }
+      ]
+    },
+    {
+      "id": "expat",
+      "name": "Expat",
+      "version": "2.9.0-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-expat",
+        "version": "2.9.0-1",
+        "pkgbase": "mingw-w64-expat"
+      },
+      "license": "MIT",
+      "policy": "ok",
+      "upstream": "https://libexpat.github.io",
+      "files": [
+        {
+          "name": "libexpat-1.dll",
+          "bytes": 239251,
+          "sha256": "8a10cf7e89524b621d5f74bd4aedc659c47c7ce397d489f323a1065ba695027a"
+        }
+      ]
+    },
+    {
+      "id": "fontconfig",
+      "name": "Fontconfig",
+      "version": "2.18.3-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-fontconfig",
+        "version": "2.18.3-1",
+        "pkgbase": "mingw-w64-fontconfig"
+      },
+      "license": "LicenseRef-fontconfig",
+      "policy": "review",
+      "upstream": "https://www.freedesktop.org/wiki/Software/fontconfig/",
+      "files": [
+        {
+          "name": "libfontconfig-1.dll",
+          "bytes": 505833,
+          "sha256": "be30a200fa4000d0a7a1d3911391969627440148f01d0028a319bcb9fa112202"
+        }
+      ]
+    },
+    {
+      "id": "libunibreak",
+      "name": "libunibreak",
+      "version": "7.0-1",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-libunibreak",
+        "version": "7.0-1",
+        "pkgbase": "mingw-w64-libunibreak"
+      },
+      "license": "Zlib",
+      "policy": "ok",
+      "upstream": "https://github.com/adah1972/libunibreak",
+      "files": [
+        {
+          "name": "libunibreak-7.dll",
+          "bytes": 141442,
+          "sha256": "f1f4bb5b5bb3dbf8d142df3012f13e4b5b0246565496d43718a6f33321e96283"
+        }
+      ]
+    },
+    {
+      "id": "winpthreads",
+      "name": "mingw-w64 winpthreads",
+      "version": "14.0.0.r495.g63ebe6cdb-2",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-libwinpthread",
+        "version": "14.0.0.r495.g63ebe6cdb-2",
+        "pkgbase": "mingw-w64-winpthreads"
+      },
+      "license": "MIT AND ZPL-2.1",
+      "policy": "review",
+      "upstream": "https://www.mingw-w64.org",
+      "files": [
+        {
+          "name": "libwinpthread-1.dll",
+          "bytes": 68731,
+          "sha256": "817e5b2636f532666e8f255e225af75e9d0c41b141512fde45264070a65b1c92"
+        }
+      ]
+    },
+    {
+      "id": "libgcc",
+      "name": "GCC runtime (libgcc_s)",
+      "version": "16.2.0-6",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-libgcc",
+        "version": "16.2.0-6",
+        "pkgbase": "mingw-w64-gcc"
+      },
+      "license": "GPL-3.0-or-later WITH GCC-exception-3.1",
+      "policy": "gcc-runtime-exception",
+      "upstream": "https://gcc.gnu.org",
+      "files": [
+        {
+          "name": "libgcc_s_seh-1.dll",
+          "bytes": 150537,
+          "sha256": "791ebf66e99c7c1b4ed3666468cec45a0172b4c8942ac6c84c3e9cab3e1b5270"
+        }
+      ]
+    },
+    {
+      "id": "libstdcxx",
+      "name": "GCC runtime (libstdc++)",
+      "version": "16.2.0-6",
+      "origin": "msys2-binary-package",
+      "msys2": {
+        "package": "mingw-w64-ucrt-x86_64-libstdc++",
+        "version": "16.2.0-6",
+        "pkgbase": "mingw-w64-gcc"
+      },
+      "license": "GPL-3.0-or-later WITH GCC-exception-3.1",
+      "policy": "gcc-runtime-exception",
+      "upstream": "https://gcc.gnu.org",
+      "files": [
+        {
+          "name": "libstdc++-6.dll",
+          "bytes": 2659194,
+          "sha256": "4e4822dc4aaa99383f581dae7ab9464ae89346c5ca742f7efbcdebe20b0fe7b5"
+        }
+      ]
+    }
+  ]
+}

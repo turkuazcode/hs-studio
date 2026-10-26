@@ -5,7 +5,7 @@
 
 [![Tauri 2.0](https://img.shields.io/badge/Tauri-2.0-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app/)
 [![Rust](https://img.shields.io/badge/Rust-1.85+-orange?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![License: GPL-3.0-only](https://img.shields.io/badge/License-GPL--3.0--only-blue.svg?style=for-the-badge)](LICENSE)
 [![Platform](https://img.shields.io/badge/Test%20edilen-Windows%2011%20x64-lightgrey?style=for-the-badge)](docs/platform-support.md)
 [![Developer](https://img.shields.io/badge/Developer-Halil%20SARITAŞ%20(hsrts)-E11D48?style=for-the-badge)](https://github.com/hsrts)
 
@@ -180,23 +180,23 @@ Tamamı sentetik ve depoya dahildir (toplam ~185 KB); `tests/fixtures/make-fixtu
 
 ## 🤝 Katkıda Bulunma (Contributing)
 
-Açık kaynak topluluğunun katkılarını memnuniyetle karşılıyoruz!
-
-1. Bu depoyu Fork'layın (`Fork` butonu)
-2. Yeni bir özellik dalı oluşturun (`git checkout -b feature/YeniOzellik`)
-3. Değişikliklerinizi commit edin (`git commit -m 'feat: Yeni özellik eklendi'`)
-4. Dalınıza push edin (`git push origin feature/YeniOzellik`)
-5. Bir **Pull Request (PR)** açın.
+Katkılar memnuniyetle karşılanır. Temiz klondan kurulum, test katmanları, mimari, lisans/i18n beklentileri ve küçük ilk görevler: **[CONTRIBUTING.md](CONTRIBUTING.md)** (EN, Türkçe özetli). Dış katkılar [CLA](CLA.md) kabulü ve `git commit -s` (DCO) gerektirir. Davranış kuralları: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Güvenlik açıkları herkese açık issue olarak değil, [SECURITY.md](SECURITY.md)'deki yoldan bildirilir. Değişiklik geçmişi: [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
 ## 📄 Lisans
 
-Bu proje [MIT Lisansı](LICENSE) kapsamında açık kaynak olarak lisanslanmıştır. Özgürce kullanılabilir, değiştirilebilir ve dağıtılabilir.
+<!-- license-section: the only README place that states the project license (with the badge above) -->
+**HS Studio** (eski çalışma adı **VHO**) — Copyright (C) 2026 Halil SARITAŞ. [GNU General Public License v3.0 only](LICENSE) (GPL-3.0-only) ile lisanslanmış özgür yazılımdır: kullanabilir, inceleyebilir, değiştirebilir ve dağıtabilirsiniz; değiştirilmiş sürümü dağıtırsanız kaynak kodunu da aynı lisansla açmanız gerekir. Garanti verilmez.
+
+*HS Studio (formerly VHO) is free software under the GNU GPL v3.0 only; it comes with no warranty.*
+
+**Ad ve logo:** "HS Studio" adı ve logosu GPL kapsamında değildir; değiştirilmiş sürümler farklı bir ad ve logo kullanmalıdır. Ayrıntı: [TRADEMARKS.md](TRADEMARKS.md) (tescilli marka iddiası yoktur).
+<!-- /license-section -->
 
 ### Üçüncü taraf bileşenler
 
-VHO yalnızca açık kaynak lisanslı (MIT, Apache-2.0, BSD, CC-BY-4.0 vb.) bileşenler kullanır. Tam liste ve lisans metinleri [src/legal/THIRD_PARTY_NOTICES.txt](src/legal/THIRD_PARTY_NOTICES.txt) dosyasında ve uygulamada **Ayarlar → Hakkında / Lisanslar** ile **İyileştir → Lisanslar ve Teşekkürler** penceresindedir.
+VHO yalnızca açık kaynak lisanslı (MIT, Apache-2.0, BSD, CC-BY-4.0 vb.; libmpv/FFmpeg LGPL, ayrı DLL olarak) bileşenler kullanır. Makinece okunur envanter ve CycloneDX SBOM: [legal/INVENTORY.md](legal/INVENTORY.md), `npm run sbom`. Tam liste ve lisans metinleri [src/legal/THIRD_PARTY_NOTICES.txt](src/legal/THIRD_PARTY_NOTICES.txt) dosyasında ve uygulamada **Ayarlar → Hakkında / Lisanslar** ile **İyileştir → Lisanslar ve Teşekkürler** penceresindedir.
 
 - **Yapay zeka bileşenleri uygulamayla birlikte gelmez.** İlk kullanımda, kullanıcı onayıyla, sabit sürüm/commit adreslerinden indirilir ve SHA-256 ile doğrulanır. Lisans dosyaları da yanlarında saklanır.
   - [ONNX Runtime Web](https://github.com/microsoft/onnxruntime) 1.30.0: Microsoft, MIT

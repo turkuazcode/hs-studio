@@ -3,8 +3,9 @@ name = "vho"
 version = "0.1.0"
 description = "VHO - Video H Oynatıcısı: video & fotoğraf medya stüdyosu"
 authors = ["Halil SARITAŞ (hsrts)"]
-license = "MIT"
+license = "GPL-3.0-only"
 edition = "2024"
+publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

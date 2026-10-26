@@ -73,6 +73,7 @@ Dosya argümanı verilirse varsayılan liste yerine o dosyalar çalışır (`npm
 | Yüz iyileştirme (GFPGAN + YuNet) | — | — | — | **kanıt yok** | Q02 (yok) | Sonraki gerçek AI smoke adayı (170 MB model) |
 | Video “AI” restorasyonu | — | — | `video` (“hazır değil” etiketi) | — | — | V01–V06 |
 | Kalite karşılaştırması, hız/bellek bütçeleri | — | — | — | — | **HENÜZ DOLDURULMADI** | Q02 |
+| Lisans envanteri, bildirimler, SBOM (R01) | `legal-inventory` (AI manifest ↔ models.json, yerel DLL listesi ↔ derleme kanıtı, bildirimde her DLL/model, gönderilen varlıklar envanterde, SBOM hash'leri, politika reddi yok) | — | `smoke` (Lisanslar penceresi) | — | — | SBOM üretimi `npm run sbom` (cargo metadata, ağsız) birim testte çalışmaz; commit edilen SBOM denetlenir |
 | İş kuyruğu (A02), kütüphane UI (L02) | paralel dallarda ekleniyor | | | | | Testleri kendi katmanına eklenir; bu harita birleştirmede güncellenir |
 
 ## Bilinen sınırlar
