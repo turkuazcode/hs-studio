@@ -75,6 +75,12 @@ Dosya argümanı verilirse varsayılan liste yerine o dosyalar çalışır (`npm
 | Kalite karşılaştırması, hız/bellek bütçeleri | `quality-metrics` (ölçütler, manifest) | — | — | `photo.quality` (photo-x4, GFPGAN) | `photo.quality`, `video.quality`, `bench:media` | Kör A/B değerlendirmesi henüz yapılmadı |
 | İş kuyruğu (A02), kütüphane UI (L02) | paralel dallarda ekleniyor | | | | | Testleri kendi katmanına eklenir; bu harita birleştirmede güncellenir |
 
+## Test yalıtımı
+
+- `VHO_DATA_DIR` verilen her test örneği kendi kimliğini alır (`com.vho.app.test<fnv1a(küçük harf veri klasörü)>`, `platform.rs` `test_identifier`). Tauri bu kimlikle `%APPDATA%` / `%LOCALAPPDATA%` altında klasör açar; `tests/e2e/lib/app.mjs` kapanışta **yalnızca o veri klasörünün** kimlik klasörlerini siler (`removeIdentityDirs`). Kimlik türetmesi Rust ve JS testlerinde aynı vektörle bağlanır; `tests/e2e/test-isolation.e2e.mjs` kapanış sonrası klasör kalmadığını kanıtlar.
+- Önbellekler (fotoğraf küçük resimleri, kare yakalama, dönüştürme) test modunda `<VHO_DATA_DIR>/cache` altındadır; kullanıcının önbellek klasörüne yazılmaz.
+- Eski koşulardan kalanlar: `npm run clean:test-artifacts` (varsayılan kuru çalışma, `-- --apply` siler) yalnızca 2 saatten eski ve kullanımda olmayan `com.vho.app.test<16 hex>` ve kurulu olarak kayıtlı olmayan `com.vho.app.packagetest*` klasörlerini siler; `com.vho.app` hiçbir zaman. 2026-10-26 ilk çalıştırma: 974 klasör, 31,7 MB silindi; 135 yeni klasör (2 saatten genç, başka ajanların koşuları) atlandı.
+
 ## Bilinen sınırlar
 
 - E2E ve AI smoke yalnızca Windows/WebView2 (CDP) üzerinde çalışır. macOS/Linux için sürücü seçilmedi; bu platformlar burada **test edilmedi** sayılır.
