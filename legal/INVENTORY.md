@@ -140,7 +140,7 @@ user confirms, pinned to a commit URL and checked against SHA-256 (A01).
 1. ~~Security contact~~ — **done 2026-10-25**: turkuazcode@gmail.com in SECURITY.md,
    CODE_OF_CONDUCT.md, TRADEMARKS.md and the issue templates. Add the repository's security-policy
    link to `.github/ISSUE_TEMPLATE/config.yml` once the URL exists.
-2. **CLA** (pre-research for the lawyer: [docs/legal/on-arastirma.md](../docs/legal/on-arastirma.md)): lawyer review of [CLA.md](../CLA.md) (Harmony-based draft, Option Five), fill the
+2. **CLA** (pre-research for the lawyer: [docs/legal/on-arastirma.md](../docs/legal/on-arastirma.md)): lawyer review of [CLA.md](../CLA.md) (Harmony-based draft, Option Three: OSI-approved licenses only, since 2026-10-26), fill the
    jurisdiction, confirm the media license, choose the signing mechanism (CLA bot or PR
    statement + record keeping), and decide whether an Entity CLA is needed.
 3. **Trademark**: lawyer review of [TRADEMARKS.md](../TRADEMARKS.md); decide on registration;

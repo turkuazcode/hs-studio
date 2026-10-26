@@ -13,6 +13,12 @@
   dönmesini sağlamak.
 - Ürün adı **HS Studio** (eski çalışma adı VHO). Ad ve logo korunacak. Fork'lar farklı ad kullanmalı.
 - Katkılar için CLA olacak. Sahip ileride yeniden lisanslayabilmeli.
+- **2026-10-26 kararı:** Kod imzalama, SignPath'in ücretsiz açık kaynak programıyla yapılacak. Bu programın
+  şartlarından biri "hiçbir bileşen için ticari çift lisans yok". Bu yüzden CLA **daraltıldı**: Harmony
+  "Option Five" (her türlü lisans, tescilli dahil) yerine **"Option Three"** seçildi. Katkılar yalnızca katkı
+  tarihindeki proje lisansıyla veya OSI onaylı açık kaynak lisanslarla (copyleft ya da permissive)
+  lisanslanabilir. Tescilli/ticari yeniden lisanslama ve bunun üzerine kurulu "App Store için ayrı lisans"
+  yolu artık **yok** (§4). CLA.md taslak sürümü 1.1.
 - GFPGAN/YuNet modelleri kalıyor. Eğitim verisindeki ticari olmayan kullanım (NC) tartışması bilerek kabul
   edildi.
 - İletişim adresi: turkuazcode@gmail.com.
@@ -23,15 +29,19 @@
 
 | Seçenek | Ne sağlar | Artısı (tek sahipli, yeniden lisanslama isteyen GPL projesi için) | Eksisi |
 |---|---|---|---|
-| **Harmony HA-CLA-I, Option Five** (taslakta seçilen) | Katkıcı telif hakkını korur. Sahibe süresiz, devredilebilir, alt lisanslanabilir geniş bir lisans verir. Sahip katkıyı **herhangi bir lisansla** (tescilli lisans dahil) dağıtabilir, **ama** katkı tarihindeki proje lisansıyla da sunmak zorundadır | Yeniden lisanslama özgürlüğü tamdır. Katkıcıya "katkın hep GPL ile de açık kalacak" güvencesi verir. Şablon CC BY 3.0 lisanslıdır, uyarlanabilir. Patent lisansı da içerir | Uzun bir metin. Katkıcıyı caydırabilir. 2011 tarihli (v1), güncellenmemiş. Türk hukukuna göre yazılmamıştır (§1.3) |
-| Harmony Option One–Four | Dış lisansı katkı tarihindeki lisansla (1), belirli lisanslarla (2), OSI lisanslarıyla (3) veya FSF'nin önerdiği copyleft lisanslarla (4) sınırlar | Katkıcıya daha fazla güvence verir | Option 1–2 ileride lisans değişimini kısıtlar. 3–4 kapalı lisansa izin vermez. "Gerekirse yeniden lisanslama" hedefini kısmen karşılar |
+| Harmony HA-CLA-I, Option Five (taslak 1.0'da seçilmişti; 2026-10-26'da bırakıldı) | Katkıcı telif hakkını korur. Sahibe süresiz, devredilebilir, alt lisanslanabilir geniş bir lisans verir. Sahip katkıyı **herhangi bir lisansla** (tescilli lisans dahil) dağıtabilir, **ama** katkı tarihindeki proje lisansıyla da sunmak zorundadır | Yeniden lisanslama özgürlüğü tamdır. Katkıcıya "katkın hep GPL ile de açık kalacak" güvencesi verir. Şablon CC BY 3.0 lisanslıdır, uyarlanabilir. Patent lisansı da içerir | Uzun bir metin. Katkıcıyı caydırabilir. 2011 tarihli (v1), güncellenmemiş. Türk hukukuna göre yazılmamıştır (§1.3) |
+| **Harmony Option Three** (**taslak 1.1'de seçilen**, 2026-10-26) | Dış lisans: katkı tarihindeki proje lisansı **veya** Etkin Tarih'te ya da sonrasında OSI'nin onayladığı herhangi bir lisans (permissive ve copyleft; sonradan onayı kaldırılsa da) | Kapalı/ticari lisansa izin vermez, bu yüzden SignPath'in "ticari çift lisans yok" şartıyla uyumludur. GPL'nin ileri sürümüne veya başka bir açık kaynak lisansa geçiş mümkün kalır | Tescilli lisans, App Store için ayrı lisans gibi yollar kapanır. Permissive bir OSI lisansına (ör. MIT) geçiş yine mümkün olduğu için "kapalı fork'u önleme" yalnızca lisans GPL kaldıkça geçerlidir |
+| Harmony Option One, Two, Four | Dış lisansı katkı tarihindeki lisansla (1), belirli listelenmiş lisanslarla (2) veya FSF'nin "önerilen copyleft lisansları" listesiyle (4) sınırlar | Katkıcıya daha fazla güvence verir; 4 permissive lisansa geçişi de engeller | 1–2 ileride lisans değişimini fiilen kısıtlar. 4, yalnızca copyleft lisanslara izin verir |
 | **Yalnızca DCO** (`Signed-off-by`, Developer Certificate of Origin 1.1) | Katkıcı "bunu yazma/gönderme hakkım var" diye beyan eder. Katkı, projenin kendi lisansıyla (GPL-3.0-only) gelir | En hafif yöntemdir. Linux çekirdeği gibi büyük projeler kullanır. Caydırıcı değildir | Sahibe **yeniden lisanslama hakkı vermez**. Dış katkı girdikten sonra lisans değişikliği tüm katkıcıların onayını ister. GPL-3.0-only olduğu için "v4'e geçiş" bile mümkün olmaz |
 | **Apache ICLA** (Apache Software Foundation'ın bireysel CLA'sı) | Geniş telif ve patent lisansı verir. Dış lisans sınırı yoktur | Çok bilinir, katkıcılar tanır. Yeniden lisanslama hakkı verir | ASF için yazılmıştır, uyarlanması gerekir. Metnin kendi yeniden kullanım koşulu bu araştırmada doğrulanamadı (`icla.txt` artık PDF'e yönlendiriyor). Katkıcıya "GPL ile açık kalacak" güvencesi yoktur |
 | Telif devri (FSF tipi "copyright assignment") | Mali haklar sahibe devredilir | Hukuki olarak en güçlü konum | En caydırıcı seçenektir. Türk hukukunda manevi haklar devredilemez. Devir sözleşmesi şekil şartlarına bağlıdır (§1.3) |
 | CLA + DCO (taslakta seçilen birleşim) | CLA hakları verir, DCO her commit'te kaynağı beyan eder | Commit bazında kanıt olur. CLA kaydı tutulmasa bile köken beyanı kalır | Katkıcı için iki adım vardır |
 
 **Ön değerlendirme (hukuki görüş değil):** Kullanıcının hedefleri yeniden lisanslama özgürlüğü ve fork'ların
-kapalı olmaması. Harmony Option Five + DCO bu iki hedefle teknik olarak örtüşüyor. "Yalnızca DCO" seçilirse
+kapalı olmaması. SignPath şartı eklendikten sonra (2026-10-26) bu iki hedefle en iyi örtüşen seçenek
+Harmony **Option Three** + DCO'dur: açık kaynak lisanslar arasında yeniden lisanslama özgürlüğü kalır,
+tescilli lisanslama kapanır. "Kapalı fork olmasın" hedefi daha sıkı tutulmak istenirse Option Four
+(yalnızca FSF'nin önerdiği copyleft lisanslar) avukatla değerlendirilebilir. "Yalnızca DCO" seçilirse
 yeniden lisanslama hedefi fiilen kaybolur. Apache ICLA da hedefleri karşılar, ama katkıcıya verilen GPL
 güvencesi olmadığı için güven açısından daha zayıf.
 
@@ -45,8 +55,9 @@ güvencesi olmadığı için güven açısından daha zayıf.
    taahhüdü olarak mı yorumlanır?
 3. **Uygulanacak hukuk ve yetkili mahkeme (§6.1, şu an `[TO BE SET]`):** Türkiye mi seçilmeli? Yabancı
    katkıcılar için ne anlama gelir?
-4. Option Five'ın "tescilli lisansla da dağıtabilir" hakkı katkıcılara açıkça ve anlaşılır biçimde anlatılmış
-   mı? Tüketici veya genel işlem şartı denetimine takılabilir mi?
+4. Option Three'nin "OSI onaylı lisanslar" ifadesi yeterince belirli mi? Onayı sonradan kaldırılan lisanslar
+   ve OSI'nin listesi değişirse ne olur? Genel işlem şartı denetimine takılabilir mi? 1.0 taslağı (Option
+   Five) hiçbir katkıcı tarafından kabul edilmedi; değişiklik için ek bir işlem gerekir mi?
 5. Kurumsal katkı için "Entity CLA" (Harmony HA-CLA-E) gerekli mi?
 6. Reşit olmayan katkıcılar (§3c) için veli onayı nasıl alınır?
 7. Kayıt tutma: hangi katkıcının hangi tarihte hangi sürümü kabul ettiği nasıl saklanmalı?
@@ -175,7 +186,9 @@ Logo ve ikon dosyaları (`src-tauri/icons/*`, `src/assets/favicon.png`, `src/ass
   - Bu tartışma GPLv2 dönemine ait. GPLv3'te §10'daki "ek kısıtlama yok" ilkesi devam ediyor.
   - Mac App Store dağıtımı da aynı sorunu taşır. macOS için mağaza dışı (notarize edilmiş DMG) dağıtım
     planlanmalı.
-  - CLA sayesinde sahip, yalnızca App Store sürümü için ayrı bir lisans verebilir (avukat sorusu).
+  - ~~CLA sayesinde App Store sürümü için ayrı lisans~~: 2026-10-26 kararıyla (CLA Option Three, SignPath)
+    bu yol **kapandı**. Dış katkılar tescilli/ticari lisansla dağıtılamaz. App Store, GPL dışında ayrı bir
+    lisans gerektirdiği için şu an planda yok.
 - **Bağımlılıklar:** Tüm bağımlılıklar GPL-3.0 ile uyumlu ([legal/INVENTORY.md](../../legal/INVENTORY.md)).
   FreeType yalnızca GPL-2.0-or-later seçeneğiyle uyumlu. OFL font ayrı dosya olarak paketlendiği sürece sorun
   yok.
@@ -202,4 +215,6 @@ Logo ve ikon dosyaları (`src-tauri/icons/*`, `src/assets/favicon.png`, `src/ass
    sorulabilir.
 5. Codec patentleri (H.264/HEVC/AAC çözücüler): telif lisansı dışında bir konu.
 6. Contributor Covenant metninin lisansı (§5).
-7. Apple App Store gerekirse: CLA'ya dayalı ayrı lisans seçeneği.
+7. ~~Apple App Store için CLA'ya dayalı ayrı lisans~~: 2026-10-26 kararıyla kapandı (SignPath, CLA Option Three).
+8. SignPath Foundation'ın "ticari çift lisans yok" şartı ile CLA Option Three'nin birlikte yorumu: permissive
+   bir OSI lisansına geçiş "ticari çift lisans" sayılır mı?
