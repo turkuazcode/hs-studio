@@ -89,6 +89,9 @@ test("actions: favorites, sizes, error tags, job ids", () => {
   assert.equal(errorCode("[exists] Bu klasörde"), "exists");
   assert.equal(errorCode("plain"), null);
   assert.equal(errorText("[ocr-language] Dil yok"), "Dil yok");
+  const t = (k, p) => `${k}|${p.detail}`;
+  assert.equal(errorText("[clipboard-busy] Pano kullanılıyor (rdpclip.exe)", t), "actions.error.clipboardBusy|rdpclip.exe");
+  assert.equal(errorText("[ocr-language] Dil yok", t), "Dil yok");
   assert.notEqual(newJobId(), newJobId());
 });
 

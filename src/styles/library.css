@@ -144,7 +144,7 @@ body.lib-open .titlebar {
 }
 
 .lib-badge.warn {
-  color: var(--accent-ruby-bright);
+  color: var(--accent-ruby-text);
 }
 
 .lib-empty {
