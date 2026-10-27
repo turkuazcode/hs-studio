@@ -98,12 +98,13 @@ fn run(app: &AppHandle) -> Value {
     linux::request_pixel_probe();
     linux::queue_render();
     let px = wait(Duration::from_secs(3), linux::probed_pixel);
-    let bright = px.is_some_and(|p| p[..3].iter().any(|c| *c > 40));
-    step("centre pixel is video (not black)", bright, json!(px));
-    let shown = on_main(app, linux::composited_centre_pixel).flatten();
+    // The generated testsrc2 clip is blue (0,0,254) in the centre from 1 s on
+    let bright = |p: &Value| p.as_array().is_some_and(|a| a.iter().take(3).any(|c| c.as_u64().unwrap_or(0) > 40));
+    step("centre pixel is video (not black)", px.as_ref().is_some_and(|p| bright(&p["rgba"])), json!(px));
+    let shown = on_main(app, linux::composited_samples).flatten();
     step(
         "composited window shows the video (webview transparent above)",
-        shown.is_some_and(|p| p.iter().any(|c| *c > 40)),
+        shown.as_ref().is_some_and(|s| bright(&s["centre"])),
         json!(shown),
     );
 
