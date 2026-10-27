@@ -5381,6 +5381,7 @@ dependencies = [
  "crc32fast",
  "fast_image_resize",
  "flate2",
+ "gtk",
  "image",
  "jpeg-decoder",
  "kamadak-exif",
