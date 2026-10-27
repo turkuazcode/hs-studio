@@ -1457,7 +1457,7 @@ body.is-dragging .drop-zone .drop-card {
 .btn-sleep-preset {
   background: var(--bg-pill);
   border: 1px solid var(--border-subtle);
-  color: #fff;
+  color: var(--text-pure); /* was #fff: unreadable in the light theme (Q03) */
   padding: 10px;
   border-radius: 10px;
   font-size: 12px;
@@ -2056,3 +2056,13 @@ html:not([data-media="image"]) .photo-only { display: none !important; }
   accent-color: var(--accent-ruby);
 }
 .eq-val, .eq-freq { font-size: 10px; color: var(--text-muted); }
+
+/* Small window / 200 % scale: title bar buttons keep only their icons; the label stays for
+   screen readers (visually hidden, not display:none) and as the tooltip (Q03) */
+@media (max-width: 760px) {
+  .current-filename, .titlebar-divider, .app-edition-tag { display: none; }
+  .titlebar-action-btn > span {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+}

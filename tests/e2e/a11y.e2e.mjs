@@ -219,6 +219,7 @@ test("a11y: reduced motion, 200 % scale, long texts, UI Automation names", { tim
       const expected = await app.eval(`["btn-play-pause", "btn-app-menu", "btn-fullscreen"].map((id) => {
         const el = document.getElementById(id); return el.getAttribute("aria-label") || el.textContent.trim(); })`);
       const script = `
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8 # Turkish names (ü, ş...) intact
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
 $root = [System.Windows.Automation.AutomationElement]::RootElement
 $cond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ProcessIdProperty, ${app.proc.pid})
