@@ -318,3 +318,43 @@ export function meanChroma(rgba, step = 7) {
 /** "Renklendir" is offered only for black-and-white / strongly faded photos. */
 export const COLORIZE_MAX_CHROMA = 8;
 export const isColorizeCandidate = (rgba) => meanChroma(rgba) <= COLORIZE_MAX_CHROMA;
+
+// ---------------------------------------------------------------- float16 tensors
+
+const f32 = new Float32Array(1);
+const u32 = new Uint32Array(f32.buffer);
+
+/** IEEE float32 -> float16 bits (round to nearest even), for fp16-input models. */
+export function toHalf(v) {
+  f32[0] = v;
+  const x = u32[0];
+  const sign = (x >>> 16) & 0x8000;
+  const exp = ((x >>> 23) & 0xff) - 127 + 15;
+  let mant = x & 0x7fffff;
+  if (exp >= 0x1f) return sign | 0x7c00 | (((x >>> 23) & 0xff) === 0xff && mant ? 0x200 : 0); // inf / nan
+  if (exp <= 0) {
+    if (exp < -10) return sign;
+    mant |= 0x800000;
+    const shift = 14 - exp;
+    const half = mant >> shift;
+    const rest = mant & ((1 << shift) - 1);
+    const mid = 1 << (shift - 1);
+    return sign | (half + (rest > mid || (rest === mid && half & 1) ? 1 : 0));
+  }
+  const half = sign | (exp << 10) | (mant >> 13);
+  const rest = mant & 0x1fff;
+  return half + (rest > 0x1000 || (rest === 0x1000 && half & 1) ? 1 : 0);
+}
+
+/** float16 bits -> number. */
+export function fromHalf(h) {
+  const sign = h & 0x8000 ? -1 : 1;
+  const exp = (h >> 10) & 0x1f;
+  const mant = h & 0x3ff;
+  if (exp === 0) return sign * mant * 2 ** -24;
+  if (exp === 0x1f) return mant ? NaN : sign * Infinity;
+  return sign * (1 + mant / 1024) * 2 ** (exp - 15);
+}
+
+export const toHalfArray = (a) => Uint16Array.from(a, toHalf);
+export const fromHalfArray = (a) => Float32Array.from(a, (h) => (typeof h === "number" && !(a instanceof Uint16Array) ? h : fromHalf(h)));

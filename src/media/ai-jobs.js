@@ -16,11 +16,31 @@
 // continued (validated) when playback stops.
 // ==========================================================================
 
-import { FACE_MODEL, MODELS, releaseAi, restoreFacesInImage, upscaleImage } from "./ai-engine.js";
+import { FACE_MODEL, MODELS, SMART_MODELS, releaseAi, restoreFacesInImage, smartEdit, upscaleImage } from "./ai-engine.js";
 import { classifyAiError, errorCodeForClass } from "./ai-policy.js";
 import { keepGrayscale } from "./grayscale.js";
 
-export const AI_JOB_KINDS = Object.freeze(["ai-photo-enhance"]);
+export const AI_JOB_KINDS = Object.freeze(["ai-photo-enhance", "ai-inpaint", "ai-background", "ai-colorize"]);
+
+/** Plan 07 smart-edit job kinds (A06) -> engine op. */
+export const SMART_KINDS = Object.freeze({ "ai-inpaint": "inpaint", "ai-background": "matting", "ai-colorize": "colorize" });
+const SMART_SUFFIX = { inpaint: "_removed", matting: "_background", colorize: "_colorized" };
+
+/**
+ * Request of a smart-edit job (pure; unit tested). params: inpaint { strokes }, matting
+ * { mode: "transparent" | "color" | "blur", color, blur }, colorize {}. Always PNG (alpha).
+ */
+export function smartEditRequest({ op, path, params = {}, inputWidth, inputHeight, metadata = "keep" }) {
+  const model = SMART_MODELS[op];
+  if (!model) throw new Error(`unknown smart edit ${op}`);
+  const suffix = op === "matting" && params.mode === "transparent" ? "_cutout" : SMART_SUFFIX[op];
+  return {
+    input: path, components: ["ort-web", model.component], op, params, inputWidth, inputHeight,
+    output: { suffix, format: "png", metadata },
+  };
+}
+
+export const smartKindOf = (op) => Object.keys(SMART_KINDS).find((k) => SMART_KINDS[k] === op);
 
 /** Request of a photo enhancement job (pure; unit tested). */
 export function photoEnhanceRequest({ path, faces = false, inputWidth, inputHeight, output } = {}) {
@@ -102,6 +122,15 @@ export function createAiJobRunner(app, { invoke, listen, convertFileSrc }) {
     return { imageData, info: { from: [pixels.width, pixels.height], to: [imageData.width, imageData.height], backend: up.backend, tile: up.tile, seconds: up.seconds, attempts: up.attempts, faces: faceStats, grayscale } };
   }
 
+  /** Plan 07 smart edit of one photo (full planned size, PNG with alpha). */
+  async function smart(op, item, request, signal, report) {
+    const pixels = await loadPixels(invoke, convertFileSrc, item.path, request.inputWidth, request.inputHeight);
+    const r = await smartEdit(op, pixels, request.params ?? {}, {
+      signal, onProgress: (phase, f) => report(phase, phase === "run" ? f : 0, f),
+    });
+    return { imageData: r.imageData, info: { op, size: [pixels.width, pixels.height], backend: r.backend, seconds: r.seconds, attempts: r.attempts } };
+  }
+
   async function execute({ jobId, attemptId, kind, request, items }) {
     if (runs.has(jobId)) return;
     const ctrl = new AbortController();
@@ -124,7 +153,9 @@ export function createAiJobRunner(app, { invoke, listen, convertFileSrc }) {
           break; // stopping / stale attempt
         }
         try {
-          const { imageData, info } = await enhance(item, request, ctrl.signal, report);
+          const { imageData, info } = SMART_KINDS[kind]
+            ? await smart(SMART_KINDS[kind], item, request, ctrl.signal, report)
+            : await enhance(item, request, ctrl.signal, report);
           const body = new Uint8Array(imageData.data.buffer, imageData.data.byteOffset, imageData.data.byteLength);
           const output = await invoke("jobs_ext_output", body, {
             headers: { "x-job-id": jobId, "x-attempt-id": attemptId, "x-idx": String(item.idx), "x-width": String(imageData.width), "x-height": String(imageData.height) },
