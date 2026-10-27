@@ -7,9 +7,11 @@
 //!
 //! Commands: `engine_status`, `engine_load`, `engine_command`, `engine_set`, `engine_get`,
 //! `engine_show`, `engine_screenshot`. Events: `engine://property {name, value}`, `engine://event`.
+//! `engine_command` / `engine_set` / `engine_load` only accept what [`policy`] allows (Q04).
 
 pub mod events;
 pub mod mpv;
+pub mod policy;
 pub mod window;
 
 use std::path::{Path, PathBuf};
@@ -211,6 +213,7 @@ pub fn engine_status(st: tauri::State<'_, Engine>) -> Value {
 /// `loadfile <path> replace`, optionally starting at `start` seconds.
 #[tauri::command]
 pub async fn engine_load(st: tauri::State<'_, Engine>, path: String, start: Option<f64>) -> Result<(), String> {
+    policy::check_load(&path)?;
     let m = mpv_of(&st)?;
     let mut cmd = json!({"name": "loadfile", "url": path, "flags": "replace"});
     if let Some(s) = start.filter(|s| *s > 0.0) {
@@ -221,11 +224,13 @@ pub async fn engine_load(st: tauri::State<'_, Engine>, path: String, start: Opti
 
 #[tauri::command]
 pub async fn engine_command(st: tauri::State<'_, Engine>, args: Value) -> Result<Value, String> {
+    policy::check_command(&args)?;
     mpv_of(&st)?.command(&args)
 }
 
 #[tauri::command]
 pub async fn engine_set(st: tauri::State<'_, Engine>, name: String, value: Value) -> Result<(), String> {
+    policy::check_set(&name, &value)?;
     mpv_of(&st)?.set_property(&name, &value)
 }
 
