@@ -480,7 +480,7 @@
     "music": {
       "replayGainTitle": "ReplayGain",
       "measuring": "Ses yüksekliği ölçülüyor (EBU R128)…",
-      "replayGainResult": "Yükseklik {lufs} LUFS · kazanç {gain} dB · tepe {peak} dBFS. Etikete yazıldı."
+      "replayGainResult": "Yükseklik {lufs} LUFS · kazanç {gain} dB · gerçek tepe {peak} dBTP. Etikete yazıldı (kazanç + örnek tepe)."
     },
     "settings": {
       "heading": "Dosya eylemleri",
