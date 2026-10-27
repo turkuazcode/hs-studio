@@ -68,7 +68,7 @@ fn clipboard_holder() -> Option<String> {
             return Some(format!("pid {pid}"));
         }
         let full = String::from_utf16_lossy(&buf[..len as usize]);
-        Some(full.rsplit(['\', '/']).next().unwrap_or(&full).to_string())
+        Some(full.rsplit(['\\', '/']).next().unwrap_or(&full).to_string())
     }
 }
 
