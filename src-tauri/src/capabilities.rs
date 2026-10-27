@@ -96,7 +96,9 @@ pub const SUPPORT: &[(&str, Support, Support, Support)] = &[
     ("actions.print", U, No, U),
     ("actions.wallpaper", U, U, U),
     ("actions.lockScreen", U, No, No),
-    ("system.mediaControls", No, No, No),
+    ("system.mediaControls", T, No, No),
+    ("audio.gapless", T, No, No),
+    ("audio.replayGain", T, U, U),
 ];
 
 /// Support of `id` on `os` (unknown OS or id: unsupported).
@@ -291,8 +293,17 @@ pub fn build(i: &Inputs) -> Vec<Capability> {
         entry("actions.wallpaper", i.wallpaper, i.wallpaper.then_some("os-wallpaper"), os_action(i.wallpaper)),
         entry("actions.lockScreen", i.lock_screen, i.lock_screen.then_some("windows-lockscreen"), os_action(i.lock_screen)),
         entry("actions.openWith", i.open_with, i.open_with.then_some("os-open-with"), os_action(i.open_with)),
-        // OS media keys / now-playing integration (SMTC, MPRIS, MPNowPlayingInfoCenter): not implemented
-        entry("system.mediaControls", false, None, Some("not-implemented")),
+        // OS media keys / now-playing card (Plan 13/L03): Windows SMTC; MPRIS / MPNowPlayingInfoCenter not implemented
+        entry("system.mediaControls", windows, windows.then_some("windows-smtc"), (!windows).then_some("not-implemented")),
+        // Gapless track change needs mpv's internal playlist (gapless-audio); the HTML5 element reloads per file
+        entry("audio.gapless", i.engine_available, i.engine_available.then_some("mpv-gapless-audio"), engine_reason.map(|_| "needs-libmpv")),
+        // ReplayGain: libmpv applies gain + clipping prevention; the HTML5 element can only attenuate
+        entry(
+            "audio.replayGain",
+            true,
+            Some(if i.engine_available { "mpv-replaygain" } else { "webview-volume" }),
+            (!i.engine_available).then_some("attenuation-only"),
+        ),
     ]
 }
 
@@ -464,7 +475,15 @@ mod tests {
             }
         }
         assert_eq!(report(&windows()).platform.webview, "webview2");
-        assert!(!get(&build(&windows()), "system.mediaControls").available);
+        let mc = get(&build(&windows()), "system.mediaControls");
+        assert_eq!((mc.available, mc.implementation), (true, Some("windows-smtc")));
+        let mut mac = windows();
+        mac.os = "macos";
+        assert_eq!(get(&build(&mac), "system.mediaControls").reason_code, Some("not-implemented"));
+        let mut no_mpv = windows();
+        no_mpv.engine_available = false;
+        assert_eq!(get(&build(&no_mpv), "audio.gapless").reason_code, Some("needs-libmpv"));
+        assert_eq!(get(&build(&no_mpv), "audio.replayGain").implementation, Some("webview-volume"));
     }
 
     #[test]
