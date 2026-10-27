@@ -150,6 +150,13 @@ fn start<R: Runtime>(app: &AppHandle<R>, win: &WebviewWindow<R>, dll: &Path, gpu
     if fast {
         opts.push(("profile", "fast".into()));
     }
+    // Diagnostics only: extra mpv options, `name=value;name=value` (e.g. `gpu-debug=yes`)
+    let extra = std::env::var("VHO_MPV_OPTIONS").unwrap_or_default();
+    for kv in extra.split(';').filter(|s| !s.is_empty()) {
+        if let Some((k, v)) = kv.split_once('=') {
+            opts.push((k.trim(), v.trim().to_string()));
+        }
+    }
     let refs: Vec<(&str, &str)> = opts.iter().map(|(k, v)| (*k, v.as_str())).collect();
     let m = mpv::Mpv::new(dll, &refs)?;
     // mpv messages go to stderr; VHO_MPV_LOG_LEVEL (e.g. "v", "debug") for diagnostics
@@ -279,7 +286,16 @@ pub async fn engine_command(st: tauri::State<'_, Engine>, args: Value) -> Result
 
 #[tauri::command]
 pub async fn engine_set(st: tauri::State<'_, Engine>, name: String, value: Value) -> Result<(), String> {
-    mpv_of(&st)?.set_property(&name, &value)
+    mpv_of(&st)?.set_property(&name, &platform_value(cfg!(target_os = "linux"), &name, value))
+}
+
+/// The "hardware decoding: automatic" setting is stored as `auto-safe`. On Linux the render API
+/// only uses copy-back decoding (ADR 0002), so it becomes `auto-copy-safe` there.
+fn platform_value(linux: bool, name: &str, value: Value) -> Value {
+    match (linux, name, value.as_str()) {
+        (true, "hwdec", Some("auto-safe")) => Value::from("auto-copy-safe"),
+        _ => value,
+    }
 }
 
 #[tauri::command]
@@ -343,6 +359,15 @@ mod tests {
         for (i, o) in [("", ""), ("f", "Zg=="), ("fo", "Zm8="), ("foo", "Zm9v"), ("foob", "Zm9vYg=="), ("foobar", "Zm9vYmFy")] {
             assert_eq!(super::base64(i.as_bytes()), o);
         }
+    }
+
+    #[test]
+    fn engine_hwdec_setting_is_copy_back_on_linux() {
+        use serde_json::json;
+        assert_eq!(super::platform_value(true, "hwdec", json!("auto-safe")), json!("auto-copy-safe"));
+        assert_eq!(super::platform_value(true, "hwdec", json!("no")), json!("no"));
+        assert_eq!(super::platform_value(false, "hwdec", json!("auto-safe")), json!("auto-safe"));
+        assert_eq!(super::platform_value(true, "volume", json!(50)), json!(50));
     }
 }
 
