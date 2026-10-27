@@ -86,7 +86,9 @@ export function createGrid(el, { thumbs, onActivate, onPointerSelect, onRender }
       img.removeAttribute("src");
       img.hidden = true;
       if (thumbs.has(it.path)) {
-        box.insertAdjacentHTML("beforeend", `<span class="ps-icon ps-broken" title="${(thumbs.error(it.path) ?? "").replace(/"/g, "&quot;")}">${BROKEN_ICON}</span>`);
+        // the error text can carry a file name: set it as a property, never as markup (Q04)
+        box.insertAdjacentHTML("beforeend", `<span class="ps-icon ps-broken">${BROKEN_ICON}</span>`);
+        box.lastElementChild.title = thumbs.error(it.path) ?? "";
       } else {
         box.classList.add("loading");
       }

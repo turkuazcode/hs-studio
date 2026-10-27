@@ -46,7 +46,9 @@ import { createTimeline } from "./ui/timeline.js";
 import { createToasts } from "./ui/toasts.js";
 import { initPlatform } from "./ui/platform.js";
 import { registerAiModelSettings } from "./ui/ai-models.js";
+import { registerCacheSettings } from "./ui/cache-settings.js";
 import { initWindowControls } from "./ui/window-controls.js";
+import { initDialogA11y } from "./ui/dialog-a11y.js";
 import { createJobsPanel } from "./ui/jobs-panel.js";
 
 /** libmpv status from the backend; { available: false } in a browser or without the DLLs. */
@@ -136,7 +138,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   app.view = app.playbackMenus;
   app.sleep = createSleepTimer(app);
   createModals(app);
+  const dialogs = initDialogA11y(); // every .modal-overlay: dialog role, focus in / trapped / restored (Q03)
   app.shortcuts = initShortcuts(app);
+  app.shortcuts.onEscape(dialogs.closeTopmost); // registered first = asked last
   initWindowControls(dom);
   app.video.syncEngineUi();
   // Diagnostics / E2E: which engine is active (read-only view)
@@ -175,6 +179,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // engine options after the base fields (tab order), once the stored values are loaded
       registerEngineSettings(app);
       announceStorageStatus(app);
+      registerCacheSettings(app);
       registerAiModelSettings(app);
       app.mediaActions.registerSettings().catch((e) => console.error("[actions] settings", e));
       app.jobsPanel?.init();

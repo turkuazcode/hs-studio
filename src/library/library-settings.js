@@ -39,6 +39,9 @@ export function registerLibrarySettings(app, api) {
         },
       })));
     listEl.replaceChildren(...(rows.length ? rows : [h("p", { class: "vho-settings-hint", text: t("library.empty.noFolders") })]));
+    // a list role with only the "no folders" hint inside is an empty list to screen readers (Q03)
+    if (rows.length) listEl.setAttribute("role", "list");
+    else listEl.removeAttribute("role");
   }
 
   s.register("library", [
