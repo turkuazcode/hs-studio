@@ -18,7 +18,11 @@ use crate::photo::ERR_CANCELLED;
 use crate::photo::ops::{self, BatchJob, Conflict};
 
 pub fn all() -> Vec<Arc<dyn Adapter>> {
-    vec![Arc::new(ExportAdapter), Arc::new(PhotoBatchAdapter)]
+    let mut v: Vec<Arc<dyn Adapter>> = vec![Arc::new(ExportAdapter), Arc::new(PhotoBatchAdapter)];
+    for kind in super::external::AI_KINDS {
+        v.push(Arc::new(super::external::ExternalAdapter::new(kind)));
+    }
+    v
 }
 
 fn invalid(e: impl std::fmt::Display) -> JobError {

@@ -7,7 +7,7 @@
 
 import { t } from "../core/i18n.js";
 import { isTauri, listen, openUrl } from "../core/tauri.js";
-import { componentStatuses, installComponent, removeComponent, verifyComponent } from "../media/ai-engine.js";
+import { aiDiagnostics, componentStatuses, installComponent, lastAiRun, removeComponent, verifyComponent } from "../media/ai-engine.js";
 import { componentActions, progressFraction, sizeText } from "../media/ai-status.js";
 
 /** Downloads started from this panel: id -> AbortController (survive panel re-renders). */
@@ -178,5 +178,38 @@ export function registerAiModelSettings(app) {
         refresh(list, app);
       },
     },
+    // A03: a running AI job pauses while a video / music plays and continues afterwards
+    { key: "ai.pauseDuringPlayback", type: "boolean", default: true, control: "toggle",
+      labelKey: "aiRuntime.settings.pauseDuringPlayback", helpKey: "aiRuntime.settings.pauseDuringPlaybackHelp" },
+    {
+      id: "ai-diagnostics", control: "custom",
+      render(container) {
+        container.classList.add("vho-ai-diagnostics");
+        const out = el("p", { id: "ai-diagnostics", class: "vho-settings-hint", "aria-live": "polite" });
+        container.append(out);
+        out.textContent = diagnosticsText();
+      },
+    },
   ]);
+}
+
+/** Last AI run and the fallbacks of this session (backend, tile size, error class). */
+export function diagnosticsText() {
+  const run = lastAiRun();
+  const parts = [];
+  if (run) {
+    parts.push(t("aiRuntime.settings.lastRun", {
+      backend: t(run.backend === "webgpu" ? "aiRuntime.backend.webgpu" : "aiRuntime.backend.wasm"),
+      tile: run.tile ?? "-", sec: run.seconds.toFixed(1),
+    }));
+  } else {
+    parts.push(t("aiRuntime.settings.noRun"));
+  }
+  const fallbacks = aiDiagnostics().filter((d) => d.outcome !== "ok");
+  if (fallbacks.length) {
+    parts.push(t("aiRuntime.settings.fallbacks", {
+      list: fallbacks.slice(-5).map((d) => `${d.backend}${d.tile ? `/${d.tile}` : ""}: ${d.cls ?? d.outcome}`).join(", "),
+    }));
+  }
+  return parts.join(" ");
 }
