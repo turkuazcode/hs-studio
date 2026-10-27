@@ -1,70 +1,79 @@
-# Hukuki ön araştırma: CLA, marka, logo, GPL-3.0
+# Hukuki ön araştırma: lisans, marka, logo
 
 > **Bu belge hukuki danışmanlık değildir.** Teknik bir ön araştırmadır. Amacı, kullanıcının avukatla
 > yapacağı görüşmeye soru listesi ve kaynak hazırlamaktır. Buradaki hiçbir ifade bir hukuki sonucu
 > garanti etmez. Türk hukuku (FSEK, SMK) ve yabancı hukuk açısından son söz avukatındır.
 >
-> Hazırlanma: 2026-10-26 (E8, R01 eki). İlgili dosyalar: [CLA.md](../../CLA.md), [TRADEMARKS.md](../../TRADEMARKS.md),
-> [LICENSE](../../LICENSE), [legal/INVENTORY.md](../../legal/INVENTORY.md), [CODE_OF_CONDUCT.md](../../CODE_OF_CONDUCT.md).
+> Hazırlanma: 2026-10-26 (E8, R01 eki). İlgili dosyalar: [LICENSE](../../LICENSE), [NOTICE](../../NOTICE), [TRADEMARKS.md](../../TRADEMARKS.md),
+> [legal/INVENTORY.md](../../legal/INVENTORY.md), [CODE_OF_CONDUCT.md](../../CODE_OF_CONDUCT.md).
 
-## 0. Durum özeti (kullanıcı kararları, 2026-10-25)
+## 0. Durum özeti ve lisans kararlarının geçmişi
 
-- Proje lisansı **GPL-3.0-only**. Amaç para değil. Kapalı fork'ları önlemek ve iyileştirmelerin ana projeye
-  dönmesini sağlamak.
-- Ürün adı **HS Studio** (eski çalışma adı VHO). Ad ve logo korunacak. Fork'lar farklı ad kullanmalı.
-- Katkılar için CLA olacak. Sahip ileride yeniden lisanslayabilmeli.
+| Tarih | Karar | Not |
+|---|---|---|
+| (başlangıç) | MIT | İlk depo lisansı |
+| 2026-10-25 | GPL-3.0-only + isim/logo koruması + CLA (Harmony "Option Five") | Amaç: kapalı fork'ları önlemek ve katkıyı ana projeye yönlendirmek |
+| 2026-10-26 (sabah) | CLA, Harmony "Option Three"e daraltıldı (yalnızca OSI lisansları) | Gerekçe: SignPath açık kaynak imzalama programı "ticari çift lisans yok" şartı koyuyor |
+| **2026-10-26** | **Apache-2.0 + NOTICE**; CLA kaldırıldı, katkılar Apache-2.0 + DCO (inbound = outbound); TRADEMARKS.md kalıyor | **Geçerli karar.** Amaç: her şey açık olsun, ama dağıtanlar projeye atıf yapsın. Basitlik |
+
+GPL-3.0 ve CLA hiçbir sürümde veya dış katkıda kullanılmadı. Herkese açık bir yayın yoktu; dış katkı da
+kabul edilmedi. Bu yüzden lisans değişikliği için kimseden izin gerekmiyordu (avukatla teyit edilebilir).
+
+Diğer güncel kararlar:
+
+- Ürün adı **HS Studio** (eski çalışma adı VHO). Ad ve logo TRADEMARKS.md ile korunur.
+- Kod imzalama: SignPath Foundation'ın ücretsiz açık kaynak programı (2026-10-26).
 - GFPGAN/YuNet modelleri kalıyor. Eğitim verisindeki ticari olmayan kullanım (NC) tartışması bilerek kabul
-  edildi.
+  edildi (2026-10-25).
 - İletişim adresi: turkuazcode@gmail.com.
 
-## 1. CLA (katkıcı lisans sözleşmesi)
+## 1. Lisans: Apache-2.0'ın sonuçları
 
-### 1.1 Seçenekler
+- **Atıf yükümlülüğü (NOTICE):** Apache-2.0 §4, yeniden dağıtanların şunları korumasını şart koşar: lisans
+  metni, telif bildirimleri ve **NOTICE dosyasındaki atıflar**. §4(d), atıfların dağıtımın en az bir yerinde
+  bulunmasını ister: NOTICE dosyasında, kaynakta/belgede ya da eserin ürettiği ekranda (bu tür bildirimlerin
+  normalde gösterildiği yerde). "Görünür tut" ricası NOTICE'ın içinde yazılı; bu bir rica olup lisansın
+  kendisi değildir.
+  - Projenin kendi dağıtımı bu şartı karşılar: NOTICE, uygulamadaki Lisanslar penceresinin en üstünde
+    gösterilir ve kurulumda `legal\NOTICE.txt` olarak bulunur.
+- **Kapalı fork'lar artık mümkün:** Apache-2.0, değiştirilmiş sürümü kaynak açmadan, ücretli de olsa dağıtmaya
+  izin verir. Bunu sınırlayan iki şey kalır:
+  - NOTICE ve lisans bildirimi şartı (atıf).
+  - **Ad ve logo koruması** (Apache-2.0 §6 marka hakkı vermez; TRADEMARKS.md fork'ların ad değiştirmesini
+    ister).
+- **Değişiklik bildirimi:** Değiştirilen dosyalarda değişikliğin belirtilmesi gerekir (§4(b)).
+- **Patent lisansı ve fesih:** Katkıcılar patent lisansı da verir. Patent davası açan kişinin lisansı sona
+  erer (§3).
+- **CLA gerekmiyor:** Katkılar §5 gereği aynı lisansla gelir. Köken beyanı DCO (`git commit -s`) ile alınır.
+  Yeniden lisanslama ihtiyacı Apache-2.0'ın geniş izinleriyle büyük ölçüde ortadan kalkar.
+- **SignPath:** "Ticari çift lisans yok" şartıyla çatışma kalmadı. Tek lisans (Apache-2.0) var, tescilli
+  ikinci bir lisans yok.
+- **Apple App Store / Microsoft Store:** Uygulamanın kendi kodu için lisans çatışması yok. Apache-2.0'ın ek
+  kısıtlama yasağı bulunmuyor.
+  - LGPL DLL'lerin (libmpv/FFmpeg) mağaza dağıtımında değiştirilebilirlik şartının nasıl karşılanacağı ayrıca
+    incelenmeli. Mac App Store'da libmpv şu an zaten yok (macOS'ta gömülü değil).
+- **Bağımlılıklar:** Hepsi Apache-2.0 ile birlikte dağıtılabilir ([legal/INVENTORY.md](../../legal/INVENTORY.md)).
+  Bağımlılık politikası değişmedi: GPL/AGPL kütüphane yok, LGPL yalnızca ayrı dosya olarak.
+- **Telif satırı:** NOTICE'ta "Copyright 2026 Halil SARITAŞ (hsrts)" yazıyor (commit'lerdeki ad).
+  Kullanıcı/avukat onaylamalı.
 
-| Seçenek | Ne sağlar | Artısı (tek sahipli, yeniden lisanslama isteyen GPL projesi için) | Eksisi |
-|---|---|---|---|
-| **Harmony HA-CLA-I, Option Five** (taslakta seçilen) | Katkıcı telif hakkını korur. Sahibe süresiz, devredilebilir, alt lisanslanabilir geniş bir lisans verir. Sahip katkıyı **herhangi bir lisansla** (tescilli lisans dahil) dağıtabilir, **ama** katkı tarihindeki proje lisansıyla da sunmak zorundadır | Yeniden lisanslama özgürlüğü tamdır. Katkıcıya "katkın hep GPL ile de açık kalacak" güvencesi verir. Şablon CC BY 3.0 lisanslıdır, uyarlanabilir. Patent lisansı da içerir | Uzun bir metin. Katkıcıyı caydırabilir. 2011 tarihli (v1), güncellenmemiş. Türk hukukuna göre yazılmamıştır (§1.3) |
-| Harmony Option One–Four | Dış lisansı katkı tarihindeki lisansla (1), belirli lisanslarla (2), OSI lisanslarıyla (3) veya FSF'nin önerdiği copyleft lisanslarla (4) sınırlar | Katkıcıya daha fazla güvence verir | Option 1–2 ileride lisans değişimini kısıtlar. 3–4 kapalı lisansa izin vermez. "Gerekirse yeniden lisanslama" hedefini kısmen karşılar |
-| **Yalnızca DCO** (`Signed-off-by`, Developer Certificate of Origin 1.1) | Katkıcı "bunu yazma/gönderme hakkım var" diye beyan eder. Katkı, projenin kendi lisansıyla (GPL-3.0-only) gelir | En hafif yöntemdir. Linux çekirdeği gibi büyük projeler kullanır. Caydırıcı değildir | Sahibe **yeniden lisanslama hakkı vermez**. Dış katkı girdikten sonra lisans değişikliği tüm katkıcıların onayını ister. GPL-3.0-only olduğu için "v4'e geçiş" bile mümkün olmaz |
-| **Apache ICLA** (Apache Software Foundation'ın bireysel CLA'sı) | Geniş telif ve patent lisansı verir. Dış lisans sınırı yoktur | Çok bilinir, katkıcılar tanır. Yeniden lisanslama hakkı verir | ASF için yazılmıştır, uyarlanması gerekir. Metnin kendi yeniden kullanım koşulu bu araştırmada doğrulanamadı (`icla.txt` artık PDF'e yönlendiriyor). Katkıcıya "GPL ile açık kalacak" güvencesi yoktur |
-| Telif devri (FSF tipi "copyright assignment") | Mali haklar sahibe devredilir | Hukuki olarak en güçlü konum | En caydırıcı seçenektir. Türk hukukunda manevi haklar devredilemez. Devir sözleşmesi şekil şartlarına bağlıdır (§1.3) |
-| CLA + DCO (taslakta seçilen birleşim) | CLA hakları verir, DCO her commit'te kaynağı beyan eder | Commit bazında kanıt olur. CLA kaydı tutulmasa bile köken beyanı kalır | Katkıcı için iki adım vardır |
+### 1.1 Avukata sorulacaklar (lisans)
 
-**Ön değerlendirme (hukuki görüş değil):** Kullanıcının hedefleri yeniden lisanslama özgürlüğü ve fork'ların
-kapalı olmaması. Harmony Option Five + DCO bu iki hedefle teknik olarak örtüşüyor. "Yalnızca DCO" seçilirse
-yeniden lisanslama hedefi fiilen kaybolur. Apache ICLA da hedefleri karşılar, ama katkıcıya verilen GPL
-güvencesi olmadığı için güven açısından daha zayıf.
+1. GPL-3.0 kararı ve CLA taslağı yayımlanmadan geri alındı. Herhangi bir hak veya taahhüt doğdu mu?
+   (Beklenti: hayır. Teyit için.)
+2. NOTICE'taki "görünür tutun" ricasının ve TRADEMARKS.md'nin birlikte hukuki etkisi ne? NOTICE'ın zorunlu
+   kısmı (§4(d)) ile rica kısmı açıkça ayrılmış mı?
+3. Telif sahibi satırı: gerçek kişi adı mı, ileride kurulacak bir tüzel kişi mi?
 
-### 1.2 Avukata sorulacaklar
-
-1. **FSEK md. 52 şekil şartı:** Mali haklara ilişkin sözleşmelerin yazılı olması ve hakların "ayrı ayrı
-   gösterilmesi" gerekir. Bu şart lisans veren CLA'lar için de geçerli mi? Tıkla-kabul et, PR açıklamasına
-   yazılan beyan veya CLA bot kaydı yazılı şekli karşılar mı? E-imza gerekir mi? Hakların (işleme, çoğaltma,
-   yayma, temsil, umuma iletim) ayrı ayrı sayılması gerekir mi? Harmony metni bunları tek tek saymıyor.
-2. **Manevi haklar (CLA §2.4):** Feragat maddesi Türk hukukunda geçerli mi, yoksa yalnızca "ileri sürmeme"
-   taahhüdü olarak mı yorumlanır?
-3. **Uygulanacak hukuk ve yetkili mahkeme (§6.1, şu an `[TO BE SET]`):** Türkiye mi seçilmeli? Yabancı
-   katkıcılar için ne anlama gelir?
-4. Option Five'ın "tescilli lisansla da dağıtabilir" hakkı katkıcılara açıkça ve anlaşılır biçimde anlatılmış
-   mı? Tüketici veya genel işlem şartı denetimine takılabilir mi?
-5. Kurumsal katkı için "Entity CLA" (Harmony HA-CLA-E) gerekli mi?
-6. Reşit olmayan katkıcılar (§3c) için veli onayı nasıl alınır?
-7. Kayıt tutma: hangi katkıcının hangi tarihte hangi sürümü kabul ettiği nasıl saklanmalı?
-
-### 1.3 Kaynaklar
-
-- Harmony Agreements: <https://www.harmonyagreements.org/agreements.html> (şablonlar). İçerik lisansı
-  sitenin altbilgisinde "Creative Commons Attribution 3.0 Unported" olarak yazıyor. Taslak bu şablondan
-  alıntı ve değişiklik listesiyle türetildi.
-- DCO 1.1: <https://developercertificate.org/>
-- Apache CLA'ları: <https://www.apache.org/licenses/contributor-agreements.html>, ICLA: <https://www.apache.org/licenses/icla.pdf>
+> Önceki CLA araştırması (Harmony seçenekleri, DCO, Apache ICLA, FSEK md. 52 soruları) bu karar nedeniyle
+> artık uygulanmıyor. Geçmiş için bu belgenin git geçmişine bakılabilir (commit 95bfeaf ve öncesi).
 
 ## 2. Marka: "HS Studio" adı ve logosu
 
 ### 2.1 TRADEMARKS.md'nin tescilsiz yapabildikleri ve yapamadıkları
 
-- **Yapabildikleri:** Projenin adı ve logosu için bir **kullanım politikası** ilan eder. GPL-3.0 §7(e)
-  lisansçının marka haklarını vermeyi reddetmesine izin verir. Fork'lara "adı değiştir" çağrısı yapar.
+- **Yapabildikleri:** Projenin adı ve logosu için bir **kullanım politikası** ilan eder. Apache-2.0 §6
+  zaten marka hakkı vermez (yalnızca kökeni tanımlamak ve NOTICE'ı yeniden üretmek için olağan kullanım hariç). Fork'lara "adı değiştir" çağrısı yapar.
   Topluluk içinde beklentiyi netleştirir. Paket depoları ve mağazalar genelde bu tür politikalara uyar.
   Logo dosyaları ayrıca telif hakkıyla (FSEK) korunabilir.
 - **Yapamadıkları (tescil yoksa):** SMK kapsamındaki tescilli marka korumasını sağlamaz. Başka biri aynı veya
@@ -128,8 +137,8 @@ Benzer adlar ("HS Player" gibi) ve sınıf 9/42 için bir marka vekili araştır
 1. "HS Studio" kelime markası mı, logo ile birleşik marka mı tescil edilmeli? Hangi sınıflarda?
 2. "HS Player" gibi aynı alandaki benzer adlar risk oluşturur mu?
 3. Tescil öncesinde TRADEMARKS.md'deki "HS ile başlayan adlar" yasağı fazla geniş mi, uygulanabilir mi?
-4. Logo dosyaları GPL-3.0 kapsamında da sunulursa (telif) marka koruması zayıflar mı? Yoksa logolar ayrı bir
-   lisansla mı tutulmalı?
+4. Logo dosyaları Apache-2.0 kapsamında da sunulursa (telif) marka koruması zayıflar mı? Yoksa logolar ayrı
+   bir lisansla mı tutulmalı (ör. "tüm hakları saklıdır", yalnızca projenin kendi dağıtımına izin)?
 5. Eski çalışma adı "VHO" için ayrıca bir şey yapmak gerekir mi?
 
 ## 3. Logo hakları: kullanıcının netleştirmesi gerekenler
@@ -149,36 +158,15 @@ Logo ve ikon dosyaları (`src-tauri/icons/*`, `src/assets/favicon.png`, `src/ass
 5. Yeni bir HS Studio logosu yapılacaksa bu sorular baştan yanıtlanmalı. Tasarımcı varsa yazılı devir
    sözleşmesi yapılmalı.
 
-## 4. GPL-3.0'ın pratik sonuçları
+## 4. Mağazalar ve dağıtım kanalları
 
-- **Kaynak kod yükümlülüğü:** İkili (exe ve kurulum paketi) dağıtılan herkes "karşılık gelen kaynak kodu"
-  sağlamalıdır (GPL-3.0 §6). Pratikte yapılacaklar:
-  - Her sürüm için tam etiketli kaynağı aynı yerde yayınlamak.
-  - Kurulum paketine LICENSE dosyasını koymak.
-  - Uygulamadaki "Lisanslar" penceresini korumak.
-  - LGPL DLL'lerin kaynağını da saklamak ([legal/INVENTORY.md](../../legal/INVENTORY.md)).
-- **"Kapalı fork'u önleme" hedefinin sınırı:** GPL, değiştirilmiş sürümü **dağıtanı** kaynağı açmaya zorlar.
-  - Yalnızca kendi içinde kullanan veya ağ hizmeti olarak sunan biri GPL-3.0 ile buna zorlanmaz. Ağ
-    hizmetini kapsayan lisans AGPL-3.0'dır; masaüstü uygulama için genelde gerekmez.
-  - GPL, fork'ların **para alarak dağıtmasını** da engellemez. Ad ve logo koruması bu boşluğu kısmen kapatır.
-- **GPL-3.0-only ("or later" değil):** İleride GPL v4'e geçmek yalnızca CLA sayesinde mümkündür.
-- **Microsoft Store:** GPL-3.0 uygulamalar dağıtılabiliyor. Örnek: GIMP (GPL-3.0-or-later) 2022'den beri
-  GIMP ekibi tarafından resmî olarak Microsoft Store'da.
-  <https://www.gimp.org/news/2022/06/18/gimp-2-10-32-on-microsoft-store/>. Mağaza koşulları yayın anında
-  yeniden kontrol edilmeli.
-- **Apple App Store:** Uyumsuzluk yaygın olarak kabul edilir. App Store kullanım koşulları, GPL'nin "ek
-  kısıtlama getirmeme" şartıyla çatışır.
-  - 2010'da VLC iOS sürümü bir VLC geliştiricisinin GPL ihlali bildirimi üzerine App Store'dan kaldırıldı.
-    FSF de benzer bir tutum açıkladı.
-    <https://www.engadget.com/2011-01-09-the-gpl-the-app-store-and-you.html>,
-    <https://www.techdirt.com/2010/11/01/apple-prefers-to-keep-gpl-d-software-out-of-app-store-so-it-can-keep-drm-on-all-apps/>.
-  - Bu tartışma GPLv2 dönemine ait. GPLv3'te §10'daki "ek kısıtlama yok" ilkesi devam ediyor.
-  - Mac App Store dağıtımı da aynı sorunu taşır. macOS için mağaza dışı (notarize edilmiş DMG) dağıtım
-    planlanmalı.
-  - CLA sayesinde sahip, yalnızca App Store sürümü için ayrı bir lisans verebilir (avukat sorusu).
-- **Bağımlılıklar:** Tüm bağımlılıklar GPL-3.0 ile uyumlu ([legal/INVENTORY.md](../../legal/INVENTORY.md)).
-  FreeType yalnızca GPL-2.0-or-later seçeneğiyle uyumlu. OFL font ayrı dosya olarak paketlendiği sürece sorun
-  yok.
+- **Microsoft Store:** Açık kaynak lisanslı uygulamalar dağıtılabiliyor; Apache-2.0 bir engel değil.
+  Mağaza koşulları yayın anında yeniden kontrol edilmeli.
+- **Apple App Store:** 2010'daki VLC olayı GPL kaynaklıydı (VLC iOS, bir geliştiricinin GPL ihlali bildirimiyle
+  kaldırıldı; <https://www.engadget.com/2011-01-09-the-gpl-the-app-store-and-you.html>). Apache-2.0 için
+  bu tür bir çatışma yok. Yine de LGPL bileşenler mağaza paketine girecekse ayrıca incelenmeli (§1).
+- **Kod imzalama:** SignPath Foundation (ücretsiz, açık kaynak). Ayrıntılar:
+  [docs/release/signing-and-updates.md](../release/signing-and-updates.md).
 
 ## 5. Contributor Covenant'ın lisansı (açık soru)
 
@@ -195,11 +183,12 @@ Logo ve ikon dosyaları (`src-tauri/icons/*`, `src/assets/favicon.png`, `src/ass
 
 ## 6. Avukat görüşmesi için kısa liste
 
-1. CLA: FSEK md. 52 şekli, manevi haklar, uygulanacak hukuk, imza yöntemi, Entity CLA (§1.2).
-2. Marka: kelime mi şekil mi, sınıf 9/42, benzer adlar, TRADEMARKS.md kapsamı (§2.4).
+1. Lisans: GPL/CLA kararının yayın öncesi geri alınması, NOTICE'ın zorunlu ve rica kısımları, telif sahibi
+   satırı (§1.1).
+2. Marka: kelime mi şekil mi, sınıf 9/42, benzer adlar, TRADEMARKS.md kapsamı, logo dosyalarının lisansı (§2.4).
 3. Logo: kökeni ve hakları (§3). Önce kullanıcı yanıtlamalı.
 4. GFPGAN/YuNet eğitim verisi (NC) riski: kullanıcı kabul etti. Risk boyutu ve uyarı metni gerekip gerekmediği
    sorulabilir.
 5. Codec patentleri (H.264/HEVC/AAC çözücüler): telif lisansı dışında bir konu.
 6. Contributor Covenant metninin lisansı (§5).
-7. Apple App Store gerekirse: CLA'ya dayalı ayrı lisans seçeneği.
+7. LGPL DLL'lerin mağaza (Microsoft/Apple) paketlerinde değiştirilebilirlik şartı.

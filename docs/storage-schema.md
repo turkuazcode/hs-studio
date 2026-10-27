@@ -103,3 +103,31 @@ Yedekler SQLite çevrimiçi yedek API'siyle alınır (WAL içeriği dahil tutarl
 - A02: iş kuyruğu tabloları göç listesine eklenir; işçiler `open_reader` + kısa `write` işlemleri kullanır.
 - Kaydetme şimdilik belge bazlıdır (son açılanlar ≤20, kaldığı yer ≤500 satır tek işlemde yeniden yazılır); L02'de satır bazlı komutlara geçilebilir.
 - macOS/Linux'ta platform kimliği kodu derlenir ama bu dalda yalnızca Windows'ta test edildi.
+
+## Kütüphane (şema v3 `library`, Plan 13/L02)
+
+Kod: `src-tauri/src/library/{mod,scan,watch,ops,folders,query,playlist}.rs`, ön yüz `src/core/library-api.js`, `src/library/*`, Fotoğraf Stüdyosu `src/studio/studio.js`. Testler: `cargo test --release --lib library`, `tests/unit/library-l02.test.mjs`, `tests/e2e/library.e2e.mjs`.
+
+**Birleştirme notu:** v2 A02'nin (`jobs`, ayrı dal). Bu dalda listenin kesintisiz kalması için v2 yerinde `jobs-pending-merge` adlı boş bir yer tutucu var; birleştirmede A02'nin gerçek v2'si onun yerine konur. Yer tutucuyu uygulamış bir test veritabanını birleşik derleme `migrationMismatch` ile reddeder (A02'yi sessizce atlamaz).
+
+| Ek | Amaç |
+|---|---|
+| `folders.status` (`online/offline/missing`), `file_count`, `scan_error` | Kütüphane klasörü (`watched=1`) ve Fotoğraf Stüdyosu favori klasörü (`favorite=1`) aynı satırda |
+| `media.in_library`, `missing_since`, `play_count`, `last_played_at` | Taramada bulunan öğe (bir kez açılan dosya 0), kayıp zamanı, akıllı listeler |
+| `media_tags(media_id, tag, tag_norm)` | Kullanıcı etiketleri (büyük/küçük harf duyarsız; ilk yazım korunur) |
+| `media_ops` | Dosya sistemi işlemi kaydı (`rename/move/trash`, `pending/done/failed`, eski/yeni yol ve kaldığı yer anahtarı) |
+| `media_fts` (FTS5, `unicode61 remove_diacritics 2`) | Ad / başlık / sanatçı / albüm / etiket araması; tetikleyicilerle aynı işlemde güncellenir; Türkçe `ı/İ` → `i` katlanır. Anlamsal (AI) arama değildir |
+
+**Kütüphaneye ekle ≠ göz at:** Yalnızca Kütüphane > Klasör ekle (veya Ayarlar > Kütüphane) kalıcı tarama başlatır. Fotoğraf Stüdyosu'nda klasöre göz atmak veya dosya açmak kütüphaneye eklemez; kullanıcının seçmediği disk taranmaz. Aynı klasör ikinci kez eklenirse `exists`, kütüphane klasörünün alt klasörü `covered`; üst klasör eklenirse alttakiler onunla birleşir.
+
+**Tarama (doğruluk kaynağı):** Dizinler gezilir, `media` satırlarıyla karşılaştırılır, yalnızca farklar 500'lük kısa işlemlerle yazılır (değişmeyen dosyaya yazma yok; 5.200 dosyalık ikinci tarama ~40 ms). Yeni dosya önce kaybolan satırlarla eşleştirilir: aynı birim + dosya kimliği = taşıma/yeniden adlandırma (UUID ve bağlı favori/yıldız/etiket/kaldığı yer korunur, `media_ops`'a `move` yazılır); yalnızca boyut+zaman benzerliği birleştirilmez. Kaybolan dosya `missing` (veri korunur, geri gelirse `present`), Geri Dönüşüm Kutusu'na taşınan `deleted` (yalnızca D1). Kök erişilemezse: birim/paylaşım yoksa klasör ve öğeleri `offline` (asla `missing` değil), birim var ama klasör yoksa `missing`. Sınırlar: sembolik bağlantı/junction izlenmez (döngü yok), derinlik 48, tarama başına 400.000 dosya; kesilen/sınırlanan tarama hiçbir şeyi `missing` yapmaz; erişim reddedilen dizinin öğelerine dokunulmaz; gizli/geçici/yarım dosyalar (`.part`, `~$`, `.crdownload`, 0 bayt) atlanır. İptal edilen taramada tamamlanan partiler tutarlıdır. Ses dosyalarının metin etiketleri (lofty, kapak okunmadan) ikinci aşamada `audio_tags`'e yazılır.
+
+**İzleme:** `notify` (CC0-1.0) yalnızca hızlandırıcıdır; olaylar 0,7 sn sessizlik (en çok 4 sn) sonra değişen dizinlerin taramasına dönüşür, taşma/hata tam uzlaştırma ister. Kaçan olayları açılıştaki, dönemsel (Ayarlar > Kütüphane: 15/30/60/240 dk, kapalı) ve elle (Şimdi tara) uzlaştırma düzeltir. Çevrimdışı klasörler 20 sn'de bir denetlenir; geri gelince taranır.
+
+**D1 olayları:** `file_rename` / `file_trash` komutları `library::tracked_rename/tracked_trash` ile sarılır: önce `pending` kayıt, sonra disk işlemi, sonra tek işlemde medya satırı + kaldığı yer anahtarı (`vho_file_<ad>_<boyut>`, `video-player.js resumeKey` ile aynı biçim) + yer imleri + kayıt `done`. Arada çökme olursa açılışta `reconcile_pending` diske bakarak tamamlar ya da `failed` yapar. Ön yüz belgesi (`library.js applyMove`) aynı anda güncellenir; geride kalmış bir belge kaydı (`save_doc`) eski yol/anahtarı `media_ops` üzerinden yeni konuma eşler, eski yolda hayalet satır oluşmaz. Tarama sırasında bulunan taşımalar `library-changed` olayıyla ön yüze bildirilir.
+
+**Ortak sorgu (`library_query`):** tür (video/ses/görüntü), görünüm (`all/continue/recentlyAdded/favorites/rated/mostPlayed/missing`), FTS araması, klasör, etiket, en az yıldız, sanatçı/albüm/tür, sıralama, sayfa (≤500). “Devam et” kaldığı yer anahtarını ad+boyuttan hesaplar. L03 için `library_music_groups` (sanatçı/albüm/tür). Fotoğraf Stüdyosu yıldız (0–5 tuşları), etiket (⋯ > Etiketler) ve “en az yıldız” süzgeci aynı tabloları kullanır; favori klasörler `folders.favorite`'e bir kez taşınır (`meta.legacy_studio_favorites`; ayar değeri dokunulmadan kalır).
+
+**Oynatma listeleri:** `playlists/playlist_items` medya kimliğine bağlıdır (yeniden adlandırılan dosya listedeki yerinde kalır). M3U/M3U8/PLS okuma: UTF-8 (BOM'lu/BOM'suz), UTF-16 BOM, aksi halde Windows-1254; göreli yollar listenin klasörüne göre, `file://` URI'leri çözülür; eksik dosyalar sırasıyla kalır ve işaretlenir. Uzak URL'ler yalnızca saklanır — içe aktarma hiçbir şey indirmez/çalıştırmaz; yalnızca akış şemaları (http(s), rtsp, rtmp, mms, srt, udp…) kabul edilir, diğerleri (`javascript:`, `data:`…) atlanıp sayılır. Yazma: `.m3u8` BOM'suz UTF-8, `.m3u` BOM'lu UTF-8, `.pls` UTF-8; aynı birimdeyse göreli yol. 16 MB / 100.000 öğe sınırı.
+
+**Sınırlar:** video süresi/çözünürlüğü taranmaz (oynatınca dolar); EXIF çekim zamanı kütüphaneye yazılmaz (stüdyo kendi okur); belirsiz taşımalar için içerik özeti hesaplanmıyor (eski satır `missing` kalır, yenisi eklenir); macOS NFC/NFD ve Unix çıkarılabilir disk algısı (`/media`, `/mnt`, `/run/media`, `/Volumes`) yalnızca kodda, test edilmedi.

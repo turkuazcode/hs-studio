@@ -128,7 +128,7 @@ export function dateInputToMs(value, endOfDay = false) {
  * filter: { type: "all"|"photo"|"image"|"raw"|"heif"|"video", from, to (ms or null), query }.
  * EXIF dates are "camera wall clock as UTC"; they are compared as local wall-clock times.
  */
-export function filterItems(items, { type = "all", from = null, to = null, query = "" } = {}) {
+export function filterItems(items, { type = "all", from = null, to = null, query = "", minRating = 0 } = {}) {
   const q = searchFold(query.trim());
   const tz = (ms) => ms + new Date(ms).getTimezoneOffset() * 60000;
   return items.filter((it) => {
@@ -139,7 +139,9 @@ export function filterItems(items, { type = "all", from = null, to = null, query
       if (from != null && d < from) return false;
       if (to != null && d > to) return false;
     }
-    if (q && !searchFold(it.name).includes(q)) return false;
+    // library ratings / tags (Plan 13/L02) are merged into the items by the studio
+    if (minRating > 0 && (it.rating ?? 0) < minRating) return false;
+    if (q && !searchFold(it.name).includes(q) && !(it.tags ?? []).some((tag) => searchFold(tag).includes(q))) return false;
     return true;
   });
 }
