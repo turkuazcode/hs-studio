@@ -208,11 +208,24 @@ fn scaled_request(w: u16, h: u16, target: u32) -> (u16, u16) {
     (((w as f64 * r).ceil() as u16).max(1), ((h as f64 * r).ceil() as u16).max(1))
 }
 
+/// Largest image decoded (2^28 = 268 MP, e.g. 16384 x 16384; 1 GiB as RGBA8). The header is
+/// checked before any pixel buffer is allocated, so a tiny file claiming a huge size
+/// (decompression bomb) fails at once instead of taking gigabytes of memory (Q04).
+pub const MAX_PIXELS: u64 = 1 << 28;
+
+fn check_size(w: u64, h: u64) -> Result<(), String> {
+    if w == 0 || h == 0 || w.saturating_mul(h) > MAX_PIXELS {
+        return Err(err_unsupported(format!("Görüntü boyutu desteklenmiyor: {w}×{h} (en fazla {} MP)", MAX_PIXELS / 1_000_000)));
+    }
+    Ok(())
+}
+
 /// Decodes a JPEG at reduced size (longest side >= target) with jpeg-decoder.
 pub fn jpeg_scaled(bytes: &[u8], target: u32) -> Result<DynamicImage, String> {
     let mut d = jpeg_decoder::Decoder::new(Cursor::new(bytes));
     d.read_info().map_err(|e| format!("JPEG okunamadı: {e}"))?;
     let info = d.info().ok_or("JPEG başlığı okunamadı")?;
+    check_size(info.width.into(), info.height.into())?;
     let (rw, rh) = scaled_request(info.width, info.height, target);
     let (w, h) = d.scale(rw, rh).map_err(|e| format!("JPEG ölçeklenemedi: {e}"))?;
     let pixels = d.decode().map_err(|e| format!("JPEG çözülemedi: {e}"))?;
@@ -245,6 +258,8 @@ fn decode_with_image(reader: ImageReader<impl std::io::BufRead + std::io::Seek>)
     limits.max_alloc = Some(4 << 30); // large panoramas
     reader.limits(limits);
     let mut decoder = reader.into_decoder().map_err(|e| err_unsupported(format!("Görüntü açılamadı: {e}")))?;
+    let (w, h) = decoder.dimensions();
+    check_size(w.into(), h.into())?;
     let icc = decoder.icc_profile().ok().flatten();
     let img = DynamicImage::from_decoder(decoder).map_err(|e| format!("Görüntü çözülemedi: {e}"))?;
     Ok((img, icc))
@@ -676,5 +691,97 @@ mod tests {
         std::fs::write(&p, b"definitely not an image").unwrap();
         let e = decode(&p, None).err().unwrap();
         assert!(e.starts_with("[unsupported]") || e.contains("çözülemedi"), "{e}");
+    }
+
+    fn crc32(data: &[u8]) -> u32 {
+        let mut c = !0u32;
+        for &b in data {
+            c ^= b as u32;
+            for _ in 0..8 {
+                c = if c & 1 != 0 { 0xEDB8_8320 ^ (c >> 1) } else { c >> 1 };
+            }
+        }
+        !c
+    }
+
+    /// A ~70-byte PNG whose header claims `w` x `h` RGBA pixels.
+    fn png_claiming(w: u32, h: u32) -> Vec<u8> {
+        let mut out = b"PNG
+
+".to_vec();
+        let mut chunk = |kind: &[u8], data: &[u8]| {
+            out.extend_from_slice(&(data.len() as u32).to_be_bytes());
+            let mut body = kind.to_vec();
+            body.extend_from_slice(data);
+            out.extend_from_slice(&body);
+            out.extend_from_slice(&crc32(&body).to_be_bytes());
+        };
+        let mut ihdr = w.to_be_bytes().to_vec();
+        ihdr.extend_from_slice(&h.to_be_bytes());
+        ihdr.extend_from_slice(&[8, 6, 0, 0, 0]);
+        chunk(b"IHDR", &ihdr);
+        chunk(b"IDAT", &[0x78, 0x9c, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01]);
+        chunk(b"IEND", &[]);
+        out
+    }
+
+    #[test]
+    fn photo_decode_rejects_decompression_bombs_before_allocating() {
+        let dir = temp_dir("bomb");
+        // 400 MP (1.6 GB as RGBA): under the decoder's own 4 GB allocation limit, over MAX_PIXELS
+        for (w, h) in [(20_000, 20_000), (65_535, 65_535), (1, u32::MAX >> 1)] {
+            let p = dir.join(format!("bomb-{w}x{h}.png"));
+            std::fs::write(&p, png_claiming(w, h)).unwrap();
+            let t = std::time::Instant::now();
+            for target in [None, Some(crate::photo::THUMB_SIZE)] {
+                let e = decode(&p, target).err().expect("bomb decoded");
+                assert!(e.starts_with("[unsupported]"), "{w}x{h}: {e}");
+            }
+            assert!(t.elapsed().as_secs() < 2, "rejection took {:?}", t.elapsed());
+        }
+        // A JPEG whose frame header is patched to 65000 x 65000 (4.2 GP)
+        let p = dir.join("small.jpg");
+        save(&pattern(32, 24), &p);
+        let mut bytes = std::fs::read(&p).unwrap();
+        let sof = bytes.windows(2).position(|m| m[0] == 0xFF && (0xC0..=0xC2).contains(&m[1])).unwrap();
+        bytes[sof + 5..sof + 9].copy_from_slice(&[0xFD, 0xE8, 0xFD, 0xE8]);
+        std::fs::write(&p, &bytes).unwrap();
+        for target in [None, Some(crate::photo::THUMB_SIZE)] {
+            let e = decode(&p, target).err().expect("JPEG bomb decoded");
+            assert!(e.starts_with("[unsupported]"), "{e}");
+        }
+        // The limit is not hit by ordinary large photos
+        assert!(check_size(12_000, 9_000).is_ok() && check_size(16_384, 16_384).is_ok());
+        assert!(check_size(0, 10).is_err());
+    }
+
+    #[test]
+    fn photo_decode_survives_truncated_and_corrupt_exif() {
+        let dir = temp_dir("badexif");
+        let p = dir.join("x.jpg");
+        write_exif_jpeg(&p, 40, 30, 6);
+        let good = std::fs::read(&p).unwrap();
+        let app1 = good.windows(2).position(|m| m == [0xFF, 0xE1]).unwrap();
+        let mut seed = 0x2545_F491u32;
+        for i in 0..200 {
+            let mut b = good.clone();
+            if i % 2 == 0 {
+                // flip bytes inside the EXIF block (IFD counts, offsets, types)
+                for _ in 0..8 {
+                    seed ^= seed << 13;
+                    seed ^= seed >> 17;
+                    seed ^= seed << 5;
+                    let at = app1 + 4 + (seed as usize % 200);
+                    b[at] = (seed >> 8) as u8;
+                }
+            } else {
+                b.truncate(app1 + 4 + i);
+            }
+            let _ = exif::read_bytes(&b);
+            let f = dir.join(format!("bad-{i}.jpg"));
+            std::fs::write(&f, &b).unwrap();
+            let _ = exif::read_path(&f).orientation();
+            let _ = decode(&f, Some(crate::photo::THUMB_SIZE));
+        }
     }
 }
