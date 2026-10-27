@@ -29,13 +29,14 @@ const SMART_SUFFIX = { inpaint: "_removed", matting: "_background", colorize: "_
 /**
  * Request of a smart-edit job (pure; unit tested). params: inpaint { strokes }, matting
  * { mode: "transparent" | "color" | "blur", color, blur }, colorize {}. Always PNG (alpha).
+ * background: "portrait" (default) | "general" picks the matting model (Settings > AI models).
  */
-export function smartEditRequest({ op, path, params = {}, inputWidth, inputHeight, metadata = "keep" }) {
-  const model = SMART_MODELS[op];
-  if (!model) throw new Error(`unknown smart edit ${op}`);
+export function smartEditRequest({ op, path, params = {}, inputWidth, inputHeight, metadata = "keep", background = "portrait" }) {
+  const model = op === "matting" && background === "general" ? "matting-general" : op;
   const suffix = op === "matting" && params.mode === "transparent" ? "_cutout" : SMART_SUFFIX[op];
+  if (!suffix || !SMART_MODELS[model]) throw new Error(`unknown smart edit ${op}`);
   return {
-    input: path, components: ["ort-web", model.component], op, params, inputWidth, inputHeight,
+    input: path, components: ["ort-web", SMART_MODELS[model].component], op, model, params, inputWidth, inputHeight,
     output: { suffix, format: "png", metadata },
   };
 }
@@ -125,7 +126,7 @@ export function createAiJobRunner(app, { invoke, listen, convertFileSrc }) {
   /** Plan 07 smart edit of one photo (full planned size, PNG with alpha). */
   async function smart(op, item, request, signal, report) {
     const pixels = await loadPixels(invoke, convertFileSrc, item.path, request.inputWidth, request.inputHeight);
-    const r = await smartEdit(op, pixels, request.params ?? {}, {
+    const r = await smartEdit(request.model ?? op, pixels, request.params ?? {}, {
       signal, onProgress: (phase, f) => report(phase, phase === "run" ? f : 0, f),
     });
     return { imageData: r.imageData, info: { op, size: [pixels.width, pixels.height], backend: r.backend, seconds: r.seconds, attempts: r.attempts } };

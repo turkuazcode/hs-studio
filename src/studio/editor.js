@@ -125,7 +125,8 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
     full: () => ({ ...full }),
     identity: () => isEditIdentity(history.state),
     setStatus: (text) => { status.textContent = text; },
-    onResult: (path) => commit({ ...initialEdit(), base: path }),
+    steps: () => history.state.aiSteps ?? [],
+    onResult: (path, op) => commit({ ...initialEdit(), base: path, aiSteps: [...(history.state.aiSteps ?? []), op] }),
   }) : null;
 
   const isOpen = () => !root.hidden;

@@ -68,6 +68,7 @@ files, 8 AI files, 10 asset groups. **0 rejected.** 12 `review` items; **11 ackn
 | libwinpthread-1.dll | MIT AND ZPL-2.1 | ZPL-2.1 permissive, not on the list | acknowledged |
 | libgcc_s_seh-1.dll, libstdc++-6.dll | GPL-3.0-or-later WITH GCC-exception-3.1 | GCC Runtime Library Exception (permits use with any license); acknowledge | acknowledged |
 | YuNet, GFPGAN weights | MIT, Apache-2.0 | weights fine; **training data** (WIDER FACE / FFHQ) has non-commercial terms | **accepted risk, owner decision 2026-10-25** ("kaliteyi önceliyoruz"): models stay; lawyer review later; re-verify training data before each release |
+| LaMa, BiRefNet (portrait/general), DDColor weights (A06) | Apache-2.0, MIT, MIT, Apache-2.0 | weights fine; **training data** (Places365 / P3M-10k, TR-humans / DIS5K / ImageNet) has research-only terms | **open, owner decision** (same question as YuNet/GFPGAN, item 7) |
 | App logo/icons | not yet stated | owner must confirm authorship/rights | **open** (see [docs/legal/on-arastirma.md](../docs/legal/on-arastirma.md)) |
 
 ## Compatibility with distributing HS Studio under Apache-2.0 (since 2026-10-26)
@@ -84,7 +85,7 @@ redistributed together with an Apache-2.0 application and what each one requires
 | GCC runtime DLLs | GPL-3.0-or-later WITH GCC-exception-3.1 | **yes** | The runtime exception allows shipping them with software under any license |
 | ffmpeg.exe / ffprobe.exe | LGPL-2.1-or-later | **yes** (separate processes) | As LGPL DLLs |
 | ONNX Runtime Web (download) | MIT (+ its ThirdPartyNotices) | **yes** | Downloaded with its notices |
-| Model weights (download) | CC-BY-4.0 (photo-x4), Apache-2.0 (GFPGAN), MIT (YuNet) | **yes** | Attribution (notices + Settings > AI models); training-data question accepted by the owner |
+| Model weights (download) | CC-BY-4.0 (photo-x4), Apache-2.0 (GFPGAN, LaMa, DDColor), MIT (YuNet, BiRefNet) | **yes** | Attribution (notices + Settings > AI models); training-data question accepted by the owner |
 | Outfit font | OFL-1.1 | **yes** | Ship unmodified with OFL.txt, never sell the font alone |
 | Leaflet, Material Icons path data, AMD FSR port | BSD-2-Clause, Apache-2.0, MIT | **yes** | Notices |
 | npm dev tools | MIT, Apache-2.0, ISC, BSD-3, MPL-2.0 (lightningcss) | not shipped | — |
@@ -159,6 +160,8 @@ user confirms, pinned to a commit URL and checked against SHA-256 (A01).
 7. **Training data** of YuNet (WIDER FACE) and GFPGAN (FFHQ): **decided 2026-10-25 — models are
    kept** (accepted risk, lawyer review later). Still open: record the 4xRealWebPhoto training data
    from its model card; re-verify all training-data notes before each release.
+   **A06 (2026-10-27):** LaMa (Places365), BiRefNet portrait (P3M-10k, TR-humans), BiRefNet general
+   (DIS5K) and DDColor (ImageNet) raise the same question; the owner has not decided it yet.
 8. ~~Review list~~ — **done 2026-10-25**: 11 of 12 acknowledged; the logo stays open (item 3).
 9. **Product rename** to HS Studio in code (window title, exe, bundle id, i18n, notices title) —
    integrator, after all branches merge; then regenerate notices and the SBOM.
