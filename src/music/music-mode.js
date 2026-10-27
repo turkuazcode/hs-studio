@@ -39,7 +39,11 @@ export function registerMusicSettings(settings) {
   ]);
 }
 
-const isMusicItem = (item) => !!item && !item.isImage && isAudioOnlyName(item.name || item.path || item.url || "");
+const isMusicItem = (item) => {
+  const name = item?.name || item?.path || item?.url || "";
+  // wma: audio-only too, kept out of isAudioOnlyName (Chromium cannot play it)
+  return !!item && !item.isImage && (isAudioOnlyName(name) || /\.wma$/i.test(name));
+};
 
 /**
  * app: { dom, state, bus, engine, engines, playlist, video, settings, toast, capabilities } (lazy)

@@ -21,8 +21,10 @@ const LIBRARY_ICON = '<svg viewBox="0 0 20 20" width="15" height="15" fill="curr
 
 const VIEWS = {
   video: ["all", "continue", "recentlyAdded", "favorites", "missing"],
-  audio: ["all", "recentlyAdded", "mostPlayed", "favorites", "missing"],
+  audio: ["all", "artists", "albums", "genres", "recentlyAdded", "mostPlayed", "favorites", "missing"],
 };
+/** Music group views (L03) -> library_music_groups `by` and the track filter field. */
+const GROUPS = { artists: { by: "artist", field: "artist" }, albums: { by: "album", field: "album" }, genres: { by: "genre", field: "genre" } };
 
 const dirOf = (p) => (p ? p.replace(/[\\/][^\\/]*$/, "") : "");
 
@@ -45,6 +47,7 @@ export function createLibraryView(app) {
   });
   const viewSel = h("select", { id: "lib-view", class: "ps-select", "aria-label": t("library.viewLabel") });
   const moreBtn = h("button", { id: "lib-more", type: "button", class: "ps-btn", text: "⋯", title: t("library.more"), "data-i18n-title": "library.more" });
+  const backBtn = h("button", { id: "lib-back", type: "button", class: "ps-btn", hidden: true });
   const closeBtn = h("button", { id: "lib-close", type: "button", class: "ps-btn", text: "✕", title: t("common.close"), "data-i18n-title": "common.close" });
   const status = h("div", { id: "lib-status", class: "lib-status", role: "status", "aria-live": "polite" });
   const list = h("div", { id: "lib-list", class: "lib-list", tabIndex: 0, role: "listbox", "aria-label": t("library.title") });
@@ -59,7 +62,7 @@ export function createLibraryView(app) {
     h("header", { class: "lib-header" },
       h("h2", { class: "lib-title", "data-i18n": "library.title", text: t("library.title") }),
       h("div", { class: "lib-tabs", role: "tablist" }, tabBtns),
-      search, viewSel, moreBtn, closeBtn),
+      backBtn, search, viewSel, moreBtn, closeBtn),
     status, list, empty, listsEl);
   const layer = h("div", { id: "library-layer", class: "ps-layer lib-layer" }, root);
   (document.getElementById("viewport") ?? document.body).append(layer);
@@ -73,6 +76,7 @@ export function createLibraryView(app) {
   let folderCount = null;
   let scanning = null; // { phase, done }
   let raf = 0;
+  let drill = null; // { view, name } inside a music group (artist / album / genre)
 
   function fillViews() {
     const opts = VIEWS[tab] ?? [];
@@ -105,8 +109,25 @@ export function createLibraryView(app) {
     focus = -1;
     rendered = "";
     list.scrollTop = 0;
-    const q = buildQuery({ kind: tab, view, search: search.value });
-    const s = createPagedSource((offset, limit) => api.query({ ...q, offset, limit }), { onLoad: () => { if (source === s) schedule(); } });
+    const group = tab === "audio" ? GROUPS[view] : null;
+    backBtn.hidden = !drill;
+    backBtn.textContent = drill ? `‹ ${drill.name || t("music.groups.unknown")}` : "";
+    root.dataset.drill = drill ? drill.name : "";
+    let fetchPage;
+    if (group && !drill) {
+      // groups are few (one row per artist / album / genre): fetched once, paged locally
+      let all = null;
+      fetchPage = async (offset, limit) => {
+        all ??= (await api.musicGroups(group.by, search.value.trim() || null)).map((g) => ({ ...g, isGroup: true, id: `g:${g.name}:${g.artist ?? ""}`, status: "present" }));
+        return { total: all.length, items: all.slice(offset, offset + limit) };
+      };
+    } else {
+      const q = group && drill
+        ? { ...buildQuery({ kind: "audio", view: "all", search: search.value }), [group.field]: drill.name, sort: "track" }
+        : buildQuery({ kind: tab, view, search: search.value });
+      fetchPage = (offset, limit) => api.query({ ...q, offset, limit });
+    }
+    const s = createPagedSource(fetchPage, { onLoad: () => { if (source === s) schedule(); } });
     source = s;
     root.dataset.loading = "1";
     s.load(0).then(() => {
@@ -131,7 +152,14 @@ export function createLibraryView(app) {
     r.style.top = `${i * ROW_H}px`;
     const badge = item.status === "offline" ? h("span", { class: "lib-badge", text: t("library.status.offline") })
       : item.status === "missing" ? h("span", { class: "lib-badge warn", text: t("library.status.missing") }) : null;
-    if (tab === "audio") {
+    if (item.isGroup) {
+      r.classList.add("lib-group");
+      r.append(
+        h("span", { class: "lib-cell lib-name", text: item.name || t("music.groups.unknown") }),
+        h("span", { class: "lib-cell lib-sub", text: item.artist ?? "" }),
+        h("span", { class: "lib-cell lib-sub", text: item.year ? String(item.year) : "" }),
+        h("span", { class: "lib-cell lib-num", text: t("music.groups.tracks", { n: item.count }) }));
+    } else if (tab === "audio") {
       r.append(
         h("span", { class: "lib-cell lib-name", title: item.path ?? "" }, item.title || item.name, badge),
         h("span", { class: "lib-cell lib-sub", text: item.artist ?? "" }),
@@ -217,6 +245,11 @@ export function createLibraryView(app) {
 
   function activate(i) {
     const item = source?.get(i);
+    if (item?.isGroup) {
+      drill = { view, name: item.name };
+      requery();
+      return;
+    }
     if (!item?.path || item.status !== "present") {
       if (item) app.toast?.(t(item.status === "offline" ? "library.toast.offline" : "library.toast.missing", { name: item.name }));
       return;
@@ -297,6 +330,23 @@ export function createLibraryView(app) {
   }
   emptyAdd.addEventListener("click", addFolder);
 
+  /** Album ReplayGain (one joint measurement, written as track + album tags). */
+  async function albumReplayGain() {
+    if (!drill) return;
+    const page = await api.query({ kind: "audio", view: "all", album: drill.name, sort: "track", limit: 500 }).catch(() => null);
+    const paths = (page?.items ?? []).filter((i) => i.status === "present" && i.path).map((i) => i.path);
+    if (!paths.length) return;
+    status.textContent = t("library.scan.tags");
+    try {
+      const r = await invoke("replaygain_album", { paths, write: true });
+      app.toast?.(t("music.album.replayGainDone", { gain: `${r.albumGainDb > 0 ? "+" : ""}${r.albumGainDb.toFixed(2)}`, n: paths.length }));
+      root.dataset.albumGain = String(r.albumGainDb);
+    } catch (e) {
+      app.toast?.(`⚠️ ${String(e?.message ?? e)}`);
+    }
+    renderStatus();
+  }
+
   async function refreshFolders() {
     try {
       const f = await api.folders();
@@ -311,14 +361,16 @@ export function createLibraryView(app) {
     { id: "addFolder", get label() { return t("library.addFolder"); }, run: addFolder, enabled: () => !!dialogOpen },
     { id: "rescan", get label() { return t("library.rescan"); }, run: () => api.rescan().catch(() => {}) },
     { id: "cancelScan", get label() { return t("library.cancelScan"); }, run: () => api.cancelScan().catch(() => {}), enabled: () => !!scanning },
+    { id: "albumGain", get label() { return t("music.album.replayGain"); }, run: () => albumReplayGain(), enabled: () => tab === "audio" && drill?.view === "albums" },
     { id: "s1", separator: true },
     { id: "settings", get label() { return t("library.settings"); }, run: () => app.settingsModal?.open("library"), enabled: () => !!app.settingsModal },
   ]);
   moreBtn.addEventListener("click", (e) => (menu.isOpen ? menu.close() : menu.openFor(e.currentTarget)));
 
   // ---------------------------------------------------------- controls
-  for (const b of tabBtns) b.addEventListener("click", () => setTab(b.dataset.tab));
-  viewSel.addEventListener("change", () => { view = viewSel.value; requery(); });
+  for (const b of tabBtns) b.addEventListener("click", () => { drill = null; setTab(b.dataset.tab); });
+  viewSel.addEventListener("change", () => { view = viewSel.value; drill = null; requery(); });
+  backBtn.addEventListener("click", () => { drill = null; requery(); });
   let searchTimer = 0;
   search.addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(requery, 150); });
   closeBtn.addEventListener("click", () => hide());
