@@ -1,0 +1,145 @@
+/* ==========================================================================
+   Music mode (Plan 13/L03): its own layout while audio plays. Video / photo controls are
+   hidden; the HUD keeps play/pause, seek, volume, speed and the playlist.
+   ========================================================================== */
+
+.music-mode[hidden] {
+  display: none !important;
+}
+
+.music-mode {
+  position: absolute;
+  inset: 48px 0 110px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  gap: 32px;
+  align-items: center;
+  padding: 24px 48px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.music-mode > * {
+  pointer-events: auto;
+}
+
+.music-now {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-width: 0;
+}
+
+.music-cover {
+  flex: 0 0 auto;
+  width: clamp(140px, 28vh, 300px);
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--bg-pill);
+  color: var(--text-secondary);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.music-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.music-text {
+  min-width: 0;
+}
+
+.music-title {
+  font-size: clamp(20px, 3.4vh, 30px);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.music-meta {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.music-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.music-btn {
+  background: var(--bg-pill);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.music-btn.active {
+  color: var(--text-pure);
+  border-color: var(--border-glow-ruby);
+  background: var(--accent-ruby-dim);
+}
+
+.music-queue {
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.music-upnext-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.music-upnext {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.music-upnext-item {
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.music-upnext-item:hover {
+  background: var(--bg-pill);
+}
+
+/* video-only controls are not shown for music */
+html.music-mode #btn-toggle-subtitles,
+html.music-mode #btn-sub-menu,
+html.music-mode #btn-search-subtitles,
+html.music-mode #btn-aspect-ratio,
+html.music-mode #btn-snapshot,
+html.music-mode #btn-pip,
+html.music-mode #btn-toggle-effects,
+html.music-mode #btn-toggle-ai-restore,
+html.music-mode #btn-toggle-split-view {
+  display: none !important;
+}
+
+@media (max-width: 760px) {
+  .music-mode {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  .music-queue {
+    display: none;
+  }
+}

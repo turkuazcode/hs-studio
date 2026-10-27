@@ -6,8 +6,8 @@ import { t } from "../core/i18n.js";
 
 
 export const VIDEO_EXT = new Set(["mp4", "m4v", "webm", "mkv", "mov", "ogv", "ts", "avi", "wmv", "flv", "3gp", "3g2", "asf", "mpg", "mpeg", "vob", "mts", "m2ts", "divx",
-  "mp3", "m4a", "aac", "flac", "wav", "ogg", "opus", "amr", "wma"]);
-export const AUDIO_EXT = new Set(["mp3", "m4a", "aac", "flac", "wav", "ogg", "opus"]);
+  "mp3", "m4a", "aac", "flac", "wav", "ogg", "opus", "amr", "wma", "oga", "aiff", "aif", "ape", "wv", "alac", "mka", "dsf"]);
+export const AUDIO_EXT = new Set(["mp3", "m4a", "aac", "flac", "wav", "ogg", "opus", "oga", "wma", "aiff", "aif", "ape", "wv", "alac", "mka", "dsf"]);
 export const IMAGE_EXT = new Set(["jpg", "jpeg", "png", "webp", "gif", "bmp", "svg", "avif", "ico"]);
 export const SUB_EXT = new Set(["srt", "vtt", "ass", "ssa"]); // ASS/SSA: rendered by libmpv (libass)
 /** Photos the webview cannot show itself: opened through the backend's photo_decode. */

@@ -105,7 +105,19 @@ export function createPlaylist(app) {
   function navigatePlaylist(step) {
     const playlist = items();
     if (!playlist.length) return;
-    playPlaylistItem(wrapIndex(state.get("currentPlaylistIndex"), step, playlist.length));
+    // music mode (shuffle / repeat, Plan 13/L03) may choose the neighbour
+    const policy = app.queuePolicy?.(state.get("currentPlaylistIndex"), step, playlist);
+    playPlaylistItem(policy ?? wrapIndex(state.get("currentPlaylistIndex"), step, playlist.length));
+  }
+
+  /** The engine already switched to `index` (gapless): mark it current without reloading. */
+  function adoptPlaylistItem(index) {
+    const playlist = items();
+    if (index < 0 || index >= playlist.length) return;
+    state.set("currentPlaylistIndex", index);
+    app.video.adopt(playlist[index]);
+    app.bus.emit("media:loading", { item: playlist[index], kind: "video", gapless: true });
+    markActive();
   }
 
   /** Appends items; returns the index of the first new one. */
@@ -151,10 +163,17 @@ export function createPlaylist(app) {
     /** Called when a video ends; returns true if the next item started. */
     playNextOnEnd() {
       const index = state.get("currentPlaylistIndex");
+      const policy = app.queuePolicy?.(index, 1, items(), { auto: true });
+      if (policy !== undefined && policy !== null) {
+        if (policy < 0) return false;
+        playPlaylistItem(policy);
+        return true;
+      }
       if (!hasNextItem(index, items().length)) return false;
       playPlaylistItem(index + 1);
       return true;
     },
+    adopt: adoptPlaylistItem,
     toggleDrawer: () => playlistDrawer.classList.toggle("open"),
     openDrawer: () => playlistDrawer.classList.add("open"),
   };

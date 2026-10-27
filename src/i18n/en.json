@@ -1199,7 +1199,10 @@
       "recentlyAdded": "Recently added",
       "favorites": "Favorites",
       "missing": "Not found",
-      "mostPlayed": "Most played"
+      "mostPlayed": "Most played",
+      "artists": "Artists",
+      "albums": "Albums",
+      "genres": "Genres"
     },
     "status": {
       "offline": "offline",
@@ -1356,6 +1359,43 @@
       "lastRun": "Last AI run: {backend}, tile {tile} px, {sec} s.",
       "noRun": "No AI run in this session yet.",
       "fallbacks": "Fallbacks: {list}."
+    }
+  },
+  "music": {
+    "title": "Music",
+    "upNext": "Up next",
+    "shuffle": "Shuffle",
+    "repeat": {
+      "off": "Repeat: off",
+      "all": "Repeat: all",
+      "one": "Repeat: this track"
+    },
+    "deviceRemoved": "Audio device removed; playback paused",
+    "settings": {
+      "heading": "Music",
+      "replayGain": "ReplayGain (loudness levelling)",
+      "rg": {
+        "off": "Off",
+        "track": "Track",
+        "album": "Album (else track)"
+      },
+      "preamp": "ReplayGain pre-amp",
+      "preventClip": "Prevent clipping (lower by the peak)",
+      "gapless": "Gapless playback between tracks",
+      "systemControls": "Windows media keys and now-playing card",
+      "pauseOnDeviceRemoval": "Pause when headphones / the audio device are removed"
+    },
+    "groups": {
+      "artists": "Artists",
+      "albums": "Albums",
+      "genres": "Genres",
+      "unknown": "(unknown)",
+      "back": "Back",
+      "tracks": "{n} tracks"
+    },
+    "album": {
+      "replayGain": "Calculate album ReplayGain…",
+      "replayGainDone": "Album ReplayGain: {gain} dB ({n} tracks)"
     }
   }
 }
