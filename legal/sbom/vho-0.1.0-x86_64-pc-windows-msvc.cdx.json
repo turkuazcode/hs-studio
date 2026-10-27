@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:aa544e62-403f-5c8e-a61d-834bc7499b47",
+ "serialNumber": "urn:uuid:fa29364b-f45e-563a-9187-6229a486a582",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-27T06:13:26Z",
+  "timestamp": "2026-10-27T06:56:26Z",
   "tools": {
    "components": [
     {
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "093509d80138746a91623d8dce7e85c217df22fc"
+    "value": "8af0a5dbe539b78af7a7d2c132b4bc1c90df7bcd"
    },
    {
     "name": "vho:native-binaries",
@@ -410,6 +410,46 @@
     }
    ],
    "description": "Audio metadata library"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/notify@8.2.0",
+   "name": "notify",
+   "version": "8.2.0",
+   "purl": "pkg:cargo/notify@8.2.0",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "CC0-1.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "4d3d07927151ff8575b7087f245456e549fea62edf0ec4e565a5ee50c8402bc3"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/notify-rs/notify.git"
+    }
+   ],
+   "description": "Cross-platform filesystem notification library"
   },
   {
    "type": "library",
@@ -2450,6 +2490,126 @@
     }
    ],
    "description": "Macros for all your token pasting needs"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/libc@0.2.191",
+   "name": "libc",
+   "version": "0.2.191",
+   "purl": "pkg:cargo/libc@0.2.191",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/rust-lang/libc"
+    }
+   ],
+   "description": "Raw FFI bindings to platform libraries like libc."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/notify-types@2.1.0",
+   "name": "notify-types",
+   "version": "2.1.0",
+   "purl": "pkg:cargo/notify-types@2.1.0",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "42b8cfee0e339a0337359f3c88165702ac6e600dc01c0cc9579a92d62b08477a"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/notify-rs/notify.git"
+    }
+   ],
+   "description": "Types used by the notify crate"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/walkdir@2.5.0",
+   "name": "walkdir",
+   "version": "2.5.0",
+   "purl": "pkg:cargo/walkdir@2.5.0",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "Unlicense OR MIT"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "29790946404f91d9c5d06f9874efddea1dc06c5efe94541a7d6863108e3a5e4b"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/BurntSushi/walkdir"
+    }
+   ],
+   "description": "Recursively walk a directory."
   },
   {
    "type": "library",
@@ -5173,46 +5333,6 @@
   },
   {
    "type": "library",
-   "bom-ref": "pkg:cargo/walkdir@2.5.0",
-   "name": "walkdir",
-   "version": "2.5.0",
-   "purl": "pkg:cargo/walkdir@2.5.0",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "Unlicense OR MIT"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "29790946404f91d9c5d06f9874efddea1dc06c5efe94541a7d6863108e3a5e4b"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/BurntSushi/walkdir"
-    }
-   ],
-   "description": "Recursively walk a directory."
-  },
-  {
-   "type": "library",
    "bom-ref": "pkg:cargo/rfd@0.16.0",
    "name": "rfd",
    "version": "0.16.0",
@@ -7047,6 +7167,86 @@
   },
   {
    "type": "library",
+   "bom-ref": "pkg:cargo/same-file@1.0.6",
+   "name": "same-file",
+   "version": "1.0.6",
+   "purl": "pkg:cargo/same-file@1.0.6",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "Unlicense OR MIT"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/BurntSushi/same-file"
+    }
+   ],
+   "description": "A simple crate for determining whether two file paths point to the same file."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/winapi-util@0.1.11",
+   "name": "winapi-util",
+   "version": "0.1.11",
+   "purl": "pkg:cargo/winapi-util@0.1.11",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "Unlicense OR MIT"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/BurntSushi/winapi-util"
+    }
+   ],
+   "description": "A dumping ground for high level safe wrappers over windows-sys."
+  },
+  {
+   "type": "library",
    "bom-ref": "pkg:cargo/crossbeam-deque@0.8.8",
    "name": "crossbeam-deque",
    "version": "0.8.8",
@@ -7604,46 +7804,6 @@
     }
    ],
    "description": "Provides types and useful methods for working with IPv4 and IPv6 network addresses, commonly called IP prefixes. The new `IpNet`, `Ipv4Net`, and `Ipv6Net` types build on the existing `IpAddr`, `Ipv4Addr`, and `Ipv6Addr` types already provided in Rust's standard library and align to their design to stay consistent. The module also provides useful traits that extend `Ipv4Addr` and `Ipv6Addr` with methods for `Add`, `Sub`, `BitAnd`, and `BitOr` operations. The module only uses stable feature so it is guaranteed to compile using the stable toolchain."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/libc@0.2.191",
-   "name": "libc",
-   "version": "0.2.191",
-   "purl": "pkg:cargo/libc@0.2.191",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/rust-lang/libc"
-    }
-   ],
-   "description": "Raw FFI bindings to platform libraries like libc."
   },
   {
    "type": "library",
@@ -9484,86 +9644,6 @@
     }
    ],
    "description": "A Cargo library to handle compilation and inclusion of Windows resources in the most resilient fashion imaginable"
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/same-file@1.0.6",
-   "name": "same-file",
-   "version": "1.0.6",
-   "purl": "pkg:cargo/same-file@1.0.6",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "Unlicense OR MIT"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/BurntSushi/same-file"
-    }
-   ],
-   "description": "A simple crate for determining whether two file paths point to the same file."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/winapi-util@0.1.11",
-   "name": "winapi-util",
-   "version": "0.1.11",
-   "purl": "pkg:cargo/winapi-util@0.1.11",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "Unlicense OR MIT"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/BurntSushi/winapi-util"
-    }
-   ],
-   "description": "A dumping ground for high level safe wrappers over windows-sys."
   },
   {
    "type": "library",
@@ -22799,6 +22879,7 @@
   {
    "ref": "pkg:cargo/mio@1.2.4",
    "dependsOn": [
+    "pkg:cargo/log@0.4.34",
     "pkg:cargo/windows-sys@0.61.2"
    ]
   },
@@ -22850,6 +22931,22 @@
   {
    "ref": "pkg:cargo/noop_proc_macro@0.3.0",
    "dependsOn": []
+  },
+  {
+   "ref": "pkg:cargo/notify-types@2.1.0",
+   "dependsOn": [
+    "pkg:cargo/bitflags@2.13.2"
+   ]
+  },
+  {
+   "ref": "pkg:cargo/notify@8.2.0",
+   "dependsOn": [
+    "pkg:cargo/libc@0.2.191",
+    "pkg:cargo/log@0.4.34",
+    "pkg:cargo/notify-types@2.1.0",
+    "pkg:cargo/walkdir@2.5.0",
+    "pkg:cargo/windows-sys@0.60.2"
+   ]
   },
   {
    "ref": "pkg:cargo/num-bigint@0.4.8",
@@ -24583,6 +24680,7 @@
     "pkg:cargo/kamadak-exif@0.6.1",
     "pkg:cargo/libloading@0.8.9",
     "pkg:cargo/lofty@0.22.4",
+    "pkg:cargo/notify@8.2.0",
     "pkg:cargo/rayon@1.12.0",
     "pkg:cargo/reqwest@0.13.5",
     "pkg:cargo/rusqlite@0.40.2",

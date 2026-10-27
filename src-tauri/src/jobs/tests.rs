@@ -23,6 +23,10 @@ struct TestEnv {
     events: Mutex<Vec<JobEvent>>,
     model: Mutex<Option<String>>,
     free: Mutex<Option<u64>>,
+    /// webview runner events (A03): (event, payload)
+    runner: Mutex<Vec<(String, Value)>>,
+    results: Mutex<Option<PathBuf>>,
+    ai_versions: Mutex<HashMap<String, String>>,
 }
 
 impl JobEnv for TestEnv {
@@ -30,10 +34,20 @@ impl JobEnv for TestEnv {
         self.events.lock().unwrap().push(ev.clone());
     }
     fn model_version(&self, id: &str) -> Option<String> {
+        if id.starts_with("ai:") {
+            let v = self.ai_versions.lock().unwrap().clone();
+            return external::resolve_pin(id, |c| v.get(c).cloned());
+        }
         (id == "test-model").then(|| self.model.lock().unwrap().clone()).flatten()
     }
     fn free_space(&self, _dir: &Path) -> Option<u64> {
         *self.free.lock().unwrap()
+    }
+    fn emit_runner(&self, event: &str, payload: &Value) {
+        self.runner.lock().unwrap().push((event.to_string(), payload.clone()));
+    }
+    fn results_dir(&self) -> Option<PathBuf> {
+        self.results.lock().unwrap().clone()
     }
 }
 
@@ -126,7 +140,8 @@ impl Fx {
     }
 
     fn sched(&self, storage: Arc<Storage>) -> Arc<Scheduler> {
-        let adapters: Vec<Arc<dyn Adapter>> = vec![self.adapter.clone(), Arc::new(adapters::PhotoBatchAdapter)];
+        let ai = external::ExternalAdapter { kind: "ai-photo-enhance", runner_wait: Duration::from_millis(300) };
+        let adapters: Vec<Arc<dyn Adapter>> = vec![self.adapter.clone(), Arc::new(adapters::PhotoBatchAdapter), Arc::new(ai)];
         Scheduler::open(storage, self.env.clone(), adapters).unwrap()
     }
 
@@ -603,4 +618,309 @@ fn photo_batch_adapter_converts_resumes_and_keeps_existing_files() {
     assert!(fx.out.join("IMG_3_x.png").exists());
     let after: Vec<_> = (1..3).map(|i| std::fs::metadata(fx.out.join(format!("IMG_{i}_x.png"))).unwrap().modified().unwrap()).collect();
     assert_eq!(before, after, "completed items were not written again");
+}
+
+// ---------------------------------------------------------------------------
+// Webview-run AI jobs (A03): the bridge between the queue worker and the page
+// ---------------------------------------------------------------------------
+
+/// The runner bridge is process-wide: external-job tests run one at a time.
+static EXTERNAL_LOCK: Mutex<()> = Mutex::new(());
+
+fn ai_fx(tag: &str) -> (Fx, PathBuf) {
+    let fx = Fx::new(tag);
+    *fx.env.results.lock().unwrap() = Some(fx.out.clone());
+    fx.env.ai_versions.lock().unwrap().extend([("ort-web".to_string(), "1.30".to_string()), ("photo-x4".to_string(), "rwp4".to_string())]);
+    let src = fx.src.join("foto.jpg");
+    std::fs::write(&src, crate::photo::testutil::jpeg_bytes(&crate::photo::testutil::pattern(16, 8), 90)).unwrap();
+    (fx, src)
+}
+
+fn ai_request(src: &Path) -> Value {
+    json!({ "input": src, "components": ["ort-web", "photo-x4"] })
+}
+
+/// Waits for the n-th runner event with that name.
+fn runner_event(env: &TestEnv, name: &str, n: usize) -> Value {
+    for _ in 0..500 {
+        if let Some(v) = env.runner.lock().unwrap().iter().filter(|(e, _)| e == name).nth(n).map(|(_, v)| v.clone()) {
+            return v;
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    panic!("no {name} event #{n}");
+}
+
+fn ids(ev: &Value) -> (String, String) {
+    (ev["jobId"].as_str().unwrap().to_string(), ev["attemptId"].as_str().unwrap().to_string())
+}
+
+#[test]
+fn ai_job_runs_in_the_webview_runner_and_writes_the_png() {
+    let _g = EXTERNAL_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    external::reset_runner();
+    let (fx, src) = ai_fx("ai-ok");
+    let s = fx.sched(fx.storage());
+    external::runner_ready(&["ai-photo-enhance".to_string()]);
+    let snap = s.submit("ai-photo-enhance", ai_request(&src), None).unwrap();
+    let s2 = s.clone();
+    let worker = std::thread::spawn(move || s2.run_next());
+    let ev = runner_event(&fx.env, "job-run", 0);
+    assert_eq!(ev["items"][0]["idx"], 0);
+    let (job, attempt) = ids(&ev);
+    // a stale attempt is refused
+    assert_eq!(external::begin(&job, "old-attempt", 0).unwrap_err().code, code::INVALID_STATE);
+    external::begin(&job, &attempt, 0).unwrap();
+    external::send(&job, &attempt, external::Msg::Progress { fraction: Some(0.5) }).unwrap();
+    // wrong buffer size is refused, the item is still running
+    assert_eq!(external::output(&job, &attempt, 0, 4, 4, vec![0; 10]).unwrap_err().code, code::INVALID_REQUEST);
+    let mut rgba = Vec::new();
+    for i in 0..(4 * 2) {
+        rgba.extend_from_slice(&[i as u8 * 30, 200, 10, 255]);
+    }
+    let out = external::output(&job, &attempt, 0, 4, 2, rgba.clone()).unwrap();
+    external::send(&job, &attempt, external::Msg::Done).unwrap();
+    worker.join().unwrap().unwrap();
+    let done = s.snapshot(&snap.id).unwrap();
+    assert_eq!((done.state.as_str(), done.done), ("completed", 1));
+    assert!(out.ends_with("foto_restored.png"), "{out}");
+    let img = image::open(&out).unwrap().to_rgba8();
+    assert_eq!(img.into_raw(), rgba, "PNG holds exactly the uploaded pixels");
+    assert!(fx.env.events.lock().unwrap().iter().any(|e| e.job.fraction == Some(0.5)));
+    // the run is over: further calls are refused
+    assert!(external::begin(&job, &attempt, 0).is_err());
+}
+
+#[test]
+fn ai_job_cancel_reaches_the_page_and_leaves_no_output() {
+    let _g = EXTERNAL_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    external::reset_runner();
+    let (fx, src) = ai_fx("ai-cancel");
+    let s = fx.sched(fx.storage());
+    external::runner_ready(&["ai-photo-enhance".to_string()]);
+    let id = s.submit("ai-photo-enhance", ai_request(&src), None).unwrap().id;
+    let s2 = s.clone();
+    let worker = std::thread::spawn(move || s2.run_next());
+    let (job, attempt) = ids(&runner_event(&fx.env, "job-run", 0));
+    external::begin(&job, &attempt, 0).unwrap();
+    s.cancel(&id).unwrap();
+    let stop = runner_event(&fx.env, "job-stop", 0);
+    assert_eq!(ids(&stop), (job.clone(), attempt.clone()));
+    external::send(&job, &attempt, external::Msg::Done).unwrap();
+    worker.join().unwrap().unwrap();
+    assert_eq!(s.snapshot(&id).unwrap().state, "cancelled");
+    assert!(fx.outputs().is_empty());
+}
+
+#[test]
+fn ai_job_lost_page_is_interrupted_and_model_change_blocks_continue() {
+    let _g = EXTERNAL_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    external::reset_runner();
+    let (fx, src) = ai_fx("ai-lost");
+    let s = fx.sched(fx.storage());
+    external::runner_ready(&["ai-photo-enhance".to_string()]);
+    let id = s.submit("ai-photo-enhance", ai_request(&src), None).unwrap().id;
+    let s2 = s.clone();
+    let worker = std::thread::spawn(move || s2.run_next());
+    let (job, attempt) = ids(&runner_event(&fx.env, "job-run", 0));
+    external::begin(&job, &attempt, 0).unwrap();
+    // the page reloads mid-run
+    external::runner_ready(&["ai-photo-enhance".to_string()]);
+    worker.join().unwrap().unwrap();
+    let snap = s.snapshot(&id).unwrap();
+    assert_eq!(snap.state, "interrupted");
+    assert_eq!(s.items(&id).unwrap()[0].state, "pending");
+    // the model was updated meanwhile: continue is blocked
+    fx.env.ai_versions.lock().unwrap().insert("photo-x4".into(), "rwp5".into());
+    s.resume_continue(&id).unwrap();
+    s.run_next().unwrap();
+    let snap = s.snapshot(&id).unwrap();
+    assert_eq!((snap.state.as_str(), snap.resume_block.as_deref()), ("failed", Some(code::MODEL_CHANGED)));
+}
+
+#[test]
+fn ai_job_without_runner_fails_resumable_and_item_errors_are_kept() {
+    let _g = EXTERNAL_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    external::reset_runner();
+    let (fx, src) = ai_fx("ai-norunner");
+    let s = fx.sched(fx.storage());
+    let id = s.submit("ai-photo-enhance", ai_request(&src), None).unwrap().id;
+    s.run_next().unwrap();
+    let snap = s.snapshot(&id).unwrap();
+    assert_eq!((snap.state.as_str(), snap.error_code.as_deref(), snap.resume_block.as_deref()), ("failed", Some(code::RUNNER_UNAVAILABLE), None));
+    // with a runner: the page reports an out-of-memory failure for the item
+    external::runner_ready(&["ai-photo-enhance".to_string()]);
+    s.resume_continue(&id).unwrap();
+    let s2 = s.clone();
+    let worker = std::thread::spawn(move || s2.run_next());
+    let (job, attempt) = ids(&runner_event(&fx.env, "job-run", 0));
+    external::begin(&job, &attempt, 0).unwrap();
+    external::fail(&job, &attempt, 0, "memory".into(), "out of memory on every tile size".into()).unwrap();
+    external::send(&job, &attempt, external::Msg::Done).unwrap();
+    worker.join().unwrap().unwrap();
+    let snap = s.snapshot(&id).unwrap();
+    assert_eq!((snap.state.as_str(), snap.error_code.as_deref()), ("failed", Some(code::ITEMS_FAILED)));
+    assert_eq!(s.items(&id).unwrap()[0].error_code.as_deref(), Some(code::MEMORY));
+    // unknown AI component: refused at submit
+    let bad = json!({ "input": src, "components": ["nope"] });
+    assert_eq!(s.submit("ai-photo-enhance", bad, None).unwrap_err().code, code::MODEL_CHANGED);
+}
+
+#[test]
+fn ai_pin_resolution() {
+    let v = |c: &str| match c {
+        "a" => Some("1".to_string()),
+        "b" => Some("2".to_string()),
+        _ => None,
+    };
+    assert_eq!(external::resolve_pin("ai:a+b", v).as_deref(), Some("1+2"));
+    assert_eq!(external::resolve_pin("ai:a+x", v), None);
+    assert_eq!(external::resolve_pin("ffmpeg", v), None);
+}
+
+// ---------------------------------------------------------------------------
+// A04: AI output integrity (colour, orientation, EXIF/GPS policy, alpha, naming, copy)
+// ---------------------------------------------------------------------------
+
+/// Runs one AI job: the page "uploads" `rgba` (w x h). Returns (job id, output path or error).
+fn run_ai(fx: &Fx, s: &Arc<Scheduler>, req: Value, rgba: Vec<u8>, w: u32, h: u32) -> (String, Result<String, JobError>) {
+    external::runner_ready(&["ai-photo-enhance".to_string()]);
+    let n = fx.env.runner.lock().unwrap().iter().filter(|(e, _)| e == "job-run").count();
+    let id = s.submit("ai-photo-enhance", req, None).unwrap().id;
+    let s2 = s.clone();
+    let worker = std::thread::spawn(move || s2.run_next());
+    let (job, attempt) = ids(&runner_event(&fx.env, "job-run", n));
+    external::begin(&job, &attempt, 0).unwrap();
+    let out = external::output(&job, &attempt, 0, w, h, rgba);
+    if let Err(e) = &out {
+        let _ = external::fail(&job, &attempt, 0, e.code.to_string(), e.message.clone());
+    }
+    external::send(&job, &attempt, external::Msg::Done).unwrap();
+    worker.join().unwrap().unwrap();
+    (id, out)
+}
+
+/// RGBA test image: opaque except a transparent right column and a half-transparent pixel.
+fn rgba_with_alpha(w: u32, h: u32) -> Vec<u8> {
+    let mut v = Vec::new();
+    for y in 0..h {
+        for x in 0..w {
+            let a = if x == w - 1 { 0 } else if (x, y) == (0, 0) { 128 } else { 255 };
+            v.extend_from_slice(&[200, (x * 20) as u8, (y * 30) as u8, a]);
+        }
+    }
+    v
+}
+
+fn png_chunks(bytes: &[u8]) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut i = 8;
+    while i + 8 <= bytes.len() {
+        let len = u32::from_be_bytes(bytes[i..i + 4].try_into().unwrap()) as usize;
+        out.push(String::from_utf8_lossy(&bytes[i + 4..i + 8]).into_owned());
+        i += 12 + len;
+    }
+    out
+}
+
+/// Source JPEG: EXIF orientation 6 + camera/date/GPS, and an ICC profile (a fake one: the
+/// output must never carry the source profile over to the browser's sRGB pixels).
+fn exif_icc_source(fx: &Fx, name: &str) -> PathBuf {
+    use crate::photo::exif::tests::{jpeg_with_exif, sample_exif_tiff};
+    let img = image::DynamicImage::ImageRgb8(crate::photo::testutil::pattern(16, 8));
+    let jpg = crate::photo::ops::encode(&img, crate::photo::ops::OutFormat::Jpeg, 90, Some(b"FAKE-ICC-PROFILE-NOT-SRGB")).unwrap();
+    let p = fx.src.join(name);
+    std::fs::write(&p, jpeg_with_exif(&jpg, &sample_exif_tiff(6))).unwrap();
+    p
+}
+
+#[test]
+fn ai_output_png_keeps_exif_upright_no_source_icc_and_alpha() {
+    let _g = EXTERNAL_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    external::reset_runner();
+    let (fx, _) = ai_fx("a04-png");
+    let src = exif_icc_source(&fx, "çiçek ğüşıö 📷.jpg"); // Unicode path
+    let hash = sha(&src);
+    let s = fx.sched(fx.storage());
+    let (id, out) = run_ai(&fx, &s, ai_request(&src), rgba_with_alpha(8, 16), 8, 16);
+    let out = PathBuf::from(out.unwrap());
+    assert_eq!(out.file_name().unwrap().to_string_lossy(), "çiçek ğüşıö 📷_restored.png");
+    let bytes = std::fs::read(&out).unwrap();
+    let chunks = png_chunks(&bytes);
+    assert!(!chunks.contains(&"iCCP".to_string()), "source ICC not copied onto sRGB pixels: {chunks:?}");
+    assert!(chunks.contains(&"eXIf".to_string()) && chunks.contains(&"tEXt".to_string()), "{chunks:?}");
+    let info = crate::photo::exif::photo_info(&out).unwrap();
+    let ex = info.exif.expect("EXIF kept");
+    assert_eq!(ex.orientation, Some(1), "pixels are upright: orientation normalized");
+    assert_eq!(ex.date_taken.as_deref(), Some("2024-05-17T14:30:05"));
+    assert_eq!(ex.make.as_deref(), Some("VHO Test"));
+    assert!(ex.gps.is_some(), "metadata keep: GPS kept");
+    let img = image::open(&out).unwrap().to_rgba8();
+    assert_eq!(img.dimensions(), (8, 16));
+    assert_eq!(img.get_pixel(7, 3).0[3], 0, "transparent column kept");
+    assert_eq!(img.get_pixel(0, 0).0[3], 128, "half alpha kept");
+    assert_eq!(img.get_pixel(3, 3).0, [200, 60, 90, 255]);
+    assert_eq!(sha(&src), hash, "source unchanged");
+    // the artifact records recipe, pinned models and the output facts
+    let params: String = s
+        .storage_for_tests()
+        .read(|c| c.query_row("SELECT params FROM artifacts WHERE job_id = ?1", [&id], |r| r.get(0)))
+        .unwrap();
+    let p: Value = serde_json::from_str(&params).unwrap();
+    assert_eq!(p["output"]["colorSpace"], "sRGB");
+    assert_eq!(p["output"]["iccCopied"], false);
+    assert_eq!(p["output"]["alpha"], true);
+    assert_eq!(p["output"]["bitDepth"], 8);
+    assert_eq!(p["models"]["version"], "1.30+rwp4");
+    assert!(p["source"]["fingerprint"].as_str().is_some_and(|f| f.len() == 64));
+
+    // same name again: a new name, the first output untouched
+    let first = std::fs::read(&out).unwrap();
+    let (_, again) = run_ai(&fx, &s, ai_request(&src), rgba_with_alpha(8, 16), 8, 16);
+    assert!(again.unwrap().ends_with("📷_restored (2).png"));
+    assert_eq!(std::fs::read(&out).unwrap(), first);
+
+    // save a copy next to the source: from the queue's record, never overwriting
+    let copy = s.copy_output(&id, 0, None).unwrap();
+    assert_eq!(PathBuf::from(&copy).parent(), src.parent());
+    let copy2 = s.copy_output(&id, 0, None).unwrap();
+    assert_ne!(copy, copy2);
+    assert_eq!(std::fs::read(&copy).unwrap(), first);
+    assert_eq!(s.copy_output(&id, 5, None).unwrap_err().code, code::INVALID_STATE);
+}
+
+#[test]
+fn ai_output_policies_jpeg_background_strip_gps_and_disk_full() {
+    let _g = EXTERNAL_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    external::reset_runner();
+    let (fx, _) = ai_fx("a04-jpeg");
+    let src = exif_icc_source(&fx, "kamera.jpg");
+    let s = fx.sched(fx.storage());
+    let mut req = ai_request(&src);
+    req["output"] = json!({ "format": "jpeg", "metadata": "stripGps", "background": [0, 0, 255], "suffix": "_x" });
+    let (_, out) = run_ai(&fx, &s, req, rgba_with_alpha(8, 16), 8, 16);
+    let out = PathBuf::from(out.unwrap());
+    assert!(out.to_string_lossy().ends_with("kamera_x.jpg"));
+    let ex = crate::photo::exif::photo_info(&out).unwrap().exif.unwrap();
+    assert!(ex.gps.is_none(), "stripGps");
+    assert_eq!(ex.date_taken.as_deref(), Some("2024-05-17T14:30:05"));
+    assert_eq!(ex.orientation, Some(1));
+    let img = image::open(&out).unwrap().to_rgb8();
+    let p = img.get_pixel(7, 8).0; // alpha 0 -> the chosen background colour
+    assert!(p[2] > 200 && p[0] < 60, "composited onto blue: {p:?}");
+
+    // strip: no EXIF at all
+    let mut req = ai_request(&src);
+    req["output"] = json!({ "metadata": "strip", "suffix": "_s" });
+    let (_, out) = run_ai(&fx, &s, req, rgba_with_alpha(4, 4), 4, 4);
+    let out = PathBuf::from(out.unwrap());
+    assert!(crate::photo::exif::photo_info(&out).unwrap().exif.is_none_or(|e| e.gps.is_none() && e.date_taken.is_none()));
+
+    // disk full: the item fails, no file appears
+    *fx.env.free.lock().unwrap() = Some(1024);
+    let before = fx.outputs();
+    let (id, out) = run_ai(&fx, &s, ai_request(&src), rgba_with_alpha(4, 4), 4, 4);
+    assert_eq!(out.unwrap_err().code, code::DISK_FULL);
+    assert_eq!(s.items(&id).unwrap()[0].state, "failed");
+    assert_eq!(fx.outputs(), before);
 }

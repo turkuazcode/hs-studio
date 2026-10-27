@@ -21,6 +21,7 @@ const basename = (p) => String(p ?? "").split(/[\\/]/).pop();
 /** Display name of a job (no full paths on screen). */
 export function jobLabel(job) {
   if (job.kind === "export") return t("jobs.kind.export", { name: job.title || "?" });
+  if (job.kind === "ai-photo-enhance") return t("jobs.kind.aiPhoto", { name: job.title || "?" });
   if (job.kind === "photo-batch") {
     return job.total === 1 && job.title ? t("jobs.kind.photoOne", { name: job.title }) : t("jobs.kind.photoBatch", { n: job.total ?? "?" });
   }
