@@ -370,7 +370,13 @@ fn builtin_manifest_is_valid_and_complete() {
         assert!(!c.license.is_empty() && !c.author.is_empty());
     }
     let ids: Vec<_> = all.iter().map(|c| c.id.as_str()).collect();
-    assert_eq!(ids, ["ort-web", "photo-x4", "face-restore"]);
+    assert_eq!(ids, ["ort-web", "photo-x4", "face-restore", "lama", "birefnet-portrait", "ddcolor"]);
+    // Plan 07 (A06): full hashes, the DDColor zip with its two entries + external data pair
+    let dd = all.iter().find(|c| c.id == "ddcolor").unwrap();
+    assert!(dd.downloads[0].is_archive());
+    assert_eq!(dd.files().iter().map(|f| f.name).collect::<Vec<_>>(), ["ddcolor.onnx", "ddcolor.data"]);
+    assert_eq!(dd.external_data[0].data, "ddcolor.data");
+    assert_eq!(all.iter().find(|c| c.id == "birefnet-portrait").unwrap().files()[0].sha256.len(), 64);
     // the files the frontend loads by name
     let photo = all.iter().find(|c| c.id == "photo-x4").unwrap();
     assert_eq!(photo.files()[0].name, "4xRealWebPhoto_v4_fp32_opset17.onnx");
