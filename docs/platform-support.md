@@ -72,10 +72,10 @@ Arka uç satırlarının tek kaynağı `src-tauri/src/capabilities.rs` → `SUPP
 
 | Yetenek (`id`) | Windows x64 | macOS arm64 | Linux x64 | Not |
 |---|---|---|---|---|
-| libmpv motoru (`engine.libmpv`) | destekli/testli | desteklenmiyor | desteklenmiyor | P02/P03 |
+| libmpv motoru (`engine.libmpv`) | destekli/testli | desteklenmiyor | destekli/test bekliyor | Linux: LGPL `libmpv.so.2` + kendi FFmpeg `.so`'ları, render API (ADR 0002); yalnızca WSLg (sanal) senaryosu çalıştı, gerçek donanım Wayland/X11 bekliyor. macOS P02 |
 | HTML5 yedeği (`engine.html5`) | destekli/testli | destekli/test bekliyor | destekli/test bekliyor | Codec'ler WebView'e bağlı; "geniş codec desteği" sayılmaz |
-| Video yüzeyi (`video.surface`) | destekli/testli (sahipli açılır pencere) | desteklenmiyor | desteklenmiyor | ADR 0001; macOS/Linux ADR 0002 bekliyor |
-| Donanım çözme (`video.hwdec`) | destekli/test bekliyor | desteklenmiyor | desteklenmiyor | `hwdec=auto-safe` istenir; başarı ölçülmedi |
+| Video yüzeyi (`video.surface`) | destekli/testli (sahipli açılır pencere) | desteklenmiyor | destekli/test bekliyor (GtkGLArea + render API) | ADR 0001 (Windows), ADR 0002 (Linux); macOS P02 |
+| Donanım çözme (`video.hwdec`) | destekli/test bekliyor | desteklenmiyor | destekli/test bekliyor | Windows `hwdec=auto-safe`; Linux `auto-copy-safe` (VAAPI yoksa yazılım çözme); başarı ölçülmedi |
 | Eski codec dönüştürme (`video.legacyTranscode`) | destekli/testli | desteklenmiyor | desteklenmiyor | Media Foundation |
 | FFmpeg eylemleri (`encode.ffmpeg`) | destekli/testli | destekli/test bekliyor | destekli/test bekliyor | Yalnızca LGPL derleme paketlenir |
 | H.264 dışa aktarma (`encode.h264`) | destekli/testli (`h264_mf`, çalışma anı yoklaması) | destekli/test bekliyor (`h264_videotoolbox`) | destekli/test bekliyor (`libopenh264`, ffmpeg onunla derlenmişse) | Aşağıda “Kodlayıcı seçimi”; H.264 çalışmazsa `mpeg4` yedeği + `h264-unavailable-fallback-mpeg4` |

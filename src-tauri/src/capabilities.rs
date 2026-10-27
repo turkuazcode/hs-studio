@@ -71,10 +71,10 @@ use Support::{No, Tested as T, Untested as U};
 /// Changing a cell needs the matching row in docs/platform-support.md (test
 /// `caps_support_table_matches_docs`) and, for `T`, the test that proves it.
 pub const SUPPORT: &[(&str, Support, Support, Support)] = &[
-    ("engine.libmpv", T, No, No),
+    ("engine.libmpv", T, No, U),
     ("engine.html5", T, U, U),
-    ("video.surface", T, No, No),
-    ("video.hwdec", U, No, No),
+    ("video.surface", T, No, U),
+    ("video.hwdec", U, No, U),
     ("video.legacyTranscode", T, No, No),
     ("encode.ffmpeg", T, U, U),
     ("encode.h264", T, U, U),
@@ -180,7 +180,7 @@ pub fn engine_reason(os: &str, error: Option<&str>) -> &'static str {
     let e = error.unwrap_or("");
     if e.contains("VHO_DISABLE_MPV") {
         "engine-disabled"
-    } else if os != "windows" || e.contains("not available on this platform") {
+    } else if !matches!(os, "windows" | "linux") || e.contains("not available on this platform") {
         "engine-unsupported-platform"
     } else if e.contains("not found") {
         "engine-missing"
@@ -233,12 +233,22 @@ pub fn build(i: &Inputs) -> Vec<Capability> {
         entry(
             "video.surface",
             true,
-            Some(if i.engine_available { "win32-owned-popup" } else { "webview-video" }),
+            Some(match (i.engine_available, i.os) {
+                (true, "linux") => "gtk-glarea-render-api",
+                (true, _) => "win32-owned-popup",
+                _ => "webview-video",
+            }),
             engine_reason,
         ),
         // Hardware decoding is requested (hwdec=auto-safe); whether it succeeds per file is
         // reported by mpv's hwdec-current, not measured here
-        entry("video.hwdec", i.engine_available, i.engine_available.then_some("mpv-hwdec-auto-safe"), Some(engine_reason.unwrap_or("success-not-measured"))),
+        // Linux: copy-back only (auto-copy-safe), software decoding when VAAPI is missing (ADR 0002)
+        entry(
+            "video.hwdec",
+            i.engine_available,
+            i.engine_available.then_some(if i.os == "linux" { "mpv-hwdec-auto-copy-safe" } else { "mpv-hwdec-auto-safe" }),
+            Some(engine_reason.unwrap_or("success-not-measured")),
+        ),
         // Legacy-codec transcode for the HTML5 fallback (Media Foundation)
         entry("video.legacyTranscode", windows, windows.then_some("media-foundation"), (!windows).then_some("unsupported-platform")),
         entry("encode.ffmpeg", i.ffmpeg, i.ffmpeg.then_some("ffmpeg-lgpl"), (!i.ffmpeg).then_some("ffmpeg-missing")),
@@ -459,7 +469,7 @@ mod tests {
             let r = report(&i);
             assert!(!r.platform.verified_platform, "{os}/{arch}");
             assert!(r.entries.iter().all(|c| !c.verified), "{os}/{arch}: verified entry without device test");
-            if os != "windows" {
+            if os == "macos" {
                 assert_eq!(get(&r.entries, "engine.libmpv").reason_code, Some("engine-unsupported-platform"));
             }
         }
@@ -551,5 +561,20 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn caps_linux_engine_render_api() {
+        let mut i = windows();
+        i.os = "linux";
+        let c = build(&i);
+        let e = get(&c, "engine.libmpv");
+        assert!(e.available && !e.verified, "WSLg/VM evidence never makes Linux verified");
+        assert_eq!(e.support, "supported-untested");
+        assert_eq!(get(&c, "video.surface").implementation, Some("gtk-glarea-render-api"));
+        assert_eq!(get(&c, "video.hwdec").implementation, Some("mpv-hwdec-auto-copy-safe"));
+        i.engine_available = false;
+        i.engine_error = Some("libmpv.so.2 not found (run `bash scripts/linux/stage-mpv.sh`)".into());
+        assert_eq!(get(&build(&i), "engine.libmpv").reason_code, Some("engine-missing"));
     }
 }
