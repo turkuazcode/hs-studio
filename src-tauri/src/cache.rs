@@ -60,7 +60,7 @@ fn folder(root: &Path, kind: &str) -> Result<PathBuf, String> {
 pub fn usage(root: &Path) -> Vec<Usage> {
     KINDS
         .iter()
-        .map(|(kind, sub)| {
+        .map(|&(kind, sub)| {
             let mut files = vec![];
             walk(&root.join(sub), &mut files);
             Usage { kind, bytes: files.iter().map(|f| f.1).sum(), files: files.len() as u64 }
