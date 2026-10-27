@@ -8,14 +8,16 @@ import { formatTime } from "../core/format.js";
 import { t } from "../core/i18n.js";
 import { aspectProps } from "./engine/engine.js";
 import { itemSize } from "./classify.js";
+import { hasSecret, redactUrl, streamTitle } from "./net-logic.js";
 
 export { MEDIA_ERR_TEXT } from "./engine/html5-engine.js";
 
 export const ASPECT_CLASSES = ["aspect-16-9", "aspect-21-9", "aspect-4-3", "aspect-fill"];
 
-/** Key of the resume position (app.resume store; localStorage in older builds). */
+/** Key of the resume position (app.resume store; localStorage in older builds). A URL with a
+ *  password / token is stored without the secret (L04). */
 export const resumeKey = (item) =>
-  item.url ? "vho_url_" + item.url : `vho_file_${item.name || "Online Video"}_${itemSize(item)}`;
+  item.url ? "vho_url_" + (hasSecret(item.url) ? redactUrl(item.url) : item.url) : `vho_file_${item.name || "Online Video"}_${itemSize(item)}`;
 
 /** Offer to resume only after 8 s and not within the last 15 s. */
 export const shouldOfferResume = (savedTime, duration) =>
@@ -81,6 +83,7 @@ export function createVideoPlayer(app) {
     timelineContainer.style.display = "flex";
 
     const name = item.name || t("ui.video.onlineName");
+    streamItem = item.url && !item.path ? { name } : null;
     state.set("currentFileKey", resumeKey(item));
 
     resumePendingTime = 0;
@@ -124,6 +127,14 @@ export function createVideoPlayer(app) {
     app.timeline.reset();
     app.photo.updateCounter();
   }
+
+  // Internet radio (L04): mpv reports the ICY title ("Artist - Song") of the stream
+  let streamItem = null;
+  engine.on("metadata/by-key/icy-title", (title) => {
+    if (!streamItem || state.get("currentMediaType") !== "video") return;
+    currentFilename.textContent = streamTitle(streamItem.name, title);
+    currentFilename.dataset.streamTitle = title ?? "";
+  });
 
   engine.on("loaded", () => {
     app.filters.refreshAfterLoad();

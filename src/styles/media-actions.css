@@ -51,6 +51,14 @@
 .vho-act-status { min-height: 16px; font-size: 12px !important; }
 .vho-act-status.is-error { color: var(--color-danger) !important; }
 .vho-act-status.is-ok { color: var(--color-success) !important; }
+.vho-act-status.is-warn { color: var(--color-warning) !important; }
+
+/* ---- Cast to device (L04) ---- */
+.vho-cast-intro { font-size: 12px; color: var(--text-muted); }
+.vho-cast-devices { list-style: none; margin: 8px 0; padding: 0; max-height: 240px; overflow: auto; }
+.vho-cast-device { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; }
+.vho-cast-device:hover, .vho-cast-device:focus-visible { background: rgba(255, 255, 255, 0.08); outline: none; }
+.vho-cast-device small { color: var(--text-muted); }
 .vho-act-progress { height: 6px; border-radius: 3px; background: var(--bg-pill); overflow: hidden; }
 .vho-act-progress[hidden] { display: none; }
 .vho-act-progress-bar { height: 100%; width: 0; background: var(--accent-gradient); transition: width 0.2s; }
@@ -130,4 +138,5 @@
 /* ---- Themes ---- */
 :root[data-theme="light"] .ma-btn { color: #334155; }
 :root[data-theme="light"] .vho-print-stage { background: rgba(0, 0, 0, 0.08); }
+:root[data-theme="light"] .vho-cast-device:hover, :root[data-theme="light"] .vho-cast-device:focus-visible { background: rgba(0, 0, 0, 0.06); }
 :root[data-theme="contrast"] .ma-btn { color: #fff; border-color: #fff; }

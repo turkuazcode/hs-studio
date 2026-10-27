@@ -401,6 +401,8 @@ export function createMediaActions(app) {
     extractSubtitle: { label: "actions.menu.extractSubtitle", kinds: ["video"], run: needFfmpeg(() => exports.openExtractSubtitle()) },
     contactSheet: { label: "actions.menu.contactSheet", kinds: ["video"], run: needFfmpeg(() => exports.contactSheet()) },
     alwaysOnTop: { label: "actions.menu.alwaysOnTop", any: true, run: toggleOnTop, check: () => onTop },
+    // L04: UPnP/DLNA renderer on the local network (local files only)
+    castDevice: { label: "actions.menu.cast", kinds: ["video", "music", "photo"], run: withPath((i) => app.cast?.open(i)), when: () => !!app.cast },
     miniPlayer: { label: "actions.menu.miniPlayer", kinds: ["video", "music"], any: true, run: toggleMini, check: () => !!mini },
     // music
     tagEditor: { label: "actions.menu.tags", kinds: ["music"], run: () => music.openTags() },
@@ -446,7 +448,7 @@ export function createMediaActions(app) {
       return sections(
         group("openWith", "showInFolder"),
         group("copyImage", "copyFile", "copyPath"),
-        group("ocr", "setWallpaper", "setLockScreen"),
+        group("ocr", "setWallpaper", "setLockScreen", "castDevice"),
         group("renameFile", "favorite", "addToPlaylist", "properties"),
         group("settings"));
     }
@@ -455,7 +457,7 @@ export function createMediaActions(app) {
         group("openWith", "showInFolder"),
         group("copyFile", "copyPath"),
         group("convertMedia", "ringtone", "replayGain"),
-        group("miniPlayer", "alwaysOnTop"),
+        group("castDevice", "miniPlayer", "alwaysOnTop"),
         group("renameFile", "deleteFile", "favorite", "addToPlaylist", "properties"),
         group("settings"));
     }
@@ -463,7 +465,7 @@ export function createMediaActions(app) {
       group("openWith", "showInFolder"),
       group("copyFrame", "copyFile", "copyPath"),
       [...(available("gif") ? [{ heading: "actions.menu.exportHeading" }] : []), ...group("gif", "clip", "extractAudio", "rotateVideo", "embedSubtitle", "extractSubtitle", "contactSheet")],
-      group("miniPlayer", "alwaysOnTop"),
+      group("castDevice", "miniPlayer", "alwaysOnTop"),
       group("renameFile", "deleteFile", "favorite", "addToPlaylist", "properties"),
       group("settings"));
   }

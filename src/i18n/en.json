@@ -276,7 +276,8 @@
       "lyrics": "Lyrics",
       "replayGain": "Measure loudness (ReplayGain)",
       "ringtone": "Ringtone / excerpt…",
-      "settings": "Settings…"
+      "settings": "Settings…",
+      "cast": "Cast to device…"
     },
     "delete": {
       "title": "Move to the Recycle Bin?",
@@ -792,11 +793,12 @@
     },
     "url": {
       "title": "Open network stream / video URL",
-      "desc": "Supported: direct video, audio or image links over HTTP / HTTPS (MP4, WebM, MP3, JPG...)",
+      "desc": "Supported: video, audio, radio or image links over HTTP / HTTPS and HLS (.m3u8) streams. A dropped connection is retried.",
       "placeholder": "https://example.com/video.mp4",
       "play": "Play",
       "invalid": "Enter a valid http(s) URL",
-      "hlsUnsupported": "⚠️ HLS (.m3u8) streams are not supported in this version"
+      "hlsUnsupported": "⚠️ HLS (.m3u8) streams play with the libmpv engine only",
+      "secretNotSaved": "Addresses with a password or access token are not saved in recent files."
     },
     "studio": {
       "name": "Photo Studio",
@@ -1418,6 +1420,37 @@
     "album": {
       "replayGain": "Calculate album ReplayGain…",
       "replayGainDone": "Album ReplayGain: {gain} dB ({n} tracks)"
+    }
+  },
+  "cast": {
+    "title": "Cast to device",
+    "intro": "Looks for TVs and speakers on the same network (UPnP/DLNA). The file is shared only with the chosen device and only until you stop casting.",
+    "devices": "Devices",
+    "searching": "Searching for devices…",
+    "pick": "Choose a device.",
+    "none": "No device found. Make sure the device is on and on the same network.",
+    "search": "Search again",
+    "starting": "Sending to {name}…",
+    "now": "{name}: {title}",
+    "play": "Play",
+    "pause": "Pause",
+    "stop": "Stop casting",
+    "stopped": "Casting stopped; the file link is closed.",
+    "blocked": "The device could not fetch the file. A firewall may be blocking this app on the local network.",
+    "state": {
+      "playing": "Playing",
+      "paused": "Paused",
+      "stopped": "Stopped",
+      "loading": "Loading…"
+    },
+    "error": {
+      "format": "The device does not support this file type ({detail}). Files are not converted automatically.",
+      "unreachable": "The device cannot be reached.",
+      "gone": "The device is no longer listed; search again.",
+      "rejected": "The device rejected the command ({detail}).",
+      "network": "Network error: {detail}",
+      "file": "The file cannot be opened: {detail}",
+      "inactive": "Nothing is being cast."
     }
   }
 }

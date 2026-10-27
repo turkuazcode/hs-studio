@@ -5,7 +5,8 @@
 
 import { t } from "../core/i18n.js";
 import { openUrl } from "../core/tauri.js";
-import { isHlsUrl, isImageFile, isValidMediaUrl, nameFromUrl } from "../media/classify.js";
+import { isHlsUrl, isImageFile, nameFromUrl } from "../media/classify.js";
+import { hasSecret, parseStreamUrl } from "../media/net-logic.js";
 
 export const OPENSUBS_LANG = { tr: "tur", en: "eng", de: "ger", fr: "fre" };
 
@@ -49,7 +50,8 @@ export function createModals(app) {
 
   function confirmUrl() {
     const url = inputUrl.value.trim();
-    if (!isValidMediaUrl(url)) {
+    // http(s) only (L04: same list as src-tauri/src/net.rs)
+    if (!parseStreamUrl(url)) {
       app.toast(t("ui.url.invalid"));
       return;
     }
@@ -57,6 +59,7 @@ export function createModals(app) {
       app.toast(t("ui.url.hlsUnsupported"));
       return;
     }
+    if (hasSecret(url)) app.toast(t("ui.url.secretNotSaved"));
     app.loader.openUrlItem({ url, name: nameFromUrl(url), isImage: isImageFile(url) });
     urlModal.classList.remove("active");
     inputUrl.value = "";
