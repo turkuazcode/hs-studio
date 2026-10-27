@@ -1,9 +1,9 @@
 # CI, kod imzalama ve güncelleme (R02 yerel hazırlık)
 
 > **Durum:** Workflow'lar yazıldı ama **hiç push edilmedi ve uzakta çalıştırılmadı**. İmzalama adımı kapalı:
-> SignPath projeyi kabul edene kadar `vars.SIGNPATH_ENABLED` tanımsız kalır. Güncelleme (updater) için
-> yapılandırma şablonu ve anahtar talimatı hazır; uygulamaya updater eklentisi **henüz eklenmedi**.
-> Fiyat ve koşul bilgileri 2026-10-26 araştırmasıdır. Satın alma veya başvuru öncesinde resmî sayfalardan
+> SignPath projeyi kabul edene kadar `vars.SIGNPATH_ENABLED` tanımsız kalır. Updater eklentisi 2026-10-27'de
+> uygulamaya eklendi (varsayılan kapalı; sunucu ve gerçek anahtar depo açılınca). Fiyat ve koşul bilgileri
+> 2026-10-26 araştırmasıdır. Satın alma veya başvuru öncesinde resmî sayfalardan
 > yeniden doğrulanmalıdır.
 
 ## Workflow'lar (`.github/workflows/`)
@@ -88,16 +88,40 @@ Windows'ta yayıncı olarak "SignPath Foundation" görünür.
 Hiçbir imza anahtarı veya sertifika depoya ya da loglara girmez. Tauri'nin `bundle.windows.signCommand` ayarı
 kullanılmadı; imzalama yalnızca CI'da SignPath üzerinden yapılır.
 
-## Tauri updater (yapılandırma hazır, eklenti bekliyor)
+## Tauri updater (uygulamaya eklendi; sunucu/anahtar bekliyor)
 
-- Şablon `src-tauri/packaging/updater.conf.json`: `bundle.createUpdaterArtifacts`,
-  `plugins.updater.pubkey/endpoints`, `windows.installMode: passive`. `package-windows.ps1 -Updater` ile
-  birleştirilir. Workflow'da `vars.UPDATER_ENABLED == 'true'` iken etkinleşir.
-- **Uygulamaya henüz eklenmedi:** `tauri-plugin-updater` (Rust) ve `@tauri-apps/plugin-updater` (JS). Eklenti
-  Rust 1.90+ gerektirir. Eklemeden önce kullanıcı kontrolü planlanmalı: kanal (stable/preview), etkin iş
-  varken ertelenmesi, L01 veri yedeği.
-- Test edilmesi gerekenler: yanlış imza, bozuk indirme, ağ kesintisi, eski sürüme düşürme denemesi (Plan 14/R02).
-  Bu testler eklentiyle birlikte yazılacak. Kaynak: <https://v2.tauri.app/plugin/updater/>.
+- **Eklenti:** `tauri-plugin-updater` **=2.13.3** (2026-10-10 sürümü, MIT OR Apache-2.0; SBOM'da). Uygulamaya
+  yalnızca Rust tarafında eklendi: `src-tauri/src/updater.rs`, komutlar `updater_check` ve `updater_install`.
+  Eklentinin JS komutlarına yetki (capability) verilmedi.
+- **Yapılandırma** (`tauri.conf.json` → `plugins.updater`): `pubkey` ve `endpoints` **boş**. Depo açılınca
+  doldurulur; o zamana kadar her denetim `not-configured` döner ve ağa çıkılmaz. Ek olarak
+  `requireSignedVersion: true` (imzadaki sürüm duyurulan sürümle aynı olmalı; eski bir gerçek paket "yeni
+  sürüm" diye yeniden sunulamaz) ve `windows.installMode: passive`.
+- **Arayüz** (sade, kullanıcı ilkelerine uygun):
+  - Ayarlar > Genel > "Güncellemeleri otomatik denetle", **varsayılan kapalı**.
+  - Altında "Şimdi denetle" düğmesi ve durum satırı. Yeni sürüm varsa "Kur" düğmesi görünür; kurulum onay
+    ister ve uygulama kapanır.
+  - Otomatik denetim açılıştan yaklaşık 8 sn sonra bir kez yapılır. Yeni sürüm için sürüm başına bir sessiz
+    bildirim gösterilir. Çevrimdışı ve "yapılandırılmamış" durumları sessizdir.
+  - Hiçbir şey kullanıcı tıklamadan indirilmez.
+- **Doğrulama:** indirme → minisign imzası (yapılandırılan açık anahtar) → imzalı sürüm eşleşmesi → kurulum.
+  - Daha eski veya aynı sürüm sunulmaz (eklentinin varsayılan karşılaştırıcısı).
+  - Hata kodları: `offline`, `signature`, `download`, `error`.
+- **Testler** (`tests/e2e/updater.e2e.mjs`, release exe ile):
+  - Her çalıştırmada geçici klasörde **atılacak** bir anahtar çifti üretilir (`tauri signer generate`); depoya
+    girmez, test sonunda silinir.
+  - Manifestler loopback sunucudan verilir. Test uç noktası ve anahtarı yalnızca yalıtılmış test örneğinde
+    (`VHO_DATA_DIR`) ve yalnızca `http://127.0.0.1` için kabul edilir.
+  - Durumlar: geçerli imza (indirme + doğrulama; `VHO_UPDATER_DRY_RUN=1` ile kurulum başlatılmaz), başka
+    anahtarın imzası, bozuk dosya, eski paketin yeni sürüm diye sunulması, eski/aynı sürüm, çevrimdışı,
+    varsayılan kapalı/yapılandırılmamış.
+  - Gerçek kurulum yolu (NSIS) P05 kurulum testiyle kanıtlandı. Updater'ın NSIS paketini indirip kurması uçtan
+    uca **denenmedi**; imzalı updater artifact'ı gerektirir.
+- **Yayın:** `src-tauri/packaging/updater.conf.json` + `package-windows.ps1 -Updater`
+  (`bundle.createUpdaterArtifacts`, `.sig` üretimi), workflow'da `vars.UPDATER_ENABLED == 'true'`.
+  `latest.json` yayımlama adımı R03/yayın kararıyla birlikte yazılacak.
+- Henüz yok: kanal seçimi (stable/preview), etkin iş varken kurulumu erteleme (şimdilik yalnızca onay
+  penceresi), kurulum öncesi L01 veri yedeği.
 
 **Anahtar üretimi (kullanıcı, kendi makinesinde, bir kez):**
 
@@ -110,10 +134,13 @@ npx tauri signer generate -w "$env:USERPROFILE\.tauri\hs-studio-updater.key"
   Yalnızca şu iki yerde tutulur:
   1. Kullanıcının parola yöneticisi ve şifreli çevrimdışı yedek.
   2. GitHub depo sırları `TAURI_SIGNING_PRIVATE_KEY` (dosya içeriği) ve `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
-- **Açık anahtar** (`…updater.key.pub` içeriği) `updater.conf.json` içindeki `pubkey` alanına yazılır. Gizli değildir.
+- **Açık anahtar** (`…updater.key.pub` içeriği) `src-tauri/tauri.conf.json` → `plugins.updater.pubkey` alanına
+  yazılır. Gizli değildir. Uç nokta da aynı yere yazılır (ör. `https://github.com/<owner>/<repo>/releases/latest/download/latest.json`).
+- CI loglarında görünmemesi için anahtar yalnızca `secrets.*` ile verilir. Workflow anahtarı yazdırmaz; `-Updater`
+  yalnızca ortam değişkenini okur.
 - Anahtar kaybolursa mevcut kurulumlar yeni imzalı güncellemeleri kabul etmez. Kullanıcılar yeni sürümü elle
   kurmak zorunda kalır. Bu yüzden yedek şarttır.
-- Bu çalışmada **hiçbir anahtar üretilmedi**.
+- Bu çalışmada **gerçek bir anahtar üretilmedi**. Testler her çalıştırmada geçici bir anahtar üretip siler.
 
 ## Yayın öncesi yapılacaklar (kullanıcı)
 

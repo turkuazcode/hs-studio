@@ -18,6 +18,7 @@
 
 import { FACE_MODEL, MODELS, releaseAi, restoreFacesInImage, upscaleImage } from "./ai-engine.js";
 import { classifyAiError, errorCodeForClass } from "./ai-policy.js";
+import { keepGrayscale } from "./grayscale.js";
 
 export const AI_JOB_KINDS = Object.freeze(["ai-photo-enhance"]);
 
@@ -49,7 +50,7 @@ export function playbackAction({ playing, media, enabled, running = [], paused =
 }
 
 /** Decodes a local photo (HEIC/RAW through the backend's display copy) at the given size. */
-async function loadPixels(invoke, convertFileSrc, path, width, height) {
+export async function loadPixels(invoke, convertFileSrc, path, width, height) {
   const d = await invoke("photo_decode", { path, maxSize: null });
   // fetch + ImageBitmap: same-origin pixels (an <img> from the asset protocol taints the
   // canvas); EXIF orientation applied once, colours converted to sRGB by the browser
@@ -96,7 +97,9 @@ export function createAiJobRunner(app, { invoke, listen, convertFileSrc }) {
         faceStats = { failed: true, message: String(e?.message ?? e) };
       }
     }
-    return { imageData, info: { from: [pixels.width, pixels.height], to: [imageData.width, imageData.height], backend: up.backend, tile: up.tile, seconds: up.seconds, attempts: up.attempts, faces: faceStats } };
+    // A04 integrity: a black-and-white photo stays black-and-white
+    const grayscale = keepGrayscale(pixels.data, imageData.data);
+    return { imageData, info: { from: [pixels.width, pixels.height], to: [imageData.width, imageData.height], backend: up.backend, tile: up.tile, seconds: up.seconds, attempts: up.attempts, faces: faceStats, grayscale } };
   }
 
   async function execute({ jobId, attemptId, kind, request, items }) {
