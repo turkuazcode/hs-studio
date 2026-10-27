@@ -212,6 +212,19 @@ pub fn attach<R: tauri::Runtime>(win: &tauri::WebviewWindow<R>, mpv: Arc<Mpv>) -
             let (w, h) = (a.allocated_width() * scale, a.allocated_height() * scale);
             let mut fbo: c_int = 0;
             unsafe { (gl.get_integerv)(GL_DRAW_FRAMEBUFFER_BINDING, &mut fbo) };
+            // Smoke diagnostics: GL state GTK leaves in the shared context before mpv draws
+            let state_before = PROBE.load(Ordering::Relaxed).then(|| {
+                let get = |e: u32| {
+                    let mut v: c_int = 0;
+                    unsafe { (gl.get_integerv)(e, &mut v) };
+                    v
+                };
+                json!({
+                    "unpackBuffer": get(0x88EF), "unpackRowLength": get(0x0CF2), "unpackAlignment": get(0x0CF5),
+                    "scissorTest": get(0x0C11), "blend": get(0x0BE2), "vao": get(0x85B5), "program": get(0x8B8D),
+                    "readFbo": get(0x8CAA), "activeTexture": get(0x84E0),
+                })
+            });
             if rc.render(fbo, w, h, true).is_ok() {
                 FRAMES.fetch_add(1, Ordering::Relaxed);
                 DRAWN.store(true, Ordering::Relaxed);
@@ -225,7 +238,7 @@ pub fn attach<R: tauri::Runtime>(win: &tauri::WebviewWindow<R>, mpv: Arc<Mpv>) -
                         (gl.get_integerv)(GL_VIEWPORT, viewport.as_mut_ptr());
                     }
                     *PIXEL.lock().unwrap() =
-                        Some(json!({"rgba": px, "fbo": fbo, "size": [w, h], "scale": scale, "viewport": viewport}));
+                        Some(json!({"rgba": px, "fbo": fbo, "size": [w, h], "scale": scale, "viewport": viewport, "glBefore": state_before}));
                 }
             }
         });
