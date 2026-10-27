@@ -109,4 +109,25 @@ Bu makinede Mac veya Linux yok. Yapılandırmalar ve tarifler hazırdır ama **t
 
 ## Test sonuçları (Windows 11 x64)
 
-_(aşağıda doldurulur)_
+**2026-10-26** tarihinde bu makinede (Windows 11 x64, AMD 1 GB iGPU) `scripts/test-installer.ps1` ile **28/28 kontrol geçti**.
+Komutlar `..\with-lock.ps1` kuyruğundan çalıştırıldı. Sonuç dosyası `tests/.results/installer.json`.
+
+| Adım | Sonuç |
+|---|---|
+| Paketler | `VHO PackageTest_0.1.0_x64-setup.exe` (28,05 MB, SHA-256 `61d9da02…4b15`) ve `…_0.1.1_x64-setup.exe` (SHA-256 `db666875…15c1`); manifestte 48 dosya. NSIS 3.13 ve nsis_tauri_utils 0.5.3, Tauri tarafından `%LOCALAPPDATA%	auri` altına indirildi |
+| Kurulum | Sessiz kurulum (`/S /NS`), yönetici izni yok, hedef `%TEMP%\…\Kurulum Dizini ğüşıöç`. Yalnızca HKCU'ya kayıt yapıldı (HKLM'ye değil). `vho.exe`, `mpv\` (38 DLL + ffmpeg/ffprobe) ve `legal\` (LICENSE, NOTICE, THIRD_PARTY_NOTICES, SOURCE-OFFER, SBOM) yerinde; manifestle SHA-256 olarak birebir aynı |
+| Ortam | Dosya ilişkilendirmesi, kısayol veya autostart oluşmadı (HKCU Classes, Run, Başlat menüsü ve masaüstü anlık görüntüleri aynı) |
+| E2E (kurulan exe) | `smoke` + `engine`: **39/39 geçti, 0 atlandı**. PATH yalnızca System32 + node; ayrı veri ve WebView2 profili, portlar 10900–10999. libmpv, kurulum klasöründeki `mpv\` altından yüklendi |
+| Veri | Kurulan uygulama yalıtılmış veri klasöründe `settings.json` ve `library.db` (+ WAL) oluşturdu |
+| Yükseltme | 0.1.0 → 0.1.1 aynı klasöre kuruldu. Veri dosyalarının SHA-256 değerleri değişmedi; yükseltilmiş uygulama mevcut `library.db` ile açıldı |
+| Kaldırma | HKCU kaldırma anahtarı ve kurulum klasörü silindi. **Kullanıcı verisi kaldı** (varsayılan). Test kimliğine ait artıklar betik tarafından temizlendi: `HKCU\Software\<publisher>\VHO PackageTest` (Tauri tasarımı) ve uygulamanın `VHO_DATA_DIR` ile oluşturduğu `%APPDATA%`/`%LOCALAPPDATA%\com.vho.app.packagetest.test*` klasörleri. Ortam anlık görüntüsü test öncesiyle aynı |
+
+**Test edilmeyenler:**
+
+- `release` varyantı: gerçek kimlik ve dosya ilişkilendirmeleri. Bilinçli olarak bu makinede kurulmadı, çünkü dosya
+  ilişkilendirmeleri kullanıcının ortamını değiştirir. Temiz bir VM veya Windows Sandbox'ta denenmeli.
+- Kurulum ekranları (Türkçe/İngilizce, lisans sayfası, "uygulama verilerini sil" kutusu). Yalnızca sessiz kurulum
+  test edildi.
+- WebView2 olmayan makine (bootstrapper indirmesi).
+- İmzalı paket (R02/SignPath) ve updater.
+- macOS ve Linux: **ortam bekliyor**.
