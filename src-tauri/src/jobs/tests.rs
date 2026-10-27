@@ -924,3 +924,40 @@ fn ai_output_policies_jpeg_background_strip_gps_and_disk_full() {
     assert_eq!(s.items(&id).unwrap()[0].state, "failed");
     assert_eq!(fx.outputs(), before);
 }
+
+#[test]
+fn smart_edit_job_kinds_write_a_png_with_alpha_and_keep_the_source() {
+    // A06: object removal / background / colorize run through the same webview bridge and A04 output
+    let _g = EXTERNAL_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    external::reset_runner();
+    for kind in ["ai-photo-enhance", "ai-inpaint", "ai-background", "ai-colorize"] {
+        assert!(external::AI_KINDS.contains(&kind), "{kind} registered");
+    }
+    let (fx, src) = ai_fx("ai-smart");
+    fx.env.ai_versions.lock().unwrap().insert("lama".into(), "lama-fp32".into());
+    let before = sha(&src);
+    let adapters: Vec<Arc<dyn Adapter>> =
+        vec![Arc::new(external::ExternalAdapter { kind: "ai-background", runner_wait: Duration::from_millis(300) })];
+    let s = Scheduler::open(fx.storage(), fx.env.clone(), adapters).unwrap();
+    external::runner_ready(&["ai-background".to_string()]);
+    let request = json!({ "input": src, "components": ["ort-web", "lama"], "op": "matting",
+        "output": { "suffix": "_cutout", "format": "png", "metadata": "keep" } });
+    let snap = s.submit("ai-background", request, None).unwrap();
+    let s2 = s.clone();
+    let worker = std::thread::spawn(move || s2.run_next());
+    let (job, attempt) = ids(&runner_event(&fx.env, "job-run", 0));
+    external::begin(&job, &attempt, 0).unwrap();
+    // a cut-out: left half transparent, right half opaque
+    let mut rgba = Vec::new();
+    for i in 0..8 {
+        rgba.extend_from_slice(&[40, 90, 200, if i % 4 < 2 { 0 } else { 255 }]);
+    }
+    let out = external::output(&job, &attempt, 0, 4, 2, rgba).unwrap();
+    external::send(&job, &attempt, external::Msg::Done).unwrap();
+    worker.join().unwrap().unwrap();
+    assert_eq!(s.snapshot(&snap.id).unwrap().state, "completed");
+    assert!(out.ends_with("foto_cutout.png"), "{out}");
+    let img = image::open(&out).unwrap().to_rgba8();
+    assert_eq!((img.get_pixel(0, 0)[3], img.get_pixel(3, 1)[3]), (0, 255), "alpha kept");
+    assert_eq!(sha(&src), before, "source unchanged");
+}
