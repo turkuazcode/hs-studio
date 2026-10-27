@@ -43,6 +43,7 @@ import { createToasts } from "./ui/toasts.js";
 import { initPlatform } from "./ui/platform.js";
 import { registerAiModelSettings } from "./ui/ai-models.js";
 import { initWindowControls } from "./ui/window-controls.js";
+import { initDialogA11y } from "./ui/dialog-a11y.js";
 
 /** libmpv status from the backend; { available: false } in a browser or without the DLLs. */
 async function engineStatus() {
@@ -127,6 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   app.view = app.playbackMenus;
   app.sleep = createSleepTimer(app);
   createModals(app);
+  initDialogA11y(); // every .modal-overlay: dialog role, focus in / trapped / restored (Q03)
   app.shortcuts = initShortcuts(app);
   initWindowControls(dom);
   app.video.syncEngineUi();

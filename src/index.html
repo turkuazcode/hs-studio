@@ -593,11 +593,11 @@
             <!-- Master Toggle Switch -->
             <div class="restore-master-toggle">
               <div class="toggle-info">
-                <strong data-i18n="enhance.master">Filtreleri uygula</strong>
+                <strong id="lbl-ai-master" data-i18n="enhance.master">Filtreleri uygula</strong>
                 <span id="ai-master-status" class="toggle-desc">Kapalı (orijinal)</span>
               </div>
               <label class="switch-toggle">
-                <input type="checkbox" id="check-ai-master" />
+                <input type="checkbox" id="check-ai-master" aria-labelledby="lbl-ai-master" aria-describedby="ai-master-status" />
                 <span class="slider-round"></span>
               </label>
             </div>
@@ -616,19 +616,19 @@
 
             <div class="filter-group">
               <div class="filter-label">
-                <span data-i18n="enhance.sharp">Keskinlik (FSR büyütme + CAS keskinleştirme)</span>
+                <span id="lbl-ai-sharp" data-i18n="enhance.sharp">Keskinlik (FSR büyütme + CAS keskinleştirme)</span>
                 <span id="val-ai-sharp">2. seviye</span>
               </div>
-              <input id="slider-ai-sharp" type="range" min="0" max="3" value="2" class="filter-slider">
+              <input id="slider-ai-sharp" aria-labelledby="lbl-ai-sharp" aria-describedby="val-ai-sharp" type="range" min="0" max="3" value="2" class="filter-slider">
               <p class="panel-note mpv-only video-only" data-i18n="enhance.sharpMpvNote">libmpv motorunda keskinleştirme yapılmaz: bu seviye yalnızca kontrastı ve doygunluğu artırır.</p>
             </div>
 
             <div class="filter-group">
               <div class="filter-label">
-                <span data-i18n="enhance.contrast">Ek kontrast</span>
+                <span id="lbl-ai-contrast" data-i18n="enhance.contrast">Ek kontrast</span>
                 <span id="val-ai-contrast">+8%</span>
               </div>
-              <input id="slider-ai-contrast" type="range" min="0" max="40" value="8" class="filter-slider">
+              <input id="slider-ai-contrast" aria-labelledby="lbl-ai-contrast" aria-describedby="val-ai-contrast" type="range" min="0" max="40" value="8" class="filter-slider">
             </div>
 
             <!-- Sound filters (video/music only) -->

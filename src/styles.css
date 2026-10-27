@@ -28,7 +28,8 @@
   /* Typography */
   --text-pure: #ffffff;
   --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  /* WCAG AA: >= 4.5:1 on every dark surface of the app (was #64748b, 3.3-3.9:1) */
+  --text-muted: #8592a6;
   --text-dark: #090a0f;
 
   /* Status Colors */
@@ -152,7 +153,7 @@ html, body {
   padding: 1px 5px;
   border-radius: 4px;
   background: var(--accent-ruby-dim);
-  color: var(--accent-ruby-bright);
+  color: #fb7185; /* 5.2:1 on the tag background (accent-ruby-bright was 3.8:1) */
   border: 1px solid rgba(225, 29, 72, 0.3);
 }
 
