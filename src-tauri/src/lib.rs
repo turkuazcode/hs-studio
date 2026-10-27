@@ -10,6 +10,7 @@ mod platform;
 mod restoration;
 mod storage;
 mod transcode;
+mod updater;
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -109,7 +110,7 @@ fn fnv1a(bytes: &[u8]) -> u64 {
 }
 
 fn transcode_cache_dir(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app.path().app_cache_dir().map_err(|e| e.to_string())?.join("transcode");
+    let dir = crate::platform::cache_dir(app)?.join("transcode");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir)
 }
@@ -230,6 +231,7 @@ async fn suspend_system() -> Result<(), String> {
 pub fn run() {
     let mut context = tauri::generate_context!();
     platform::apply_test_isolation(&mut context);
+    updater::apply_test_overrides(&mut context);
 
     let builder = tauri::Builder::default();
     // Must be the first plugin: a second launch exits here, before any window exists.
@@ -250,11 +252,13 @@ pub fn run() {
     let app = builder
         .manage(platform::PendingOpen::default())
         .manage(storage::StorageState::default())
+        .manage(updater::PendingUpdate::default())
         .manage(library::LibraryState::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(window_state.build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             prune_transcode_cache(app.handle());
 
@@ -286,6 +290,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            updater::updater_check,
+            updater::updater_install,
             suspend_system,
             get_compat_mode,
             set_compat_mode,
@@ -362,6 +368,7 @@ pub fn run() {
             jobs::jobs_resume,
             jobs::jobs_remove,
             jobs::jobs_clear_finished,
+            jobs::jobs_output_copy,
             jobs::jobs_runner_ready,
             jobs::jobs_ext_begin,
             jobs::jobs_ext_progress,

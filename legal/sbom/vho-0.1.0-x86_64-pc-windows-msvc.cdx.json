@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:ba619d55-046e-556c-b123-812c11e2d263",
+ "serialNumber": "urn:uuid:fa29364b-f45e-563a-9187-6229a486a582",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-27T06:16:09Z",
+  "timestamp": "2026-10-27T06:56:26Z",
   "tools": {
    "components": [
     {
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "ca92183f233b5f2a82839f8913bd7193817840ec"
+    "value": "8af0a5dbe539b78af7a7d2c132b4bc1c90df7bcd"
    },
    {
     "name": "vho:native-binaries",
@@ -930,6 +930,46 @@
     }
    ],
    "description": "Simple, persistent key-value store."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/tauri-plugin-updater@2.13.3",
+   "name": "tauri-plugin-updater",
+   "version": "2.13.3",
+   "purl": "pkg:cargo/tauri-plugin-updater@2.13.3",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "Apache-2.0 OR MIT"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "855a336eb389d2c1502244fd48fa2d8cb487a430f691bbaed025195f99a04489"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/tauri-apps/plugins-workspace"
+    }
+   ],
+   "description": "In-app updates for Tauri applications."
   },
   {
    "type": "library",
@@ -3253,6 +3293,46 @@
   },
   {
    "type": "library",
+   "bom-ref": "pkg:cargo/rustls@0.23.46",
+   "name": "rustls",
+   "version": "0.23.46",
+   "purl": "pkg:cargo/rustls@0.23.46",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "Apache-2.0 OR ISC OR MIT"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "48e13bd8c0e9365c43cfa5c9e8f9ad49d3c8444926c9aac819e0e4dc503c8fdf"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/rustls/rustls"
+    }
+   ],
+   "description": "Rustls is a modern TLS library written in Rust."
+  },
+  {
+   "type": "library",
    "bom-ref": "pkg:cargo/rustls-pki-types@1.15.1",
    "name": "rustls-pki-types",
    "version": "1.15.1",
@@ -3290,6 +3370,46 @@
     }
    ],
    "description": "Shared types for the rustls PKI ecosystem"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/rustls-platform-verifier@0.7.1",
+   "name": "rustls-platform-verifier",
+   "version": "0.7.1",
+   "purl": "pkg:cargo/rustls-platform-verifier@0.7.1",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "1167586491e2b18b8bfbb293e8180ec17c201c4f076d7cb3070ca964e7598f98"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/rustls/rustls-platform-verifier"
+    }
+   ],
+   "description": "rustls-platform-verifier supports verifying TLS certificates in rustls with the operating system verifier"
   },
   {
    "type": "library",
@@ -3370,6 +3490,46 @@
     }
    ],
    "description": "An implementation of TLS/SSL streams for Tokio using native-tls giving an implementation of TLS for nonblocking I/O streams."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/tokio-rustls@0.26.6",
+   "name": "tokio-rustls",
+   "version": "0.26.6",
+   "purl": "pkg:cargo/tokio-rustls@0.26.6",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "c9cc2678c2cdd569ef8215e2afd7954ada2ae20b4fdd2c5fe6139a3b02d105db"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/rustls/tokio-rustls"
+    }
+   ],
+   "description": "Asynchronous TLS/SSL streams for Tokio using Rustls."
   },
   {
    "type": "library",
@@ -5373,6 +5533,246 @@
   },
   {
    "type": "library",
+   "bom-ref": "pkg:cargo/base64@0.22.1",
+   "name": "base64",
+   "version": "0.22.1",
+   "purl": "pkg:cargo/base64@0.22.1",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/marshallpierce/rust-base64"
+    }
+   ],
+   "description": "encodes and decodes base64 as bytes or utf8"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/infer@0.22.0",
+   "name": "infer",
+   "version": "0.22.0",
+   "purl": "pkg:cargo/infer@0.22.0",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "f4200d433cbd5178df7797c9c2e75b348b728e39631cf14520d1e2fc424201f4"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/bojand/infer"
+    }
+   ],
+   "description": "Small crate to infer file type based on magic number signatures"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/minisign-verify@0.3.0",
+   "name": "minisign-verify",
+   "version": "0.3.0",
+   "purl": "pkg:cargo/minisign-verify@0.3.0",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "871285dc19d8d0ebe0eef3d0e99a205f2a71363b122632cbbfa4a6c370a960ce"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/jedisct1/rust-minisign-verify"
+    }
+   ],
+   "description": "Minisign signature verification for files and streams with Ed25519. A small Rust library with no external dependencies."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/tempfile@3.27.0",
+   "name": "tempfile",
+   "version": "3.27.0",
+   "purl": "pkg:cargo/tempfile@3.27.0",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/Stebalien/tempfile"
+    }
+   ],
+   "description": "A library for managing temporary files and directories."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/time@0.3.55",
+   "name": "time",
+   "version": "0.3.55",
+   "purl": "pkg:cargo/time@0.3.55",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "cdb87b95ec50ddfa440816d227a17b2ccbdda963a316a727fda0fc4334f7d134"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/time-rs/time"
+    }
+   ],
+   "description": "Date and time library. Fully interoperable with the standard library. Mostly compatible with #![no_std]."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/zip@4.6.1",
+   "name": "zip",
+   "version": "4.6.1",
+   "purl": "pkg:cargo/zip@4.6.1",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "caa8cd6af31c3b31c6631b8f483848b91589021b28fffe50adada48d4f4d2ed1"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/zip-rs/zip2.git"
+    }
+   ],
+   "description": "Library to support the reading and writing of zip files."
+  },
+  {
+   "type": "library",
    "bom-ref": "pkg:cargo/mio@1.2.4",
    "name": "mio",
    "version": "1.2.4",
@@ -7367,86 +7767,6 @@
   },
   {
    "type": "library",
-   "bom-ref": "pkg:cargo/rustls@0.23.46",
-   "name": "rustls",
-   "version": "0.23.46",
-   "purl": "pkg:cargo/rustls@0.23.46",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "Apache-2.0 OR ISC OR MIT"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "48e13bd8c0e9365c43cfa5c9e8f9ad49d3c8444926c9aac819e0e4dc503c8fdf"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/rustls/rustls"
-    }
-   ],
-   "description": "Rustls is a modern TLS library written in Rust."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/tokio-rustls@0.26.6",
-   "name": "tokio-rustls",
-   "version": "0.26.6",
-   "purl": "pkg:cargo/tokio-rustls@0.26.6",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "c9cc2678c2cdd569ef8215e2afd7954ada2ae20b4fdd2c5fe6139a3b02d105db"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/rustls/tokio-rustls"
-    }
-   ],
-   "description": "Asynchronous TLS/SSL streams for Tokio using Rustls."
-  },
-  {
-   "type": "library",
    "bom-ref": "pkg:cargo/ipnet@2.12.2",
    "name": "ipnet",
    "version": "2.12.2",
@@ -7564,6 +7884,166 @@
     }
    ],
    "description": "Schannel bindings for rust, allowing SSL/TLS (e.g. https) without openssl"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/once_cell@1.21.4",
+   "name": "once_cell",
+   "version": "1.21.4",
+   "purl": "pkg:cargo/once_cell@1.21.4",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/matklad/once_cell"
+    }
+   ],
+   "description": "Single assignment cells and lazy values."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/ring@0.17.14",
+   "name": "ring",
+   "version": "0.17.14",
+   "purl": "pkg:cargo/ring@0.17.14",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "Apache-2.0 AND ISC"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "a4689e6c2294d81e88dc6261c768b63bc4fcdb852be6d1352498b114f61383b7"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/briansmith/ring"
+    }
+   ],
+   "description": "An experiment."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/rustls-webpki@0.103.16",
+   "name": "rustls-webpki",
+   "version": "0.103.16",
+   "purl": "pkg:cargo/rustls-webpki@0.103.16",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "ISC"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "4443b1b6d39d7c663139942cc4558262562d2c84123bb6282ef177009ca8b281"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/rustls/webpki"
+    }
+   ],
+   "description": "Web PKI X.509 Certificate Verification."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/subtle@2.6.1",
+   "name": "subtle",
+   "version": "2.6.1",
+   "purl": "pkg:cargo/subtle@2.6.1",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "BSD-3-Clause"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/dalek-cryptography/subtle"
+    }
+   ],
+   "description": "Pure-Rust traits and utilities for constant-time cryptographic implementations."
   },
   {
    "type": "library",
@@ -8007,46 +8487,6 @@
   },
   {
    "type": "library",
-   "bom-ref": "pkg:cargo/time@0.3.55",
-   "name": "time",
-   "version": "0.3.55",
-   "purl": "pkg:cargo/time@0.3.55",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "cdb87b95ec50ddfa440816d227a17b2ccbdda963a316a727fda0fc4334f7d134"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/time-rs/time"
-    }
-   ],
-   "description": "Date and time library. Fully interoperable with the standard library. Mostly compatible with #![no_std]."
-  },
-  {
-   "type": "library",
    "bom-ref": "pkg:cargo/version_check@0.9.5",
    "name": "version_check",
    "version": "0.9.5",
@@ -8244,46 +8684,6 @@
     }
    ],
    "description": "Contains types to define keyboard related events."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/once_cell@1.21.4",
-   "name": "once_cell",
-   "version": "1.21.4",
-   "purl": "pkg:cargo/once_cell@1.21.4",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/matklad/once_cell"
-    }
-   ],
-   "description": "Single assignment cells and lazy values."
   },
   {
    "type": "library",
@@ -8644,46 +9044,6 @@
     }
    ],
    "description": "HTML querying and manipulation with CSS selectors"
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/infer@0.22.0",
-   "name": "infer",
-   "version": "0.22.0",
-   "purl": "pkg:cargo/infer@0.22.0",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "f4200d433cbd5178df7797c9c2e75b348b728e39631cf14520d1e2fc424201f4"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/bojand/infer"
-    }
-   ],
-   "description": "Small crate to infer file type based on magic number signatures"
   },
   {
    "type": "library",
@@ -9364,6 +9724,286 @@
     }
    ],
    "description": "Core primitives for application-level tracing."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/cfb@0.14.0",
+   "name": "cfb",
+   "version": "0.14.0",
+   "purl": "pkg:cargo/cfb@0.14.0",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "a347dcabdae9c31b0825fd6a8bed285ec9c2acb89c47827126d52fa4f59cece3"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/mdsteele/rust-cfb"
+    }
+   ],
+   "description": "Read/write Compound File Binary (structured storage) files"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/fastrand@2.5.0",
+   "name": "fastrand",
+   "version": "2.5.0",
+   "purl": "pkg:cargo/fastrand@2.5.0",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "Apache-2.0 OR MIT"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/smol-rs/fastrand"
+    }
+   ],
+   "description": "A simple and fast random number generator"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/deranged@0.5.9",
+   "name": "deranged",
+   "version": "0.5.9",
+   "purl": "pkg:cargo/deranged@0.5.9",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "9e9de72ce2ad1f90dc62fa25f0f430ef85eb4b0d8fa0be4f30373bc40a21d28e"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/jhpratt/deranged"
+    }
+   ],
+   "description": "Ranged integers"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/num-conv@0.2.2",
+   "name": "num-conv",
+   "version": "0.2.2",
+   "purl": "pkg:cargo/num-conv@0.2.2",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "521739c6d2bac4aa25192232afe6841231376b2b26d4d9fae5ecf8ca5772e441"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/jhpratt/num-conv"
+    }
+   ],
+   "description": "`num_conv` is a crate to convert between integer types without using `as` casts. This provides better certainty when refactoring, makes the exact behavior of code more explicit, and allows using turbofish syntax."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/powerfmt@0.2.1",
+   "name": "powerfmt",
+   "version": "0.2.1",
+   "purl": "pkg:cargo/powerfmt@0.2.1",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "4a6394b9e965e73d0a289ee54f589087e2c676aedf60885baf52c76b771e4958"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/jhpratt/powerfmt"
+    }
+   ],
+   "description": "`powerfmt` is a library that provides utilities for formatting values. This crate makes it significantly easier to support filling to a minimum width with alignment, avoid heap allocation, and avoid repetitive calculations."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/time-core@0.1.9",
+   "name": "time-core",
+   "version": "0.1.9",
+   "purl": "pkg:cargo/time-core@0.1.9",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "9e1c906769ad99c88eaa54e728060edef082f8e358ff32030cb7c7d315e81109"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/time-rs/time"
+    }
+   ],
+   "description": "This crate is an implementation detail and should not be relied upon directly."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/time-macros@0.2.32",
+   "name": "time-macros",
+   "version": "0.2.32",
+   "purl": "pkg:cargo/time-macros@0.2.32",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "7e689342a48d2ea927c87ea50cabf8594854bf940e9310208848d680d668ed85"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/time-rs/time"
+    }
+   ],
+   "description": "Procedural macros for the time crate. This crate is an implementation detail and should not be relied upon directly."
   },
   {
    "type": "library",
@@ -10607,10 +11247,50 @@
   },
   {
    "type": "library",
-   "bom-ref": "pkg:cargo/rustls-webpki@0.103.16",
-   "name": "rustls-webpki",
-   "version": "0.103.16",
-   "purl": "pkg:cargo/rustls-webpki@0.103.16",
+   "bom-ref": "pkg:cargo/getrandom@0.2.17",
+   "name": "getrandom",
+   "version": "0.2.17",
+   "purl": "pkg:cargo/getrandom@0.2.17",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/rust-random/getrandom"
+    }
+   ],
+   "description": "A small cross-platform library for retrieving random data from system source"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/untrusted@0.9.0",
+   "name": "untrusted",
+   "version": "0.9.0",
+   "purl": "pkg:cargo/untrusted@0.9.0",
    "scope": "required",
    "licenses": [
     {
@@ -10634,56 +11314,16 @@
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "4443b1b6d39d7c663139942cc4558262562d2c84123bb6282ef177009ca8b281"
+     "content": "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
     }
    ],
    "externalReferences": [
     {
      "type": "vcs",
-     "url": "https://github.com/rustls/webpki"
+     "url": "https://github.com/briansmith/untrusted"
     }
    ],
-   "description": "Web PKI X.509 Certificate Verification."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/subtle@2.6.1",
-   "name": "subtle",
-   "version": "2.6.1",
-   "purl": "pkg:cargo/subtle@2.6.1",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "BSD-3-Clause"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/dalek-cryptography/subtle"
-    }
-   ],
-   "description": "Pure-Rust traits and utilities for constant-time cryptographic implementations."
+   "description": "Safe, fast, zero-panic, zero-crashing, zero-allocation parsing of untrusted inputs in Rust."
   },
   {
    "type": "library",
@@ -11004,206 +11644,6 @@
     }
    ],
    "description": "Typenum is a Rust library for type-level numbers evaluated at compile time. It currently supports bits, unsigned integers, and signed integers. It also provides a type-level array of type-level numbers, but its implementation is incomplete."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/deranged@0.5.9",
-   "name": "deranged",
-   "version": "0.5.9",
-   "purl": "pkg:cargo/deranged@0.5.9",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "9e9de72ce2ad1f90dc62fa25f0f430ef85eb4b0d8fa0be4f30373bc40a21d28e"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/jhpratt/deranged"
-    }
-   ],
-   "description": "Ranged integers"
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/num-conv@0.2.2",
-   "name": "num-conv",
-   "version": "0.2.2",
-   "purl": "pkg:cargo/num-conv@0.2.2",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "521739c6d2bac4aa25192232afe6841231376b2b26d4d9fae5ecf8ca5772e441"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/jhpratt/num-conv"
-    }
-   ],
-   "description": "`num_conv` is a crate to convert between integer types without using `as` casts. This provides better certainty when refactoring, makes the exact behavior of code more explicit, and allows using turbofish syntax."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/powerfmt@0.2.1",
-   "name": "powerfmt",
-   "version": "0.2.1",
-   "purl": "pkg:cargo/powerfmt@0.2.1",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "4a6394b9e965e73d0a289ee54f589087e2c676aedf60885baf52c76b771e4958"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/jhpratt/powerfmt"
-    }
-   ],
-   "description": "`powerfmt` is a library that provides utilities for formatting values. This crate makes it significantly easier to support filling to a minimum width with alignment, avoid heap allocation, and avoid repetitive calculations."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/time-core@0.1.9",
-   "name": "time-core",
-   "version": "0.1.9",
-   "purl": "pkg:cargo/time-core@0.1.9",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "9e1c906769ad99c88eaa54e728060edef082f8e358ff32030cb7c7d315e81109"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/time-rs/time"
-    }
-   ],
-   "description": "This crate is an implementation detail and should not be relied upon directly."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/time-macros@0.2.32",
-   "name": "time-macros",
-   "version": "0.2.32",
-   "purl": "pkg:cargo/time-macros@0.2.32",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "7e689342a48d2ea927c87ea50cabf8594854bf940e9310208848d680d668ed85"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/time-rs/time"
-    }
-   ],
-   "description": "Procedural macros for the time crate. This crate is an implementation detail and should not be relied upon directly."
   },
   {
    "type": "library",
@@ -11804,46 +12244,6 @@
     }
    ],
    "description": "Compact buffer/string type for zero-copy parsing"
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/cfb@0.14.0",
-   "name": "cfb",
-   "version": "0.14.0",
-   "purl": "pkg:cargo/cfb@0.14.0",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "a347dcabdae9c31b0825fd6a8bed285ec9c2acb89c47827126d52fa4f59cece3"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/mdsteele/rust-cfb"
-    }
-   ],
-   "description": "Read/write Compound File Binary (structured storage) files"
   },
   {
    "type": "library",
@@ -12887,6 +13287,46 @@
   },
   {
    "type": "library",
+   "bom-ref": "pkg:cargo/web-time@1.1.0",
+   "name": "web-time",
+   "version": "1.1.0",
+   "purl": "pkg:cargo/web-time@1.1.0",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/daxpedda/web-time"
+    }
+   ],
+   "description": "Drop-in replacement for std::time for Wasm in browsers"
+  },
+  {
+   "type": "library",
    "bom-ref": "pkg:cargo/zerocopy-derive@0.8.63",
    "name": "zerocopy-derive",
    "version": "0.8.63",
@@ -13367,86 +13807,6 @@
   },
   {
    "type": "library",
-   "bom-ref": "pkg:cargo/ring@0.17.14",
-   "name": "ring",
-   "version": "0.17.14",
-   "purl": "pkg:cargo/ring@0.17.14",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "Apache-2.0 AND ISC"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "a4689e6c2294d81e88dc6261c768b63bc4fcdb852be6d1352498b114f61383b7"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/briansmith/ring"
-    }
-   ],
-   "description": "An experiment."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/untrusted@0.9.0",
-   "name": "untrusted",
-   "version": "0.9.0",
-   "purl": "pkg:cargo/untrusted@0.9.0",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "ISC"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/briansmith/untrusted"
-    }
-   ],
-   "description": "Safe, fast, zero-panic, zero-crashing, zero-allocation parsing of untrusted inputs in Rust."
-  },
-  {
-   "type": "library",
    "bom-ref": "pkg:cargo/icu_normalizer@2.4.0",
    "name": "icu_normalizer",
    "version": "2.4.0",
@@ -13884,46 +14244,6 @@
     }
    ],
    "description": "A fork of std::sync::Arc with some extra functionality and without weak references"
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/web-time@1.1.0",
-   "name": "web-time",
-   "version": "1.1.0",
-   "purl": "pkg:cargo/web-time@1.1.0",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/daxpedda/web-time"
-    }
-   ],
-   "description": "Drop-in replacement for std::time for Wasm in browsers"
   },
   {
    "type": "library",
@@ -14767,46 +15087,6 @@
   },
   {
    "type": "library",
-   "bom-ref": "pkg:cargo/getrandom@0.2.17",
-   "name": "getrandom",
-   "version": "0.2.17",
-   "purl": "pkg:cargo/getrandom@0.2.17",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "ff2abc00be7fca6ebc474524697ae276ad847ad0a6b3faa4bcb027e9a4614ad0"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/rust-random/getrandom"
-    }
-   ],
-   "description": "A small cross-platform library for retrieving random data from system source"
-  },
-  {
-   "type": "library",
    "bom-ref": "pkg:cargo/icu_normalizer_data@2.4.0",
    "name": "icu_normalizer_data",
    "version": "2.4.0",
@@ -15004,46 +15284,6 @@
     }
    ],
    "description": "An unsafe marker trait for types like Box and Rc that dereference to a stable address even when moved, and hence can be used with libraries such as owning_ref and rental."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/fastrand@2.5.0",
-   "name": "fastrand",
-   "version": "2.5.0",
-   "purl": "pkg:cargo/fastrand@2.5.0",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "Apache-2.0 OR MIT"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/smol-rs/fastrand"
-    }
-   ],
-   "description": "A simple and fast random number generator"
   },
   {
    "type": "library",
@@ -21578,6 +21818,10 @@
    ]
   },
   {
+   "ref": "pkg:cargo/base64@0.22.1",
+   "dependsOn": []
+  },
+  {
    "ref": "pkg:cargo/base64@0.23.1",
    "dependsOn": []
   },
@@ -22615,6 +22859,10 @@
    "dependsOn": []
   },
   {
+   "ref": "pkg:cargo/minisign-verify@0.3.0",
+   "dependsOn": []
+  },
+  {
    "ref": "pkg:cargo/miniz_oxide@0.8.9",
    "dependsOn": [
     "pkg:cargo/adler2@2.0.1",
@@ -23058,10 +23306,13 @@
     "pkg:cargo/percent-encoding@2.3.2",
     "pkg:cargo/pin-project-lite@0.2.17",
     "pkg:cargo/rustls-pki-types@1.15.1",
+    "pkg:cargo/rustls-platform-verifier@0.7.1",
+    "pkg:cargo/rustls@0.23.46",
     "pkg:cargo/serde@1.0.229",
     "pkg:cargo/serde_json@1.0.154",
     "pkg:cargo/sync_wrapper@1.0.2",
     "pkg:cargo/tokio-native-tls@0.3.1",
+    "pkg:cargo/tokio-rustls@0.26.6",
     "pkg:cargo/tokio-util@0.7.20",
     "pkg:cargo/tokio@1.54.1",
     "pkg:cargo/tower-http@0.6.11",
@@ -23119,6 +23370,14 @@
    ]
   },
   {
+   "ref": "pkg:cargo/rustls-platform-verifier@0.7.1",
+   "dependsOn": [
+    "pkg:cargo/log@0.4.34",
+    "pkg:cargo/rustls@0.23.46",
+    "pkg:cargo/windows-sys@0.61.2"
+   ]
+  },
+  {
    "ref": "pkg:cargo/rustls-webpki@0.103.16",
    "dependsOn": [
     "pkg:cargo/ring@0.17.14",
@@ -23130,6 +23389,7 @@
    "ref": "pkg:cargo/rustls@0.23.46",
    "dependsOn": [
     "pkg:cargo/once_cell@1.21.4",
+    "pkg:cargo/ring@0.17.14",
     "pkg:cargo/rustls-pki-types@1.15.1",
     "pkg:cargo/rustls-webpki@0.103.16",
     "pkg:cargo/subtle@2.6.1",
@@ -23582,6 +23842,32 @@
    ]
   },
   {
+   "ref": "pkg:cargo/tauri-plugin-updater@2.13.3",
+   "dependsOn": [
+    "pkg:cargo/base64@0.22.1",
+    "pkg:cargo/futures-util@0.3.34",
+    "pkg:cargo/http@1.5.0",
+    "pkg:cargo/infer@0.22.0",
+    "pkg:cargo/log@0.4.34",
+    "pkg:cargo/minisign-verify@0.3.0",
+    "pkg:cargo/percent-encoding@2.3.2",
+    "pkg:cargo/reqwest@0.13.5",
+    "pkg:cargo/rustls@0.23.46",
+    "pkg:cargo/semver@1.0.28",
+    "pkg:cargo/serde@1.0.229",
+    "pkg:cargo/serde_json@1.0.154",
+    "pkg:cargo/tauri-plugin@2.7.2",
+    "pkg:cargo/tauri@2.12.5",
+    "pkg:cargo/tempfile@3.27.0",
+    "pkg:cargo/thiserror@2.0.21",
+    "pkg:cargo/time@0.3.55",
+    "pkg:cargo/tokio@1.54.1",
+    "pkg:cargo/url@2.5.8",
+    "pkg:cargo/windows-sys@0.61.2",
+    "pkg:cargo/zip@4.6.1"
+   ]
+  },
+  {
    "ref": "pkg:cargo/tauri-plugin-window-state@2.5.0",
    "dependsOn": [
     "pkg:cargo/bitflags@2.13.2",
@@ -23712,6 +23998,15 @@
     "pkg:cargo/webview2-com@0.39.1",
     "pkg:cargo/window-vibrancy@0.8.1",
     "pkg:cargo/windows@0.62.2"
+   ]
+  },
+  {
+   "ref": "pkg:cargo/tempfile@3.27.0",
+   "dependsOn": [
+    "pkg:cargo/fastrand@2.5.0",
+    "pkg:cargo/getrandom@0.4.3",
+    "pkg:cargo/once_cell@1.21.4",
+    "pkg:cargo/windows-sys@0.61.2"
    ]
   },
   {
@@ -24342,6 +24637,14 @@
    ]
   },
   {
+   "ref": "pkg:cargo/zip@4.6.1",
+   "dependsOn": [
+    "pkg:cargo/crc32fast@1.5.3",
+    "pkg:cargo/indexmap@2.14.2",
+    "pkg:cargo/memchr@2.8.3"
+   ]
+  },
+  {
    "ref": "pkg:cargo/zlib-rs@0.6.8",
    "dependsOn": []
   },
@@ -24389,6 +24692,7 @@
     "pkg:cargo/tauri-plugin-opener@2.7.2",
     "pkg:cargo/tauri-plugin-single-instance@2.5.4",
     "pkg:cargo/tauri-plugin-store@2.5.0",
+    "pkg:cargo/tauri-plugin-updater@2.13.3",
     "pkg:cargo/tauri-plugin-window-state@2.5.0",
     "pkg:cargo/tauri@2.12.5",
     "pkg:cargo/tokio@1.54.1",

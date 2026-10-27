@@ -7,6 +7,7 @@ import { upscaleImage, restoreFacesInImage, downloadConsentText, describeHardwar
 import { i18n, t } from "../core/i18n.js";
 import { convertFileSrc, invoke } from "../core/tauri.js";
 import { photoEnhanceRequest } from "./ai-jobs.js";
+import { keepGrayscale } from "./grayscale.js";
 import { etaSeconds, memoryBudget, planInput } from "./ai-policy.js";
 import { safeFileName } from "../core/format.js";
 
@@ -166,7 +167,11 @@ export function createPhotoAi(app) {
     });
     try {
       const final = await app.jobs.run("ai-photo-enhance",
-        photoEnhanceRequest({ path, faces: withFaces, inputWidth: plan.width, inputHeight: plan.height }), {
+        photoEnhanceRequest({
+          path, faces: withFaces, inputWidth: plan.width, inputHeight: plan.height,
+          // A04: EXIF/GPS policy of the result (Settings > AI models)
+          output: { metadata: app.settings?.get?.("ai.output.metadata") ?? "keep" },
+        }), {
           onSubmitted: (snap) => {
             jobId = snap.id;
             if (cancelRequested) app.jobs.cancel(snap.id).catch(() => {});
@@ -180,7 +185,7 @@ export function createPhotoAi(app) {
       const output = result?.output ?? final.result?.results?.[0]?.output;
       if (final.state === "completed" && output) {
         const url = convertFileSrc(output);
-        deepResult = { url, path: output, blob: null, originalSrc, showingEnhanced: false };
+        deepResult = { url, path: output, jobId, blob: null, originalSrc, showingEnhanced: false };
         const info = result?.info;
         const faces = info?.faces;
         const faceNote = !withFaces || !faces ? () => ""
@@ -272,6 +277,7 @@ export function createPhotoAi(app) {
         }
       }
 
+      keepGrayscale(pixels.data, finalImage.data); // A04: B/W stays B/W
       const c = document.createElement("canvas");
       c.width = finalImage.width;
       c.height = finalImage.height;
@@ -325,8 +331,19 @@ export function createPhotoAi(app) {
   btnDeepSave?.addEventListener("click", async () => {
     if (!deepResult) return;
     const base = safeFileName((currentFilename.textContent || "VHO").replace(/\.[^.]+$/, ""));
-    // queued job: the PNG is already a file (AI results folder); the copy is offered as before
-    deepResult.blob ??= await fetch(deepResult.url).then((r) => r.blob()).catch(() => null);
+    // queued job: a copy of the result file (EXIF/alpha kept) next to the photo, never
+    // overwriting; the file comes from the queue's own record
+    if (deepResult.jobId) {
+      try {
+        const saved = await invoke("jobs_output_copy", { id: deepResult.jobId, idx: 0 });
+        btnDeepSave.dataset.saved = saved;
+        app.toast(t("enhance.deepSavedTo", { name: saved.split(/[\\/]/).pop() }));
+      } catch (e) {
+        const key = `jobs.error.${e?.code}`;
+        app.toast(t("enhance.deepFailed", { error: t(key) !== key ? t(key) : e?.message ?? String(e) }));
+      }
+      return;
+    }
     if (app.snapshot.downloadBlob(deepResult.blob, `${base}_AI_4x.png`)) app.toast(t("enhance.deepSaved"));
   });
 

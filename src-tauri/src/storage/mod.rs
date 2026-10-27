@@ -521,9 +521,10 @@ mod tests {
         let s = Storage::open_with(&dir, &migrations::MIGRATIONS[..1]).unwrap();
         s.write(|tx| Ok(tx.execute("INSERT INTO meta VALUES ('probe', 'kept')", [])?)).unwrap();
         drop(s);
-        let s = Storage::open_with(&dir, &migrations::MIGRATIONS[..2]).unwrap();
-        assert_eq!(s.report.migrated, vec![2]);
-        assert_eq!(s.report.schema_version, 2);
+        let s = Storage::open(&dir).unwrap();
+        // v2 (A02 jobs) and every later step (v3 L02 library) run on the L01 data
+        assert_eq!(s.report.migrated, (2..=migrations::latest_version()).collect::<Vec<_>>());
+        assert_eq!(s.report.schema_version, migrations::latest_version());
         let backup = PathBuf::from(s.report.backup.clone().expect("backup before the jobs migration"));
         assert!(backup.file_name().unwrap().to_string_lossy().starts_with("library-v1-"));
         let v: String = s.read(|c| c.query_row("SELECT value FROM meta WHERE key = 'probe'", [], |r| r.get(0))).unwrap();

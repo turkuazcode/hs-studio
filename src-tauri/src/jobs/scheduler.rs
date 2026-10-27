@@ -200,6 +200,11 @@ impl Scheduler {
     // Reads
     // -----------------------------------------------------------------------
 
+    #[cfg(test)]
+    pub fn storage_for_tests(&self) -> &Storage {
+        &self.storage
+    }
+
     pub fn list(&self) -> Result<Vec<JobSnapshot>, JobError> {
         Ok(self.storage.read(store::list)?)
     }
@@ -469,6 +474,44 @@ impl Scheduler {
         Ok(true)
     }
 
+    /// Copies a completed item's output next to its source (or into `dir`) without
+    /// overwriting anything (A04 "save a copy"). The file comes from the queue's own record,
+    /// never from a path the UI sends.
+    pub fn copy_output(&self, id: &str, idx: i64, dir: Option<PathBuf>) -> Result<String, JobError> {
+        let (input, output): (String, Option<String>) = self
+            .storage
+            .read(|c| {
+                c.query_row(
+                    "SELECT input_path, output_path FROM job_items WHERE job_id = ?1 AND idx = ?2 AND state = 'completed'",
+                    params![id, idx],
+                    |r| Ok((r.get(0)?, r.get(1)?)),
+                )
+                .optional()
+            })?
+            .ok_or_else(|| JobError::new(code::INVALID_STATE, "no completed output"))?;
+        let output = PathBuf::from(output.ok_or_else(|| JobError::new(code::INVALID_STATE, "no completed output"))?);
+        let size = std::fs::metadata(&output).map_err(|e| JobError::new(code::NOT_FOUND, e.to_string()))?.len();
+        let dir = dir.unwrap_or_else(|| super::parent_dir(Path::new(&input)));
+        if let Some(free) = self.env.free_space(&dir) {
+            if free < size + (16 << 20) {
+                return Err(JobError::new(code::DISK_FULL, format!("{} MiB free", free >> 20)));
+            }
+        }
+        let target = dir.join(output.file_name().unwrap_or_default());
+        let part = dir.join(format!(".vho-copy-{}.part", uuid::Uuid::new_v4().simple()));
+        let io = |e: std::io::Error| JobError::new(super::classify_error(&e.to_string()), e.to_string());
+        std::fs::copy(&output, &part).map_err(|e| {
+            let _ = std::fs::remove_file(&part);
+            io(e)
+        })?;
+        let placed = crate::actions::files::place_no_clobber(&part, &target).map_err(|e| {
+            let _ = std::fs::remove_file(&part);
+            JobError::new(code::FAILED, e)
+        })?;
+        self.env.on_output(&placed);
+        Ok(placed.to_string_lossy().into_owned())
+    }
+
     /// Removes completed and cancelled jobs (output files stay).
     pub fn clear_finished(&self) -> Result<usize, JobError> {
         Ok(self.storage.write(|tx| Ok(tx.execute("DELETE FROM jobs WHERE state IN ('completed', 'cancelled')", [])?))?)
@@ -515,6 +558,7 @@ impl Scheduler {
                         attempt_id: &attempt,
                         kind: adapter.kind(),
                         request: &row.request,
+                        model: row.model.as_deref(),
                         pending,
                         cancelled: Box::new(|| guard.cancelled() || stop.load(Ordering::SeqCst)),
                         last_progress: Mutex::new(None),
@@ -638,6 +682,8 @@ pub struct RunCtx<'a> {
     pub attempt_id: &'a str,
     pub kind: &'static str,
     pub request: &'a Value,
+    /// Pinned tool/model versions of the job (JSON `{id, version}`)
+    pub model: Option<&'a str>,
     /// Items this attempt must do (completed ones are not here).
     pub pending: Vec<store::PendingRow>,
     cancelled: Box<dyn Fn() -> bool + Send + Sync + 'a>,
@@ -746,6 +792,12 @@ impl RunCtx<'_> {
 
     /// The final file exists and is complete: item done, artifact recorded (same transaction).
     pub fn complete_item(&self, idx: i64, output: &Path, bytes: u64) -> Result<(), JobError> {
+        self.complete_item_with(idx, output, bytes, Value::Null)
+    }
+
+    /// Like `complete_item`; `extra` (an object) is merged into the artifact record (A04:
+    /// recipe, pinned models, source fingerprint, output size / colour / alpha / metadata).
+    pub fn complete_item_with(&self, idx: i64, output: &Path, bytes: u64, extra: Value) -> Result<(), JobError> {
         let ok = std::fs::metadata(output).is_ok_and(|m| m.is_file() && m.len() > 0);
         if !ok {
             return self.fail_item(idx, code::FAILED, "output missing or empty");
@@ -759,7 +811,11 @@ impl RunCtx<'_> {
                 params![self.job_id, idx, out, bytes as i64, now],
             )?;
             let media: Option<String> = tx.query_row("SELECT media_id FROM job_items WHERE job_id = ?1 AND idx = ?2", params![self.job_id, idx], |r| r.get(0))?;
-            let params_json = serde_json::json!({ "attemptId": self.attempt_id, "idx": idx }).to_string();
+            let mut params_v = serde_json::json!({ "attemptId": self.attempt_id, "idx": idx });
+            if let (Some(p), Value::Object(e)) = (params_v.as_object_mut(), extra) {
+                p.extend(e);
+            }
+            let params_json = params_v.to_string();
             tx.execute(
                 "INSERT INTO artifacts (id, media_id, kind, path, params, created_at, job_id) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
                 params![uuid::Uuid::new_v4().to_string(), media, self.kind, out, params_json, now, self.job_id],

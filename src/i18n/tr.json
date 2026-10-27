@@ -102,7 +102,8 @@
       "subPosition": "Altyazı konumu (100 = en alt)",
       "eqPreset": "Ekolayzır hazır ayarı",
       "hwdec": "Donanım ile video çözme",
-      "fastProfile": "Hızlı görüntü profili (profile=fast)"
+      "fastProfile": "Hızlı görüntü profili (profile=fast)",
+      "checkUpdates": "Güncellemeleri otomatik denetle"
     },
     "help": {
       "defaultApps": "Windows, uygulamaların kendini varsayılan yapmasına izin vermez; açılan pencerede VHO'yu seçin.",
@@ -112,7 +113,8 @@
       "normalize": "Sessiz ve gürültülü sahneleri dengeler (dynaudnorm).",
       "fastProfile": "Dahili ekran kartlarında GPU yükünü azaltır.",
       "fastProfileGpu": "Dahili ekran kartlarında GPU yükünü azaltır. Bu bilgisayar: {gpu}.",
-      "fastProfileGpuIntegrated": "Dahili ekran kartlarında GPU yükünü azaltır. Bu bilgisayar: {gpu} (dahili)."
+      "fastProfileGpuIntegrated": "Dahili ekran kartlarında GPU yükünü azaltır. Bu bilgisayar: {gpu} (dahili).",
+      "checkUpdates": "Açılışta bir kez. Güncellemeler imzalıdır ve yalnızca Kur'a tıkladığınızda kurulur; medyanızla ilgili hiçbir şey gönderilmez."
     },
     "options": {
       "languageSystem": "Sistem dili",
@@ -594,7 +596,8 @@
     "deepTooLarge": "Bu fotoğraf {w}×{h}. 4 kat çıktı bu cihazın AI bellek sınırını aşar: giriş {iw}×{ih} boyutuna küçültülecek, sonuç {ow}×{oh} olacak. Devam edilsin mi?",
     "deepQueued": "Sırada: önceki uzun iş bitince başlayacak…",
     "deepRunningEta": "İyileştiriliyor… %{pct} — {hw}, yaklaşık {eta} sn kaldı",
-    "deepPaused": "Duraklatıldı (oynatma sırasında veya uygulama kapanırken). Başlık çubuğundaki İşler panelinden devam eder."
+    "deepPaused": "Duraklatıldı (oynatma sırasında veya uygulama kapanırken). Başlık çubuğundaki İşler panelinden devam eder.",
+    "deepSavedTo": "Kopya kaydedildi: {name} (fotoğrafın klasöründe; EXIF ve saydamlık korundu)"
   },
   "ui": {
     "docTitle": "VHO - Video Oynatıcı",
@@ -1358,7 +1361,26 @@
       "pauseDuringPlaybackHelp": "Oynatma takılmasın diye çalışan AI işi duraklar; oynatma durunca kaldığı işten (doğrulanarak) devam eder.",
       "lastRun": "Son AI çalışması: {backend}, karo {tile} px, {sec} sn.",
       "noRun": "Bu oturumda henüz AI çalışması yok.",
-      "fallbacks": "Geri çekilmeler: {list}."
+      "fallbacks": "Geri çekilmeler: {list}.",
+      "metadata": "AI sonucunda meta veri (tarih, kamera, konum)"
+    }
+  },
+  "updates": {
+    "checkNow": "Şimdi denetle",
+    "install": "Kur",
+    "toast": "{version} sürümü hazır (Ayarlar > Genel).",
+    "confirmInstall": "{version} sürümü kurulsun mu? Kurulum sırasında uygulama kapanır; ayarlarınız ve kütüphaneniz korunur.",
+    "status": {
+      "checking": "Denetleniyor…",
+      "available": "{version} sürümü hazır (sizdeki: {current}).",
+      "none": "En güncel sürümü kullanıyorsunuz ({current}).",
+      "offline": "Güncelleme sunucusuna bağlanılamadı.",
+      "notConfigured": "Henüz bir güncelleme sunucusu tanımlı değil.",
+      "signature": "Güncelleme reddedildi: imzası geçerli değil.",
+      "download": "Güncelleme indirilemedi.",
+      "verified": "Güncelleme indirildi ve doğrulandı.",
+      "installing": "Kurulum başlatılıyor…",
+      "error": "Güncelleme denetimi başarısız oldu."
     }
   },
   "music": {
