@@ -480,7 +480,7 @@
     "music": {
       "replayGainTitle": "ReplayGain",
       "measuring": "Measuring loudness (EBU R128)…",
-      "replayGainResult": "Loudness {lufs} LUFS · gain {gain} dB · peak {peak} dBFS. Written to the tags."
+      "replayGainResult": "Loudness {lufs} LUFS · gain {gain} dB · true peak {peak} dBTP. Written to the tags (gain + sample peak)."
     },
     "settings": {
       "heading": "File actions",
