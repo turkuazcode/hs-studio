@@ -4,6 +4,7 @@ mod capabilities;
 mod engine;
 mod jobs;
 mod library;
+mod music;
 mod photo;
 mod platform;
 mod restoration;
@@ -392,7 +393,11 @@ pub fn run() {
             library::library_playlist_delete,
             library::library_playlist_import,
             library::library_playlist_read,
-            library::library_playlist_export
+            library::library_playlist_export,
+            music::replaygain_album,
+            music::controls::media_controls_update,
+            music::controls::media_controls_state,
+            music::controls::media_controls_simulate
         ])
         .build(context)
         .expect("error while building tauri application");

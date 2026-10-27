@@ -88,10 +88,12 @@ windows = { version = "0.62", features = [
   "Foundation_Collections",
   "Globalization",
   "Graphics_Imaging",
+  "Media",
   "Media_Ocr",
   "Storage",
   "Storage_Streams",
   "System_UserProfile",
+  "Win32_System_WinRT",
 ] }
 windows-collections = "0.3"
 
