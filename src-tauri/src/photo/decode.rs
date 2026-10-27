@@ -706,9 +706,7 @@ mod tests {
 
     /// A ~70-byte PNG whose header claims `w` x `h` RGBA pixels.
     fn png_claiming(w: u32, h: u32) -> Vec<u8> {
-        let mut out = b"PNG
-
-".to_vec();
+        let mut out = b"\x89PNG\r\n\x1a\n".to_vec();
         let mut chunk = |kind: &[u8], data: &[u8]| {
             out.extend_from_slice(&(data.len() as u32).to_be_bytes());
             let mut body = kind.to_vec();
