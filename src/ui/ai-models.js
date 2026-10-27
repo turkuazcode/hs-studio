@@ -181,6 +181,14 @@ export function registerAiModelSettings(app) {
     // A03: a running AI job pauses while a video / music plays and continues afterwards
     { key: "ai.pauseDuringPlayback", type: "boolean", default: true, control: "toggle",
       labelKey: "aiRuntime.settings.pauseDuringPlayback", helpKey: "aiRuntime.settings.pauseDuringPlaybackHelp" },
+    // A04: metadata of AI results (like the photo batch): keep / without GPS / none
+    { key: "ai.output.metadata", type: "enum", values: ["keep", "stripGps", "strip"], default: "keep", control: "select",
+      labelKey: "aiRuntime.settings.metadata",
+      options: [
+        { value: "keep", labelKey: "studio.batch.keep" },
+        { value: "stripGps", labelKey: "studio.batch.stripGps" },
+        { value: "strip", labelKey: "studio.batch.stripAll" },
+      ] },
     {
       id: "ai-diagnostics", control: "custom",
       render(container) {

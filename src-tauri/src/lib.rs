@@ -367,6 +367,7 @@ pub fn run() {
             jobs::jobs_resume,
             jobs::jobs_remove,
             jobs::jobs_clear_finished,
+            jobs::jobs_output_copy,
             jobs::jobs_runner_ready,
             jobs::jobs_ext_begin,
             jobs::jobs_ext_progress,

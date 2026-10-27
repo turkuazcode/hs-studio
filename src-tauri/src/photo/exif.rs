@@ -438,7 +438,7 @@ pub fn photo_info(path: &Path) -> Result<PhotoInfo, String> {
 // ---------------------------------------------------------------------------
 
 /// What to do with metadata when writing a new file.
-#[derive(serde::Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(serde::Deserialize, serde::Serialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum MetadataPolicy {
     /// Keep EXIF (orientation reset/updated, stale embedded thumbnail dropped)

@@ -16,6 +16,7 @@ import { mkdir, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { REPO_ROOT, launchApp, removeDir } from "../e2e/lib/app.mjs";
 import { compareRgb, decodePng, encodePng } from "./lib/image.mjs";
+import { pngChunks } from "../lib/icc.mjs";
 
 const CACHE_ROOT = process.env.VHO_TEST_AI_CACHE || join(REPO_ROOT, "tests", ".cache", "ai-smoke");
 const DATA_DIR = join(CACHE_ROOT, "vho-data");
@@ -198,6 +199,57 @@ test("queue job: ai-photo-enhance through the Rust queue and the webview runner"
   close("queue job PNG", out, backend.tile === 128 ? tolFor(backend.backend) : TOL.tiled);
   // the backend's own panel/jobs list knows it
   assert.ok((await app.eval(`__TAURI__.core.invoke("jobs_list")`)).some((j) => j.id === snap.id && j.kind === "ai-photo-enhance"));
+});
+
+test("A04: a transparent photo through the queue keeps its alpha, sRGB PNG without a copied profile", { timeout: 900000 }, async (t) => {
+  if (!ready) return t.skip("blocked: model cache empty");
+  const src = join(DATA_DIR, "job-alpha.png");
+  writeFileSync(src, readFileSync(FIXTURE_PNG)); // alpha 0 block + alpha 128 strip
+  const snap = await app.eval(`__TAURI__.core.invoke("jobs_submit", { job: { kind: "ai-photo-enhance", request: {
+    input: ${JSON.stringify(src)}, components: ["ort-web", "photo-x4"], model: "photo-x4", faces: false,
+    inputWidth: ${fixture.width}, inputHeight: ${fixture.height} } } })`);
+  await app.waitFor(`__TAURI__.core.invoke("jobs_get", { id: ${JSON.stringify(snap.id)} }).then((d) => ["completed", "failed", "cancelled"].includes(d.job.state))`,
+    { timeoutMs: 600000, message: "AI job finished" });
+  const d = await app.eval(`__TAURI__.core.invoke("jobs_get", { id: ${JSON.stringify(snap.id)} })`);
+  assert.equal(d.job.state, "completed", JSON.stringify(d));
+  const bytes = readFileSync(d.items[0].outputPath);
+  const chunks = pngChunks(bytes);
+  assert.ok(chunks.includes("tEXt") && !chunks.includes("iCCP"), chunks.join(","));
+  const out = decodePng(bytes);
+  const a = (x, y) => out.data[(y * out.width + x) * 4 + 3];
+  assert.equal(a(41 * 4, 25 * 4), 0, "transparent block");
+  assert.ok(Math.abs(a(40 * 4, 20 * 4) - 128) <= 2, `half alpha ${a(40 * 4, 20 * 4)}`);
+  assert.equal(a(10, 10), 255);
+  // the visible pixel next to the transparent block keeps its colour (no dark halo)
+  const i = (25 * 4 * out.width + 33 * 4) * 4;
+  const f = (25 * fixture.width + 33) * 4;
+  for (let c = 0; c < 3; c++) assert.ok(Math.abs(out.data[i + c] - fixture.data[f + c]) < 60, `edge colour ch${c}: ${out.data[i + c]} vs ${fixture.data[f + c]}`);
+  // the save-a-copy command copies from the queue's record into the photo's folder
+  const copy = await app.eval(`__TAURI__.core.invoke("jobs_output_copy", { id: ${JSON.stringify(snap.id)}, idx: 0 })`);
+  assert.ok(copy.endsWith("job-alpha_restored.png") && copy.startsWith(DATA_DIR), copy);
+  assert.deepEqual(readFileSync(copy), bytes);
+});
+
+test("A04: a black-and-white photo stays black-and-white (no colour invented)", { timeout: 900000 }, async (t) => {
+  if (!ready) return t.skip("blocked: model cache empty");
+  const src = join(DATA_DIR, "job-gray.png");
+  const gray = { ...fixture, data: Uint8Array.from(fixture.data) };
+  for (let i = 0; i < gray.data.length; i += 4) {
+    const y = Math.round(0.299 * gray.data[i] + 0.587 * gray.data[i + 1] + 0.114 * gray.data[i + 2]);
+    gray.data.set([y, y, y, 255], i);
+  }
+  writeFileSync(src, encodePng(gray));
+  const snap = await app.eval(`__TAURI__.core.invoke("jobs_submit", { job: { kind: "ai-photo-enhance", request: {
+    input: ${JSON.stringify(src)}, components: ["ort-web", "photo-x4"], model: "photo-x4", faces: false,
+    inputWidth: ${fixture.width}, inputHeight: ${fixture.height} } } })`);
+  await app.waitFor(`__TAURI__.core.invoke("jobs_get", { id: ${JSON.stringify(snap.id)} }).then((d) => ["completed", "failed", "cancelled"].includes(d.job.state))`,
+    { timeoutMs: 600000, message: "AI job finished" });
+  const d = await app.eval(`__TAURI__.core.invoke("jobs_get", { id: ${JSON.stringify(snap.id)} })`);
+  assert.equal(d.job.state, "completed", JSON.stringify(d));
+  const out = decodePng(readFileSync(d.items[0].outputPath));
+  let coloured = 0;
+  for (let i = 0; i < out.data.length; i += 4) if (out.data[i] !== out.data[i + 1] || out.data[i + 1] !== out.data[i + 2]) coloured++;
+  assert.equal(coloured, 0, "every output pixel has R = G = B");
 });
 
 /** Working set of our vho.exe + its WebView2 processes (MB). */
