@@ -2,6 +2,7 @@ mod actions;
 mod ai;
 mod capabilities;
 mod engine;
+mod identity;
 mod jobs;
 mod photo;
 mod platform;
@@ -230,6 +231,8 @@ pub fn run() {
     let mut context = tauri::generate_context!();
     platform::apply_test_isolation(&mut context);
     updater::apply_test_overrides(&mut context);
+    // Product rename (new bundle identifier): take over the data of the old identity once
+    identity::migrate_legacy_data(&context.config().identifier);
 
     let builder = tauri::Builder::default();
     // Must be the first plugin: a second launch exits here, before any window exists.
