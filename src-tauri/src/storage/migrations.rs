@@ -551,7 +551,7 @@ mod tests {
         migrate(&mut c, &MIGRATIONS[..1]).unwrap();
         c.execute("INSERT INTO media (id, path, name, added_at, updated_at) VALUES ('m', 'p', 'n', 0, 0)", []).unwrap();
         c.execute("INSERT INTO artifacts (id, media_id, kind, path, created_at) VALUES ('a', 'm', 'export', 'o.mp4', 1)", []).unwrap();
-        assert_eq!(migrate(&mut c, MIGRATIONS).unwrap(), vec![2]);
+        assert_eq!(migrate(&mut c, &MIGRATIONS[..2]).unwrap(), vec![2]);
         let (path, job): (String, Option<String>) =
             c.query_row("SELECT path, job_id FROM artifacts WHERE id = 'a'", [], |r| Ok((r.get(0)?, r.get(1)?))).unwrap();
         assert_eq!((path.as_str(), job), ("o.mp4", None));
