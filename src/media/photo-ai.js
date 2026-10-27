@@ -7,6 +7,7 @@ import { upscaleImage, restoreFacesInImage, downloadConsentText, describeHardwar
 import { i18n, t } from "../core/i18n.js";
 import { convertFileSrc, invoke } from "../core/tauri.js";
 import { photoEnhanceRequest } from "./ai-jobs.js";
+import { keepGrayscale } from "./grayscale.js";
 import { etaSeconds, memoryBudget, planInput } from "./ai-policy.js";
 import { safeFileName } from "../core/format.js";
 
@@ -276,6 +277,7 @@ export function createPhotoAi(app) {
         }
       }
 
+      keepGrayscale(pixels.data, finalImage.data); // A04: B/W stays B/W
       const c = document.createElement("canvas");
       c.width = finalImage.width;
       c.height = finalImage.height;
