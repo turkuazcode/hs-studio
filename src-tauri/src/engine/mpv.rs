@@ -502,6 +502,7 @@ pub mod render {
             self._mpv.check(unsafe { (self.api.render)(self.h, params.as_mut_ptr()) })
         }
 
+        /// Called after the frame drawn by `render` was presented (GTK frame clock `after-paint`).
         pub fn report_swap(&self) {
             unsafe { (self.api.report_swap)(self.h) }
         }
