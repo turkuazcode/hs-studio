@@ -281,6 +281,8 @@ export function createEngineFacade(impls) {
     get volume() { return current.volume; },
     get rate() { return current.rate; },
     get previewSrc() { return current.previewSrc; },
+    /** Gapless next item (libmpv only; other engines reload per file). */
+    queueNext: (item) => current.queueNext?.(item) ?? Promise.resolve(false),
     hasDuration() {
       const d = current.duration;
       return Number.isFinite(d) && d > 0;
