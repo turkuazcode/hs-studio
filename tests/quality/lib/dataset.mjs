@@ -197,7 +197,9 @@ export async function prepareSet({ update = process.env.VHO_QUALITY_UPDATE_LOCK 
   const lock = loadLock();
   const files = {};
   const setDir = join(CACHE, "set");
-  const stamp = createHash("sha256").update(JSON.stringify({ manifest, version })).digest("hex").slice(0, 16);
+  // The recipe code is part of the stamp: a changed builder rebuilds an existing cache
+  const recipe = readFileSync(fileURLToPath(import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  const stamp = createHash("sha256").update(JSON.stringify({ manifest, version, recipe })).digest("hex").slice(0, 16);
   const stampFile = join(setDir, "stamp.txt");
   const fresh = !existsSync(stampFile) || readFileSync(stampFile, "utf8") !== stamp;
   if (fresh) rmSync(setDir, { recursive: true, force: true });
