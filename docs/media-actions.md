@@ -87,4 +87,4 @@ yalnızca günlüğe yazılır. Silme her zaman Geri Dönüşüm Kutusu'na taş�
 - Kilit ekranı: paketlenmemiş masaüstü uygulamalarında bazı Windows sürümleri erişimi
   reddedebilir (hata mesajı gösterilir).
 - OCR: Linux'ta kurulu `tesseract` + dil paketleriyle (test edilmedi); macOS'ta yok (Vision Türkçe tanımıyor). Ayrıntı: [platform-support.md](platform-support.md).
-- Favoriler ve "Listeye ekle" Plan 05 kütüphanesi gelene kadar ayar deposunda / mevcut listede.
+- Favoriler `library.db`'de (L01); yeniden adlandırma/silme L02 işlem kaydıyla medya kimliğine bağlıdır (favori, kaldığı yer, yer imleri ve kayıtlı listeler yeni yolu izler; ayrıntı [storage-schema.md](storage-schema.md#kütüphane-şema-v3-library-plan-13l02)). "Listeye ekle" o anki oynatma listesine ekler; kayıtlı listeler oynatma listesi ⋯ menüsünde.

@@ -10,8 +10,8 @@ import { DatabaseSync } from "node:sqlite";
 import { HTML5_ENGINE, fixture, launchApp, makeDataDir, removeDir } from "./lib/app.mjs";
 import { dbPath, readLibraryDb, waitLibraryDb } from "./lib/db.mjs";
 
-/** Latest schema version of this build (storage/migrations.rs; v2 = A02 job queue). */
-const APP_SCHEMA = 2;
+/** Latest schema version of this build (storage/migrations.rs; v2 = A02 job queue, v3 = L02 library). */
+const APP_SCHEMA = 3;
 const VIDEO = fixture("sample-h264.mp4");
 const PHOTO = fixture("photo-a.jpg");
 const VIDEO_KEY = `vho_file_sample-h264.mp4_${statSync(VIDEO).size}`;

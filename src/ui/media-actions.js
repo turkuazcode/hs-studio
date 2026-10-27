@@ -188,9 +188,13 @@ export function createMediaActions(app) {
         const i = list.indexOf(item);
         const next = renamedItem(item, newPath);
         if (i >= 0) list[i] = next;
-        app.library?.recent?.update?.(oldPath, { id: newPath, path: newPath, name: next.name });
-        const pos = app.resume?.get?.(oldKey);
-        if (pos) { app.resume.set(resumeKey(next), pos); app.resume.remove(oldKey); }
+        // recent entry, favorite, resume position and bookmarks follow the file (L02)
+        if (app.library?.applyMove) app.library.applyMove({ oldPath, newPath, oldKey, newKey: resumeKey(next) });
+        else {
+          app.library?.recent?.update?.(oldPath, { id: newPath, path: newPath, name: next.name });
+          const pos = app.resume?.get?.(oldKey);
+          if (pos) { app.resume.set(resumeKey(next), pos); app.resume.remove(oldKey); }
+        }
         app.bus.emit("file:renamed", { path: oldPath, newPath });
         if (dom.currentFilename && kind === "photo") {
           delete dom.currentFilename.dataset.i18n;

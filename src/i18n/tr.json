@@ -54,7 +54,8 @@
       "shortcuts": "Kısayollar",
       "advanced": "Gelişmiş",
       "about": "Hakkında / Lisanslar",
-      "components": "AI modelleri"
+      "components": "AI modelleri",
+      "library": "Kütüphane"
     },
     "headings": {
       "enhance": "Görüntü filtreleri",
@@ -220,7 +221,8 @@
       "openWith": "Birlikte aç",
       "showInFolder": "Klasörde göster",
       "lyrics": "Şarkı sözleri",
-      "tagEditor": "Etiketler"
+      "tagEditor": "Etiketler",
+      "library": "Kütüphane"
     }
   },
   "actions": {
@@ -500,8 +502,8 @@
       "ocrNoLanguage": "Bu bilgisayarda metin tanıma dili bulunamadı.",
       "toolsHeading": "Medya araçları (ffmpeg)",
       "toolsInfo": "{version} · H.264 kodlayıcı: {encoder}",
-      "fallbackEncoder": "{name} (H.264 yok, yedek kodlayıcı)",
-      "none": "yok"
+      "none": "yok",
+      "fallbackEncoder": "{name} (H.264 yok, yedek kodlayıcı)"
     }
   },
   "effects": {
@@ -1178,6 +1180,111 @@
       "busy": "Bileşen şu anda indiriliyor veya doğrulanıyor.",
       "archive-invalid": "Model arşivi geçersiz veya izin verilmeyen içerik barındırıyor.",
       "io": "Dosya işlemi başarısız oldu."
+    }
+  },
+  "library": {
+    "title": "Kütüphane",
+    "entry": "Kütüphane",
+    "search": "Kütüphanede ara (ad, başlık, sanatçı, etiket)…",
+    "viewLabel": "Görünüm",
+    "more": "Diğer seçenekler",
+    "tabs": {
+      "video": "Videolar",
+      "audio": "Müzik",
+      "lists": "Listeler"
+    },
+    "views": {
+      "all": "Tümü",
+      "continue": "Devam et",
+      "recentlyAdded": "Son eklenenler",
+      "favorites": "Favoriler",
+      "missing": "Bulunamayanlar",
+      "mostPlayed": "En çok oynatılanlar"
+    },
+    "status": {
+      "offline": "çevrimdışı",
+      "missing": "bulunamadı"
+    },
+    "resumeAt": "{time} konumunda kaldı",
+    "count": "{n} öğe",
+    "empty": {
+      "noFolders": "Kütüphanede klasör yok. Bir klasör eklediğinizde VHO onu tarar ve güncel tutar.",
+      "noMatch": "Aramayla eşleşen öğe yok.",
+      "none": "Bu görünümde öğe yok."
+    },
+    "scan": {
+      "running": "Taranıyor… {n} dosya",
+      "tags": "Müzik etiketleri okunuyor…"
+    },
+    "toast": {
+      "nothingToPlay": "Oynatılabilecek dosya yok",
+      "offline": "{name}: disk çevrimdışı",
+      "missing": "{name}: dosya bulunamadı",
+      "folder": {
+        "added": "Kütüphaneye eklendi: {name}",
+        "exists": "Bu klasör zaten kütüphanede: {name}",
+        "covered": "Bu klasör zaten kütüphanedeki {name} içinde"
+      }
+    },
+    "addFolder": "Klasör ekle…",
+    "rescan": "Şimdi tara",
+    "cancelScan": "Taramayı durdur",
+    "settings": "Kütüphane ayarları",
+    "removeFolder": "Kütüphaneden çıkar",
+    "removeConfirm": "\"{name}\" kütüphaneden çıkarılsın mı? Dosyalar diskte kalır; favori, yıldız ve etiketler korunur.",
+    "settingsIntro": "Kütüphane klasörleri sürekli taranır ve güncel tutulur. Fotoğraf Stüdyosu'nda bir klasöre göz atmak veya bir dosyayı açmak onu kütüphaneye eklemez.",
+    "folderStatus": {
+      "online": "bağlı",
+      "offline": "çevrimdışı (disk/ağ bağlı değil)",
+      "missing": "klasör bulunamadı"
+    },
+    "fields": {
+      "watch": "Klasörlerdeki değişiklikleri anında izle",
+      "reconcile": "Klasörleri düzenli olarak yeniden denetle"
+    },
+    "reconcile": {
+      "off": "Yalnızca açılışta ve elle",
+      "m15": "15 dakikada bir",
+      "m30": "30 dakikada bir",
+      "m60": "Saatte bir",
+      "m240": "4 saatte bir"
+    },
+    "lists": {
+      "import": "Liste dosyası içe aktar…",
+      "saveQueue": "Oynatma listesini kaydet…",
+      "count": "{n} öğe",
+      "play": "Oynat",
+      "export": "Dışa aktar…",
+      "delete": "Listeyi sil",
+      "empty": "Kayıtlı liste yok.",
+      "fileType": "Oynatma listesi",
+      "saveTitle": "Listeyi kaydet",
+      "name": "Liste adı",
+      "save": "Kaydet",
+      "queueEmpty": "Oynatma listesi boş",
+      "defaultName": "Yeni liste",
+      "saved": "\"{name}\" kaydedildi ({n} öğe)",
+      "imported": "\"{name}\" içe aktarıldı: {n} öğe, {missing} bulunamadı",
+      "skippedEntries": "{n} desteklenmeyen satır atlandı (uzak içerik indirilmez, çalıştırılmaz)",
+      "missingItems": "{n} dosya bulunamadı ve atlandı",
+      "exported": "Liste kaydedildi ({n} öğe)",
+      "more": "Liste seçenekleri",
+      "openFile": "Liste dosyası aç…",
+      "exportQueue": "Dışa aktar (M3U/PLS)…",
+      "manage": "Kayıtlı listeler…"
+    },
+    "photo": {
+      "rating": "Yıldız",
+      "ratingClear": "Yıldızı kaldır",
+      "tags": "Etiketler…",
+      "tagsTitle": "Etiketler",
+      "tagsLabel": "Etiketler (virgülle ayırın)",
+      "tagsSaved": "Etiketler kaydedildi",
+      "ratingSaved": "{n} öğeye {stars} verildi",
+      "ratingCleared": "Yıldız kaldırıldı",
+      "minRating": "En az yıldız",
+      "anyRating": "Tümü",
+      "tagsInfo": "Etiketler"
     }
   },
   "jobs": {
