@@ -29,10 +29,10 @@ fi
 # mpv: -Dgpl=false (the X11 backend is GPL-gated in 0.41, so it is off by construction);
 # libmpv for the render API (OpenGL via EGL/GLX is provided by VHO's GL context)
 if [ ! -f "$PREFIX/lib/x86_64-linux-gnu/libmpv.so.2" ] && [ ! -f "$PREFIX/lib/libmpv.so.2" ]; then
-  (cd mpv && meson setup build --prefix="$PREFIX" --buildtype=release --default-library=shared \
+  (cd mpv && rm -rf build && meson setup build --prefix="$PREFIX" --buildtype=release --default-library=shared \
      -Dgpl=false -Dlibmpv=true -Dcplayer=true \
      -Dwayland=enabled -Degl=enabled -Degl-wayland=enabled -Dgl=enabled \
-     -Dvaapi=enabled -Dvaapi-drm=enabled -Dvaapi-wayland=enabled \
+     -Dvaapi=enabled -Dvaapi-drm=auto -Dvaapi-wayland=auto \
      -Dpulse=enabled -Dpipewire=enabled -Dalsa=enabled \
      -Dlua=disabled -Djavascript=disabled -Drubberband=disabled -Dcdda=disabled -Ddvdnav=disabled \
      -Dlibbluray=disabled -Dlibarchive=disabled -Dvapoursynth=disabled -Dzimg=disabled \
