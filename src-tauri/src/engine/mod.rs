@@ -24,6 +24,8 @@ pub const OBSERVED: &[&str] = &[
     "time-pos", "duration", "pause", "track-list", "chapter-list", "chapter", "volume", "mute",
     "eof-reached", "video-params", "hwdec-current", "aid", "sid", "speed", "sub-delay", "audio-delay",
     "demuxer-cache-time", "seeking", "idle-active", "path",
+    // music mode (L03): headphones unplugged / output device changed
+    "audio-device-list",
 ];
 
 #[derive(Default)]

@@ -37,6 +37,8 @@ pub struct TagData {
     pub lyrics: String,
     pub replaygain_track_gain: String,
     pub replaygain_track_peak: String,
+    pub replaygain_album_gain: String,
+    pub replaygain_album_peak: String,
     pub cover: Option<Cover>,
     pub tag_type: String,
     pub duration: f64,
@@ -97,6 +99,8 @@ pub fn tag_to_data(tag: &Tag) -> TagData {
         lyrics: text(tag, &ItemKey::Lyrics),
         replaygain_track_gain: text(tag, &ItemKey::ReplayGainTrackGain),
         replaygain_track_peak: text(tag, &ItemKey::ReplayGainTrackPeak),
+        replaygain_album_gain: text(tag, &ItemKey::ReplayGainAlbumGain),
+        replaygain_album_peak: text(tag, &ItemKey::ReplayGainAlbumPeak),
         cover: pic.map(|p| {
             let mime = mime_str(p.mime_type());
             Cover {
@@ -219,6 +223,15 @@ pub fn write(path: &Path, u: &TagUpdate) -> Result<(), String> {
     let mut file = open(path)?;
     let tag = primary_tag_mut(&mut file);
     apply_update(tag, u, cover)?;
+    tag.save_to_path(path, WriteOptions::default()).map_err(|e| format!("Etiketler yazılamadı: {e}"))
+}
+
+/// Album ReplayGain tags (gain in dB, linear sample peak) next to the track values.
+pub fn write_replaygain_album(path: &Path, album_gain_db: f64, album_peak: f64) -> Result<(), String> {
+    let mut file = open(path)?;
+    let tag = primary_tag_mut(&mut file);
+    tag.insert_text(ItemKey::ReplayGainAlbumGain, format!("{album_gain_db:.2} dB"));
+    tag.insert_text(ItemKey::ReplayGainAlbumPeak, format!("{album_peak:.6}"));
     tag.save_to_path(path, WriteOptions::default()).map_err(|e| format!("Etiketler yazılamadı: {e}"))
 }
 

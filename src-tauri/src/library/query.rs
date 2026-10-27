@@ -134,7 +134,7 @@ fn build(q: &Query) -> Built {
         let a = arg(Value::Text(t), &mut args);
         w.push(format!("EXISTS (SELECT 1 FROM media_tags t WHERE t.media_id = m.id AND t.tag_norm = {a})"));
     }
-    for (col, v) in [("a.artist", &q.artist), ("a.album", &q.album), ("a.genre", &q.genre)] {
+    for (col, v) in [("COALESCE(a.album_artist, a.artist)", &q.artist), ("a.album", &q.album), ("a.genre", &q.genre)] {
         if let Some(v) = v {
             if v.is_empty() {
                 w.push(format!("COALESCE({col}, '') = ''"));

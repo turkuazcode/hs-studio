@@ -482,7 +482,7 @@
     "music": {
       "replayGainTitle": "ReplayGain",
       "measuring": "Measuring loudness (EBU R128)…",
-      "replayGainResult": "Loudness {lufs} LUFS · gain {gain} dB · peak {peak} dBFS. Written to the tags."
+      "replayGainResult": "Loudness {lufs} LUFS · gain {gain} dB · true peak {peak} dBTP. Written to the tags (gain + sample peak)."
     },
     "settings": {
       "heading": "File actions",
@@ -1202,7 +1202,10 @@
       "recentlyAdded": "Recently added",
       "favorites": "Favorites",
       "missing": "Not found",
-      "mostPlayed": "Most played"
+      "mostPlayed": "Most played",
+      "artists": "Artists",
+      "albums": "Albums",
+      "genres": "Genres"
     },
     "status": {
       "offline": "offline",
@@ -1378,6 +1381,43 @@
       "verified": "Update downloaded and verified.",
       "installing": "Starting the installer…",
       "error": "The update check failed."
+    }
+  },
+  "music": {
+    "title": "Music",
+    "upNext": "Up next",
+    "shuffle": "Shuffle",
+    "repeat": {
+      "off": "Repeat: off",
+      "all": "Repeat: all",
+      "one": "Repeat: this track"
+    },
+    "deviceRemoved": "Audio device removed; playback paused",
+    "settings": {
+      "heading": "Music",
+      "replayGain": "ReplayGain (loudness levelling)",
+      "rg": {
+        "off": "Off",
+        "track": "Track",
+        "album": "Album (else track)"
+      },
+      "preamp": "ReplayGain pre-amp",
+      "preventClip": "Prevent clipping (lower by the peak)",
+      "gapless": "Gapless playback between tracks",
+      "systemControls": "Windows media keys and now-playing card",
+      "pauseOnDeviceRemoval": "Pause when headphones / the audio device are removed"
+    },
+    "groups": {
+      "artists": "Artists",
+      "albums": "Albums",
+      "genres": "Genres",
+      "unknown": "(unknown)",
+      "back": "Back",
+      "tracks": "{n} tracks"
+    },
+    "album": {
+      "replayGain": "Calculate album ReplayGain…",
+      "replayGainDone": "Album ReplayGain: {gain} dB ({n} tracks)"
     }
   }
 }
