@@ -1,5 +1,6 @@
 mod actions;
 mod ai;
+mod cache;
 mod capabilities;
 mod engine;
 mod jobs;
@@ -289,6 +290,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            cache::cache_usage,
+            cache::cache_clear,
             updater::updater_check,
             updater::updater_install,
             suspend_system,

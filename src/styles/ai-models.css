@@ -15,3 +15,7 @@
 .vho-ai-model-progress-track { height: 4px; border-radius: 4px; background: rgba(127, 127, 127, 0.25); overflow: hidden; margin-top: 4px; }
 .vho-ai-model-progress-bar { width: 0; height: 100%; background: var(--accent-gradient); transition: width 0.2s ease; }
 .vho-ai-model-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+/* Settings > General > Cache (src/ui/cache-settings.js) */
+.vho-cache-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.vho-cache-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--text-secondary); }
