@@ -4,6 +4,9 @@
 // Save as. The preview is a canvas rendered from a 1600 px upright copy with
 // the same formulas as the backend; saving sends the edit as photo_batch ops,
 // so the full-resolution original is processed by Rust with EXIF kept.
+// "✨ Akıllı" tools (smart-tools.js, Plan 07) replace the edit's base image with an AI result
+// file (state.base, an undoable step); saving then processes that base, never overwriting
+// the original with an AI result (Save behaves as Save copy).
 // ==========================================================================
 
 import {
@@ -11,6 +14,7 @@ import {
   editFlip, editRotate, editToOps, initialEdit, isEditIdentity, parentDir, rotatedSize, sharpenImageData, stemOf,
 } from "./logic.js";
 import { loadBitmap } from "./info-panel.js";
+import { createSmartTools } from "./smart-tools.js";
 import { nextFrame } from "./logic.js";
 import { t } from "../core/i18n.js";
 
@@ -75,6 +79,7 @@ const template = () => `
         <span ${tx(s.labelKey)}</span><output data-out="${s.key}">0</output>
         <input type="range" class="filter-slider" data-adj="${s.key}" min="${s.min}" max="${s.max}" value="0" step="1">
       </label>`).join("")}
+    <div class="ps-smart-host"></div>
     <div class="ps-editor-save">
       <button class="btn-primary btn-sm" data-act="save" ${ti("studio.editor.saveTitle")} ${tx("studio.editor.save")}</button>
       <button class="btn-secondary btn-sm" data-act="save-copy" ${ti("studio.editor.saveCopyTitle")} ${tx("studio.editor.saveCopy")}</button>
@@ -85,9 +90,10 @@ const template = () => `
   </aside>`;
 
 /**
- * root: empty overlay element. deps: { invoke, convertFileSrc, dialogSave, toast, onSaved(outcome, mode), onClose }
+ * root: empty overlay element. deps: { invoke, convertFileSrc, dialogSave, toast, onSaved(outcome, mode), onClose,
+ * jobs?, settings? } (jobs: the AI queue client for the smart tools)
  */
-export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, onSaved, onClose }) {
+export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, onSaved, onClose, jobs, settings }) {
   root.innerHTML = template();
   const $ = (s) => root.querySelector(s);
   const canvas = $(".ps-editor-canvas");
@@ -111,6 +117,16 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
   let geomCanvas = null;
   let raf = 0;
   let saving = false;
+  let loadedBase = null;       // path the preview bitmap was made from
+
+  const basePath = (e = history.state) => e.base ?? item?.path;
+  const smart = jobs ? createSmartTools($(".ps-smart-host"), stage, canvas, { invoke, jobs, settings, toast }, {
+    base: () => basePath(),
+    full: () => ({ ...full }),
+    identity: () => isEditIdentity(history.state),
+    setStatus: (text) => { status.textContent = text; },
+    onResult: (path) => commit({ ...initialEdit(), base: path }),
+  }) : null;
 
   const isOpen = () => !root.hidden;
 
@@ -140,6 +156,10 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
   function render() {
     raf = 0;
     if (!bitmap) return;
+    if (item && basePath(live) !== loadedBase) {
+      loadBase(basePath(live)); // undo/redo across an AI step: another base image
+      return;
+    }
     const e = live;
     const src = orientedCanvas(e);
     if (canvas.width !== src.width || canvas.height !== src.height) {
@@ -174,6 +194,8 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
     const { w, h } = outputSize(e);
     $(".ps-editor-dims").textContent = full.w ? `${w} × ${h}` : "";
     root.dataset.ops = JSON.stringify(ops);
+    root.dataset.base = e.base ?? "";
+    smart?.refresh();
     root.dataset.dirty = JSON.stringify(history.state) !== JSON.stringify(saved) ? "1" : "0";
   }
 
@@ -339,16 +361,21 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
     if (cropMode) exitCrop(true);
     const e = history.state;
     const ops = editToOps(e, full.w, full.h);
-    if (!ops.length) {
+    if (!ops.length && !e.base) {
       toast(t("studio.editor.nothingToSave"));
       return;
     }
+    // an AI result is never written over the original by "Save": it becomes a copy (PNG keeps
+    // transparency), next to the original
+    if (e.base && mode === "save") mode = "copy";
     const output = { format: "same", quality: 92, metadata: "keep", lossless: true, counterStart: 1 };
+    if (e.base) Object.assign(output, { dir: parentDir(item.path) });
     if (mode === "save") {
       if (!window.confirm(t("studio.editor.overwriteConfirm", { name: item.name }))) return;
       Object.assign(output, { conflict: "overwrite", nameTemplate: "{name}" });
     } else if (mode === "copy") {
-      Object.assign(output, { conflict: "rename", nameTemplate: `{name}${t("studio.editor.copySuffix")}` });
+      const stem = e.base ? stemOf(item.name).replace(/[{}]/g, "_") : "{name}";
+      Object.assign(output, { conflict: "rename", nameTemplate: `${stem}${t("studio.editor.copySuffix")}` });
     } else {
       if (!dialogSave) {
         toast(t("studio.editor.saveAsUnavailable"));
@@ -375,7 +402,7 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
     status.textContent = t("studio.editor.saving");
     root.dataset.saving = "1";
     try {
-      const summary = await invoke("photo_batch", { job: { jobId: `edit-${Date.now()}`, files: [item.path], ops, output } });
+      const summary = await invoke("photo_batch", { job: { jobId: `edit-${Date.now()}`, files: [basePath(e)], ops, output } });
       const r = summary.results[0];
       root.dataset.lastResult = JSON.stringify(r);
       if (!r?.ok) throw new Error(r?.error ?? t("studio.editor.unknownError"));
@@ -411,19 +438,36 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
     exitCrop(false);
     live = saved = history.reset(initialEdit());
     geomKey = "";
+    smart?.reset();
+    await loadBase(next.path);
+  }
+
+  /** Preview bitmap + full size of the edit's base image (the original or an AI result). */
+  async function loadBase(path) {
+    const next = item;
+    loadedBase = path;
+    busy.hidden = false;
+    root.dataset.ready = "0";
     try {
       const [info, thumb] = await Promise.all([
-        invoke("photo_info", { path: next.path }).catch(() => null),
-        invoke("photo_thumb", { path: next.path, size: PREVIEW_SIZE }),
+        invoke("photo_info", { path }).catch(() => null),
+        invoke("photo_thumb", { path, size: PREVIEW_SIZE }),
       ]);
-      if (item !== next) return;
+      if (item !== next || loadedBase !== path) return;
       bitmap?.close?.();
       bitmap = await loadBitmap(convertFileSrc(thumb.path));
       full = info?.width && info?.height ? { w: info.width, h: info.height } : { w: thumb.width, h: thumb.height };
+      geomKey = "";
       busy.hidden = true;
       root.dataset.ready = "1";
       root.dataset.full = `${full.w}x${full.h}`;
       schedule();
+      if (smart) {
+        // colorize is offered for black-and-white / faded photos only
+        const o = new OffscreenCanvas(Math.min(256, bitmap.width), Math.min(256, bitmap.height));
+        o.getContext("2d").drawImage(bitmap, 0, 0, o.width, o.height);
+        smart.refresh(o.getContext("2d").getImageData(0, 0, o.width, o.height).data);
+      }
     } catch (e) {
       busy.textContent = t("studio.editor.openFailed", { error: String(e).replace(/^\[[a-z-]+\]\s*/, "") });
     }
@@ -431,13 +475,17 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
 
   function close(force = false) {
     if (!isOpen()) return true;
-    const dirty = JSON.stringify(history.state) !== JSON.stringify(saved) && !isEditIdentity(history.state);
+    const st = history.state;
+    const dirty = JSON.stringify(st) !== JSON.stringify(saved) && (!isEditIdentity(st) || (st.base ?? null) !== (saved.base ?? null));
+    if (!force && smart?.busy) return false;
     if (!force && dirty && !window.confirm(t("studio.editor.discardConfirm"))) return false;
     exitCrop(false);
     root.hidden = true;
+    smart?.reset();
     bitmap?.close?.();
     bitmap = null;
     item = null;
+    loadedBase = null;
     busy.textContent = t("ui.licenses.loading");
 
     onClose?.();
@@ -460,6 +508,8 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
     open, close, handleKey,
     get isOpen() { return isOpen(); },
     get state() { return history.state; },
+    /** Smart tools (tests / automation). */
+    get smart() { return smart; },
     /** Test / automation hook: set the crop rect (normalised) directly. */
     setCrop(c) { commit({ ...history.state, crop: c ? clampCrop(c) : null }); },
   };

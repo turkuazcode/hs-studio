@@ -19,6 +19,10 @@
 
 import { bleedTransparent, hasTransparency, upscaleAlpha } from "./alpha.js";
 import { restoreFaces } from "./face-restore.js";
+import {
+  COLORIZE_SIZE, LAMA_SIZE, MATTING_SIZE, colorizeInput, composeBackground, fromHalfArray, lamaCrop, lamaInputs, lamaPaste,
+  maskBBox, mattingAlpha, mattingInput, mergeColorize, rasterizeStrokes, toHalfArray,
+} from "./smart-edit.js";
 import { fixOutputDimNames } from "./onnx-patch.js";
 
 let ortPromise = null;
@@ -49,7 +53,7 @@ function loadOrt(runtime) {
 // ONNX output dim-name patch (protobuf walker), see onnx-patch.js
 export { fixOutputDimNames };
 
-async function getSession(ort, url, backend, scale) {
+async function getSession(ort, url, backend, scale, externalData) {
   const key = `${url}|${backend}`;
   if (!sessions.has(key)) {
     try {
@@ -58,6 +62,8 @@ async function getSession(ort, url, backend, scale) {
       sessions.set(key, await ort.InferenceSession.create(model, {
         executionProviders: [backend],
         graphOptimizationLevel: "all",
+        // ONNX external weights (DDColor): [{ path: <name in the model>, data: <URL> }]
+        ...(externalData?.length ? { externalData } : {}),
       }));
     } catch (e) {
       // the engine's error policy (ai-policy.js) tells memory from model problems by the text
@@ -166,6 +172,65 @@ async function run(msg) {
   postMessage({ type: "done", width: W * S, height: H * S, data: dst.buffer, stats, alpha }, [dst.buffer]);
 }
 
+/** float32 tensor, or float16 when the model's input is declared float16 (fp16 exports). */
+function inputTensor(ort, session, index, data, dims) {
+  const meta = session.inputMetadata?.[index];
+  const half = meta && (meta.type === "float16" || meta.type === 10);
+  return half ? new ort.Tensor("float16", toHalfArray(data), dims) : new ort.Tensor("float32", data, dims);
+}
+
+async function outputData(t) {
+  const d = await t.getData();
+  return t.type === "float16" ? fromHalfArray(d) : d;
+}
+
+/**
+ * Plan 07 smart editing (A06): { type: "smart", runtime, backend, op: "inpaint" | "matting" |
+ * "colorize", model: { url, externalData? }, image, params } -> done { width, height, data }.
+ * Pre/post-processing: smart-edit.js (Plan 07 recipes).
+ */
+async function runSmart(msg) {
+  const { runtime, backend, op, model, image, params } = msg;
+  postMessage({ type: "progress", phase: "load", fraction: 0 });
+  const ort = await loadOrt(runtime);
+  await releaseExcept([`${model.url}|${backend}`]);
+  const session = await getSession(ort, model.url, backend, 1, model.externalData);
+  const W = image.width, H = image.height;
+  const rgba = new Uint8ClampedArray(image.data);
+  postMessage({ type: "progress", phase: "run", fraction: 0.1 });
+  let out;
+  if (op === "inpaint") {
+    const mask = rasterizeStrokes(params?.strokes, W, H);
+    const bbox = maskBBox(mask, W, H);
+    if (!bbox) throw new Error("Invalid input: the removal mask is empty");
+    const crop = lamaCrop(bbox, W, H);
+    const t = lamaInputs(rgba, mask, W, crop);
+    const names = session.inputNames;
+    const maskName = names.find((n) => /mask/i.test(n)) ?? names[1];
+    const imageName = names.find((n) => n !== maskName) ?? names[0];
+    const res = await session.run({
+      [imageName]: inputTensor(ort, session, names.indexOf(imageName), t.image, [1, 3, LAMA_SIZE, LAMA_SIZE]),
+      [maskName]: inputTensor(ort, session, names.indexOf(maskName), t.mask, [1, 1, LAMA_SIZE, LAMA_SIZE]),
+    });
+    postMessage({ type: "progress", phase: "run", fraction: 0.8 });
+    out = lamaPaste(rgba, W, H, mask, crop, await outputData(res[session.outputNames[0]]));
+  } else if (op === "matting") {
+    const res = await session.run({ [session.inputNames[0]]: inputTensor(ort, session, 0, mattingInput(rgba, W, H), [1, 3, MATTING_SIZE, MATTING_SIZE]) });
+    postMessage({ type: "progress", phase: "run", fraction: 0.8 });
+    // the last output is the final full-resolution prediction
+    const logits = await outputData(res[session.outputNames[session.outputNames.length - 1]]);
+    out = composeBackground(rgba, W, H, mattingAlpha(logits, W, H), params);
+  } else if (op === "colorize") {
+    const res = await session.run({ [session.inputNames[0]]: inputTensor(ort, session, 0, colorizeInput(rgba, W, H), [1, 3, COLORIZE_SIZE, COLORIZE_SIZE]) });
+    postMessage({ type: "progress", phase: "run", fraction: 0.8 });
+    out = mergeColorize(rgba, W, H, await outputData(res[session.outputNames[0]]));
+  } else {
+    throw new Error(`Invalid input: unknown smart edit ${op}`);
+  }
+  postMessage({ type: "progress", phase: "run", fraction: 1 });
+  postMessage({ type: "done", width: W, height: H, data: out.buffer }, [out.buffer]);
+}
+
 /**
  * Backend probe (A03): a real tiny inference (y = x + x) on the requested backend.
  * { type: "probe", runtime, backend, model: ArrayBuffer, input: ArrayBuffer, shape } ->
@@ -210,7 +275,8 @@ self.onmessage = (e) => {
     if (e.data.fault.crash) return; // the worker dies before answering
     if (e.data.fault.badModel && e.data.model) e.data.model = { ...e.data.model, url: e.data.fault.badModel };
   }
-  const job = e.data?.type === "run" ? run : e.data?.type === "faces" ? runFaces : e.data?.type === "probe" ? probe : null;
+  const jobs = { run, faces: runFaces, probe, smart: runSmart };
+  const job = Object.hasOwn(jobs, e.data?.type) ? jobs[e.data.type] : null;
   if (!job) return;
   job(e.data).catch((err) => {
     // A failed session (e.g. GPU out of memory) must not be reused

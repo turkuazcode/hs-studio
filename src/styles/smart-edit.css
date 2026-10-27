@@ -1,0 +1,18 @@
+/* ==========================================================================
+   Photo editor "✨ Akıllı" tools (Plan 07 / A06): brush mask overlay and the small panels.
+   ========================================================================== */
+.ps-mask-canvas {
+  position: absolute;
+  cursor: crosshair;
+  touch-action: none;
+  z-index: 2;
+}
+.ps-mask-canvas[hidden] { display: none; }
+.ps-smart-hint { margin: 4px 0; color: var(--text-secondary); font-size: 12px; }
+.ps-smart-hint[hidden] { display: none; }
+.ps-smart-panel { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.ps-smart-panel[hidden] { display: none; }
+.ps-smart-color { width: 48px; height: 28px; border: 0; background: none; padding: 0; }
+.ps-smart-color[hidden], .ps-smart-blur[hidden] { display: none; }
+.ps-smart .ps-progress { height: 4px; border-radius: 2px; background: var(--bg-pill); overflow: hidden; }
+.ps-smart .ps-progress-bar { height: 100%; width: 0; background: var(--accent-ruby); transition: width 0.2s; }

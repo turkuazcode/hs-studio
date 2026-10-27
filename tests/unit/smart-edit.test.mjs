@@ -133,3 +133,12 @@ test("DDColor merge: L from the original, ab upscaled and softened, alpha kept",
   assert.equal(softChroma(85), 65, "strong chroma compressed");
   assert.equal(colorizeInput(rgba, W, H).length, 3 * plane);
 });
+
+test("float16 conversion for fp16-input models", async () => {
+  const { toHalf, fromHalf, toHalfArray, fromHalfArray } = await import("../../src/media/smart-edit.js");
+  for (const v of [0, 1, -2, 0.5, 65504, 1e-4, -0.333]) assert.ok(Math.abs(fromHalf(toHalf(v)) - v) <= Math.abs(v) * 1e-3 + 1e-7, String(v));
+  assert.equal(toHalf(1), 0x3c00);
+  assert.equal(toHalf(-2), 0xc000);
+  assert.equal(fromHalf(0x7c00), Infinity);
+  assert.deepEqual([...fromHalfArray(toHalfArray([0.25, 3]))], [0.25, 3]);
+});

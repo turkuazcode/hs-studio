@@ -27,7 +27,7 @@ use crate::photo::exif::MetadataPolicy;
 use super::{JobEnv, JobError, ModelPin, code, parent_dir};
 
 /// Kinds the webview runs. `components`: AI components pinned at submit (validated on continue).
-pub const AI_KINDS: &[&str] = &["ai-photo-enhance"];
+pub const AI_KINDS: &[&str] = &["ai-photo-enhance", "ai-inpaint", "ai-background", "ai-colorize"];
 
 /// How long a job waits for a runner (a page that has not loaded yet) before it is put back.
 const RUNNER_WAIT: Duration = Duration::from_secs(20);
