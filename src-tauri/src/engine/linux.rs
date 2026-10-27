@@ -35,7 +35,7 @@ static WANT_VISIBLE: AtomicBool = AtomicBool::new(false);
 static DRAWN: AtomicBool = AtomicBool::new(false);
 /// Smoke test: read back the centre pixel after the next render.
 static PROBE: AtomicBool = AtomicBool::new(false);
-static PIXEL: Mutex<Option<[u8; 4]>> = Mutex::new(None);
+static PIXEL: Mutex<Option<Value>> = Mutex::new(None);
 static INFO: Mutex<Option<Value>> = Mutex::new(None);
 
 // ---------------------------------------------------------------------------
@@ -59,6 +59,7 @@ static GL: OnceLock<Result<Gl, String>> = OnceLock::new();
 
 const GL_DRAW_FRAMEBUFFER_BINDING: u32 = 0x8CA6;
 const GL_READ_FRAMEBUFFER: u32 = 0x8CA8;
+const GL_VIEWPORT: u32 = 0x0BA2;
 const GL_RGBA: u32 = 0x1908;
 const GL_UNSIGNED_BYTE: u32 = 0x1401;
 
@@ -217,11 +218,14 @@ pub fn attach<R: tauri::Runtime>(win: &tauri::WebviewWindow<R>, mpv: Arc<Mpv>) -
                 if PROBE.swap(false, Ordering::Relaxed) {
                     // mpv leaves its own read binding behind: read from GtkGLArea's FBO explicitly
                     let mut px = [0u8; 4];
+                    let mut viewport: [c_int; 4] = [0; 4];
                     unsafe {
                         (gl.bind_framebuffer)(GL_READ_FRAMEBUFFER, fbo as u32);
                         (gl.read_pixels)(w / 2, h / 2, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, px.as_mut_ptr() as *mut c_void);
+                        (gl.get_integerv)(GL_VIEWPORT, viewport.as_mut_ptr());
                     }
-                    *PIXEL.lock().unwrap() = Some(px);
+                    *PIXEL.lock().unwrap() =
+                        Some(json!({"rgba": px, "fbo": fbo, "size": [w, h], "scale": scale, "viewport": viewport}));
                 }
             }
         });
@@ -249,32 +253,36 @@ pub fn info() -> Value {
     v
 }
 
-pub fn render_ready() -> bool {
-    RENDER.with(|r| r.borrow().is_some())
-}
-
 /// Smoke test: centre pixel of the next rendered frame (main thread schedules a redraw).
 pub fn request_pixel_probe() {
     *PIXEL.lock().unwrap() = None;
     PROBE.store(true, Ordering::Relaxed);
 }
-pub fn probed_pixel() -> Option<[u8; 4]> {
-    *PIXEL.lock().unwrap()
+pub fn probed_pixel() -> Option<Value> {
+    PIXEL.lock().unwrap().clone()
 }
 
-/// Smoke test (main thread): centre pixel of the GL area as the user sees it, read back from the
-/// window GTK composited (video + the transparent webview above it). Proves the webview does not
-/// cover the video, which the FBO read-back alone cannot show.
-pub fn composited_centre_pixel() -> Option<[u8; 3]> {
+/// Smoke test (main thread): the GL area as the user sees it, read back from the window GTK
+/// composited (video + the transparent webview above it), sampled on a 5x5 grid. Proves the
+/// webview does not cover the video, which the FBO read-back alone cannot show.
+pub fn composited_samples() -> Option<Value> {
     use gtk::gdk::prelude::WindowExtManual;
     AREA.with(|a| {
         let a = a.borrow();
         let area = a.as_ref()?;
         let top = area.toplevel()?;
-        let (x, y) = area.translate_coordinates(&top, area.allocated_width() / 2, area.allocated_height() / 2)?;
-        let pb = top.window()?.pixbuf(x, y, 1, 1)?;
-        let bytes = pb.read_pixel_bytes();
-        (bytes.len() >= 3).then(|| [bytes[0], bytes[1], bytes[2]])
+        let win = top.window()?;
+        let (aw, ah) = (area.allocated_width(), area.allocated_height());
+        let mut grid = vec![];
+        for j in 1..=5 {
+            for i in 1..=5 {
+                let (x, y) = area.translate_coordinates(&top, aw * i / 6, ah * j / 6)?;
+                let pb = win.pixbuf(x, y, 1, 1)?;
+                let b = pb.read_pixel_bytes();
+                grid.push([b[0], b[1], b[2]]);
+            }
+        }
+        Some(json!({"centre": grid[12], "grid": grid, "area": [aw, ah], "scale": area.scale_factor()}))
     })
 }
 
