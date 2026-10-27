@@ -74,6 +74,8 @@ Dosya argümanı verilirse varsayılan liste yerine o dosyalar çalışır (`npm
 | Video “AI” restorasyonu | — | — | `video` (“hazır değil” etiketi) | — | — | V01–V06 |
 | Video restorasyonu V01: kaynak ölçümü (alan sırası/idet, CFR/VFR, SAR/rotation, renk/HDR, çoklu ses) + reçete/hash | — | `restoration::tests` (saf kurallar + ffmpeg lavfi ile üretilen fixture'lar; ffmpeg `VHO_FFMPEG` ya da `src-tauri/target/release` içinde **olmalı**, yoksa test başarısız) | `restoration` (IPC, üretilmiş fixture'lar) | — | taban çizgisi CPU hızı: `experiments/video-restoration/baseline-speed.ps1` (Q02 değil) | UI yok (V04) |
 | Kalite karşılaştırması, hız/bellek bütçeleri | — | — | — | — | **HENÜZ DOLDURULMADI** | Q02 |
+| Güncelleme (updater, R02) | `updates` (durum metinleri TR/EN, hata kodu) | `updater::tests` (loopback kısıtı, hata sınıfları) | `updater` (atılacak anahtar, loopback manifest: geçerli/başka anahtar/bozuk/eski paket/sürüm düşürme/çevrimdışı/varsayılan kapalı) | — | — | Gerçek NSIS güncelleme kurulumu denenmedi |
+| CI workflow hijyeni (R02), sürüm kapısı (R03) | `ci-workflows`, `release-gate` | — | — | — | — | Workflow'lar uzakta hiç çalışmadı |
 | Lisans envanteri, bildirimler, SBOM (R01) | `legal-inventory` (AI manifest ↔ models.json, yerel DLL listesi ↔ derleme kanıtı, bildirimde her DLL/model, gönderilen varlıklar envanterde, SBOM hash'leri, politika reddi yok) | — | `smoke` (Lisanslar penceresi) | — | — | SBOM üretimi `npm run sbom` (cargo metadata, ağsız) birim testte çalışmaz; commit edilen SBOM denetlenir |
 | İş kuyruğu (A02), kütüphane UI (L02) | paralel dallarda ekleniyor | | | | | Testleri kendi katmanına eklenir; bu harita birleştirmede güncellenir |
 
