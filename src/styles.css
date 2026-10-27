@@ -794,6 +794,12 @@ body.is-dragging .drop-zone .drop-card {
   gap: 8px;
 }
 
+/* Small window / 200 % scale: the right group moves to a second row instead of leaving the window (Q03) */
+@media (max-width: 640px) {
+  .controls-row { flex-wrap: wrap; row-gap: 6px; }
+  .controls-group.right { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+}
+
 /* Primary Play Button */
 .btn-play {
   width: 36px;

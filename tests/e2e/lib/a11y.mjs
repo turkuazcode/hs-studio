@@ -44,7 +44,8 @@ export async function tab(app, { shift = false } = {}) {
 }
 
 /** Native key press (Escape, Enter, Space...) through CDP Input. */
-export async function press(app, key, { code = key, keyCode, modifiers = 0, text } = {}) {
+export async function press(app, key, { code = key, keyCode, modifiers = 0, text = { Enter: "\r", " ": " " }[key] } = {}) {
+  // Enter / Space activate a focused button through the "char" (keypress) event, as a real key does
   const codes = { Escape: 27, Enter: 13, " ": 32, ArrowLeft: 37, ArrowUp: 38, ArrowRight: 39, ArrowDown: 40 };
   const base = { key, code, windowsVirtualKeyCode: keyCode ?? codes[key] ?? 0, nativeVirtualKeyCode: keyCode ?? codes[key] ?? 0, modifiers };
   await app.cdp.send("Input.dispatchKeyEvent", { type: "rawKeyDown", ...base });
