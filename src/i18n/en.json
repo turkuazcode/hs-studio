@@ -591,7 +591,8 @@
     "deepTooLarge": "This photo is {w}×{h}. A 4× output exceeds this device's AI memory budget: the input will be reduced to {iw}×{ih} and the result will be {ow}×{oh}. Continue?",
     "deepQueued": "Queued: starts when the previous long job finishes…",
     "deepRunningEta": "Enhancing… {pct}% — {hw}, about {eta} s left",
-    "deepPaused": "Paused (during playback or when the app closed). It continues from the Jobs panel in the title bar."
+    "deepPaused": "Paused (during playback or when the app closed). It continues from the Jobs panel in the title bar.",
+    "deepSavedTo": "Copy saved: {name} (in the photo's folder; EXIF and transparency kept)"
   },
   "ui": {
     "docTitle": "VHO - Video Player",
@@ -1247,7 +1248,8 @@
       "pauseDuringPlaybackHelp": "A running AI job pauses so playback does not stutter; it continues (validated) when playback stops.",
       "lastRun": "Last AI run: {backend}, tile {tile} px, {sec} s.",
       "noRun": "No AI run in this session yet.",
-      "fallbacks": "Fallbacks: {list}."
+      "fallbacks": "Fallbacks: {list}.",
+      "metadata": "Metadata in AI results (date, camera, location)"
     }
   }
 }
