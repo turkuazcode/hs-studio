@@ -31,6 +31,7 @@ import { createSubtitles } from "./media/subtitles.js";
 import { createVideoPlayer } from "./media/video-player.js";
 import { createVisualFilters } from "./media/visual-filters.js";
 import { createLibraryView } from "./library/library-view.js";
+import { createMusicMode } from "./music/music-mode.js";
 import { createPhotoStudio } from "./studio/studio.js";
 import { createFullscreen } from "./ui/fullscreen.js";
 import { createHud } from "./ui/hud.js";
@@ -162,6 +163,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Persistent library (Plan 13/L02): video / music views, saved lists, Settings > Library
   app.libraryView = createLibraryView(app);
   window.__vhoLibrary = app.libraryView;
+  // Music mode (Plan 13/L03): own layout, queue policy, gapless, ReplayGain, system media controls
+  app.music = createMusicMode(app);
+  window.__vhoMusic = app.music;
 
   // Settings window, recent files, menus, themes, language... then the files passed on
   // the command line ("Open with VHO"), so they open with the restored settings.

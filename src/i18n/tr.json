@@ -1199,7 +1199,10 @@
       "recentlyAdded": "Son eklenenler",
       "favorites": "Favoriler",
       "missing": "Bulunamayanlar",
-      "mostPlayed": "En çok oynatılanlar"
+      "mostPlayed": "En çok oynatılanlar",
+      "artists": "Sanatçılar",
+      "albums": "Albümler",
+      "genres": "Türler"
     },
     "status": {
       "offline": "çevrimdışı",
@@ -1356,6 +1359,43 @@
       "lastRun": "Son AI çalışması: {backend}, karo {tile} px, {sec} sn.",
       "noRun": "Bu oturumda henüz AI çalışması yok.",
       "fallbacks": "Geri çekilmeler: {list}."
+    }
+  },
+  "music": {
+    "title": "Müzik",
+    "upNext": "Sıradakiler",
+    "shuffle": "Karışık",
+    "repeat": {
+      "off": "Tekrar: kapalı",
+      "all": "Tekrar: tümü",
+      "one": "Tekrar: bu parça"
+    },
+    "deviceRemoved": "Ses cihazı çıkarıldı; çalma duraklatıldı",
+    "settings": {
+      "heading": "Müzik",
+      "replayGain": "ReplayGain (ses seviyesi eşitleme)",
+      "rg": {
+        "off": "Kapalı",
+        "track": "Parça",
+        "album": "Albüm (yoksa parça)"
+      },
+      "preamp": "ReplayGain ön kazancı",
+      "preventClip": "Kırpılmayı önle (tepe değerine göre kıs)",
+      "gapless": "Parçalar arasında boşluksuz geçiş",
+      "systemControls": "Windows medya tuşları ve şimdi çalan kartı",
+      "pauseOnDeviceRemoval": "Kulaklık/ses cihazı çıkarılınca duraklat"
+    },
+    "groups": {
+      "artists": "Sanatçılar",
+      "albums": "Albümler",
+      "genres": "Türler",
+      "unknown": "(bilinmiyor)",
+      "back": "Geri",
+      "tracks": "{n} parça"
+    },
+    "album": {
+      "replayGain": "Albüm ReplayGain hesapla…",
+      "replayGainDone": "Albüm ReplayGain: {gain} dB ({n} parça)"
     }
   }
 }
