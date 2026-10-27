@@ -177,8 +177,9 @@ fn album_replaygain_is_one_joint_measurement_and_tags_round_trip() {
     let mean = (q.track_gain_db + l.track_gain_db) / 2.0;
     assert!(album.album_gain_db < mean - 2.0 && (album.album_gain_db - l.track_gain_db).abs() < 3.5, "{album:?}");
     // peaks: sample peak (linear) of the loud track; the true peak is only reported
-    // (ffmpeg's sine source has amplitude 1/8)
-    assert!((album.album_peak - 0.125 * 10f64.powf(-6.0 / 20.0)).abs() < 0.003, "{}", album.album_peak);
+    // album peak = the highest track sample peak; the tracks are 14 dB apart (factor 0.2)
+    assert_eq!(album.album_peak, l.track_peak.max(q.track_peak));
+    assert!((q.track_peak / l.track_peak - 10f64.powf(-14.0 / 20.0)).abs() < 0.01, "{} {}", q.track_peak, l.track_peak);
     assert!(l.true_peak_dbfs >= l.sample_peak_dbfs - 0.01);
     // the tags written on the generated copies read back as written (track + album)
     for (p, t) in [(&quiet, q), (&loud, l)] {

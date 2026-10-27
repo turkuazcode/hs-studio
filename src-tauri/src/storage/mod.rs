@@ -521,7 +521,7 @@ mod tests {
         let s = Storage::open_with(&dir, &migrations::MIGRATIONS[..1]).unwrap();
         s.write(|tx| Ok(tx.execute("INSERT INTO meta VALUES ('probe', 'kept')", [])?)).unwrap();
         drop(s);
-        let s = Storage::open(&dir).unwrap();
+        let s = Storage::open_with(&dir, &migrations::MIGRATIONS[..2]).unwrap();
         assert_eq!(s.report.migrated, vec![2]);
         assert_eq!(s.report.schema_version, 2);
         let backup = PathBuf::from(s.report.backup.clone().expect("backup before the jobs migration"));
