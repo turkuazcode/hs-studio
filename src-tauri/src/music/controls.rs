@@ -40,8 +40,6 @@ pub struct ControlsState {
     pub buttons_received: u64,
 }
 
-pub const SUPPORTED: bool = cfg!(windows);
-
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ButtonEvent {
