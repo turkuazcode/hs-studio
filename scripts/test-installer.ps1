@@ -106,7 +106,9 @@ function LaunchOnce([string]$exe, [string]$data, [int]$seconds = 10) {
 Write-Host "== work folder : $WorkRoot"
 Write-Host "== install to  : $installDir"
 $before = Snapshot
-$manifestPath = Get-ChildItem (Split-Path $Installer -Parent) -Filter 'package-manifest-test-*.json' | Sort-Object LastWriteTime | Select-Object -Last 1
+# the manifest written for exactly this installer (variant "test", same version)
+$installerVersion = if ((Split-Path $Installer -Leaf) -match '_(\d+\.\d+\.\d+)_x64-setup\.exe$') { $Matches[1] } else { '' }
+$manifestPath = Get-Item (Join-Path (Split-Path $Installer -Parent) "package-manifest-test-$installerVersion.json") -ErrorAction SilentlyContinue
 
 try {
   # ------------------------------------------------------------ install
