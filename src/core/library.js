@@ -257,11 +257,53 @@ export function createLibrary({ adapter = memoryAdapter(), legacyStorage = null,
     subscribe(fn) { favSubs.add(fn); return () => favSubs.delete(fn); },
   };
 
+  /**
+   * A file changed location (D1 rename, or a move found by a library scan, Plan 13/L02):
+   * the recent entry, favorite, resume position and bookmarks follow it. The database side
+   * is updated by the backend; this keeps the in-memory document from writing the old path
+   * back.
+   */
+  function applyMove({ oldPath, newPath, oldKey, newKey }) {
+    if (!oldPath || !newPath || oldPath === newPath) return false;
+    let changed = false;
+    if (data.recent.some((e) => e.id === oldPath)) {
+      const name = newPath.split(/[\\/]/).pop();
+      const patch = { id: newPath, path: newPath, name };
+      if (oldKey && newKey) patch.resumeKey = newKey;
+      data.recent = data.recent.filter((e) => e.id !== newPath).map((e) => (e.id === oldPath ? { ...e, ...patch } : e));
+      changed = true;
+      notify();
+    }
+    if (data.favorites.includes(oldPath)) {
+      data.favorites = sanitizeFavorites(data.favorites.map((p) => (p === oldPath ? newPath : p)));
+      changed = true;
+      notifyFavorites();
+    }
+    if (oldKey && newKey && oldKey !== newKey) {
+      if (oldKey in data.resume) {
+        const t = data.resume[oldKey];
+        data.resume = { ...data.resume };
+        delete data.resume[oldKey];
+        if (!(newKey in data.resume)) data.resume = setResume(data.resume, newKey, t);
+        changed = true;
+      }
+      if (data.bookmarks[oldKey]) {
+        data.bookmarks = { ...data.bookmarks };
+        if (!data.bookmarks[newKey]) data.bookmarks[newKey] = data.bookmarks[oldKey];
+        delete data.bookmarks[oldKey];
+        changed = true;
+      }
+    }
+    if (changed) scheduleSave();
+    return changed;
+  }
+
   return {
     ready,
     resume,
     bookmarks,
     favorites,
+    applyMove,
     /** Storage backend report (library-db.js adapters), e.g. { backend: "sqlite", report }. */
     get status() { return adapter.status ?? null; },
     recent: {

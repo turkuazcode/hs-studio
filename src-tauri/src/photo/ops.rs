@@ -617,6 +617,34 @@ fn png_with_exif(png: &[u8], tiff: &[u8]) -> Vec<u8> {
     out
 }
 
+/// Adds a Latin-1 `tEXt` chunk (before the image data) to a PNG file.
+pub(crate) fn png_with_text(png: &[u8], keyword: &str, text: &str) -> Vec<u8> {
+    let mut pos = 8;
+    while pos + 8 <= png.len() {
+        let len = u32::from_be_bytes(png[pos..pos + 4].try_into().unwrap()) as usize;
+        if &png[pos + 4..pos + 8] == b"IDAT" {
+            break;
+        }
+        pos += 12 + len;
+    }
+    let pos = pos.min(png.len());
+    let latin1 = |s: &str| s.chars().map(|c| if (c as u32) < 256 && c != '\0' { c as u8 } else { b'?' }).collect::<Vec<u8>>();
+    let mut data = latin1(keyword);
+    data.truncate(79);
+    data.push(0);
+    data.extend(latin1(text));
+    let mut chunk = Vec::with_capacity(data.len() + 12);
+    chunk.extend_from_slice(&(data.len() as u32).to_be_bytes());
+    chunk.extend_from_slice(b"tEXt");
+    chunk.extend_from_slice(&data);
+    let crc = crc32fast::hash(&chunk[4..]);
+    chunk.extend_from_slice(&crc.to_be_bytes());
+    let mut out = png[..pos].to_vec();
+    out.extend_from_slice(&chunk);
+    out.extend_from_slice(&png[pos..]);
+    out
+}
+
 /// Adds an EXIF chunk to a WebP file (converting a simple VP8/VP8L file to VP8X).
 fn webp_with_exif(webp: &[u8], tiff: &[u8], w: u32, h: u32) -> Option<Vec<u8>> {
     if webp.len() < 20 || &webp[0..4] != b"RIFF" || &webp[8..12] != b"WEBP" {
@@ -660,7 +688,7 @@ fn webp_with_exif(webp: &[u8], tiff: &[u8], w: u32, h: u32) -> Option<Vec<u8>> {
     Some(out)
 }
 
-fn embed_exif(bytes: Vec<u8>, format: OutFormat, tiff: Option<&[u8]>, w: u32, h: u32) -> Vec<u8> {
+pub(crate) fn embed_exif(bytes: Vec<u8>, format: OutFormat, tiff: Option<&[u8]>, w: u32, h: u32) -> Vec<u8> {
     let Some(tiff) = tiff else { return bytes };
     match format {
         OutFormat::Jpeg => jpeg_rewrite_metadata(&bytes, Some(tiff), false, false).unwrap_or(bytes),

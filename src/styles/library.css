@@ -1,0 +1,236 @@
+/* ==========================================================================
+   Library (Plan 13/L02): video / music lists, saved lists, Settings > Library.
+   Reuses the photo studio controls (.ps-btn / .ps-input / .ps-select / .ps-menu).
+   ========================================================================== */
+
+.lib-layer [hidden] {
+  display: none !important;
+}
+
+.lib-root {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-canvas);
+  color: var(--text-pure);
+  padding-top: 40px; /* titlebar */
+}
+
+body.lib-open .titlebar {
+  opacity: 1 !important;
+}
+
+.lib-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.lib-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 8px 0 0;
+}
+
+.lib-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-pill);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+
+.lib-tab {
+  background: none;
+  border: 0;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.lib-tab[aria-selected="true"] {
+  background: var(--accent-ruby-dim);
+  color: var(--text-pure);
+}
+
+.lib-search {
+  flex: 1 1 200px;
+  min-width: 140px;
+}
+
+.lib-status {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 6px 16px;
+  min-height: 26px;
+}
+
+.lib-list {
+  position: relative;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  outline: none;
+  contain: strict;
+}
+
+.lib-spacer {
+  width: 1px;
+}
+
+.lib-rows {
+  position: absolute;
+  inset: 0 0 auto 0;
+}
+
+.lib-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 44px;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+  cursor: default;
+}
+
+.lib-row:hover {
+  background: var(--bg-pill);
+}
+
+.lib-row.focused {
+  background: var(--accent-ruby-dim);
+}
+
+.lib-row.status-offline,
+.lib-row.status-missing {
+  opacity: 0.55;
+}
+
+.lib-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lib-sub {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.lib-num {
+  text-align: right;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.lib-badge {
+  margin-left: 8px;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: var(--bg-pill-hover);
+  color: var(--text-secondary);
+}
+
+.lib-badge.warn {
+  color: var(--accent-ruby-bright);
+}
+
+.lib-empty {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.lib-empty-text {
+  color: var(--text-secondary);
+  max-width: 460px;
+  font-size: 13px;
+}
+
+.lib-playlists {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 8px 16px;
+}
+
+.lib-pl-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.lib-pl-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+}
+
+/* Settings > Library */
+.lib-set-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.lib-set-folder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lib-set-path {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lib-set-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lib-set-folder small {
+  color: var(--text-secondary);
+}
+
+.lib-set-folder[data-status="offline"] .lib-set-name,
+.lib-set-folder[data-status="missing"] .lib-set-name {
+  opacity: 0.6;
+}
+
+/* Photo studio: library star rating on a thumbnail */
+.ps-cell[data-stars]::after {
+  content: attr(data-stars);
+  position: absolute;
+  left: 8px;
+  top: 6px;
+  z-index: 1;
+  font-size: 11px;
+  color: #fbbf24;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
