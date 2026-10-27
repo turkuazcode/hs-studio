@@ -71,7 +71,7 @@ function Snapshot {
   $s.desktop = @(Get-ChildItem ([Environment]::GetFolderPath('Desktop')) -Filter *.lnk -ErrorAction SilentlyContinue | ForEach-Object Name | Sort-Object)
   return $s
 }
-function Diff($a, $b) {
+function Compare-Snapshot($a, $b) {
   $out = @()
   foreach ($k in $a.Keys) {
     $d = Compare-Object @($a[$k]) @($b[$k]) -ErrorAction SilentlyContinue
@@ -131,7 +131,7 @@ try {
     }
     Check 'installed files match package manifest (sha256)' ($bad.Count -eq 0) ($bad -join ', ')
   }
-  $assoc = Diff $before (Snapshot)
+  $assoc = Compare-Snapshot $before (Snapshot)
   $assocBad = @($assoc | Where-Object { $_ -like 'classes:*' -or $_ -like 'startMenu:*' -or $_ -like 'desktop:*' -or $_ -like 'run:*' })
   Check 'no file associations / shortcuts / autostart created' ($assocBad.Count -eq 0) ($assocBad -join ' | ')
 
@@ -234,7 +234,7 @@ try {
     }
   }
   $after = Snapshot
-  $d = Diff $before $after
+  $d = Compare-Snapshot $before $after
   Check 'environment snapshot unchanged after the test' ($d.Count -eq 0) ($d -join ' | ')
   if (-not $KeepWorkRoot) { Remove-Item -Recurse -Force $WorkRoot -ErrorAction SilentlyContinue }
 }
