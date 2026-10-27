@@ -4,17 +4,17 @@
 > (™). No registration is claimed (no ®). The owner should have this policy reviewed by a lawyer
 > and decide on registration before the first public release.
 >
-> **Türkçe özet:** Kod GPL-3.0 ile serbesttir; **isim ve logo değildir**. Değiştirilmiş bir sürümü
+> **Türkçe özet:** Kod Apache-2.0 ile serbesttir; **isim ve logo değildir**. Değiştirilmiş bir sürümü
 > dağıtan herkes kendi ürününe farklı bir ad ve logo vermelidir ("HS" ile başlayan veya
 > karıştırılabilecek adlar dahil). Projeye doğru şekilde atıf yapmak ("HS Studio'ya dayanır",
 > "HS Studio ile uyumlu") serbesttir. Değiştirilmemiş resmî sürümü olduğu gibi yeniden dağıtmak
 > serbesttir.
 
-HS Studio (formerly the working name **VHO**, "Video H Oynatıcısı") is free software under the
-GNU General Public License version 3 ([LICENSE](LICENSE)). The GPL gives you broad rights to the
-**code**. It does not grant rights to the project's **name and logo**: GPL-3.0 section 7(e)
-allows a project to decline to grant rights under trademark law, and this policy describes how
-the names may be used. Its purpose is that users can always tell the official project apart from
+HS Studio (formerly the working name **VHO**, "Video H Oynatıcısı") is open-source software under
+the Apache License 2.0 ([LICENSE](LICENSE), [NOTICE](NOTICE)). The license gives you broad rights to
+the **code**. It does not grant rights to the project's **name and logo**: section 6 of the Apache
+License 2.0 says it "does not grant permission to use the trade names, trademarks, service marks,
+or product names of the Licensor", and this policy describes how the names may be used. Its purpose is that users can always tell the official project apart from
 modified versions — not to restrict what you do with the code.
 
 ## The marks
@@ -54,7 +54,8 @@ Rename the application and replace the icons before you distribute it. In practi
 - change the product name, window title, executable name, bundle identifier and installer
   name, and the "About" text;
 - replace the files in `src-tauri/icons/` and `src/assets/` that carry the logo;
-- keep the copyright and license notices (the GPL requires that), and you may say
+- keep the copyright notices, LICENSE and NOTICE (Apache-2.0 section 4 requires them in your
+  distribution), and you may say
   "based on HS Studio" with a link to the project.
 
 ## Questions and permission requests
@@ -62,4 +63,4 @@ Rename the application and replace the icons before you distribute it. In practi
 E-mail **turkuazcode@gmail.com** (subject starting with `TRADEMARK:`).
 
 This policy may be updated; the version in the default branch of the official repository
-applies. It does not limit any right that the GPL-3.0 gives you for the code.
+applies. It does not limit any right that the Apache License 2.0 gives you for the code.

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "publisher": "Halil SARITAŞ (TurkuazCode)",
+    "copyright": "Copyright 2026 Halil SARITAŞ. Apache-2.0.",
+    "category": "Video",
+    "shortDescription": "Video, photo and music player and studio",
+    "licenseFile": "../LICENSE",
+    "resources": {
+      "target/package-staging/mpv/": "mpv/",
+      "target/package-staging/legal/": "legal/"
+    },
+    "windows": {
+      "webviewInstallMode": { "type": "downloadBootstrapper", "silent": true },
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["Turkish", "English"],
+        "displayLanguageSelector": false,
+        "installerIcon": "icons/icon.ico",
+        "compression": "lzma"
+      }
+    }
+  }
+}

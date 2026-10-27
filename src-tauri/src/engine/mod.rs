@@ -304,7 +304,7 @@ pub fn frame_to_temp(app: &AppHandle, st: &tauri::State<'_, Engine>) -> Result<P
     use std::sync::atomic::{AtomicU64, Ordering};
     static N: AtomicU64 = AtomicU64::new(0);
     let m = mpv_of(st)?;
-    let dir = app.path().app_cache_dir().map_err(|e| e.to_string())?.join("thumbs");
+    let dir = crate::platform::cache_dir(app)?.join("thumbs");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let path = dir.join(format!("frame-{}-{}.png", std::process::id(), N.fetch_add(1, Ordering::Relaxed)));
     m.command(&json!(["screenshot-to-file", path.to_string_lossy(), "video"]))?;

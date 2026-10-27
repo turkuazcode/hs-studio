@@ -17,4 +17,4 @@
 - [ ] New dependency / binary / model / font / icon: license is on the accepted list, `legal/inventory/` + notices updated, `npm run sbom` re-run
 - [ ] Original user files are never modified in place
 - [ ] Commits are signed off (`git commit -s`, DCO)
-- [ ] I agree to the [HS Studio Individual CLA](../CLA.md) (version 1.0) for this and my future contributions <!-- required for outside contributors once the CLA is in force -->
+- [ ] I submit this contribution under the Apache License 2.0 (inbound = outbound; see CONTRIBUTING.md)

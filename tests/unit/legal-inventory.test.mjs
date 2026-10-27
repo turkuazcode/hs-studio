@@ -81,6 +81,18 @@ test("every native DLL and AI file is named in the notices (legal/NOTICES_HEADER
   assert.ok(notices.includes("ONNX Runtime Web 1.30.0"));
 });
 
+test("project license: Apache-2.0 everywhere, NOTICE shown at the top of the in-app notices", () => {
+  assert.match(read("LICENSE"), /Apache License\s+Version 2\.0, January 2004/);
+  assert.match(read("src-tauri/Cargo.toml"), /^license = "Apache-2\.0"$/m);
+  assert.equal(json("package.json").license, "Apache-2.0");
+  const notice = read("NOTICE").replace(/\r\n/g, "\n").trim();
+  for (const f of ["legal/NOTICES_HEADER.txt", "src/legal/THIRD_PARTY_NOTICES.txt"]) {
+    const head = read(f).replace(/\r\n/g, "\n").slice(0, 3000);
+    assert.ok(head.includes(notice), `${f} starts with the NOTICE file (Apache-2.0 4(d))`);
+  }
+  assert.ok(!existsSync(join(ROOT, "CLA.md")), "no CLA: inbound = outbound Apache-2.0 + DCO");
+});
+
 test("asset inventory: paths exist, hashes of pinned upstream files match, shipped src/ assets are covered", () => {
   for (const a of assets.items) {
     for (const p of a.paths) assert.ok(existsSync(join(ROOT, p)), `${a.id}: ${p} exists`);

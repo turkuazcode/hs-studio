@@ -1,13 +1,13 @@
-# DRAFT (Q01/R02) — not pushed, never run remotely. Review runner images, action versions
-# (pin to full commit SHAs before enabling) and the libmpv staging source first.
+# CI (plan 14/Q01 + R02). Not pushed and never run remotely yet: review before the first push.
+# Every third-party action is pinned to a full commit SHA (tag in the comment; looked up
+# 2026-10-26 with `git ls-remote`). Update them deliberately, never to a moving tag.
 #
 # Layers (docs/status/test-map.md):
 #   unit   — every push/PR, network-free (npm test blocks non-loopback connections)
 #   rust   — every push/PR
-#   e2e    — Windows; needs the LGPL libmpv/ffmpeg build staged next to vho.exe (not available
-#            on a hosted runner yet: manual trigger until P05 publishes that build artifact)
+#   e2e    — Windows: release exe + the LGPL libmpv/ffmpeg set from native-windows.yml
 #   ai     — manual / release candidate; real model downloaded once into a cache keyed by the
-#            AI manifest hash, so a manifest change refreshes it and nothing else does
+#            AI manifest hash
 name: ci
 
 on:
@@ -16,32 +16,39 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      e2e:
-        description: "Run the Windows app E2E layer"
-        type: boolean
-        default: false
       ai:
         description: "Run the real-AI smoke layer (downloads ~76 MB once per manifest)"
         type: boolean
         default: false
 
+# Least privilege: CI only reads the repository. Fork PRs get no secrets (GitHub default).
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RUST_TOOLCHAIN: "1.99.1"
+  NODE_VERSION: "24"
 
 jobs:
   unit:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 24
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
       - run: npm test
         env:
           VHO_TEST_NO_SKIP: "1"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: results-unit
@@ -50,51 +57,64 @@ jobs:
   rust:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master 2026-10
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: src-tauri
-      - run: cargo test --release --lib --manifest-path src-tauri/Cargo.toml
+      - run: cargo test --release --lib --locked --manifest-path src-tauri/Cargo.toml
 
-  app:
-    if: github.event_name == 'workflow_dispatch' && (inputs.e2e || inputs.ai)
+  native:
+    uses: ./.github/workflows/native-windows.yml
+
+  e2e:
     runs-on: windows-latest
-    needs: [unit, rust]
+    needs: [unit, rust, native]
     env:
       VHO_E2E_PORT_MIN: "10700"
       VHO_E2E_PORT_MAX: "10799"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 24
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
           cache: npm
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master 2026-10
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: src-tauri
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: mpv-windows-x64
+          path: mpv-build
       - run: npm ci
       - run: npm run build:release
-      # TODO(P05): download the pinned LGPL libmpv/ffmpeg build artifact and verify its sha256,
-      # then: npm run stage:mpv -- -Source <dist>. Without it E2E runs on the HTML5 engine only
-      # and the libmpv tests fail (they are not skipped).
+      - run: npm run stage:mpv -- -Source mpv-build\dist
       - name: E2E
-        if: inputs.e2e
         run: npm run e2e
+        env:
+          VHO_TEST_NO_SKIP: "1"
       - name: Restore real-AI model cache
-        if: inputs.ai
-        uses: actions/cache@v4
+        if: github.event_name == 'workflow_dispatch' && inputs.ai
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: tests/.cache/ai-smoke/vho-data/ai
           key: vho-ai-${{ hashFiles('src-tauri/src/ai/manifest.rs') }}
       - name: Real-AI smoke
-        if: inputs.ai
+        if: github.event_name == 'workflow_dispatch' && inputs.ai
         run: npm run test:ai
         env:
           VHO_TEST_NO_SKIP: "1"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: results-app
+          name: results-e2e
           path: tests/.results/

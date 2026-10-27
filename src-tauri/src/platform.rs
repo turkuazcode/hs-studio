@@ -19,6 +19,15 @@ pub fn data_dir_override() -> Option<PathBuf> {
     std::env::var_os(DATA_DIR_ENV).filter(|v| !v.is_empty()).map(PathBuf::from)
 }
 
+/// Cache root (photo thumbnails, frame grabs, transcodes). With the test override it lives in
+/// `<VHO_DATA_DIR>/cache`, so test runs never write into the user's real cache folder.
+pub fn cache_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
+    match data_dir_override() {
+        Some(d) => Ok(d.join("cache")),
+        None => app.path().app_cache_dir().map_err(|e| e.to_string()),
+    }
+}
+
 /// Stable 64-bit FNV-1a.
 fn fnv1a(bytes: &[u8]) -> u64 {
     bytes.iter().fold(0xcbf29ce484222325u64, |h, b| (h ^ *b as u64).wrapping_mul(0x100000001b3))
@@ -29,10 +38,16 @@ fn fnv1a(bytes: &[u8]) -> u64 {
 /// or receives files from, the user's own VHO.
 pub fn apply_test_isolation<R: Runtime>(context: &mut tauri::Context<R>) {
     if let Some(dir) = data_dir_override() {
-        let suffix = fnv1a(dir.to_string_lossy().to_lowercase().as_bytes());
         let config = context.config_mut();
-        config.identifier = format!("{}.test{suffix:016x}", config.identifier);
+        config.identifier = test_identifier(&config.identifier, &dir);
     }
+}
+
+/// `<identifier>.test<fnv1a(lowercase data dir)>`. The E2E harness derives the same name
+/// (tests/e2e/lib/app.mjs `testIdentity`) to remove the app folders a test instance created.
+pub fn test_identifier(base: &str, data_dir: &Path) -> String {
+    let suffix = fnv1a(data_dir.to_string_lossy().to_lowercase().as_bytes());
+    format!("{base}.test{suffix:016x}")
 }
 
 /// Folder for settings.json / library.json: VHO_DATA_DIR or the app config dir.
@@ -155,6 +170,13 @@ mod tests {
         assert_eq!(got.len(), 2);
         assert!(got.iter().all(|p| Path::new(p).is_absolute() && p.ends_with("a.mp4")));
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_identifier_matches_the_e2e_harness() {
+        // Same vector as tests/unit/test-layers.test.mjs (JS side of the derivation)
+        let dir = Path::new(r"C:\Users\Test\AppData\Local\Temp\vho-e2e-ABC\vho-data");
+        assert_eq!(test_identifier("com.vho.app", dir), "com.vho.app.test784bc84e15c2ff8b");
     }
 
     #[test]

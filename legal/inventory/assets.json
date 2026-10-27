@@ -87,7 +87,7 @@
       "author": "unconfirmed (present since the baseline commit)",
       "shipped": true,
       "policy": "review",
-      "notes": "Project logo. Not covered by the GPL grant for its use as a name/brand: TRADEMARKS.md governs use of the name and logo (decision 2026-10-25). OPEN ITEM for the owner: confirm who made the logo and that the project holds the rights; if any generator or stock asset was used, record its terms here. Whether the logo files themselves are also offered under GPL-3.0 (copyright) while the mark stays protected (trademark) is an owner/lawyer decision."
+      "notes": "Project logo. Not covered by the Apache-2.0 grant for its use as a name/brand (Apache-2.0 section 6 grants no trademark rights): TRADEMARKS.md governs use of the name and logo (decision 2026-10-25). OPEN ITEM for the owner: confirm who made the logo and that the project holds the rights; if any generator or stock asset was used, record its terms here. Whether the logo files themselves are also offered under Apache-2.0 (copyright) while the mark stays protected (trademark) is an owner/lawyer decision."
     },
     {
       "id": "amd-fsr1",
@@ -144,7 +144,7 @@
         "tests/fixtures/sample.vtt",
         "tests/fixtures/sample-1254.srt"
       ],
-      "license": "GPL-3.0-only",
+      "license": "Apache-2.0",
       "author": "VHO authors (generated)",
       "generator": "tests/fixtures/make-fixtures.ps1, tests/fixtures/make-engine-fixtures.ps1, tests/fixtures/make-subtitles.mjs, tests/fixtures/gen/",
       "shipped": false,
@@ -159,7 +159,7 @@
         "tests/ai/fixtures/smoke-44x28.png",
         "tests/ai/fixtures/photo-x4-ref.png"
       ],
-      "license": "GPL-3.0-only",
+      "license": "Apache-2.0",
       "author": "VHO authors (generated)",
       "generator": "tests/ai/photo-x4.ai.mjs (makeFixture(); reference written only with VHO_AI_UPDATE_REFERENCE=1)",
       "shipped": false,
@@ -171,7 +171,7 @@
       "category": "evidence",
       "name": "mpv spike results (screenshots of synthetic test patterns, logs)",
       "paths": [],
-      "license": "GPL-3.0-only",
+      "license": "Apache-2.0",
       "author": "VHO authors",
       "generator": "experiments/mpv-spike/",
       "shipped": false,

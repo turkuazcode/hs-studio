@@ -36,14 +36,15 @@ macOS and Linux builds are untested ([docs/platform-support.md](docs/platform-su
 - Test layers: unit (network-free), Rust, Windows end-to-end, real-AI smoke; test map and runner
   with separate pass/fail/skip counts.
 - Open-source pack: CONTRIBUTING, SECURITY (reporting channel still to be set), Code of Conduct
-  (Contributor Covenant 2.1), draft CLA, name/logo policy, license inventories
+  (Contributor Covenant 2.1), NOTICE, name/logo policy, license inventories
   (`legal/inventory/`), CycloneDX SBOM generator (`npm run sbom`) and a git-history scanner
   (`npm run scan:history`).
 
 ### Changed
 
-- Project license changed from MIT to **GPL-3.0-only** (owner decision, 2026-10-25); the name and
-  logo are covered by [TRADEMARKS.md](TRADEMARKS.md). Product name will become **HS Studio**
+- Project license: MIT → GPL-3.0-only (2026-10-25) → **Apache-2.0** with a [NOTICE](NOTICE) file
+  (owner decision, 2026-10-26; no release was ever made under GPL-3.0). The name and logo are
+  covered by [TRADEMARKS.md](TRADEMARKS.md). Product name will become **HS Studio**
   (working name VHO; the rename in the application itself is pending).
 - The GPU image filter is labelled as a filter ("not a neural network"); video "AI restoration"
   is shown as not ready.
