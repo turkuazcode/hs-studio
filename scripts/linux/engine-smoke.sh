@@ -39,6 +39,9 @@ run() {
       timeout 120 "$BIN" "$TMP/smoke.mkv" > "$TMP/log-$backend.txt" 2>&1
   local code=$?
   grep -E "\[VHO\] (smoke|engine smoke|linux video)|libmpv unavailable" "$TMP/log-$backend.txt"
+  mkdir -p "$ROOT/tests/.results"
+  # Diagnostics: keep the whole app + mpv log (VHO_MPV_LOG_LEVEL=v)
+  [ -n "${VHO_MPV_LOG_LEVEL:-}" ] && cp "$TMP/log-$backend.txt" "$ROOT/tests/.results/linux-engine-smoke-$backend.log"
   if [ -f "$TMP/report-$backend.json" ]; then
     mkdir -p "$ROOT/tests/.results"
     cp "$TMP/report-$backend.json" "$ROOT/tests/.results/linux-engine-smoke-$backend.json"

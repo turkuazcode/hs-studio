@@ -152,7 +152,8 @@ fn start<R: Runtime>(app: &AppHandle<R>, win: &WebviewWindow<R>, dll: &Path, gpu
     }
     let refs: Vec<(&str, &str)> = opts.iter().map(|(k, v)| (*k, v.as_str())).collect();
     let m = mpv::Mpv::new(dll, &refs)?;
-    m.request_log_messages("warn");
+    // mpv messages go to stderr; VHO_MPV_LOG_LEVEL (e.g. "v", "debug") for diagnostics
+    m.request_log_messages(&std::env::var("VHO_MPV_LOG_LEVEL").unwrap_or_else(|_| "warn".into()));
     for (i, p) in OBSERVED.iter().enumerate() {
         let _ = m.observe(i as u64 + 1, p);
     }
