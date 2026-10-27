@@ -1112,6 +1112,43 @@
       "show": "Konumu haritada göster",
       "noLocation": "Konum bilgisi yok",
       "leafletFailed": "Leaflet yüklenemedi"
+    },
+    "smart": {
+      "title": "✨ Akıllı",
+      "remove": "Nesne sil",
+      "background": "Arka plan",
+      "colorize": "Renklendir",
+      "brush": "Fırça boyutu",
+      "eraser": "Silgi",
+      "clear": "Temizle",
+      "removeApply": "Sil",
+      "apply": "Uygula",
+      "blurAmount": "Bulanıklık",
+      "bg": {
+        "transparent": "Şeffaf",
+        "white": "Beyaz",
+        "black": "Siyah",
+        "color": "Renk",
+        "blur": "Bulanık"
+      },
+      "saveEditsFirst": "Akıllı araçlar için önce döndürme/kırpma/ayar değişikliklerini kaydedin veya sıfırlayın.",
+      "tooLarge": "Fotoğraf büyük ({w} × {h}). Bellek için {ow} × {oh} boyutunda işlenecek. Devam edilsin mi?",
+      "working": "Yapay zekâ çalışıyor…",
+      "done": "Bitti. Geri almak için Ctrl+Z; kaydetmek için Kopya kaydet.",
+      "cancelled": "İptal edildi.",
+      "failed": "Akıllı düzenleme başarısız: {error}",
+      "applied": "Uygulanan: {list}",
+      "op": {
+        "inpaint": "nesne silme",
+        "matting": "arka plan",
+        "colorize": "renklendirme"
+      },
+      "settings": {
+        "background": "Arka plan kaldırma modeli",
+        "backgroundHelp": "Fotoğraf düzenleyicisindeki “Arka plan” aracı. “Nesne ve ürün” ikinci bir model indirir (yaklaşık 490 MB).",
+        "portrait": "Kişi (portre)",
+        "general": "Nesne ve ürün"
+      }
     }
   },
   "storage": {

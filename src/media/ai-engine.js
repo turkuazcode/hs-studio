@@ -46,6 +46,8 @@ export const FACE_MODEL = {
 export const SMART_MODELS = Object.freeze({
   inpaint: { component: "lama", file: "lama_fp32.onnx", title: "LaMa", credit: "Samsung AI Center (Apache-2.0)" },
   matting: { component: "birefnet-portrait", file: "birefnet_portrait_fp16.onnx", title: "BiRefNet portrait", credit: "Peng Zheng et al. (MIT)" },
+  // optional second background model for objects / products (Settings > AI models)
+  "matting-general": { op: "matting", component: "birefnet-general", file: "birefnet_general_fp16.onnx", title: "BiRefNet", credit: "Peng Zheng et al. (MIT)" },
   colorize: { component: "ddcolor", file: "ddcolor.onnx", data: "ddcolor.data", title: "DDColor", credit: "Xiaoyang Kang et al. (Apache-2.0)" },
 });
 
@@ -524,20 +526,21 @@ export async function upscaleImage(modelId, source, { onProgress, signal } = {})
 
 /**
  * Plan 07 smart edit of an image (A06), off the UI thread, one heavy AI job at a time.
- * op: "inpaint" (params.strokes) | "matting" (params: { mode, color, blur }) | "colorize".
- * Returns { imageData, backend, seconds, attempts }.
+ * model: a SMART_MODELS key — "inpaint" (params.strokes) | "matting" / "matting-general"
+ * (params: { mode, color, blur }) | "colorize". Returns { imageData, backend, seconds, attempts }.
  */
-export async function smartEdit(op, source, params, { onProgress, signal } = {}) {
-  const m = SMART_MODELS[op];
-  if (!m) throw new Error(`unknown smart edit ${op}`);
+export async function smartEdit(model, source, params, { onProgress, signal } = {}) {
+  const m = SMART_MODELS[model];
+  if (!m) throw new Error(`unknown smart edit ${model}`);
+  const op = m.op ?? model;
   const release = await slot.acquire();
   const ad = createInferenceAdapter();
   try {
     const dirs = await ad.prepare([m.component], { onProgress: (f) => onProgress?.("download", f), signal });
     const dir = dirs[m.component];
-    const model = { url: assetUrl(joinPath(dir, m.file)) };
-    if (m.data) model.externalData = [{ path: m.data, data: assetUrl(joinPath(dir, m.data)) }];
-    return await ad.run(source, { op: "smart", smartOp: op, modelId: m.component, model, params }, (phase, f) => onProgress?.(phase, f), signal);
+    const files = { url: assetUrl(joinPath(dir, m.file)) };
+    if (m.data) files.externalData = [{ path: m.data, data: assetUrl(joinPath(dir, m.data)) }];
+    return await ad.run(source, { op: "smart", smartOp: op, modelId: m.component, model: files, params }, (phase, f) => onProgress?.(phase, f), signal);
   } finally {
     ad.release();
     release();

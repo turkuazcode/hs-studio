@@ -83,6 +83,97 @@
       "policy": "review",
       "notes": "Weight licenses are permissive. Status review because of the training-data question; accepted by the owner on 2026-10-25 (see acknowledged).",
       "acknowledged": "2026-10-25 owner decision: GFPGAN and YuNet stay in the app (quality first). The non-commercial training-data question (WIDER FACE / FFHQ) is an accepted, owner-decided risk; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
+    },
+    {
+      "component": "lama",
+      "kind": "model-weights",
+      "files": {
+        "lama_fp32.onnx": {
+          "role": "inpainting weights (ONNX, float32)",
+          "name": "LaMa (big-lama)",
+          "weightLicense": "Apache-2.0",
+          "weightAuthor": "Samsung AI Center Moscow (Suvorov et al.)",
+          "upstream": "https://github.com/advimman/lama",
+          "exportedBy": "https://huggingface.co/Carve/LaMa-ONNX (commit c3c0c9e468934d62e79c329e35d82dd09ff8c444, Apache-2.0; custom FourierUnitJIT, same results per the card)",
+          "trainingData": "big-lama is reported upstream as trained on Places365-Challenge (Places dataset terms: non-commercial research/education). Open item for the owner (legal/INVENTORY.md), same question as YuNet/GFPGAN: dataset terms vs. permissively licensed weights. To be re-verified from the official repository before release."
+        }
+      },
+      "name": "LaMa (big-lama)",
+      "version": "lama-fp32-c3c0c9e",
+      "weightLicense": "Apache-2.0",
+      "codeLicense": "Apache-2.0",
+      "policy": "review",
+      "notes": "Plan 07 smart editing (A06). Status review only because of the training-data question."
+    },
+    {
+      "component": "birefnet-portrait",
+      "kind": "model-weights",
+      "files": {
+        "birefnet_portrait_fp16.onnx": {
+          "role": "background matting weights (ONNX, float16)",
+          "name": "BiRefNet portrait",
+          "weightLicense": "MIT",
+          "weightAuthor": "Peng Zheng et al. (BiRefNet)",
+          "upstream": "https://huggingface.co/ZhengPeng7/BiRefNet-portrait (MIT)",
+          "exportedBy": "https://huggingface.co/onnx-community/BiRefNet-portrait-ONNX (commit dd7167f6a8b54ff7efc29a4c988938d79866464f, onnx/model_fp16.onnx)",
+          "trainingData": "Model card: P3M-10k (except TE-P3M-500-P), TR-humans (schirrmacher/humans), TE-P3M-500-P. Open item for the owner (legal/INVENTORY.md), same question as YuNet/GFPGAN: dataset terms vs. permissively licensed weights. To be re-verified from the official repository before release."
+        }
+      },
+      "name": "BiRefNet portrait",
+      "version": "portrait-fp16-dd7167f",
+      "weightLicense": "MIT",
+      "codeLicense": "MIT",
+      "policy": "review",
+      "notes": "Plan 07 smart editing (A06). Status review only because of the training-data question."
+    },
+    {
+      "component": "birefnet-general",
+      "kind": "model-weights",
+      "files": {
+        "birefnet_general_fp16.onnx": {
+          "role": "background matting weights (ONNX, float16)",
+          "name": "BiRefNet (general)",
+          "weightLicense": "MIT",
+          "weightAuthor": "Peng Zheng et al. (BiRefNet)",
+          "upstream": "https://huggingface.co/ZhengPeng7/BiRefNet (MIT)",
+          "exportedBy": "https://huggingface.co/onnx-community/BiRefNet-ONNX (commit 534d3c82d3bb8b2f0867db6dfbc3a525b8e42f67, onnx/model_fp16.onnx)",
+          "trainingData": "Model card: DIS-TR (DIS5K), validated on DIS-TEs/DIS-VD. Open item for the owner (legal/INVENTORY.md), same question as YuNet/GFPGAN: dataset terms vs. permissively licensed weights. To be re-verified from the official repository before release."
+        }
+      },
+      "name": "BiRefNet (general)",
+      "version": "general-fp16-534d3c8",
+      "weightLicense": "MIT",
+      "codeLicense": "MIT",
+      "policy": "review",
+      "notes": "Plan 07 smart editing (A06). Status review only because of the training-data question."
+    },
+    {
+      "component": "ddcolor",
+      "kind": "model-weights",
+      "files": {
+        "ddcolor.onnx": {
+          "role": "colorization graph (ONNX, weights in ddcolor.data)",
+          "name": "DDColor paper_tiny",
+          "weightLicense": "Apache-2.0",
+          "weightAuthor": "Xiaoyang Kang et al. (DDColor, DAMO Academy)",
+          "upstream": "https://github.com/piddnad/DDColor",
+          "exportedBy": "Qualcomm AI Hub qai-hub-models v0.65.0 (ddcolor-onnx-float.zip; card https://huggingface.co/qualcomm/DDColor, Apache-2.0)"
+        },
+        "ddcolor.data": {
+          "role": "colorization weights (ONNX external data of ddcolor.onnx)",
+          "name": "DDColor paper_tiny weights",
+          "weightLicense": "Apache-2.0",
+          "weightAuthor": "Xiaoyang Kang et al. (DDColor, DAMO Academy)",
+          "upstream": "https://github.com/piddnad/DDColor"
+        }
+      },
+      "name": "DDColor (paper_tiny, Qualcomm AI Hub export)",
+      "version": "qaihub-0.65.0-float",
+      "weightLicense": "Apache-2.0",
+      "codeLicense": "Apache-2.0",
+      "policy": "review",
+      "trainingData": "DDColor is reported upstream as trained on ImageNet (ImageNet terms: non-commercial research/education). Open item for the owner (legal/INVENTORY.md), same question as YuNet/GFPGAN: dataset terms vs. permissively licensed weights. To be re-verified from the official repository before release.",
+      "notes": "Plan 07 smart editing (A06). The zip is verified and only the two files are extracted (path-traversal safe), each verified again. Status review only because of the training-data question."
     }
   ]
 }

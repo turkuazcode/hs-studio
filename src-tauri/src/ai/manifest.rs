@@ -314,6 +314,25 @@ pub fn builtin() -> Vec<Component> {
                 "https://huggingface.co/onnx-community/BiRefNet-portrait-ONNX/resolve/dd7167f6a8b54ff7efc29a4c988938d79866464f/onnx/model_fp16.onnx",
                 "birefnet_portrait_fp16.onnx", "4c05930c0b6f1418d02eb1de81c46fe37638ba54f5a93adeb5c674521db10110", 489_666_272)],
         },
+        // Optional "objects / products" background model (Settings > AI models). Full SHA-256 and
+        // size from the Hugging Face API (LFS oid) at the pinned commit on 2026-10-27.
+        Component {
+            id: "birefnet-general".into(),
+            version: "general-fp16-534d3c8".into(),
+            task: "matting".into(),
+            title: "BiRefNet general (background removal, objects)".into(),
+            author: "Peng Zheng et al. (BiRefNet); ONNX export: onnx-community".into(),
+            license: "MIT".into(),
+            source: "https://huggingface.co/onnx-community/BiRefNet-ONNX/tree/534d3c82d3bb8b2f0867db6dfbc3a525b8e42f67".into(),
+            input: "RGB ImageNet-normalized [1,3,1024,1024]".into(),
+            output: "mask logits [1,1,1024,1024]".into(),
+            process_version: 1,
+            tested_backends: vec![],
+            external_data: vec![],
+            downloads: vec![file(
+                "https://huggingface.co/onnx-community/BiRefNet-ONNX/resolve/534d3c82d3bb8b2f0867db6dfbc3a525b8e42f67/onnx/model_fp16.onnx",
+                "birefnet_general_fp16.onnx", "3654c741eb80bd926ada8fed1713b506ccf8d30eb1f6487e87eb9f234f33df09", 489_666_272)],
+        },
         Component {
             id: "ddcolor".into(),
             version: "qaihub-0.65.0-float".into(),

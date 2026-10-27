@@ -370,7 +370,7 @@ fn builtin_manifest_is_valid_and_complete() {
         assert!(!c.license.is_empty() && !c.author.is_empty());
     }
     let ids: Vec<_> = all.iter().map(|c| c.id.as_str()).collect();
-    assert_eq!(ids, ["ort-web", "photo-x4", "face-restore", "lama", "birefnet-portrait", "ddcolor"]);
+    assert_eq!(ids, ["ort-web", "photo-x4", "face-restore", "lama", "birefnet-portrait", "birefnet-general", "ddcolor"]);
     // Plan 07 (A06): full hashes, the DDColor zip with its two entries + external data pair
     let dd = all.iter().find(|c| c.id == "ddcolor").unwrap();
     assert!(dd.downloads[0].is_archive());

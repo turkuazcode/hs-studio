@@ -186,7 +186,7 @@ test("ai models: settings list, download, verify/repair, remove, zip, cancel, er
       assert.equal(await app.text("#settings-tab-components"), "AI modelleri");
       await app.waitFor(`document.getElementById("ai-model-list")?.dataset.loaded === "1"`, { timeoutMs: 8000, message: "list loaded" });
       const ids = await app.eval(`[...document.querySelectorAll("#ai-model-list [data-component]")].map((r) => r.dataset.component)`);
-      assert.deepEqual(ids, ["ort-web", "photo-x4", "face-restore", "lama", "birefnet-portrait", "ddcolor", "test-model", "test-slow", "test-cut", "test-bad", "test-pack"]);
+      assert.deepEqual(ids, ["ort-web", "photo-x4", "face-restore", "lama", "birefnet-portrait", "birefnet-general", "ddcolor", "test-model", "test-slow", "test-cut", "test-bad", "test-pack"]);
       const photo = await app.text(row("photo-x4"));
       for (const s of ["4xRealWebPhoto v4 (DAT-2)", "Philip Hofmann", "CC-BY-4.0", "46.5 MB", "İndirilmedi"]) assert.ok(photo.includes(s), `${s} in ${photo}`);
       assert.equal(await rowState("test-model"), "missing");

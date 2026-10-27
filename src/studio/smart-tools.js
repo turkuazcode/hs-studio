@@ -25,6 +25,7 @@ const template = () => `
     <button class="ps-btn" data-act="smart-color" hidden ${tx("studio.smart.colorize")}</button>
   </div>
   <p class="ps-smart-hint" hidden></p>
+  <p class="ps-smart-applied" hidden></p>
   <div class="ps-smart-panel" data-panel="remove" hidden>
     <label class="ps-slider"><span ${tx("studio.smart.brush")}</span><output data-out="brush">4</output>
       <input type="range" class="filter-slider" data-brush min="1" max="15" value="4" step="1"></label>
@@ -56,13 +57,14 @@ const hexToRgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)
 
 /**
  * host: container in the editor tools; stage/canvas: the editor preview. deps: { invoke, jobs,
- * settings?, toast } ; editor: { base(), full(), identity(), onResult(path), setStatus(text) }.
+ * settings?, toast } ; editor: { base(), full(), identity(), steps(), onResult(path, op), setStatus(text) }.
  */
 export function createSmartTools(host, stage, canvas, deps, editor) {
   host.innerHTML = template();
   host.classList.add("ps-smart");
   const $ = (s) => host.querySelector(s);
   const hint = $(".ps-smart-hint");
+  const applied = $(".ps-smart-applied");
   const overlay = document.createElement("canvas");
   overlay.className = "ps-mask-canvas";
   overlay.hidden = true;
@@ -91,6 +93,11 @@ export function createSmartTools(host, stage, canvas, deps, editor) {
     hint.hidden = ok;
     hint.textContent = ok ? "" : t("studio.smart.saveEditsFirst");
     if (bitmapPixels) $('[data-act="smart-color"]').hidden = !isColorizeCandidate(bitmapPixels);
+    // which AI steps the current image went through (undo removes them again)
+    const steps = editor.steps();
+    applied.hidden = !steps.length;
+    applied.textContent = steps.length ? t("studio.smart.applied", { list: steps.map((op) => t(`studio.smart.op.${op}`)).join(", ") }) : "";
+    host.dataset.steps = steps.join(",");
     if (!ok && panel && panel !== "run") showPanel(null);
   }
 
@@ -156,18 +163,20 @@ export function createSmartTools(host, stage, canvas, deps, editor) {
   async function run(op, params) {
     const path = editor.base();
     const { w, h } = editor.full();
+    const background = deps.settings?.get?.("ai.smart.background") === "general" ? "general" : "portrait";
+    const model = op === "matting" && background === "general" ? "matting-general" : op;
     const plan = planInput(w, h, 1, { budget: memoryBudget(globalThis.navigator?.deviceMemory) });
     if (plan.downscaled && !window.confirm(t("studio.smart.tooLarge", { w, h, ow: plan.width, oh: plan.height }))) return;
     let consent;
     try {
-      consent = await downloadConsentText(SMART_MODELS[op].component);
+      consent = await downloadConsentText(SMART_MODELS[model].component);
     } catch (e) {
       editor.setStatus(String(e?.message ?? e));
       return;
     }
     if (consent && !window.confirm(consent)) return;
     const metadata = deps.settings?.get?.("ai.output.metadata") ?? "keep";
-    const request = smartEditRequest({ op, path, params, inputWidth: plan.width, inputHeight: plan.height, metadata });
+    const request = smartEditRequest({ op, path, params, inputWidth: plan.width, inputHeight: plan.height, metadata, background });
     running = { jobId: null, cancelled: false };
     showPanel("run");
     refresh();
