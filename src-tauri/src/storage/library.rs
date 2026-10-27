@@ -118,9 +118,14 @@ pub fn upsert_media(
         let found: Option<String> =
             conn.query_row("SELECT id FROM media WHERE path_norm = ?1", [&norm], |r| r.get(0)).optional()?;
         if let Some(id) = found {
+            // a file marked missing/deleted that is opened again from that path is back (L02)
+            let back = Path::new(path).is_file();
             conn.execute(
-                "UPDATE media SET path = ?2, name = COALESCE(?3, name), kind = COALESCE(?4, kind), updated_at = ?5 WHERE id = ?1",
-                params![id, path, name, kind.map(media_kind), now],
+                "UPDATE media SET path = ?2, name = COALESCE(?3, name), kind = COALESCE(?4, kind), updated_at = ?5,
+                   status = CASE WHEN ?6 AND status IN ('missing', 'deleted') THEN 'present' ELSE status END,
+                   missing_since = CASE WHEN ?6 AND status IN ('missing', 'deleted') THEN NULL ELSE missing_since END
+                 WHERE id = ?1",
+                params![id, path, name, kind.map(media_kind), now, back],
             )?;
             return Ok(id);
         }
@@ -224,6 +229,9 @@ pub fn load_doc(conn: &Connection) -> rusqlite::Result<LibraryDoc> {
 /// Media rows are kept (their UUIDs stay stable); only list membership changes.
 pub fn save_doc(conn: &Connection, doc: &LibraryDoc) -> Result<(), StorageError> {
     let now = now_ms();
+    // L02: a document written before it heard of a rename/move (old path / resume key) is
+    // mapped to the current location instead of re-creating the old one
+    let doc = &remap_moved(conn, doc)?;
 
     conn.execute("DELETE FROM recent", [])?;
     let mut seen = HashSet::new();
@@ -298,6 +306,47 @@ pub fn save_doc(conn: &Connection, doc: &LibraryDoc) -> Result<(), StorageError>
         meta_set(conn, LS_BOOKMARKS_KEY, &now.to_string())?;
     }
     Ok(())
+}
+
+/// Applies finished renames/moves (operation log, L02) to a stale document.
+fn remap_moved(conn: &Connection, doc: &LibraryDoc) -> Result<LibraryDoc, StorageError> {
+    use crate::library::ops::{map_key, map_path};
+    let mut d = doc.clone();
+    for e in &mut d.recent {
+        if let Some(p) = e.path.as_deref() {
+            if let Some(n) = map_path(conn, p)? {
+                e.id = n.clone();
+                e.name = basename(&n);
+                e.path = Some(n);
+                if let Some(k) = map_key(conn, &e.resume_key)? {
+                    e.resume_key = k;
+                }
+            }
+        }
+    }
+    for p in &mut d.favorites {
+        if let Some(n) = map_path(conn, p)? {
+            *p = n;
+        }
+    }
+    let mut resume = Vec::with_capacity(d.resume.len());
+    for (k, v) in d.resume {
+        let k = map_key(conn, &k)?.unwrap_or(k);
+        resume.retain(|(old, _): &(String, f64)| *old != k);
+        resume.push((k, v));
+    }
+    d.resume = resume;
+    let mut bookmarks: Vec<(String, Vec<Bookmark>)> = Vec::with_capacity(d.bookmarks.len());
+    for (k, list) in d.bookmarks {
+        let k = map_key(conn, &k)?.unwrap_or(k);
+        match bookmarks.iter_mut().find(|(old, _)| *old == k) {
+            Some((_, l)) if l.is_empty() => *l = list,
+            Some(_) => {}
+            None => bookmarks.push((k, list)),
+        }
+    }
+    d.bookmarks = bookmarks;
+    Ok(d)
 }
 
 // --------------------------------------------------------------------------------------

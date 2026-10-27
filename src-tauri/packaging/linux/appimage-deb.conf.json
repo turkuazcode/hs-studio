@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "active": true,
+    "targets": ["appimage", "deb"],
+    "publisher": "Halil SARITAŞ (TurkuazCode)",
+    "copyright": "Copyright 2026 Halil SARITAŞ. Apache-2.0.",
+    "category": "Video",
+    "shortDescription": "Video, photo and music player and studio",
+    "licenseFile": "../LICENSE",
+    "resources": {
+      "target/package-staging/legal/": "legal/"
+    },
+    "linux": {
+      "deb": {
+        "section": "video",
+        "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0"]
+      }
+    }
+  }
+}

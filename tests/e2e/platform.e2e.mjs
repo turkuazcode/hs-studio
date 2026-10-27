@@ -61,7 +61,7 @@ test("platform: settings window, language switch, help, menus", { timeout: 12000
       await app.click(`#app-menu [data-menu-id="settings"]`);
       assert.equal(await isActive(app, "settings-modal"), true);
       const tabs = await app.eval(`[...document.querySelectorAll("#settings-modal [role=tab]")].map((b) => b.textContent)`);
-      assert.deepEqual(tabs, ["Genel", "Oynatma", "Altyazı", "Ses", "Fotoğraf", "Görünüm", "Kısayollar", "AI modelleri", "Gelişmiş", "Hakkında / Lisanslar"]);
+      assert.deepEqual(tabs, ["Genel", "Oynatma", "Altyazı", "Ses", "Fotoğraf", "Kütüphane", "Görünüm", "Kısayollar", "AI modelleri", "Gelişmiş", "Hakkında / Lisanslar"]);
       assert.equal(await app.text("#settings-title"), "Ayarlar");
       assert.equal(await app.eval(`!!document.getElementById("setting-btn-default-apps")`), true, "default apps button (Windows)");
     });

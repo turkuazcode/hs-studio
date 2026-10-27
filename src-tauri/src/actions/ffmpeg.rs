@@ -4,9 +4,12 @@
 //! `<exe>/mpv/`, `<exe>/resources/mpv/` (plus `PATH` outside Windows).
 //!
 //! Encoders (no x264/x265 in an LGPL build):
-//! - H.264: Windows `h264_mf` (Media Foundation; verified in the build), macOS
-//!   `h264_videotoolbox`, Linux `libopenh264` (BSD-2, needs an ffmpeg built with it) or VAAPI.
-//!   Only the Windows path is implemented and tested; see `H264_ENCODER`.
+//! - Video: chosen AT RUN TIME (`encoder_choice`, P04): the platform's H.264 candidates
+//!   (`H264_CANDIDATES`: Windows `h264_mf` then AMF/QSV/NVENC/OpenH264 when the build has them,
+//!   macOS `h264_videotoolbox`, Linux `libopenh264`) must be listed by `ffmpeg -encoders` AND
+//!   pass a real short encode; otherwise ffmpeg's own `mpeg4` is the fallback. Each encoder's
+//!   pixel format and maximum frame size are applied to the job (`encoder_scale`); HDR input is
+//!   refused for re-encoding (`check_encodable`). Only the Windows path is tested.
 //! - AAC: ffmpeg's native `aac`; Opus: native `opus` (experimental flag, 48 kHz); FLAC, WAV;
 //!   MP3: `mp3_mf` (Media Foundation) on Windows. GIF: native `gif` with a generated palette.
 //!
@@ -26,7 +29,8 @@ use super::files::unique_path;
 use super::{ERR_INVALID, ERR_NO_FFMPEG, ERR_UNSUPPORTED};
 use crate::photo::ERR_CANCELLED;
 
-/// H.264 encoder of this platform (LGPL-compatible, hardware/OS provided).
+/// Preferred H.264 encoder of this platform (= first of `H264_CANDIDATES`; the one actually
+/// used is the runtime choice).
 #[cfg(windows)]
 pub const H264_ENCODER: &str = "h264_mf";
 #[cfg(target_os = "macos")]
@@ -41,6 +45,155 @@ pub const MP3_ENCODER: &str = "mp3_mf";
 pub const MP3_ENCODER: &str = "libmp3lame";
 
 const EXE: &str = if cfg!(windows) { ".exe" } else { "" };
+
+// ---------------------------------------------------------------------------
+// Video encoder selection (P04): runtime probe + fallback, with each encoder's constraints
+// ---------------------------------------------------------------------------
+
+/// A video encoder VHO may use for re-encoded exports, with the limits it imposes. Hardware /
+/// OS encoders only take 8-bit 4:2:0 in a fixed pixel format and have a maximum frame size;
+/// none of them tone-maps HDR (see `check_encodable`).
+#[derive(Serialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct VideoEncoder {
+    pub name: &'static str,
+    /// "h264" or the fallback codec ("mpeg4": MPEG-4 Part 2, ffmpeg's own LGPL encoder)
+    pub codec: &'static str,
+    /// OS/hardware encoder (Media Foundation, VideoToolbox): may use the GPU
+    pub hardware: bool,
+    pub pix_fmt: &'static str,
+    /// Largest frame in landscape orientation (portrait: swapped)
+    pub max_width: u32,
+    pub max_height: u32,
+}
+
+const fn enc(name: &'static str, codec: &'static str, hardware: bool, pix_fmt: &'static str, max_width: u32, max_height: u32) -> VideoEncoder {
+    VideoEncoder { name, codec, hardware, pix_fmt, max_width, max_height }
+}
+
+/// Last resort on every platform: always in an LGPL ffmpeg, plays in common players, not H.264.
+pub const FALLBACK_ENCODER: VideoEncoder = enc("mpeg4", "mpeg4", false, "yuv420p", 7680, 4320);
+
+/// Candidates in order of preference. `h264_d3d12va` / `h264_vulkan` exist in the Windows
+/// build but failed on the reference AMD iGPU (filter format errors) and need hwupload
+/// graphs: not candidates. VAAPI needs a device + hwupload: not a candidate yet.
+#[cfg(windows)]
+pub const H264_CANDIDATES: &[VideoEncoder] = &[
+    // Media Foundation picks the GPU MFT (AMD/Intel/NVIDIA) or Microsoft's software encoder;
+    // AMD VCN / MS software H.264: level 5.1 frame limits
+    enc("h264_mf", "h264", true, "nv12", 4096, 2160),
+    enc("h264_amf", "h264", true, "nv12", 4096, 2160),
+    enc("h264_qsv", "h264", true, "nv12", 4096, 2160),
+    enc("h264_nvenc", "h264", true, "nv12", 4096, 4096),
+    enc("libopenh264", "h264", false, "yuv420p", 3840, 2160),
+];
+#[cfg(target_os = "macos")]
+pub const H264_CANDIDATES: &[VideoEncoder] =
+    &[enc("h264_videotoolbox", "h264", true, "nv12", 4096, 2304), enc("libopenh264", "h264", false, "yuv420p", 3840, 2160)];
+#[cfg(not(any(windows, target_os = "macos")))]
+pub const H264_CANDIDATES: &[VideoEncoder] = &[enc("libopenh264", "h264", false, "yuv420p", 3840, 2160)];
+
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct EncoderAttempt {
+    pub name: &'static str,
+    /// Listed by `ffmpeg -encoders`
+    pub present: bool,
+    /// A real short encode succeeded
+    pub ok: bool,
+    pub error: Option<String>,
+}
+
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct EncoderChoice {
+    pub encoder: VideoEncoder,
+    /// No H.264 candidate worked: `FALLBACK_ENCODER` is used
+    pub fallback: bool,
+    pub attempts: Vec<EncoderAttempt>,
+}
+
+/// Pure selection: first candidate that is listed AND passes `probe`; else the fallback.
+/// Listing alone is not enough (h264_mf is listed in every Windows build, but MF can fail on
+/// a machine without a working H.264 MFT).
+pub fn select_encoder(candidates: &[VideoEncoder], present: &[String], probe: &dyn Fn(&VideoEncoder) -> Result<(), String>) -> EncoderChoice {
+    let mut attempts = vec![];
+    for c in candidates {
+        let listed = present.iter().any(|p| p == c.name);
+        let result = if listed { probe(c) } else { Err("not in this ffmpeg build".into()) };
+        let ok = result.is_ok();
+        attempts.push(EncoderAttempt { name: c.name, present: listed, ok, error: result.err() });
+        if ok {
+            return EncoderChoice { encoder: *c, fallback: false, attempts };
+        }
+    }
+    EncoderChoice { encoder: FALLBACK_ENCODER, fallback: true, attempts }
+}
+
+/// Real probe: 8 frames 640x360 through the encoder into an MP4 (muxing included), <= 20 s.
+pub fn probe_encoder(tools: &Tools, e: &VideoEncoder) -> Result<(), String> {
+    let out = std::env::temp_dir().join(format!("vho-encprobe-{}-{}.mp4", std::process::id(), e.name));
+    let mut args = s(["-f", "lavfi", "-i", "testsrc2=size=640x360:rate=25", "-frames:v", "8", "-an"]);
+    args.extend(video_codec_args(e, 800, false));
+    args.extend(s(["-loglevel", "error"]));
+    args.push(out.to_string_lossy().into_owned());
+    let deadline = std::time::Instant::now() + Duration::from_secs(20);
+    let r = run_ffmpeg(&tools.ffmpeg, &args, 0.0, &|| std::time::Instant::now() > deadline, |_| {});
+    let size = std::fs::metadata(&out).map(|m| m.len()).unwrap_or(0);
+    let _ = std::fs::remove_file(&out);
+    r.and_then(|_| if size > 0 { Ok(()) } else { Err("empty output".into()) })
+}
+
+/// Encoder used by `plan()` when no runtime choice is given (first candidate of the platform).
+pub fn default_encoder() -> VideoEncoder {
+    H264_CANDIDATES[0]
+}
+
+/// Encoder arguments for `kbps` (CBR when the size matters).
+pub fn video_codec_args(e: &VideoEncoder, kbps: u32, cbr: bool) -> Vec<String> {
+    let mut v = s(["-c:v", e.name, "-b:v"]);
+    v.push(format!("{kbps}k"));
+    v.extend(s(["-pix_fmt", e.pix_fmt]));
+    if e.name == "h264_mf" {
+        // "cbr" keeps the e-mail preset under its size limit
+        v.extend(s(["-rate_control", if cbr { "cbr" } else { "u_vbr" }]));
+    } else if cbr {
+        v.push("-maxrate".into());
+        v.push(format!("{kbps}k"));
+        v.push("-bufsize".into());
+        v.push(format!("{}k", kbps * 2));
+    }
+    v
+}
+
+/// `scale=` that makes a WxH output acceptable for the encoder (even size, inside its
+/// maximum frame in the same orientation), or None when it already is.
+pub fn encoder_scale(w: u32, h: u32, e: &VideoEncoder) -> Option<String> {
+    if w == 0 || h == 0 {
+        return Some("scale=trunc(iw/2)*2:trunc(ih/2)*2".into());
+    }
+    let (mw, mh) = if w >= h { (e.max_width, e.max_height) } else { (e.max_height, e.max_width) };
+    if w <= mw && h <= mh && w % 2 == 0 && h % 2 == 0 {
+        return None;
+    }
+    let r = (mw as f64 / w as f64).min(mh as f64 / h as f64).min(1.0);
+    let even = |v: f64| ((v / 2.0).floor() as u32 * 2).max(2);
+    Some(format!("scale={}:{}", even(w as f64 * r), even(h as f64 * r)))
+}
+
+/// HDR (PQ/HLG) cannot be re-encoded correctly: no tone mapping in this LGPL build and the
+/// encoders take 8-bit SDR only. Refuse instead of writing washed-out SDR.
+pub fn check_encodable(v: &VideoStream) -> Result<(), String> {
+    if matches!(v.color_transfer.as_str(), "smpte2084" | "arib-std-b67") {
+        return Err(format!("{ERR_UNSUPPORTED} HDR video yeniden kodlanamaz (ton eşleme yok); kayıpsız kesim kullanılabilir"));
+    }
+    Ok(())
+}
+
+/// Runtime choice for this machine (probed once, cached). None without ffmpeg.
+pub fn encoder_choice() -> Option<EncoderChoice> {
+    tools_info().video_encoder
+}
 
 // ---------------------------------------------------------------------------
 // Locating the tools
@@ -82,7 +235,7 @@ pub fn locate() -> Result<Tools, String> {
     Err(format!("{ERR_NO_FFMPEG} ffmpeg.exe bulunamadı (npm run stage:mpv)"))
 }
 
-fn command(exe: &Path) -> Command {
+pub(crate) fn command(exe: &Path) -> Command {
     let mut c = Command::new(exe);
     c.stdin(Stdio::null());
     #[cfg(windows)]
@@ -100,15 +253,19 @@ pub struct ToolsInfo {
     pub available: bool,
     pub ffmpeg: Option<String>,
     pub version: Option<String>,
+    /// Video encoder exports use (runtime choice; the fallback when no H.264 encoder works)
     pub h264_encoder: &'static str,
+    /// An H.264 encoder passed the runtime probe
     pub h264_available: bool,
+    /// Runtime selection with every attempt (None without ffmpeg)
+    pub video_encoder: Option<EncoderChoice>,
     /// Relevant encoders present in this ffmpeg build
     pub encoders: Vec<String>,
     pub error: Option<String>,
 }
 
 const INTERESTING: &[&str] = &[
-    "h264_mf", "hevc_mf", "h264_videotoolbox", "libopenh264", "h264_vaapi", "libx264", "aac", "aac_mf", "opus", "libopus",
+    "h264_mf", "hevc_mf", "h264_videotoolbox", "libopenh264", "h264_vaapi", "libx264", "h264_amf", "h264_qsv", "h264_nvenc", "mpeg4", "aac", "aac_mf", "opus", "libopus",
     "flac", "alac", "mp3_mf", "libmp3lame", "pcm_s16le", "gif", "png", "libwebp", "srt", "ass", "webvtt", "mov_text",
 ];
 
@@ -131,7 +288,7 @@ pub fn tools_info() -> ToolsInfo {
     INFO.get_or_init(|| match locate() {
         Err(e) => ToolsInfo {
             available: false, ffmpeg: None, version: None, h264_encoder: H264_ENCODER, h264_available: false,
-            encoders: vec![], error: Some(e),
+            video_encoder: None, encoders: vec![], error: Some(e),
         },
         Ok(t) => {
             let version = command(&t.ffmpeg)
@@ -140,12 +297,14 @@ pub fn tools_info() -> ToolsInfo {
                 .ok()
                 .and_then(|o| String::from_utf8_lossy(&o.stdout).lines().next().map(str::to_string));
             let enc = encoders(&t);
+            let choice = version.is_some().then(|| select_encoder(H264_CANDIDATES, &enc, &|e| probe_encoder(&t, e)));
             ToolsInfo {
                 available: version.is_some(),
                 ffmpeg: Some(t.ffmpeg.to_string_lossy().into_owned()),
                 version,
-                h264_encoder: H264_ENCODER,
-                h264_available: enc.iter().any(|e| e == H264_ENCODER),
+                h264_encoder: choice.as_ref().map_or(H264_ENCODER, |c| c.encoder.name),
+                h264_available: choice.as_ref().is_some_and(|c| !c.fallback),
+                video_encoder: choice,
                 encoders: enc,
                 error: None,
             }
@@ -168,6 +327,9 @@ pub struct VideoStream {
     /// Display rotation, counter-clockwise degrees (ffprobe convention)
     pub rotation: i32,
     pub bit_rate: u64,
+    /// ffprobe `pix_fmt` / `color_transfer` ("" when not reported)
+    pub pix_fmt: String,
+    pub color_transfer: String,
 }
 
 impl VideoStream {
@@ -265,6 +427,8 @@ pub fn parse_probe(json: &Value) -> MediaInfo {
                     fps: fps.unwrap_or(0.0),
                     rotation,
                     bit_rate: num(&s["bit_rate"]),
+                    pix_fmt: s["pix_fmt"].as_str().unwrap_or("").to_string(),
+                    color_transfer: s["color_transfer"].as_str().unwrap_or("").to_string(),
                 });
             }
             Some("audio") => info.audio.push(AudioStream {
@@ -399,6 +563,13 @@ pub struct JobRequest {
     pub output_dir: Option<String>,
     #[serde(flatten)]
     pub kind: JobKind,
+    /// Job queue (A02) only, never from the UI: folder for the partial file (the job's own
+    /// temp dir, same volume as the output)
+    #[serde(skip)]
+    pub temp_dir: Option<PathBuf>,
+    /// Job queue (A02) only: never replace an existing output, pick `name (n)` instead
+    #[serde(skip)]
+    pub no_clobber: bool,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -445,6 +616,11 @@ pub fn fit_short_side(w: u32, h: u32, short_max: u32) -> (u32, u32) {
     (even(w as f64 * r), even(h as f64 * r))
 }
 
+/// Output size of `scale_filter(info, short_max)` when the source size is known.
+fn scaled_size(info: &MediaInfo, short_max: u32) -> Option<(u32, u32)> {
+    info.video.as_ref().map(|v| v.display_size()).filter(|(w, h)| *w > 0 && *h > 0).map(|(w, h)| fit_short_side(w, h, short_max))
+}
+
 /// `scale=W:H` for a display size limit (the decoder auto-rotates before filters), or an
 /// expression when the source size is unknown.
 fn scale_filter(info: &MediaInfo, short_max: u32) -> String {
@@ -455,25 +631,6 @@ fn scale_filter(info: &MediaInfo, short_max: u32) -> String {
         }
         None => format!("scale='if(gt(iw,ih),-2,min({short_max},iw))':'if(gt(iw,ih),min({short_max},ih),-2)'"),
     }
-}
-
-/// H.264 video encoder options at `kbps` (CBR when the size matters).
-fn h264(kbps: u32, cbr: bool) -> Vec<String> {
-    let mut v = s(["-c:v", H264_ENCODER, "-b:v"]);
-    v.push(format!("{kbps}k"));
-    if H264_ENCODER == "h264_mf" {
-        // Media Foundation wants NV12; "cbr" keeps the e-mail preset under its size limit
-        v.extend(s(["-pix_fmt", "nv12", "-rate_control", if cbr { "cbr" } else { "u_vbr" }]));
-    } else {
-        v.extend(s(["-pix_fmt", "yuv420p"]));
-        if cbr {
-            v.push("-maxrate".into());
-            v.push(format!("{kbps}k"));
-            v.push("-bufsize".into());
-            v.push(format!("{}k", kbps * 2));
-        }
-    }
-    v
 }
 
 fn aac(kbps: u32) -> Vec<String> {
@@ -557,8 +714,25 @@ pub fn email_budget(duration: f64, has_video: bool) -> Result<(u32, u32, u32), S
     Ok((video.min(4000), audio, short))
 }
 
-/// Builds the ffmpeg arguments of a job (pure: unit tested for every preset).
+/// Builds the ffmpeg arguments of a job with the platform's default encoder (tests).
 pub fn plan(kind: &JobKind, info: &MediaInfo, input: &Path) -> Result<Plan, String> {
+    plan_with(kind, info, input, &default_encoder())
+}
+
+/// `-vf` for a re-encode: `base` filter (or none) plus the encoder's size constraints for an
+/// output of `out` (display orientation, after `base`).
+fn encode_vf(base: Option<&str>, out: Option<(u32, u32)>, e: &VideoEncoder) -> Vec<String> {
+    let fix = match out {
+        Some((w, h)) => encoder_scale(w, h, e),
+        None => Some("scale=trunc(iw/2)*2:trunc(ih/2)*2".into()),
+    };
+    let chain: Vec<&str> = base.into_iter().chain(fix.as_deref()).collect();
+    if chain.is_empty() { vec![] } else { vec!["-vf".into(), chain.join(",")] }
+}
+
+/// Builds the ffmpeg arguments of a job (pure: unit tested for every preset). `e` is the video
+/// encoder chosen at run time (`encoder_choice`): its pixel format, size limit and rate options.
+pub fn plan_with(kind: &JobKind, info: &MediaInfo, input: &Path, e: &VideoEncoder) -> Result<Plan, String> {
     let in_ext = crate::photo::ext_lower(input);
     let mut p = Plan::default();
     match kind {
@@ -569,11 +743,13 @@ pub fn plan(kind: &JobKind, info: &MediaInfo, input: &Path) -> Result<Plan, Stri
             p.suffix = "_kesit".into();
             if *precise {
                 if let Some(v) = &info.video {
+                    check_encodable(v)?;
                     let kbps = if v.bit_rate > 0 { (v.bit_rate / 1000) as u32 } else { 4000 };
-                    p.output_opts = [s(["-map", "0:v:0", "-map", "0:a?"]), h264(kbps.clamp(800, 20000), false), aac(192),
-                        s(["-sn", "-movflags", "+faststart"])].concat();
+                    let size = Some(v.display_size()).filter(|(w, h)| *w > 0 && *h > 0);
+                    p.output_opts = [s(["-map", "0:v:0", "-map", "0:a?"]), encode_vf(None, size, e), video_codec_args(e, kbps.clamp(800, 20000), false),
+                        aac(192), s(["-sn", "-movflags", "+faststart"])].concat();
                     p.ext = "mp4".into();
-                    p.needs.push(H264_ENCODER);
+                    p.needs.push(e.name);
                 } else {
                     // audio: re-encode to the same family for a sample-exact cut
                     let (opts, ext, need) = audio_format(if matches!(in_ext.as_str(), "flac" | "wav") { AudioFormat::Flac } else { AudioFormat::Aac }, info);
@@ -610,15 +786,15 @@ pub fn plan(kind: &JobKind, info: &MediaInfo, input: &Path) -> Result<Plan, Stri
             p.needs.push("gif");
         }
         JobKind::Clip { start, end } => {
-            need_video(info)?;
+            check_encodable(need_video(info)?)?;
             let (a, b) = check_range(*start, *end, info)?;
             p.input_opts = s(["-ss", &secs(a), "-to", &secs(b)]);
-            p.output_opts = [s(["-map", "0:v:0", "-map", "0:a:0?", "-vf", &scale_filter(info, 720)]), h264(2000, false), aac(128),
-                s(["-sn", "-movflags", "+faststart"])].concat();
+            p.output_opts = [s(["-map", "0:v:0", "-map", "0:a:0?"]), encode_vf(Some(&scale_filter(info, 720)), scaled_size(info, 720), e),
+                video_codec_args(e, 2000, false), aac(128), s(["-sn", "-movflags", "+faststart"])].concat();
             p.duration = b - a;
             p.suffix = "_klip".into();
             p.ext = "mp4".into();
-            p.needs.push(H264_ENCODER);
+            p.needs.push(e.name);
         }
         JobKind::ExtractAudio { format } => {
             if info.audio.is_empty() {
@@ -657,13 +833,16 @@ pub fn plan(kind: &JobKind, info: &MediaInfo, input: &Path) -> Result<Plan, Stri
                     p.suffix = suffix.into();
                 }
             } else {
+                if let Some(v) = &info.video {
+                    check_encodable(v)?;
+                }
                 let mut vf = scale_filter(info, short);
                 if matches!(preset, Preset::Whatsapp | Preset::Email) && info.video.as_ref().is_some_and(|v| v.fps > 30.5) {
                     vf.push_str(",fps=30");
                 }
-                p.output_opts = [s(["-map", "0:v:0", "-map", "0:a:0?", "-vf", &vf]), h264(vk, cbr), aac(ak),
-                    s(["-sn", "-map_metadata", "0", "-movflags", "+faststart"])].concat();
-                p.needs.push(H264_ENCODER);
+                p.output_opts = [s(["-map", "0:v:0", "-map", "0:a:0?"]), encode_vf(Some(&vf), scaled_size(info, short), e),
+                    video_codec_args(e, vk, cbr), aac(ak), s(["-sn", "-map_metadata", "0", "-movflags", "+faststart"])].concat();
+                p.needs.push(e.name);
             }
         }
         JobKind::Rotate { degrees, reencode } => {
@@ -690,11 +869,15 @@ pub fn plan(kind: &JobKind, info: &MediaInfo, input: &Path) -> Result<Plan, Stri
                     270 => "transpose=2",
                     _ => "hflip,vflip",
                 };
+                check_encodable(v)?;
                 let kbps = if v.bit_rate > 0 { (v.bit_rate / 1000) as u32 } else { 4000 };
-                p.output_opts = [s(["-map", "0:v:0", "-map", "0:a?", "-vf", tf]), h264(kbps.clamp(800, 20000), false), aac(192),
-                    s(["-sn", "-map_metadata", "0", "-movflags", "+faststart"])].concat();
+                let (dw, dh) = v.display_size();
+                let out = if cw == 180 { (dw, dh) } else { (dh, dw) };
+                let out = Some(out).filter(|(w, h)| *w > 0 && *h > 0);
+                p.output_opts = [s(["-map", "0:v:0", "-map", "0:a?"]), encode_vf(Some(tf), out, e), video_codec_args(e, kbps.clamp(800, 20000), false),
+                    aac(192), s(["-sn", "-map_metadata", "0", "-movflags", "+faststart"])].concat();
                 p.ext = "mp4".into();
-                p.needs.push(H264_ENCODER);
+                p.needs.push(e.name);
             }
         }
         JobKind::EmbedSubtitle { subtitle } => {
@@ -791,6 +974,8 @@ pub fn run_ffmpeg(
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| format!("ffmpeg başlatılamadı: {e}"))?;
+    #[cfg(windows)]
+    tie_to_app(&child);
     let stdout = child.stdout.take().unwrap();
     let mut stderr = child.stderr.take().unwrap();
     let reader = std::thread::spawn(move || {
@@ -838,6 +1023,39 @@ pub fn run_ffmpeg(
     Ok(err)
 }
 
+/// Windows: ffmpeg children join a job object that closes with VHO (also on a crash or a
+/// forced kill), so an export never keeps running orphaned and its partial file can be
+/// cleaned up by the job queue's recovery (A02) on the next start.
+#[cfg(windows)]
+fn tie_to_app(child: &std::process::Child) {
+    use std::os::windows::io::AsRawHandle;
+    use windows_sys::Win32::System::JobObjects::{
+        AssignProcessToJobObject, CreateJobObjectW, JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE, JOBOBJECT_EXTENDED_LIMIT_INFORMATION,
+        JobObjectExtendedLimitInformation, SetInformationJobObject,
+    };
+    static JOB: OnceLock<usize> = OnceLock::new();
+    let job = *JOB.get_or_init(|| unsafe {
+        let h = CreateJobObjectW(std::ptr::null(), std::ptr::null());
+        if h.is_null() {
+            return 0;
+        }
+        let mut info: JOBOBJECT_EXTENDED_LIMIT_INFORMATION = std::mem::zeroed();
+        info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+        SetInformationJobObject(
+            h,
+            JobObjectExtendedLimitInformation,
+            &info as *const _ as *const std::ffi::c_void,
+            std::mem::size_of_val(&info) as u32,
+        );
+        h as usize // never closed: the OS closes it when VHO exits
+    });
+    if job != 0 {
+        unsafe {
+            AssignProcessToJobObject(job as _, child.as_raw_handle() as _);
+        }
+    }
+}
+
 static PART_SEQ: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 pub fn run_job(req: &JobRequest, cancelled: &dyn Fn() -> bool, progress: impl Fn(f64) + Send + 'static) -> Result<JobResult, String> {
@@ -852,7 +1070,8 @@ pub fn run_job(req: &JobRequest, cancelled: &dyn Fn() -> bool, progress: impl Fn
         }
     }
     let info = probe_with(&tools, input)?;
-    let plan = plan(&req.kind, &info, input)?;
+    let encoder = encoder_choice().map_or_else(default_encoder, |c| c.encoder);
+    let plan = plan_with(&req.kind, &info, input, &encoder)?;
     let available = tools_info().encoders;
     if let Some(missing) = plan.needs.iter().find(|n| !available.iter().any(|e| e == *n)) {
         return Err(format!("{ERR_UNSUPPORTED} Bu ffmpeg derlemesinde {missing} kodlayıcısı yok"));
@@ -870,7 +1089,7 @@ pub fn run_job(req: &JobRequest, cancelled: &dyn Fn() -> bool, progress: impl Fn
         return Err(format!("{ERR_INVALID} Çıktı kaynak dosyanın üzerine yazamaz"));
     }
     let dir = output.parent().ok_or("Geçersiz çıktı yolu")?;
-    let partial = dir.join(format!(
+    let partial = req.temp_dir.as_deref().unwrap_or(dir).join(format!(
         ".{}.vho-part{}-{}.{}",
         output.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default(),
         std::process::id(),
@@ -894,14 +1113,21 @@ pub fn run_job(req: &JobRequest, cancelled: &dyn Fn() -> bool, progress: impl Fn
         let _ = std::fs::remove_file(&partial);
         return Err("ffmpeg boş bir dosya üretti".into());
     }
-    if output.exists() {
-        // explicit output path chosen in a save dialog (the dialog asked about overwriting)
-        let _ = std::fs::remove_file(&output);
-    }
-    std::fs::rename(&partial, &output).map_err(|e| {
-        let _ = std::fs::remove_file(&partial);
-        format!("Çıktı yazılamadı: {e}")
-    })?;
+    let output = if req.no_clobber {
+        super::files::place_no_clobber(&partial, &output).inspect_err(|_| {
+            let _ = std::fs::remove_file(&partial);
+        })?
+    } else {
+        if output.exists() {
+            // explicit output path chosen in a save dialog (the dialog asked about overwriting)
+            let _ = std::fs::remove_file(&output);
+        }
+        std::fs::rename(&partial, &output).map_err(|e| {
+            let _ = std::fs::remove_file(&partial);
+            format!("Çıktı yazılamadı: {e}")
+        })?;
+        output
+    };
     Ok(JobResult { output: output.to_string_lossy().into_owned(), size })
 }
 
@@ -969,7 +1195,7 @@ mod tests {
     fn video_info(w: u32, h: u32, dur: f64) -> MediaInfo {
         MediaInfo {
             duration: dur,
-            video: Some(VideoStream { codec: "h264".into(), width: w, height: h, fps: 30.0, rotation: 0, bit_rate: 3_000_000 }),
+            video: Some(VideoStream { codec: "h264".into(), width: w, height: h, fps: 30.0, rotation: 0, bit_rate: 3_000_000, ..Default::default() }),
             audio: vec![AudioStream { codec: "aac".into(), channels: 2, sample_rate: 48000, bit_rate: 128_000, language: String::new() }],
             ..Default::default()
         }
@@ -1243,4 +1469,120 @@ mod tests {
         assert!((l.track_peak - 0.266073).abs() < 1e-5, "{}", l.track_peak);
         assert!(parse_ebur128("nothing").is_none());
     }
+
+    #[test]
+    fn encoder_selection_probes_and_falls_back() {
+        let present = |names: &[&str]| names.iter().map(|n| n.to_string()).collect::<Vec<_>>();
+        let a = enc("enc_a", "h264", true, "nv12", 4096, 2160);
+        let b = enc("enc_b", "h264", false, "yuv420p", 3840, 2160);
+        // listed and working: first wins
+        let c = select_encoder(&[a, b], &present(&["enc_a", "enc_b"]), &|_| Ok(()));
+        assert_eq!((c.encoder.name, c.fallback, c.attempts.len()), ("enc_a", false, 1));
+        // listed but failing (MF without a working MFT) -> next candidate
+        let c = select_encoder(&[a, b], &present(&["enc_a", "enc_b"]), &|e| if e.name == "enc_a" { Err("MFT".into()) } else { Ok(()) });
+        assert_eq!(c.encoder.name, "enc_b");
+        assert_eq!(c.attempts[0], EncoderAttempt { name: "enc_a", present: true, ok: false, error: Some("MFT".into()) });
+        // not listed -> never probed
+        let c = select_encoder(&[a, b], &present(&["enc_b"]), &|e| { assert_ne!(e.name, "enc_a"); Ok(()) });
+        assert_eq!(c.encoder.name, "enc_b");
+        assert!(!c.attempts[0].present);
+        // nothing works -> mpeg4 fallback, flagged
+        let c = select_encoder(&[a, b], &present(&["enc_a"]), &|_| Err("x".into()));
+        assert_eq!((c.encoder, c.fallback), (FALLBACK_ENCODER, true));
+        assert_eq!(c.attempts.len(), 2);
+    }
+
+    #[test]
+    fn encoder_constraints_in_plans() {
+        let mf = enc("h264_mf", "h264", true, "nv12", 4096, 2160);
+        let soft = enc("libopenh264", "h264", false, "yuv420p", 3840, 2160);
+        // size limits: 8K landscape and portrait fit inside, even, aspect kept; odd sizes fixed
+        assert_eq!(encoder_scale(1920, 1080, &mf), None);
+        assert_eq!(encoder_scale(7680, 4320, &mf).as_deref(), Some("scale=3840:2160"));
+        assert_eq!(encoder_scale(4320, 7680, &mf).as_deref(), Some("scale=2160:3840"));
+        assert_eq!(encoder_scale(641, 361, &mf).as_deref(), Some("scale=640:360"));
+        assert_eq!(encoder_scale(0, 0, &mf).as_deref(), Some("scale=trunc(iw/2)*2:trunc(ih/2)*2"));
+        // pixel format + rate control per encoder
+        let a = video_codec_args(&mf, 2000, true);
+        assert!(has(&a, &["-pix_fmt", "nv12"]) && has(&a, &["-rate_control", "cbr"]));
+        let a = video_codec_args(&soft, 2000, true);
+        assert!(has(&a, &["-pix_fmt", "yuv420p"]) && has(&a, &["-maxrate", "2000k"]) && !a.iter().any(|x| x == "-rate_control"));
+        let a = video_codec_args(&FALLBACK_ENCODER, 900, false);
+        assert!(has(&a, &["-c:v", "mpeg4", "-b:v", "900k"]));
+        // 8K precise cut with MF gets a size-limiting scale; 1080p none
+        let p = plan_with(&JobKind::Cut { start: 0.0, end: 2.0, precise: true }, &video_info(7680, 4320, 9.0), mp4(), &mf).unwrap();
+        assert!(has(&p.output_opts, &["-vf", "scale=3840:2160"]), "{:?}", p.output_opts);
+        assert_eq!(p.needs, vec!["h264_mf"]);
+        let p = plan_with(&JobKind::Cut { start: 0.0, end: 2.0, precise: true }, &video_info(1920, 1080, 9.0), mp4(), &mf).unwrap();
+        assert!(!p.output_opts.iter().any(|a| a == "-vf"));
+        // rotate 90 re-encode of a 4320x7680 portrait -> transpose then fit landscape 3840x2160
+        let mut v = video_info(4320, 7680, 9.0);
+        v.video.as_mut().unwrap().rotation = 0;
+        let p = plan_with(&JobKind::Rotate { degrees: 90, reencode: true }, &v, mp4(), &mf).unwrap();
+        assert!(has(&p.output_opts, &["-vf", "transpose=1,scale=3840:2160"]), "{:?}", p.output_opts);
+        // fallback encoder recorded in needs; convert keeps its own scale first
+        let p = plan_with(&JobKind::Convert { preset: Preset::P720 }, &video_info(1920, 1080, 9.0), mp4(), &FALLBACK_ENCODER).unwrap();
+        assert!(has(&p.output_opts, &["-vf", "scale=1280:720"]) && p.needs == vec!["mpeg4"]);
+    }
+
+    #[test]
+    fn hdr_is_not_reencoded() {
+        let mut v = video_info(3840, 2160, 9.0);
+        v.video.as_mut().unwrap().color_transfer = "smpte2084".into();
+        for kind in [
+            JobKind::Cut { start: 0.0, end: 2.0, precise: true },
+            JobKind::Clip { start: 0.0, end: 2.0 },
+            JobKind::Convert { preset: Preset::P1080 },
+            JobKind::Rotate { degrees: 90, reencode: true },
+        ] {
+            assert!(plan(&kind, &v, mp4()).unwrap_err().starts_with(ERR_UNSUPPORTED), "{kind:?}");
+        }
+        // lossless cut / rotation metadata stay possible
+        assert!(plan(&JobKind::Cut { start: 0.0, end: 2.0, precise: false }, &v, mp4()).is_ok());
+        assert!(plan(&JobKind::Rotate { degrees: 90, reencode: false }, &v, mp4()).is_ok());
+        v.video.as_mut().unwrap().color_transfer = "arib-std-b67".into();
+        assert!(plan(&JobKind::Clip { start: 0.0, end: 2.0 }, &v, mp4()).is_err());
+        let json = json!({"streams": [{"codec_type": "video", "width": 1920, "height": 1080, "pix_fmt": "yuv420p10le", "color_transfer": "smpte2084"}]});
+        let i = parse_probe(&json);
+        assert_eq!((i.video.as_ref().unwrap().pix_fmt.as_str(), i.video.as_ref().unwrap().color_transfer.as_str()), ("yuv420p10le", "smpte2084"));
+    }
+
+    /// Real runtime probe with the staged LGPL ffmpeg (`npm run stage:mpv`): on Windows the
+    /// first candidate h264_mf must pass on this machine, the fallback must encode, and a
+    /// missing encoder is reported as such.
+    #[test]
+    fn encoder_runtime_probe_real_ffmpeg() {
+        let t = test_tools();
+        let listed = encoders(&t);
+        assert!(listed.iter().any(|e| e == "mpeg4"), "{listed:?}");
+        probe_encoder(&t, &FALLBACK_ENCODER).expect("mpeg4 fallback encodes");
+        let c = select_encoder(H264_CANDIDATES, &listed, &|e| probe_encoder(&t, e));
+        if cfg!(windows) {
+            assert_eq!((c.encoder.name, c.fallback), ("h264_mf", false), "{:?}", c.attempts);
+        }
+        let ghost = enc("h264_does_not_exist", "h264", false, "yuv420p", 64, 64);
+        assert!(probe_encoder(&t, &ghost).is_err());
+        let c = select_encoder(&[ghost], &listed, &|e| probe_encoder(&t, e));
+        assert!(c.fallback && !c.attempts[0].present);
+    }
+}
+
+/// ffmpeg/ffprobe for tests: `VHO_FFMPEG`, else the staged copy in `src-tauri/target/{release,debug}`.
+/// Missing ffmpeg FAILS the calling test (no silent pass).
+#[cfg(test)]
+pub(crate) fn test_tools() -> Tools {
+    let mut dirs: Vec<PathBuf> = vec![];
+    if let Some(p) = std::env::var_os("VHO_FFMPEG").filter(|v| !v.is_empty()) {
+        let p = PathBuf::from(p);
+        dirs.push(if p.is_file() { p.parent().map(Path::to_path_buf).unwrap_or_default() } else { p });
+    }
+    let manifest = Path::new(env!("CARGO_MANIFEST_DIR"));
+    dirs.push(manifest.join("target").join("release"));
+    dirs.push(manifest.join("target").join("debug"));
+    dirs.into_iter()
+        .find_map(|d| {
+            let (ffmpeg, ffprobe) = (d.join(format!("ffmpeg{EXE}")), d.join(format!("ffprobe{EXE}")));
+            (ffmpeg.is_file() && ffprobe.is_file()).then_some(Tools { ffmpeg, ffprobe })
+        })
+        .expect("ffmpeg/ffprobe not found: run `npm run stage:mpv` (copies them to src-tauri/target/release) or set VHO_FFMPEG")
 }

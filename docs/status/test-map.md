@@ -62,7 +62,9 @@ Dosya argümanı verilirse varsayılan liste yerine o dosyalar çalışır (`npm
 | %200 ses + sınırlayıcı | `capabilities` | — | `audio-limiter` | — | — | |
 | Görüntü filtreleri (WebGL, sinir ağı değil) | — | — | `video`, `photo` | — | — | |
 | Eski codec dönüştürme (WMV9) | — | `transcode` (ignored, gerçek dosya ister) | `legacy` | — | — | |
-| Yetenek matrisi (P01) | `capabilities` | `capabilities` | `engine` | — | — | macOS/Linux `verified=false` |
+| Yetenek matrisi (P01) + destek tablosu (P04) | `capabilities` (support alanı) | `capabilities` (SUPPORT kuralları, docs eşleşmesi) | `engine` | — | — | macOS/Linux `verified=false`; sistem etkili eylemler elle: [manual-os-checklist](../manual-os-checklist.md) |
+| Kodlayıcı çalışma anı seçimi + kısıtlar (P04) | — | `actions::ffmpeg::tests` (`encoder_*`, `hdr_is_not_reencoded`; gerçek ffmpeg yoklaması) | `engine`, `actions` (720p dönüştürme) | — | — | ffmpeg `target/release` içinde olmalı |
+| OCR Linux Tesseract yolu, WIC ICC (P04) | — | `ocr::tesseract::tests`, `photo::heic::wic::tests` | `actions` (Windows OCR) | — | — | Tesseract cihazda test edilmedi |
 | Oynatma listesi, sınıflandırma, URL/HLS | `playlist`, `classify`, `helpers` | — | `smoke`, `video` | — | — | |
 | Fotoğraf görüntüleyici | `studio` | `photo::decode`, `photo::exif` | `photo` | — | — | |
 | Fotoğraf stüdyosu (ızgara, düzenleyici, toplu iş, karşılaştırma) | `studio` | `photo::*` (33+) | `photo-studio` | — | `photo-studio` 5.000 dosya ilk ızgara (ölçüm, bütçe değil); `photo_thumb_bench` (ignored) | HEIC/AVIF OS codec'ine bağlı |
@@ -72,7 +74,11 @@ Dosya argümanı verilirse varsayılan liste yerine o dosyalar çalışır (`npm
 | Fotoğraf AI ×4 (DAT-2, WebGPU→WASM, parçalı çıkarım) | `onnx-patch` | — | `smoke` (worker modülü yüklenir) | **`photo-x4.ai`**: boyut/sonlu/sabit değil/kanal/alpha/referans | `photo.quality` (15 örnek), `bench:media` ai | Alpha 255'e sabit, EXIF/ICC korunmuyor (A04) |
 | Yüz iyileştirme (GFPGAN + YuNet) | — | — | — | gerçek model `photo.quality` içinde (`vho-x4-faces`) | `photo.quality` | Sonraki gerçek AI smoke adayı (170 MB model) |
 | Video “AI” restorasyonu | — | — | `video` (“hazır değil” etiketi) | — | — | V01–V06 |
+| Video restorasyonu V01: kaynak ölçümü (alan sırası/idet, CFR/VFR, SAR/rotation, renk/HDR, çoklu ses) + reçete/hash | — | `restoration::tests` (saf kurallar + ffmpeg lavfi ile üretilen fixture'lar; ffmpeg `VHO_FFMPEG` ya da `src-tauri/target/release` içinde **olmalı**, yoksa test başarısız) | `restoration` (IPC, üretilmiş fixture'lar) | — | taban çizgisi CPU hızı: `experiments/video-restoration/baseline-speed.ps1` (Q02 değil) | UI yok (V04) |
 | Kalite karşılaştırması, hız/bellek bütçeleri | `quality-metrics` (ölçütler, manifest) | — | — | `photo.quality` (photo-x4, GFPGAN) | `photo.quality`, `video.quality`, `bench:media` | Kör A/B değerlendirmesi henüz yapılmadı |
+| Güncelleme (updater, R02) | `updates` (durum metinleri TR/EN, hata kodu) | `updater::tests` (loopback kısıtı, hata sınıfları) | `updater` (atılacak anahtar, loopback manifest: geçerli/başka anahtar/bozuk/eski paket/sürüm düşürme/çevrimdışı/varsayılan kapalı) | — | — | Gerçek NSIS güncelleme kurulumu denenmedi |
+| CI workflow hijyeni (R02), sürüm kapısı (R03) | `ci-workflows`, `release-gate` | — | — | — | — | Workflow'lar uzakta hiç çalışmadı |
+| Lisans envanteri, bildirimler, SBOM (R01) | `legal-inventory` (AI manifest ↔ models.json, yerel DLL listesi ↔ derleme kanıtı, bildirimde her DLL/model, gönderilen varlıklar envanterde, SBOM hash'leri, politika reddi yok) | — | `smoke` (Lisanslar penceresi) | — | — | SBOM üretimi `npm run sbom` (cargo metadata, ağsız) birim testte çalışmaz; commit edilen SBOM denetlenir |
 | İş kuyruğu (A02), kütüphane UI (L02) | paralel dallarda ekleniyor | | | | | Testleri kendi katmanına eklenir; bu harita birleştirmede güncellenir |
 
 ## Test yalıtımı

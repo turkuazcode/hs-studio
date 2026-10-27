@@ -1,7 +1,9 @@
 // ==========================================================================
 // Batch processing dialog: rename pattern, convert, resize, rotate, strip
 // EXIF/GPS for the selection; live name preview, progress, cancel.
-// Everything runs in the backend's photo_batch (parallel, EXIF aware).
+// Everything runs in the backend's photo_batch (parallel, EXIF aware), through the persistent
+// job queue (Plan 11/A02) when it is available: an interrupted batch continues later at the
+// completed-file boundary.
 // ==========================================================================
 
 import { batchPreview } from "./logic.js";
@@ -109,8 +111,8 @@ export function batchJobFromForm(v) {
   return { ops, output };
 }
 
-/** root: modal overlay element. deps: { invoke, listen, dialogOpen, toast, onDone(summary) } */
-export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone }) {
+/** root: modal overlay element. deps: { invoke, listen, dialogOpen, toast, jobs?, onDone(summary) } */
+export function createBatch(root, { invoke, listen, dialogOpen, toast, jobs, onDone }) {
   root.innerHTML = template();
   const $ = (s) => root.querySelector(s);
   const form = $(".ps-batch-form");
@@ -121,7 +123,9 @@ export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone })
   const dirEl = $(".ps-batch-dir");
   let items = [];
   let outDir = null;
-  let running = null; // jobId
+  let running = null; // jobId (queue job id once submitted)
+  let localId = null;
+  let cancelRequested = false;
 
   const values = () => {
     const f = new FormData(form);
@@ -178,11 +182,14 @@ export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone })
     if (output.removeSource && !window.confirm(t("studio.batch.removeConfirm", { n: items.length }))) return;
     const jobId = `batch-${Date.now()}`;
     running = jobId;
+    localId = jobId;
+    cancelRequested = false;
     setRunning(true);
     progress.hidden = false;
     bar.style.width = "0%";
     statusEl.textContent = `0 / ${items.length}`;
-    const un = await listen?.("photo-batch-progress", (e) => {
+    const request = { files: items.map((i) => i.path), ops, output };
+    const un = queued() ? null : await listen?.("photo-batch-progress", (e) => {
       const p = e.payload;
       if (p.jobId !== jobId) return;
       bar.style.width = `${(100 * p.done) / p.total}%`;
@@ -190,7 +197,7 @@ export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone })
       root.dataset.done = p.done;
     });
     try {
-      const s = await invoke("photo_batch", { job: { jobId, files: items.map((i) => i.path), ops, output } });
+      const s = queued() ? await runQueued(request) : await invoke("photo_batch", { job: { jobId, ...request } });
       root.dataset.summary = JSON.stringify({ total: s.total, succeeded: s.succeeded, failed: s.failed, skipped: s.skipped, cancelled: s.cancelled, elapsedMs: s.elapsedMs });
       const cancelledN = s.results.filter((r) => r.error === "[cancelled]").length;
       statusEl.textContent = [
@@ -211,11 +218,45 @@ export function createBatch(root, { invoke, listen, dialogOpen, toast, onDone })
     }
   }
 
+  const queued = () => !!jobs && jobs.available !== false;
+
+  /** Queue path: same summary shape as photo_batch (results[] with input/output/ok/error). */
+  async function runQueued(request) {
+    const show = (job) => {
+      if (!job?.total) return;
+      const n = job.done + (job.failed || 0);
+      bar.style.width = `${(100 * n) / job.total}%`;
+      statusEl.textContent = `${n} / ${job.total}`;
+      root.dataset.done = n;
+    };
+    let final;
+    try {
+      final = await jobs.run("photo-batch", request, {
+        onSubmitted: (snap) => {
+          running = snap.id;
+          root.dataset.jobId = snap.id;
+          if (cancelRequested) jobs.cancel(snap.id).catch(() => {});
+        },
+        onUpdate: show,
+      });
+    } catch (e) {
+      if (e?.code !== "storageUnavailable") throw e;
+      return invoke("photo_batch", { job: { jobId: localId, ...request } }); // queue unavailable
+    }
+    show(final);
+    return final.result ?? { total: final.total, succeeded: 0, failed: final.total, skipped: 0, cancelled: final.state === "cancelled", elapsedMs: 0, results: [] };
+  }
+
   /** Cancels the running job; retries while the backend has not registered it yet. */
   async function cancel() {
     const id = running;
     if (!id) return;
     statusEl.textContent = t("studio.batch.cancelling");
+    if (queued()) {
+      cancelRequested = true; // reaches the job as soon as it is queued (onSubmitted)
+      if (id !== localId) await jobs.cancel(id).catch(() => {});
+      return;
+    }
     while (running === id) {
       const ok = await invoke("photo_cancel", { id }).catch(() => false);
       if (ok) return;

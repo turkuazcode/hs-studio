@@ -9,11 +9,15 @@
 // Messages out:
 //   { type: "progress", phase: "load" | "run", fraction }
 //   { type: "done", width, height, data: ArrayBuffer, stats? }
-//   (run: stats = { nonFinite, min, max } of the raw model output before clamping to 0..255,
+//   (run: alpha = the input had transparency: transparent colours were bled from visible
+//    neighbours before the model and the alpha channel is upscaled separately (A04);
+//    stats = { nonFinite, min, max } of the raw model output before clamping to 0..255,
 //    so a NaN/Inf or out-of-range output is visible to callers and the real-model smoke test)
 //   { type: "error", message }
+//   probe (A03): { type: "probe", runtime, backend, model, input, shape } -> done { ok, maxError }
 // ==========================================================================
 
+import { bleedTransparent, hasTransparency, upscaleAlpha } from "./alpha.js";
 import { restoreFaces } from "./face-restore.js";
 import { fixOutputDimNames } from "./onnx-patch.js";
 
@@ -48,12 +52,17 @@ export { fixOutputDimNames };
 async function getSession(ort, url, backend, scale) {
   const key = `${url}|${backend}`;
   if (!sessions.has(key)) {
-    let model = await (await fetch(url)).arrayBuffer();
-    if (scale !== 1) model = fixOutputDimNames(model).bytes;
-    sessions.set(key, await ort.InferenceSession.create(model, {
-      executionProviders: [backend],
-      graphOptimizationLevel: "all",
-    }));
+    try {
+      let model = await (await fetch(url)).arrayBuffer();
+      if (scale !== 1) model = fixOutputDimNames(model).bytes;
+      sessions.set(key, await ort.InferenceSession.create(model, {
+        executionProviders: [backend],
+        graphOptimizationLevel: "all",
+      }));
+    } catch (e) {
+      // the engine's error policy (ai-policy.js) tells memory from model problems by the text
+      throw new Error(`Failed to load model: ${e?.message || e}`);
+    }
   }
   return sessions.get(key);
 }
@@ -101,7 +110,11 @@ async function run(msg) {
   const session = await getSession(ort, model.url, backend, model.scale);
 
   const W = image.width, H = image.height, S = model.scale;
-  const src = new Uint8ClampedArray(image.data);
+  const original = new Uint8ClampedArray(image.data);
+  // A04: transparent pixels get their visible neighbours' colour (no dark halo), the alpha
+  // channel is scaled separately below
+  const alpha = hasTransparency(original);
+  const src = alpha ? bleedTransparent(original, W, H) : original;
   const dst = new Uint8ClampedArray(W * S * H * S * 4);
   const inputName = session.inputNames[0];
   const outputName = session.outputNames[0];
@@ -149,11 +162,55 @@ async function run(msg) {
       postMessage({ type: "progress", phase: "run", fraction: ++done / (rows * cols) });
     }
   }
-  postMessage({ type: "done", width: W * S, height: H * S, data: dst.buffer, stats }, [dst.buffer]);
+  if (alpha) upscaleAlpha(original, W, H, S, dst);
+  postMessage({ type: "done", width: W * S, height: H * S, data: dst.buffer, stats, alpha }, [dst.buffer]);
+}
+
+/**
+ * Backend probe (A03): a real tiny inference (y = x + x) on the requested backend.
+ * { type: "probe", runtime, backend, model: ArrayBuffer, input: ArrayBuffer, shape } ->
+ * done { ok, maxError }. The session is released right away.
+ */
+async function probe(msg) {
+  const ort = await loadOrt(msg.runtime);
+  await releaseExcept([]);
+  const session = await ort.InferenceSession.create(new Uint8Array(msg.model), { executionProviders: [msg.backend] });
+  try {
+    const input = new Float32Array(msg.input);
+    const res = await session.run({ x: new ort.Tensor("float32", input, msg.shape) });
+    const out = await res.y.getData();
+    let maxError = 0;
+    for (let i = 0; i < input.length; i++) maxError = Math.max(maxError, Math.abs(out[i] - 2 * input[i]));
+    postMessage({ type: "done", ok: maxError < 1e-3, maxError });
+  } finally {
+    await session.release?.();
+  }
+}
+
+/**
+ * Test-only fault injection (A03 tests; the engine passes `fault` only when the page sets
+ * globalThis.__vhoAiTestFaults): simulated out-of-memory above a tile size, a crash of this
+ * worker, a damaged model file.
+ */
+function injectFault(msg) {
+  const f = msg.fault;
+  if (!f) return;
+  if (f.oomAboveTile && msg.tile > f.oomAboveTile) throw new Error(`Failed to allocate GPU buffer: out of memory (test fault, tile ${msg.tile})`);
+  if (f.crash) setTimeout(() => { throw new Error("AI worker crashed (test fault)"); }, 0);
 }
 
 self.onmessage = (e) => {
-  const job = e.data?.type === "run" ? run : e.data?.type === "faces" ? runFaces : null;
+  if (e.data?.fault) {
+    try {
+      injectFault(e.data);
+    } catch (err) {
+      postMessage({ type: "error", message: String(err.message) });
+      return;
+    }
+    if (e.data.fault.crash) return; // the worker dies before answering
+    if (e.data.fault.badModel && e.data.model) e.data.model = { ...e.data.model, url: e.data.fault.badModel };
+  }
+  const job = e.data?.type === "run" ? run : e.data?.type === "faces" ? runFaces : e.data?.type === "probe" ? probe : null;
   if (!job) return;
   job(e.data).catch((err) => {
     // A failed session (e.g. GPU out of memory) must not be reused

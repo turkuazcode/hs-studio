@@ -54,7 +54,8 @@
       "shortcuts": "Shortcuts",
       "advanced": "Advanced",
       "about": "About / Licenses",
-      "components": "AI models"
+      "components": "AI models",
+      "library": "Library"
     },
     "headings": {
       "enhance": "Picture filters",
@@ -101,7 +102,8 @@
       "subPosition": "Subtitle position (100 = bottom)",
       "eqPreset": "Equalizer preset",
       "hwdec": "Hardware video decoding",
-      "fastProfile": "Fast picture profile (profile=fast)"
+      "fastProfile": "Fast picture profile (profile=fast)",
+      "checkUpdates": "Check for updates automatically"
     },
     "help": {
       "defaultApps": "Windows does not let apps make themselves the default; choose VHO in the window that opens.",
@@ -111,7 +113,8 @@
       "normalize": "Balances quiet and loud scenes (dynaudnorm).",
       "fastProfile": "Reduces GPU load on integrated graphics.",
       "fastProfileGpu": "Reduces GPU load on integrated graphics. This computer: {gpu}.",
-      "fastProfileGpuIntegrated": "Reduces GPU load on integrated graphics. This computer: {gpu} (integrated)."
+      "fastProfileGpuIntegrated": "Reduces GPU load on integrated graphics. This computer: {gpu} (integrated).",
+      "checkUpdates": "Once at startup. Updates are signed and installed only when you click Install; nothing about your media is sent."
     },
     "options": {
       "languageSystem": "System language",
@@ -146,7 +149,7 @@
     },
     "about": {
       "description": "Open source media studio for video, photos and music.",
-      "license": "MIT license · Developer: Halil SARITAŞ · TurkuazCode"
+      "license": "Apache-2.0 license · Developer: Halil SARITAŞ · TurkuazCode"
     }
   },
   "shortcuts": {
@@ -220,7 +223,8 @@
       "openWith": "Open with",
       "showInFolder": "Show in folder",
       "lyrics": "Lyrics",
-      "tagEditor": "Tags"
+      "tagEditor": "Tags",
+      "library": "Library"
     }
   },
   "actions": {
@@ -414,7 +418,7 @@
       "found": "{n} lines recognized · the text is selectable",
       "none": "No text found",
       "copyAll": "Copy all",
-      "noLanguage": "No text recognition language installed in Windows (Settings > Language)",
+      "noLanguage": "No text recognition language installed (Windows: Settings > Language; Linux: the tesseract-ocr-<lang> package)",
       "unsupported": "Text recognition is not available for this file / system"
     },
     "props": {
@@ -500,7 +504,8 @@
       "ocrNoLanguage": "No text recognition language found on this computer.",
       "toolsHeading": "Media tools (ffmpeg)",
       "toolsInfo": "{version} · H.264 encoder: {encoder}",
-      "none": "none"
+      "none": "none",
+      "fallbackEncoder": "{name} (no H.264, fallback encoder)"
     }
   },
   "effects": {
@@ -587,7 +592,12 @@
     "deepToast": "✨ Photo enhanced with AI",
     "deepCancelled": "Cancelled.",
     "deepFailed": "⚠️ Enhancement failed: {error}",
-    "deepSaved": "Enhanced photo saved"
+    "deepSaved": "Enhanced photo saved",
+    "deepTooLarge": "This photo is {w}×{h}. A 4× output exceeds this device's AI memory budget: the input will be reduced to {iw}×{ih} and the result will be {ow}×{oh}. Continue?",
+    "deepQueued": "Queued: starts when the previous long job finishes…",
+    "deepRunningEta": "Enhancing… {pct}% — {hw}, about {eta} s left",
+    "deepPaused": "Paused (during playback or when the app closed). It continues from the Jobs panel in the title bar.",
+    "deepSavedTo": "Copy saved: {name} (in the photo's folder; EXIF and transparency kept)"
   },
   "ui": {
     "docTitle": "VHO - Video Player",
@@ -1173,6 +1183,201 @@
       "busy": "The component is being downloaded or verified right now.",
       "archive-invalid": "The model archive is invalid or contains forbidden content.",
       "io": "A file operation failed."
+    }
+  },
+  "library": {
+    "title": "Library",
+    "entry": "Library",
+    "search": "Search the library (name, title, artist, tag)…",
+    "viewLabel": "View",
+    "more": "More options",
+    "tabs": {
+      "video": "Videos",
+      "audio": "Music",
+      "lists": "Lists"
+    },
+    "views": {
+      "all": "All",
+      "continue": "Continue watching",
+      "recentlyAdded": "Recently added",
+      "favorites": "Favorites",
+      "missing": "Not found",
+      "mostPlayed": "Most played"
+    },
+    "status": {
+      "offline": "offline",
+      "missing": "not found"
+    },
+    "resumeAt": "stopped at {time}",
+    "count": "{n} items",
+    "empty": {
+      "noFolders": "The library has no folders yet. Add a folder and VHO scans it and keeps it up to date.",
+      "noMatch": "Nothing matches the search.",
+      "none": "Nothing in this view."
+    },
+    "scan": {
+      "running": "Scanning… {n} files",
+      "tags": "Reading music tags…"
+    },
+    "toast": {
+      "nothingToPlay": "No playable file",
+      "offline": "{name}: the disk is offline",
+      "missing": "{name}: file not found",
+      "folder": {
+        "added": "Added to the library: {name}",
+        "exists": "This folder is already in the library: {name}",
+        "covered": "This folder is already inside the library folder {name}"
+      }
+    },
+    "addFolder": "Add folder…",
+    "rescan": "Scan now",
+    "cancelScan": "Stop scanning",
+    "settings": "Library settings",
+    "removeFolder": "Remove from library",
+    "removeConfirm": "Remove \"{name}\" from the library? The files stay on disk; favorites, ratings and tags are kept.",
+    "settingsIntro": "Library folders are scanned and kept up to date. Browsing a folder in the Photo Studio or opening a file does not add it to the library.",
+    "folderStatus": {
+      "online": "connected",
+      "offline": "offline (disk/network not connected)",
+      "missing": "folder not found"
+    },
+    "fields": {
+      "watch": "Watch the folders for changes",
+      "reconcile": "Re-check the folders regularly"
+    },
+    "reconcile": {
+      "off": "Only at start and on request",
+      "m15": "Every 15 minutes",
+      "m30": "Every 30 minutes",
+      "m60": "Every hour",
+      "m240": "Every 4 hours"
+    },
+    "lists": {
+      "import": "Import a list file…",
+      "saveQueue": "Save the play queue…",
+      "count": "{n} items",
+      "play": "Play",
+      "export": "Export…",
+      "delete": "Delete list",
+      "empty": "No saved lists.",
+      "fileType": "Playlist",
+      "saveTitle": "Save list",
+      "name": "List name",
+      "save": "Save",
+      "queueEmpty": "The play queue is empty",
+      "defaultName": "New list",
+      "saved": "\"{name}\" saved ({n} items)",
+      "imported": "\"{name}\" imported: {n} items, {missing} not found",
+      "skippedEntries": "{n} unsupported lines skipped (remote content is never downloaded or run)",
+      "missingItems": "{n} files not found and skipped",
+      "exported": "List saved ({n} items)",
+      "more": "List options",
+      "openFile": "Open a list file…",
+      "exportQueue": "Export (M3U/PLS)…",
+      "manage": "Saved lists…"
+    },
+    "photo": {
+      "rating": "Rating",
+      "ratingClear": "Clear rating",
+      "tags": "Tags…",
+      "tagsTitle": "Tags",
+      "tagsLabel": "Tags (comma separated)",
+      "tagsSaved": "Tags saved",
+      "ratingSaved": "{stars} given to {n} items",
+      "ratingCleared": "Rating cleared",
+      "minRating": "Minimum rating",
+      "anyRating": "All",
+      "tagsInfo": "Tags"
+    }
+  },
+  "jobs": {
+    "title": "Jobs",
+    "button": "Background jobs",
+    "clearFinished": "Clear finished",
+    "empty": "No jobs",
+    "waiting": "Waiting in the queue…",
+    "interruptedNotice": "Some jobs were interrupted when the app closed. Use the Jobs button in the title bar to continue them.",
+    "continueHint": "Finished files are not processed again",
+    "items": "{done} / {total}",
+    "kind": {
+      "export": "Export: {name}",
+      "photoOne": "Photo job: {name}",
+      "photoBatch": "Photo batch ({n} files)",
+      "other": "Job",
+      "aiPhoto": "AI enhancement: {name}"
+    },
+    "state": {
+      "queued": "Queued",
+      "running": "Running",
+      "pausing": "Pausing…",
+      "paused": "Paused",
+      "cancelling": "Cancelling…",
+      "cancelled": "Cancelled",
+      "completed": "Completed",
+      "failed": "Failed",
+      "interrupted": "Interrupted"
+    },
+    "action": {
+      "continue": "Continue",
+      "restart": "Restart",
+      "pause": "Pause",
+      "cancel": "Cancel",
+      "reveal": "Show in folder",
+      "remove": "Remove from list"
+    },
+    "error": {
+      "sourceChanged": "The source file changed; the job can only be restarted.",
+      "sourceMissing": "The source file was not found.",
+      "modelChanged": "The tool/model version changed; the job can only be restarted.",
+      "recipeChanged": "The job settings do not match this version; restart it.",
+      "diskFull": "Not enough free disk space.",
+      "itemsFailed": "{n} file(s) could not be processed.",
+      "noFfmpeg": "ffmpeg was not found.",
+      "unsupported": "This format is not supported.",
+      "invalidState": "The job cannot do that right now.",
+      "notFound": "Job not found.",
+      "storageUnavailable": "The job queue is not available.",
+      "failed": "The job failed.",
+      "memory": "Not enough memory (graphics card and processor were tried). Try a smaller photo.",
+      "modelFailed": "The model could not be loaded or run. Repair it in Settings > AI models.",
+      "runnerUnavailable": "The AI runner was not ready; continue the job to try again."
+    }
+  },
+  "aiRuntime": {
+    "hwCpu": "Processor (WebAssembly)",
+    "hwGpu": "Graphics card (WebGPU: {name})",
+    "hwGpuGeneric": "Graphics card (WebGPU)",
+    "failed": "The AI model could not be run",
+    "facesFailed": "Face restoration could not be run",
+    "backend": {
+      "webgpu": "graphics card (WebGPU)",
+      "wasm": "processor (WebAssembly)"
+    },
+    "settings": {
+      "pauseDuringPlayback": "Pause AI jobs while a video or music plays",
+      "pauseDuringPlaybackHelp": "A running AI job pauses so playback does not stutter; it continues (validated) when playback stops.",
+      "lastRun": "Last AI run: {backend}, tile {tile} px, {sec} s.",
+      "noRun": "No AI run in this session yet.",
+      "fallbacks": "Fallbacks: {list}.",
+      "metadata": "Metadata in AI results (date, camera, location)"
+    }
+  },
+  "updates": {
+    "checkNow": "Check now",
+    "install": "Install",
+    "toast": "Version {version} is available (Settings > General).",
+    "confirmInstall": "Install version {version}? The app will close while the installer runs; your settings and library are kept.",
+    "status": {
+      "checking": "Checking…",
+      "available": "Version {version} is available (you have {current}).",
+      "none": "You have the latest version ({current}).",
+      "offline": "No connection to the update server.",
+      "notConfigured": "No update server is set up yet.",
+      "signature": "The update was rejected: its signature is not valid.",
+      "download": "The update could not be downloaded.",
+      "verified": "Update downloaded and verified.",
+      "installing": "Starting the installer…",
+      "error": "The update check failed."
     }
   }
 }

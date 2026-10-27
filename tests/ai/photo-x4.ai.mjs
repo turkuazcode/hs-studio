@@ -14,7 +14,8 @@
 //
 // Checks (see docs/status/test-map.md for the tolerances and why they were chosen):
 // output size, finite raw values (worker stats), non-constant output, RGB channel order,
-// alpha handling, difference to an independent bilinear upscale and to the committed
+// alpha kept (A04: transparent block alpha 0, half-alpha strip 128, no halo at the edge),
+// difference to an independent bilinear upscale and to the committed
 // reference output (tests/ai/fixtures/photo-x4-ref.png, WASM backend).
 // VHO_AI_UPDATE_REFERENCE=1 rewrites that reference from the WASM run (review the diff!).
 import { test, after, before } from "node:test";
@@ -147,15 +148,26 @@ function checkOutput(label, out) {
     assert.ok(m[ch] > Math.max(...others) + 100,
       `${label}: ${name} stripe lost its channel (mean RGB ${m.map((v) => v.toFixed(0)).join(",")})`);
   }
-  // Alpha: the worker returns an opaque image (alpha is restored/composited by the caller;
-  // keeping it is A04's job). Transparent input pixels must still give defined RGB.
-  for (let i = 3; i < out.data.length; i += 4) {
-    if (out.data[i] !== 255) assert.fail(`${label}: alpha ${out.data[i]} at pixel ${(i - 3) / 4} (expected opaque output)`);
+  // Alpha (A04): the worker keeps transparency. The alpha channel is upscaled separately;
+  // colours under alpha 0 are bled from the visible neighbours before the model, so no dark
+  // halo reaches the visible edge.
+  const { transparent: TR, halfAlpha: HA } = FIXTURE_REGIONS;
+  const within = (r, x, y, m) => x >= (r.x0 + m) * SCALE && x < (r.x1 - m) * SCALE && y >= (r.y0 + m) * SCALE && y < (r.y1 - m) * SCALE;
+  for (let y = 0; y < out.height; y++) {
+    for (let x = 0; x < out.width; x++) {
+      const a = out.data[(y * out.width + x) * 4 + 3];
+      if (within(TR, x, y, 1)) assert.equal(a, 0, `${label}: alpha ${a} inside the transparent block at ${x},${y}`);
+      else if (within(HA, x, y, 1) && !within({ ...TR, y0: TR.y0 - 1 }, x, y, 0)) assert.ok(Math.abs(a - 128) <= 2, `${label}: alpha ${a} in the half-alpha strip at ${x},${y}`);
+      else if (!within({ x0: HA.x0 - 1, x1: 44, y0: HA.y0 - 1, y1: 28 }, x, y, 0)) assert.equal(a, 255, `${label}: alpha ${a} at opaque pixel ${x},${y}`);
+    }
   }
-  const t = regionMean(out, FIXTURE_REGIONS.transparent, SCALE, 1);
-  const inT = regionMean(fixture, FIXTURE_REGIONS.transparent, 1, 1);
-  assert.ok(t.every((v, c) => Math.abs(v - inT[c]) < 40),
-    `${label}: RGB under alpha 0 not preserved (in ${inT.map(Math.round)}, out ${t.map(Math.round)})`);
+  const halo = (r, label2) => {
+    const o = regionMean(out, r, SCALE, 0);
+    const i = regionMean(fixture, r, 1, 0);
+    assert.ok(o.every((v, c) => Math.abs(v - i[c]) < 40), `${label}: ${label2} colour changed (in ${i.map(Math.round)}, out ${o.map(Math.round)})`);
+  };
+  halo({ x0: HA.x0 + 1, x1: HA.x1 - 1, y0: HA.y0 + 1, y1: HA.y1 - 1 }, "half-transparent strip");
+  halo({ x0: TR.x0 - 3, x1: TR.x0 - 1, y0: TR.y0 + 1, y1: TR.y1 - 1 }, "edge next to the transparent block (halo)");
   // Independent baseline
   const bl = compareRgb(out, bilinearUpscale(fixture, SCALE));
   assert.ok(bl.psnr >= TOL.bilinearMinPsnr, `${label}: PSNR vs bilinear ${bl.psnr.toFixed(2)} dB < ${TOL.bilinearMinPsnr}`);
