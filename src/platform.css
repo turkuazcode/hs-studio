@@ -43,11 +43,14 @@
   --text-secondary: #334155;
   --text-muted: #5b6577;
   --text-dark: #ffffff;
+  --accent-ruby-text: #9f1239;
 }
 :root[data-theme="light"] .app-container { background: radial-gradient(circle at 50% 15%, #ffffff 0%, #e6e9f0 75%); }
 :root[data-theme="light"] .titlebar { background: rgba(250, 251, 253, 0.92); }
 :root[data-theme="light"] .app-title,
 :root[data-theme="light"] .drop-title,
+:root[data-theme="light"] .toggle-info strong,
+:root[data-theme="light"] .check-text strong,
 :root[data-theme="light"] .btn-secondary,
 :root[data-theme="light"] .modal-input,
 :root[data-theme="light"] .modal-select { color: var(--text-pure); }

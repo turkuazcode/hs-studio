@@ -45,10 +45,17 @@ export function initDialogA11y(doc = document) {
 
   const topmost = () => [...doc.querySelectorAll(".modal-overlay.active")].filter(isShown).pop() ?? null;
 
+  // Last focused control outside every dialog: a dialog that focuses its own field while it
+  // opens (before the observer runs) still gives focus back to the button that opened it
+  let lastOutside = null;
+  doc.addEventListener("focusin", (e) => {
+    if (!e.target.closest?.(".modal-overlay")) lastOutside = e.target;
+  }, true);
+
   function opened(overlay) {
     ensureDialogRole(overlay);
     const from = doc.activeElement;
-    openers.set(overlay, from && from !== doc.body && !overlay.contains(from) ? from : null);
+    openers.set(overlay, from && from !== doc.body && !overlay.contains(from) ? from : lastOutside);
     // Let the dialog's own code focus its preferred control first
     requestAnimationFrame(() => requestAnimationFrame(() => {
       if (!overlay.classList.contains("active") || overlay.contains(doc.activeElement)) return;
@@ -68,7 +75,10 @@ export function initDialogA11y(doc = document) {
     const lost = doc.activeElement === doc.body || doc.activeElement === null || overlay.contains(doc.activeElement) || !overlay.isConnected;
     // Another dialog still open: focus stays with it
     if (!lost || topmost()) return;
-    if (opener?.isConnected && isShown(opener) && !opener.disabled) opener.focus();
+    // opened from a menu item that has closed since: back to the button of that menu
+    const menu = opener?.closest?.("[role=menu]");
+    const target = menu?.id && !isShown(opener) ? doc.querySelector(`[aria-controls="${menu.id}"]`) : opener;
+    if (target?.isConnected && isShown(target) && !target.disabled) target.focus();
   }
 
   function sync() {
