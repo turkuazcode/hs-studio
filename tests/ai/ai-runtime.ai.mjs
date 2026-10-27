@@ -230,6 +230,28 @@ test("A04: a transparent photo through the queue keeps its alpha, sRGB PNG witho
   assert.deepEqual(readFileSync(copy), bytes);
 });
 
+test("A04: a black-and-white photo stays black-and-white (no colour invented)", { timeout: 900000 }, async (t) => {
+  if (!ready) return t.skip("blocked: model cache empty");
+  const src = join(DATA_DIR, "job-gray.png");
+  const gray = { ...fixture, data: Uint8Array.from(fixture.data) };
+  for (let i = 0; i < gray.data.length; i += 4) {
+    const y = Math.round(0.299 * gray.data[i] + 0.587 * gray.data[i + 1] + 0.114 * gray.data[i + 2]);
+    gray.data.set([y, y, y, 255], i);
+  }
+  writeFileSync(src, encodePng(gray));
+  const snap = await app.eval(`__TAURI__.core.invoke("jobs_submit", { job: { kind: "ai-photo-enhance", request: {
+    input: ${JSON.stringify(src)}, components: ["ort-web", "photo-x4"], model: "photo-x4", faces: false,
+    inputWidth: ${fixture.width}, inputHeight: ${fixture.height} } } })`);
+  await app.waitFor(`__TAURI__.core.invoke("jobs_get", { id: ${JSON.stringify(snap.id)} }).then((d) => ["completed", "failed", "cancelled"].includes(d.job.state))`,
+    { timeoutMs: 600000, message: "AI job finished" });
+  const d = await app.eval(`__TAURI__.core.invoke("jobs_get", { id: ${JSON.stringify(snap.id)} })`);
+  assert.equal(d.job.state, "completed", JSON.stringify(d));
+  const out = decodePng(readFileSync(d.items[0].outputPath));
+  let coloured = 0;
+  for (let i = 0; i < out.data.length; i += 4) if (out.data[i] !== out.data[i + 1] || out.data[i + 1] !== out.data[i + 2]) coloured++;
+  assert.equal(coloured, 0, "every output pixel has R = G = B");
+});
+
 /** Working set of our vho.exe + its WebView2 processes (MB). */
 function processMemoryMb() {
   const ps = `

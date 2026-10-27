@@ -18,6 +18,7 @@
 
 import { FACE_MODEL, MODELS, releaseAi, restoreFacesInImage, upscaleImage } from "./ai-engine.js";
 import { classifyAiError, errorCodeForClass } from "./ai-policy.js";
+import { keepGrayscale } from "./grayscale.js";
 
 export const AI_JOB_KINDS = Object.freeze(["ai-photo-enhance"]);
 
@@ -96,7 +97,9 @@ export function createAiJobRunner(app, { invoke, listen, convertFileSrc }) {
         faceStats = { failed: true, message: String(e?.message ?? e) };
       }
     }
-    return { imageData, info: { from: [pixels.width, pixels.height], to: [imageData.width, imageData.height], backend: up.backend, tile: up.tile, seconds: up.seconds, attempts: up.attempts, faces: faceStats } };
+    // A04 integrity: a black-and-white photo stays black-and-white
+    const grayscale = keepGrayscale(pixels.data, imageData.data);
+    return { imageData, info: { from: [pixels.width, pixels.height], to: [imageData.width, imageData.height], backend: up.backend, tile: up.tile, seconds: up.seconds, attempts: up.attempts, faces: faceStats, grayscale } };
   }
 
   async function execute({ jobId, attemptId, kind, request, items }) {
