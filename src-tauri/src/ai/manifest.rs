@@ -209,7 +209,7 @@ fn file(url: &str, name: &str, sha256: &str, bytes: u64) -> Download {
 const ORT_WEB: &str = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/";
 const HF_RWP: &str = "https://huggingface.co/Phips/4xRealWebPhoto_v4_dat2/resolve/95e9cd50553951c27d86bafbdc1bc27ca8e750d2/";
 
-/// Components shipped in the app's manifest (Plan 07 models are added by A06).
+/// Components shipped in the app's manifest (Plan 07 smart-editing models: A06).
 pub fn builtin() -> Vec<Component> {
     let webgpu_wasm = vec!["webgpu".to_string(), "wasm".to_string()];
     vec![
@@ -268,7 +268,7 @@ pub fn builtin() -> Vec<Component> {
             input: "YuNet BGR 640x640; GFPGAN RGB -1..1 [1,3,512,512]".into(),
             output: "faces + landmarks; RGB -1..1 [1,3,512,512]".into(),
             process_version: 1,
-            tested_backends: webgpu_wasm,
+            tested_backends: webgpu_wasm.clone(),
             external_data: vec![],
             downloads: vec![
                 file("https://huggingface.co/opencv/face_detection_yunet/resolve/3cc26e7f1014a5ee5d74a42acee58bafc9d0a310/face_detection_yunet_2023mar.onnx",
@@ -278,6 +278,67 @@ pub fn builtin() -> Vec<Component> {
                     "GFPGANv1.4-w16.onnx",
                     "1704d227d3a0ca73618137f55e1a124d3953a68a990ecd0e7e2e039b2823eb11", 170_289_207),
             ],
+        },
+        // ---- Plan 07 smart editing (A06). Sizes / full SHA-256 checked against the Hugging Face
+        // API (LFS oid) and the published zip on 2026-10-27; the zip entries from its directory.
+        Component {
+            id: "lama".into(),
+            version: "lama-fp32-c3c0c9e".into(),
+            task: "inpaint".into(),
+            title: "LaMa (big-lama) inpainting".into(),
+            author: "Samsung AI Center Moscow (LaMa); ONNX export: Carve".into(),
+            license: "Apache-2.0".into(),
+            source: "https://huggingface.co/Carve/LaMa-ONNX/tree/c3c0c9e468934d62e79c329e35d82dd09ff8c444".into(),
+            input: "image RGB 0..1 [1,3,512,512] + mask [1,1,512,512] (1 = fill)".into(),
+            output: "RGB 0..255 [1,3,512,512]".into(),
+            process_version: 1,
+            tested_backends: vec![],
+            external_data: vec![],
+            downloads: vec![file("https://huggingface.co/Carve/LaMa-ONNX/resolve/c3c0c9e468934d62e79c329e35d82dd09ff8c444/lama_fp32.onnx",
+                "lama_fp32.onnx", "1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6", 208_044_816)],
+        },
+        Component {
+            id: "birefnet-portrait".into(),
+            version: "portrait-fp16-dd7167f".into(),
+            task: "matting".into(),
+            title: "BiRefNet portrait (background removal)".into(),
+            author: "Peng Zheng et al. (BiRefNet); ONNX export: onnx-community".into(),
+            license: "MIT".into(),
+            source: "https://huggingface.co/onnx-community/BiRefNet-portrait-ONNX/tree/dd7167f6a8b54ff7efc29a4c988938d79866464f".into(),
+            input: "RGB ImageNet-normalized [1,3,1024,1024]".into(),
+            output: "mask logits [1,1,1024,1024]".into(),
+            process_version: 1,
+            tested_backends: vec![],
+            external_data: vec![],
+            downloads: vec![file(
+                "https://huggingface.co/onnx-community/BiRefNet-portrait-ONNX/resolve/dd7167f6a8b54ff7efc29a4c988938d79866464f/onnx/model_fp16.onnx",
+                "birefnet_portrait_fp16.onnx", "4c05930c0b6f1418d02eb1de81c46fe37638ba54f5a93adeb5c674521db10110", 489_666_272)],
+        },
+        Component {
+            id: "ddcolor".into(),
+            version: "qaihub-0.65.0-float".into(),
+            task: "colorize".into(),
+            title: "DDColor (paper_tiny) colorization".into(),
+            author: "Xiaoyang Kang et al. (DDColor); ONNX export: Qualcomm AI Hub".into(),
+            license: "Apache-2.0".into(),
+            source: "https://huggingface.co/qualcomm/DDColor (qai-hub-models v0.65.0)".into(),
+            input: "RGB 0..1 [1,3,256,256]".into(),
+            output: "Lab ab [1,2,256,256]".into(),
+            process_version: 1,
+            tested_backends: vec![],
+            external_data: vec![ExternalData { model: "ddcolor.onnx".into(), data: "ddcolor.data".into() }],
+            downloads: vec![Download {
+                url: "https://qaihub-public-assets.s3.us-west-2.amazonaws.com/qai-hub-models/models/ddcolor/releases/v0.65.0/ddcolor-onnx-float.zip".into(),
+                sha256: "512e788cab02db6796ede174af0db2302247130284a3a00eab9aafddafa48a49".into(),
+                bytes: 206_251_342,
+                name: None,
+                extract: vec![
+                    Extract { entry: "ddcolor-onnx-float/ddcolor.onnx".into(), name: "ddcolor.onnx".into(),
+                        sha256: "310d0c66a38cd8cfd7d9d93fdb5500fef79d584fe59e25a417aea5915a6b3733".into(), bytes: 2_750_675 },
+                    Extract { entry: "ddcolor-onnx-float/ddcolor.data".into(), name: "ddcolor.data".into(),
+                        sha256: "5b65cb3eab9fa4ae9ecacd539b148fa51157655732022913b1cf47346f93940c".into(), bytes: 225_312_128 },
+                ],
+            }],
         },
     ]
 }
