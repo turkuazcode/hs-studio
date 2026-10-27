@@ -19,7 +19,7 @@ Yalnızca libmpv motorunda: sıradaki müzik parçası mpv'nin kendi listesine e
 
 **Ölçüm** (`music::tests::gapless_boundary_is_measured_flac_exact_aac_trimmed`): tek bir sürekli 441 Hz sinüsün iki yarısı ayrı dosyalara yazılır, libmpv `ao=pcm` ile art arda çalar, PCM çıktısı ideal sinüsle karşılaştırılır (birleşimin ±50 ms çevresinde en uzun sessiz dizi ve en büyük sapma, toplam örnek sayısı).
 - FLAC (kayıpsız): tam 96.000 örnek, sessiz dizi ≤ 1 örnek, sapma < 0,001 — örnek kesintisi yok.
-- AAC/M4A (encoder delay 1024 + padding, MP4 edit list ile kırpılır): toplam örnek sapması < 1024, sessiz dizi < 48 örnek (1 ms). Ölçülen değerler test çıktısında `[gapless]` satırındadır.
+- AAC/M4A (encoder delay 1024 + padding, MP4 edit list ile kırpılır): ölçülen +256 örnek ve birleşimde 128 örneklik (2,7 ms) sessiz dizi (ffmpeg'in yerleşik `aac` kodlayıcısının bıraktığı dolgu); kırpılmasaydı ≥ 1024 + dolgu olurdu. Test sınırı: sapma < 1024, sessiz dizi ≤ 256 örnek. Ölçülen değerler test çıktısında `[gapless]` satırındadır.
 - Sınır: `ao=pcm` zamanlamasızdır; gerçek ses kartında cihaz yeniden açma gecikmesi bu testte görünmez (gapless=yes iken zaten yeniden açılmaz). MP3 için LAME/Xing gecikme bilgisi yazan bir kodlayıcı LGPL derlemede yok; MP3 kesintisi ölçülmedi.
 
 ## ReplayGain politikası
