@@ -55,10 +55,11 @@ cp -L "$PREFIX/bin/ffmpeg" "$PREFIX/bin/ffprobe" "$WORK/dist/"
 for f in "$WORK/dist"/*; do patchelf --set-rpath '$ORIGIN' "$f"; done
 
 # evidence (license + dependency resolution)
-"$WORK/dist/ffmpeg" -hide_banner -buildconf > "$WORK/evidence/ffmpeg-buildconf.txt"
+"$WORK/dist/ffmpeg" -hide_banner -buildconf | sed "s#$WORK#<work>#" > "$WORK/evidence/ffmpeg-buildconf.txt"
 "$WORK/dist/ffmpeg" -hide_banner -L 2>/dev/null | head -5 > "$WORK/evidence/ffmpeg-license.txt" || true
 if grep -q -- '--enable-gpl\|--enable-nonfree' "$WORK/evidence/ffmpeg-buildconf.txt"; then echo "GPL FFmpeg!"; exit 1; fi
-grep -q "LGPL" "$WORK/evidence/ffmpeg-license.txt"
+# `ffmpeg -L` spells the license out ("GNU Lesser General Public License ... version 2.1")
+grep -q "GNU Lesser General Public" "$WORK/evidence/ffmpeg-license.txt" || { echo "FFmpeg is not LGPL"; exit 1; }
 meson introspect mpv/build --buildoptions | python3 -c 'import json,sys; o={x["name"]:x["value"] for x in json.load(sys.stdin)}; print("gpl =", o["gpl"]); print("x11 =", o["x11"]); assert o["gpl"] is False' \
   | tee "$WORK/evidence/mpv-options.txt"
 LD_LIBRARY_PATH="$WORK/dist" "$PREFIX/bin/mpv" --version > "$WORK/evidence/mpv-version.txt" 2>&1 || true

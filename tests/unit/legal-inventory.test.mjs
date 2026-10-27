@@ -71,6 +71,22 @@ test("native inventory: every shipped DLL/exe has version, license, hash and a s
   }
 });
 
+test("Linux native inventory (P03): LGPL flags, same file set and hashes as the build evidence", () => {
+  const linux = json("legal/inventory/native-linux-x64.json");
+  assert.ok(!linux.sources.ffmpeg.configure.some((f) => /--enable-(gpl|version3|nonfree)/.test(f)), "no GPL/nonfree FFmpeg");
+  assert.ok(linux.sources.mpv.meson.includes("-Dgpl=false"));
+  assert.match(read("third_party/mpv/evidence/linux/mpv-options.txt"), /gpl = False/);
+  assert.doesNotMatch(read("third_party/mpv/evidence/linux/ffmpeg-buildconf.txt"), /--enable-(gpl|version3|nonfree)/);
+  assert.doesNotMatch(read("third_party/mpv/evidence/linux/mpv-vo.txt"), /^\s+(x11|xv)\s/m, "GPL-gated X11 VOs absent");
+  const evidence = Object.fromEntries(read("third_party/mpv/evidence/linux/dist-sha256.txt").trim().split(/\r?\n/).map((l) => l.split(/\s+/).reverse()));
+  assert.deepEqual(linux.files.map((f) => f.name).sort(), Object.keys(evidence).sort(), "same file set as the build evidence");
+  for (const f of linux.files) {
+    assert.equal(f.sha256, evidence[f.name], `${f.name}: sha256`);
+    assert.equal(f.license, "LGPL-2.1-or-later");
+  }
+  for (const s of Object.values(linux.sources)) assert.match(s.commit, /^[0-9a-f]{40}$/);
+});
+
 test("every native DLL and AI file is named in the notices (legal/NOTICES_HEADER.txt)", () => {
   for (const c of native.components) for (const f of c.files) assert.ok(notices.includes(f.name), `${f.name} missing from notices`);
   for (const c of manifest) for (const f of c.files) {
