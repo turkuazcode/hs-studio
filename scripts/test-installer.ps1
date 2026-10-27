@@ -20,6 +20,9 @@
 param(
   [Parameter(Mandatory)][string]$Installer,
   [string]$UpgradeInstaller,
+  # rename rehearsal: a "HS Studio PackageTest" installer (package-windows.ps1 -Variant test-renamed)
+  # installed after the old one must remove the old per-user install and keep the user data
+  [string]$RenamedInstaller,
   [string]$WorkRoot,
   [string[]]$E2EFiles = @('tests/e2e/smoke.e2e.mjs', 'tests/e2e/engine.e2e.mjs'),
   [switch]$SkipE2E,
@@ -37,9 +40,17 @@ function Check([string]$name, [bool]$ok, [string]$detail = '') {
 }
 
 $Installer = (Resolve-Path $Installer).Path
+$RenamedProduct = 'HS Studio PackageTest'
+$RenamedIdentifier = 'com.hsstudio.app.packagetest'
 foreach ($i in @($Installer, $UpgradeInstaller) | Where-Object { $_ }) {
   if ((Split-Path $i -Leaf) -notlike "$Product*") { throw "Refusing '$i': only the test identity ($Product, built with -Variant test) may be installed by this script." }
 }
+if ($RenamedInstaller) {
+  if ((Split-Path $RenamedInstaller -Leaf) -notlike "$RenamedProduct*") { throw "Refusing '$RenamedInstaller': expected a $RenamedProduct installer (-Variant test-renamed)." }
+  $RenamedInstaller = (Resolve-Path $RenamedInstaller).Path
+}
+$renamedKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$RenamedProduct"
+if (Test-Path $renamedKey) { throw "A '$RenamedProduct' install is already registered. Uninstall it first." }
 if ($UpgradeInstaller) { $UpgradeInstaller = (Resolve-Path $UpgradeInstaller).Path }
 $uninstKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$Product"
 if (Test-Path $uninstKey) { throw "A '$Product' install is already registered ($uninstKey). Uninstall it first." }
@@ -159,6 +170,27 @@ try {
     Check 'library.db still present after upgraded start' (@(Get-ChildItem $dataDir -Recurse -Filter 'library.db').Count -gt 0)
   }
 
+  # ------------------------------------------------------------ rename rehearsal
+  if ($RenamedInstaller) {
+    Write-Host "`n== renamed product installed over the old one"
+    $renamedDir = Join-Path $WorkRoot 'Yeni Ad Kurulum'
+    $code = RunInstaller $RenamedInstaller $renamedDir
+    Check 'renamed installer exit code 0' ($code -eq 0) "($code)"
+    $deadline = (Get-Date).AddSeconds(60)
+    while ((Test-Path $uninstKey) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 500 }
+    Check 'old product uninstalled by the renamed installer' (-not (Test-Path $uninstKey))
+    $oldLeft = @(if (Test-Path $installDir) { Get-ChildItem $installDir -Recurse -Force | ForEach-Object { $_.FullName } })
+    Check 'old install folder removed' ($oldLeft.Count -eq 0) ($oldLeft -join ', ')
+    Check 'renamed product registered under HKCU' (Test-Path $renamedKey)
+    $changed = @($dataHash.Keys | Where-Object { -not (Test-Path $_) -or (Get-FileHash -Algorithm SHA256 $_).Hash -ne $dataHash[$_] })
+    Check 'rename left user data untouched' ($changed.Count -eq 0) ($changed -join ', ')
+    $exe = MainExe $renamedDir
+    Check 'renamed app starts with the existing data' (LaunchOnce $exe.FullName $dataDir)
+    # from here on the renamed install is the one to remove
+    $installDir = $renamedDir
+    $uninstKey = $renamedKey
+  }
+
   # ------------------------------------------------------------ uninstall
   Write-Host "`n== uninstall"
   $un = Join-Path $installDir 'uninstall.exe'
@@ -175,19 +207,25 @@ try {
 } finally {
   # ------------------------------------------------------------ test-only leftovers
   Write-Host "`n== cleanup of test-only leftovers"
-  if (Test-Path $uninstKey) {
-    $u = (Get-ItemProperty $uninstKey).UninstallString -replace '"', ''
-    if ($u -and (Test-Path $u)) { Start-Process -FilePath $u -ArgumentList '/S' -Wait }
+  foreach ($k in @($uninstKey, "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\$Product", $renamedKey) | Select-Object -Unique) {
+    if (Test-Path $k) {
+      $u = (Get-ItemProperty $k).UninstallString -replace '"', ''
+      if ($u -and (Test-Path $u)) { Start-Process -FilePath $u -ArgumentList '/S' -Wait }
+    }
   }
   $pub = 'HKCU:\Software\Halil SARITA' + [char]0x015E + ' (TurkuazCode)'
-  if (Test-Path "$pub\$Product") {
-    Write-Host "  removing $pub\$Product (Tauri keeps it unless 'delete app data' is chosen)"
-    Remove-Item -Recurse -Force "$pub\$Product"
-    if (-not (Get-ChildItem $pub -ErrorAction SilentlyContinue) -and -not (Get-ItemProperty $pub -ErrorAction SilentlyContinue).PSObject.Properties.Where({ $_.Name -notlike 'PS*' })) { Remove-Item -Force $pub }
+  foreach ($name in @($Product, $RenamedProduct)) {
+    if (Test-Path "$pub\$name") {
+      Write-Host "  removing $pub\$name (Tauri keeps it unless 'delete app data' is chosen)"
+      Remove-Item -Recurse -Force "$pub\$name"
+    }
   }
+  if ((Test-Path $pub) -and -not (Get-ChildItem $pub -ErrorAction SilentlyContinue) -and -not (Get-ItemProperty $pub -ErrorAction SilentlyContinue).PSObject.Properties.Where({ $_.Name -notlike 'PS*' })) { Remove-Item -Force $pub }
   foreach ($base in @($env:APPDATA, $env:LOCALAPPDATA)) {
-    Get-ChildItem $base -Directory -Filter "$Identifier*" -ErrorAction SilentlyContinue | ForEach-Object {
-      Write-Host "  removing $($_.FullName)"; Remove-Item -Recurse -Force $_.FullName -ErrorAction SilentlyContinue
+    foreach ($id in @($Identifier, $RenamedIdentifier)) {
+      Get-ChildItem $base -Directory -Filter "$id*" -ErrorAction SilentlyContinue | ForEach-Object {
+        Write-Host "  removing $($_.FullName)"; Remove-Item -Recurse -Force $_.FullName -ErrorAction SilentlyContinue
+      }
     }
   }
   $after = Snapshot
