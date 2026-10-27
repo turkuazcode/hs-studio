@@ -1,0 +1,2 @@
+gpl = False
+x11 = auto
