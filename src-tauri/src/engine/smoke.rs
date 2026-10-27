@@ -100,6 +100,12 @@ fn run(app: &AppHandle) -> Value {
     let px = wait(Duration::from_secs(3), linux::probed_pixel);
     let bright = px.is_some_and(|p| p[..3].iter().any(|c| *c > 40));
     step("centre pixel is video (not black)", bright, json!(px));
+    let shown = on_main(app, linux::composited_centre_pixel).flatten();
+    step(
+        "composited window shows the video (webview transparent above)",
+        shown.is_some_and(|p| p.iter().any(|c| *c > 40)),
+        json!(shown),
+    );
 
     let _ = m.set_property("pause", &json!(true));
     std::thread::sleep(Duration::from_millis(500));

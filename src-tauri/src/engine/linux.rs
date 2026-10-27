@@ -31,6 +31,8 @@ thread_local! {
 /// Frames drawn by mpv into the GL area (diagnostics / smoke test).
 pub static FRAMES: AtomicU64 = AtomicU64::new(0);
 static WANT_VISIBLE: AtomicBool = AtomicBool::new(false);
+/// An mpv frame was drawn since the last paint: report the swap after GTK presents it.
+static DRAWN: AtomicBool = AtomicBool::new(false);
 /// Smoke test: read back the centre pixel after the next render.
 static PROBE: AtomicBool = AtomicBool::new(false);
 static PIXEL: Mutex<Option<[u8; 4]>> = Mutex::new(None);
@@ -46,6 +48,7 @@ struct Gl {
     proc_address: ProcFn,
     kind: &'static str,
     get_integerv: unsafe extern "C" fn(u32, *mut c_int),
+    bind_framebuffer: unsafe extern "C" fn(u32, u32),
     read_pixels: unsafe extern "C" fn(c_int, c_int, c_int, c_int, u32, u32, *mut c_void),
     _lib: libloading::Library,
 }
@@ -55,6 +58,7 @@ unsafe impl Sync for Gl {}
 static GL: OnceLock<Result<Gl, String>> = OnceLock::new();
 
 const GL_DRAW_FRAMEBUFFER_BINDING: u32 = 0x8CA6;
+const GL_READ_FRAMEBUFFER: u32 = 0x8CA8;
 const GL_RGBA: u32 = 0x1908;
 const GL_UNSIGNED_BYTE: u32 = 0x1401;
 
@@ -82,11 +86,13 @@ fn load_gl(wayland: bool) -> Result<Gl, String> {
                     if p.is_null() { Err(format!("{name} not found via {sym}")) } else { Ok(p) }
                 };
                 let gi = get("glGetIntegerv")?;
+                let bf = get("glBindFramebuffer")?;
                 let rp = get("glReadPixels")?;
                 return Ok(Gl {
                     proc_address: f,
                     kind,
                     get_integerv: unsafe { std::mem::transmute::<*mut c_void, unsafe extern "C" fn(u32, *mut c_int)>(gi) },
+                    bind_framebuffer: unsafe { std::mem::transmute::<*mut c_void, unsafe extern "C" fn(u32, u32)>(bf) },
                     read_pixels: unsafe {
                         std::mem::transmute::<*mut c_void, unsafe extern "C" fn(c_int, c_int, c_int, c_int, u32, u32, *mut c_void)>(rp)
                     },
@@ -175,6 +181,19 @@ pub fn attach<R: tauri::Runtime>(win: &tauri::WebviewWindow<R>, mpv: Arc<Mpv>) -
             Ok(rc) => {
                 rc.set_update_callback(on_update, std::ptr::null_mut());
                 RENDER.with(|r| *r.borrow_mut() = Some(rc));
+                // GTK swaps the window buffers itself; tell mpv when a frame it drew was presented
+                // (frame timing / display sync)
+                if let Some(clock) = a.frame_clock() {
+                    clock.connect_after_paint(|_| {
+                        if DRAWN.swap(false, Ordering::Relaxed) {
+                            RENDER.with(|r| {
+                                if let Some(rc) = r.borrow().as_ref() {
+                                    rc.report_swap();
+                                }
+                            });
+                        }
+                    });
+                }
                 set_info(json!({"gdkBackend": backend, "gl": gl_kind, "gles": uses_es, "error": null}));
             }
             Err(e) => set_info(json!({"error": format!("mpv_render_context_create: {e}"), "gdkBackend": backend, "gl": gl_kind})),
@@ -194,9 +213,14 @@ pub fn attach<R: tauri::Runtime>(win: &tauri::WebviewWindow<R>, mpv: Arc<Mpv>) -
             unsafe { (gl.get_integerv)(GL_DRAW_FRAMEBUFFER_BINDING, &mut fbo) };
             if rc.render(fbo, w, h, true).is_ok() {
                 FRAMES.fetch_add(1, Ordering::Relaxed);
+                DRAWN.store(true, Ordering::Relaxed);
                 if PROBE.swap(false, Ordering::Relaxed) {
+                    // mpv leaves its own read binding behind: read from GtkGLArea's FBO explicitly
                     let mut px = [0u8; 4];
-                    unsafe { (gl.read_pixels)(w / 2, h / 2, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, px.as_mut_ptr() as *mut c_void) };
+                    unsafe {
+                        (gl.bind_framebuffer)(GL_READ_FRAMEBUFFER, fbo as u32);
+                        (gl.read_pixels)(w / 2, h / 2, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, px.as_mut_ptr() as *mut c_void);
+                    }
                     *PIXEL.lock().unwrap() = Some(px);
                 }
             }
@@ -236,6 +260,22 @@ pub fn request_pixel_probe() {
 }
 pub fn probed_pixel() -> Option<[u8; 4]> {
     *PIXEL.lock().unwrap()
+}
+
+/// Smoke test (main thread): centre pixel of the GL area as the user sees it, read back from the
+/// window GTK composited (video + the transparent webview above it). Proves the webview does not
+/// cover the video, which the FBO read-back alone cannot show.
+pub fn composited_centre_pixel() -> Option<[u8; 3]> {
+    use gtk::gdk::prelude::WindowExtManual;
+    AREA.with(|a| {
+        let a = a.borrow();
+        let area = a.as_ref()?;
+        let top = area.toplevel()?;
+        let (x, y) = area.translate_coordinates(&top, area.allocated_width() / 2, area.allocated_height() / 2)?;
+        let pb = top.window()?.pixbuf(x, y, 1, 1)?;
+        let bytes = pb.read_pixel_bytes();
+        (bytes.len() >= 3).then(|| [bytes[0], bytes[1], bytes[2]])
+    })
 }
 
 /// Shows / hides the video under the webview (main thread).
