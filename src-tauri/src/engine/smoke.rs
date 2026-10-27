@@ -95,12 +95,25 @@ fn run(app: &AppHandle) -> Value {
     let visible = on_main(app, linux::is_visible);
     step("surface visible (frontend engine_show)", visible == Some(true), json!(visible));
 
-    linux::request_pixel_probe();
-    linux::queue_render();
-    let px = wait(Duration::from_secs(3), linux::probed_pixel);
-    // The generated testsrc2 clip is blue (0,0,254) in the centre from 1 s on
+    // The generated testsrc2 clip is blue (0,0,254) in the centre from 1 s on. Several probes while
+    // playing: a black frame in between would be visible flicker.
     let bright = |p: &Value| p.as_array().is_some_and(|a| a.iter().take(3).any(|c| c.as_u64().unwrap_or(0) > 40));
-    step("centre pixel is video (not black)", px.as_ref().is_some_and(|p| bright(&p["rgba"])), json!(px));
+    let mut probes = vec![];
+    for _ in 0..6 {
+        linux::request_pixel_probe();
+        linux::queue_render();
+        let px = wait(Duration::from_secs(3), linux::probed_pixel);
+        probes.push(json!({
+            "t": num("time-pos"),
+            "px": px,
+            "voConfigured": m.get_property("vo-configured").ok(),
+            "videoOut": m.get_property("video-out-params").ok().map(|v| json!([v["w"], v["h"], v["pixelformat"]])),
+            "drops": [m.get_property("frame-drop-count").ok(), m.get_property("decoder-frame-drop-count").ok()],
+        }));
+        std::thread::sleep(Duration::from_millis(150));
+    }
+    let lit = probes.iter().filter(|p| bright(&p["px"]["rgba"])).count();
+    step("centre pixel is video (not black)", lit == probes.len(), json!({"lit": lit, "probes": probes}));
     let shown = on_main(app, linux::composited_samples).flatten();
     step(
         "composited window shows the video (webview transparent above)",
