@@ -82,6 +82,7 @@ Dosya argümanı verilirse varsayılan liste yerine o dosyalar çalışır (`npm
 | İş kuyruğu (A02), kütüphane UI (L02) | paralel dallarda ekleniyor | | | | | Testleri kendi katmanına eklenir; bu harita birleştirmede güncellenir |
 | Erişilebilirlik (Q03): WCAG 2.1 A/AA taraması, klavye, odak, diyaloglar, azaltılmış hareket, %200 ölçek, uzun metin, UI Automation adları | `actions` (kodlu hata metinleri) | — | `a11y` (axe-core, yalnızca test örneğine CDP ile eklenir) | — | — | İnsan kontrolleri bekliyor: aşağıdaki Q03 bölümü |
 | Pano meşgulken yeniden deneme | — | `actions::clipboard::tests` (geri çekilme süresi, başka hataları denememe) | `clipboard-contention` (başka süreç panoyu tutarken bekler / tutan exe adıyla `[clipboard-busy]`) | — | — | Yalnızca Windows |
+| Güvenlik/mahremiyet (Q04): mpv köprüsü izin listesi, sıkıştırma bombası, bozuk EXIF, AppleScript tırnaklama, önbellek temizleme, uzak ana bilgisayar listesi + CSP | `privacy` | `engine::policy::tests`, `photo::decode::tests` (bomba, bozuk EXIF), `actions::system::tests`, `cache::tests` | `security` | — | — | Bağımlılık taraması ağ ister: `npm run audit:deps` (elle). İnceleme: [q04-review.md](../security/q04-review.md) |
 
 ## Erişilebilirlik (Q03)
 

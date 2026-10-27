@@ -45,6 +45,7 @@ import { createTimeline } from "./ui/timeline.js";
 import { createToasts } from "./ui/toasts.js";
 import { initPlatform } from "./ui/platform.js";
 import { registerAiModelSettings } from "./ui/ai-models.js";
+import { registerCacheSettings } from "./ui/cache-settings.js";
 import { initWindowControls } from "./ui/window-controls.js";
 import { initDialogA11y } from "./ui/dialog-a11y.js";
 import { createJobsPanel } from "./ui/jobs-panel.js";
@@ -173,6 +174,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       // engine options after the base fields (tab order), once the stored values are loaded
       registerEngineSettings(app);
       announceStorageStatus(app);
+      registerCacheSettings(app);
       registerAiModelSettings(app);
       app.mediaActions.registerSettings().catch((e) => console.error("[actions] settings", e));
       app.jobsPanel?.init();
