@@ -1,0 +1,15 @@
+HS Studio (formerly VHO, "Video H Oynatıcısı")
+Copyright 2026 Halil SARITAŞ (hsrts)
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+Project home: <project URL to be set before the first public release>
+
+This product includes third-party software and assets under their own licenses; see
+THIRD_PARTY_NOTICES.txt (shown in the app under Settings > About / Licenses) and the
+legal/ folder of the installation.
+
+Section 4(d) of the Apache License 2.0 requires redistributions of HS Studio or of works
+based on it to include the attribution notices of this NOTICE file. Please also keep them
+visible to your users, for example in an About, credits or licenses screen.
+The names "HS Studio" and "VHO" and the logo are not licensed under the Apache License;
+see TRADEMARKS.md.
