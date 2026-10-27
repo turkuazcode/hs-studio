@@ -6,10 +6,12 @@
 ; uninstaller (silent: user data is kept, its file associations and shortcuts are removed), so the
 ; renamed app does not end up installed twice. The app data itself is copied to the new
 ; identifier by the app on first start (src-tauri/src/identity.rs).
+; One trace line goes to %TEMP%\legacy-install-hook.log (support / the rename rehearsal).
 !macro NSIS_HOOK_PREINSTALL
   !if "${PRODUCTNAME}" != "@LEGACY@"
     Push $R5
     Push $R6
+    Push $R7
     ReadRegStr $R5 HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\@LEGACY@" "InstallLocation"
     ${If} $R5 != ""
       StrCpy $R6 $R5 1
@@ -20,10 +22,22 @@
       ${If} ${FileExists} "$R5\uninstall.exe"
         DetailPrint "Removing the previous @LEGACY@ installation (user data is kept): $R5"
         ExecWait '"$R5\uninstall.exe" /S _?=$R5' $R6
-        Delete "$R5\uninstall.exe"
-        RMDir "$R5"
+        FileOpen $R7 "$TEMP\legacy-install-hook.log" a
+        FileSeek $R7 0 END
+        FileWrite $R7 "@LEGACY@ at $R5: uninstaller exit code $R6$\r$\n"
+        FileClose $R7
+        ${If} $R6 == 0
+          Delete "$R5\uninstall.exe"
+          RMDir "$R5"
+        ${EndIf}
+      ${Else}
+        FileOpen $R7 "$TEMP\legacy-install-hook.log" a
+        FileSeek $R7 0 END
+        FileWrite $R7 "@LEGACY@ registered at $R5 but no uninstall.exe there$\r$\n"
+        FileClose $R7
       ${EndIf}
     ${EndIf}
+    Pop $R7
     Pop $R6
     Pop $R5
   !endif

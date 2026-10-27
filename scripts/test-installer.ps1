@@ -178,6 +178,9 @@ try {
     $renamedDir = Join-Path $WorkRoot 'Yeni Ad Kurulum'
     $code = RunInstaller $RenamedInstaller $renamedDir
     Check 'renamed installer exit code 0' ($code -eq 0) "($code)"
+    $hookLog = Join-Path ([IO.Path]::GetTempPath()) 'legacy-install-hook.log'
+    if (Test-Path $hookLog) { Write-Host "  hook: $((Get-Content $hookLog -Raw).Trim())"; Remove-Item $hookLog -Force }
+    else { Write-Host '  hook: no trace (the old product was not found by the installer hook)' }
     $deadline = (Get-Date).AddSeconds(60)
     while ((Test-Path $uninstKey) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 500 }
     Check 'old product uninstalled by the renamed installer' (-not (Test-Path $uninstKey))
