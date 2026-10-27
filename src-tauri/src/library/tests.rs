@@ -614,3 +614,54 @@ fn upsert_of_a_returned_file_marks_it_present() {
     s.write(|tx| upsert_media(tx, Some(&f.to_string_lossy()), None, None, None)).unwrap();
     assert_eq!(status_of_id(&s, &id).0, "present");
 }
+
+/// Minimal 16-bit mono WAV (0.1 s of silence) with a RIFF INFO tag written by lofty.
+fn tagged_wav(p: &Path, title: &str, album: &str) {
+    let samples = 4410u32;
+    let mut b = Vec::new();
+    b.extend_from_slice(b"RIFF");
+    b.extend_from_slice(&(36 + samples * 2).to_le_bytes());
+    b.extend_from_slice(b"WAVEfmt ");
+    b.extend_from_slice(&16u32.to_le_bytes());
+    b.extend_from_slice(&1u16.to_le_bytes());
+    b.extend_from_slice(&1u16.to_le_bytes());
+    b.extend_from_slice(&44100u32.to_le_bytes());
+    b.extend_from_slice(&88200u32.to_le_bytes());
+    b.extend_from_slice(&2u16.to_le_bytes());
+    b.extend_from_slice(&16u16.to_le_bytes());
+    b.extend_from_slice(b"data");
+    b.extend_from_slice(&(samples * 2).to_le_bytes());
+    b.resize(b.len() + samples as usize * 2, 0);
+    write(p, &b);
+    use lofty::config::WriteOptions;
+    use lofty::prelude::*;
+    let mut tag = lofty::tag::Tag::new(lofty::tag::TagType::RiffInfo);
+    tag.set_title(title.into());
+    tag.set_album(album.into());
+    tag.save_to_path(p, WriteOptions::default()).unwrap();
+}
+
+/// Files opened / played before their folder was added (a media row without tags) get their
+/// tags read by the first library scan (L03: music views showed them under an empty album).
+#[test]
+fn scan_reads_tags_of_files_known_from_playback() {
+    let t = tmp("known-tags");
+    let root = t.0.join("Müzik");
+    let played = root.join("01 çalındı.wav");
+    let fresh = root.join("02 yeni.wav");
+    tagged_wav(&played, "Şarkı 1", "Sakla Samanı");
+    tagged_wav(&fresh, "Şarkı 2", "Sakla Samanı");
+    let s = open_db(&t);
+    s.write(|tx| upsert_media(tx, Some(&played.to_string_lossy()), None, Some("audio"), None)).unwrap();
+    add(&s, &root);
+    scan_all(&s);
+    let albums: Vec<(String, i64)> = s
+        .read(|c| query::music_groups(c, "album", None))
+        .unwrap()
+        .into_iter()
+        .map(|g| (g.name, g.count as i64))
+        .collect();
+    assert_eq!(albums, vec![("Sakla Samanı".to_string(), 2)]);
+    // a second scan does not re-read unchanged files
+    assert_eq!(scan_all(&s).tags_read, 0);
+}

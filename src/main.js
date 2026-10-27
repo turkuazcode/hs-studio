@@ -155,6 +155,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     get capabilities() { return app.capabilities.all(); },
     /** Same path as the native file drop / open dialog (tests cannot synthesize an OS drop). */
     openPaths: (paths) => app.loader.openPaths(paths),
+    /** Same as the HUD controls (seek bar / play button) without pixel clicks. */
+    seek: (t) => app.engine.seek(t),
+    pause: () => app.engine.pause(),
   };
   app.studio = createPhotoStudio(app);
   // File / photo / video / music actions (Plan 06): toolbar, "⋯" + right-click menus, dialogs

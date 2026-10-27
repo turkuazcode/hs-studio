@@ -73,23 +73,19 @@ pub fn redact(text: &str) -> String {
 }
 
 /// Per-file libmpv options for a network URL: reconnect after a dropped connection (bounded),
-/// segment retry for HLS, network timeout. Local files get none.
+/// network timeout. Local files get none. (An HLS segment that fails is skipped by FFmpeg;
+/// `seg_max_retry` through `demuxer-lavf-o` made libmpv re-open every segment and stall.)
 pub fn load_options(url: &str) -> Vec<(&'static str, String)> {
     if !is_stream_url(url) {
         return Vec::new();
     }
-    let mut o = vec![
+    vec![
         ("network-timeout", "20".to_string()),
         (
             "stream-lavf-o",
             "reconnect=1,reconnect_streamed=1,reconnect_on_network_error=1,reconnect_delay_max=8,reconnect_max_retries=6".to_string(),
         ),
-    ];
-    let path = url.split(['?', '#']).next().unwrap_or("").to_ascii_lowercase();
-    if path.ends_with(".m3u8") {
-        o.push(("demuxer-lavf-o", "seg_max_retry=4".to_string()));
-    }
-    o
+    ]
 }
 
 #[cfg(test)]
@@ -117,7 +113,6 @@ mod tests {
         assert!(load_options("C:\\film.mkv").is_empty());
         let o = load_options("http://h/live.m3u8?x=1");
         assert!(o.iter().any(|(k, v)| *k == "stream-lavf-o" && v.contains("reconnect=1")));
-        assert!(o.iter().any(|(k, _)| *k == "demuxer-lavf-o"));
-        assert!(!load_options("http://h/radio").iter().any(|(k, _)| *k == "demuxer-lavf-o"));
+        assert!(!o.iter().any(|(k, _)| *k == "demuxer-lavf-o"));
     }
 }

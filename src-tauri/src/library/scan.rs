@@ -370,6 +370,10 @@ fn set_folder_status(tx: &Transaction, folder_id: &str, status: &str, now: i64) 
     Ok(())
 }
 
+fn has_audio_tags(tx: &Transaction, media_id: &str) -> rusqlite::Result<bool> {
+    tx.query_row("SELECT EXISTS(SELECT 1 FROM audio_tags WHERE media_id = ?1)", [media_id], |r| r.get(0))
+}
+
 fn apply(tx: &Transaction, change: Change, now: i64, audio: &mut Vec<String>, moves: &mut Vec<ops::Moved>) -> Result<(), StorageError> {
     match change {
         Change::Insert { found, ident, folder_id } => {
@@ -406,7 +410,8 @@ fn apply(tx: &Transaction, change: Change, now: i64, audio: &mut Vec<String>, mo
                     content_changed
                 ],
             )?;
-            if found.kind == "audio" && content_changed {
+            // also files known before they were in the library (opened / played earlier): no tags read yet
+            if found.kind == "audio" && (content_changed || !has_audio_tags(tx, &id)?) {
                 audio.push(id);
             }
         }
@@ -425,7 +430,7 @@ fn apply(tx: &Transaction, change: Change, now: i64, audio: &mut Vec<String>, mo
             )?;
             let moved = ops::record_move(tx, &known.id, &known.path, &found.path, now)?;
             moves.push(moved);
-            if found.kind == "audio" && known.mtime_ns != found.mtime_ns {
+            if found.kind == "audio" && (known.mtime_ns != found.mtime_ns || !has_audio_tags(tx, &known.id)?) {
                 audio.push(known.id);
             }
         }
