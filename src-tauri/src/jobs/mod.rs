@@ -516,6 +516,12 @@ pub async fn jobs_remove(app: AppHandle, id: String) -> Result<bool, JobError> {
     blocking(app, move |s| s.remove(&id)).await
 }
 
+/// A04: copy of a completed item's output next to its source (no overwrite); returns the path.
+#[tauri::command]
+pub async fn jobs_output_copy(app: AppHandle, id: String, idx: i64, dir: Option<String>) -> Result<String, JobError> {
+    blocking(app, move |s| s.copy_output(&id, idx, dir.map(PathBuf::from))).await
+}
+
 #[tauri::command]
 pub async fn jobs_clear_finished(app: AppHandle) -> Result<usize, JobError> {
     blocking(app, |s| s.clear_finished()).await
