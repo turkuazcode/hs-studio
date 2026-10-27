@@ -62,7 +62,9 @@ Dosya argümanı verilirse varsayılan liste yerine o dosyalar çalışır (`npm
 | %200 ses + sınırlayıcı | `capabilities` | — | `audio-limiter` | — | — | |
 | Görüntü filtreleri (WebGL, sinir ağı değil) | — | — | `video`, `photo` | — | — | |
 | Eski codec dönüştürme (WMV9) | — | `transcode` (ignored, gerçek dosya ister) | `legacy` | — | — | |
-| Yetenek matrisi (P01) | `capabilities` | `capabilities` | `engine` | — | — | macOS/Linux `verified=false` |
+| Yetenek matrisi (P01) + destek tablosu (P04) | `capabilities` (support alanı) | `capabilities` (SUPPORT kuralları, docs eşleşmesi) | `engine` | — | — | macOS/Linux `verified=false`; sistem etkili eylemler elle: [manual-os-checklist](../manual-os-checklist.md) |
+| Kodlayıcı çalışma anı seçimi + kısıtlar (P04) | — | `actions::ffmpeg::tests` (`encoder_*`, `hdr_is_not_reencoded`; gerçek ffmpeg yoklaması) | `engine`, `actions` (720p dönüştürme) | — | — | ffmpeg `target/release` içinde olmalı |
+| OCR Linux Tesseract yolu, WIC ICC (P04) | — | `ocr::tesseract::tests`, `photo::heic::wic::tests` | `actions` (Windows OCR) | — | — | Tesseract cihazda test edilmedi |
 | Oynatma listesi, sınıflandırma, URL/HLS | `playlist`, `classify`, `helpers` | — | `smoke`, `video` | — | — | |
 | Fotoğraf görüntüleyici | `studio` | `photo::decode`, `photo::exif` | `photo` | — | — | |
 | Fotoğraf stüdyosu (ızgara, düzenleyici, toplu iş, karşılaştırma) | `studio` | `photo::*` (33+) | `photo-studio` | — | `photo-studio` 5.000 dosya ilk ızgara (ölçüm, bütçe değil); `photo_thumb_bench` (ignored) | HEIC/AVIF OS codec'ine bağlı |
