@@ -93,9 +93,11 @@ export function initShortcuts(app) {
 
   window.addEventListener("keydown", (e) => {
     const t = e.target;
-    if (isTextField(t)) return;
+    // typing keeps its keys, but Escape still closes the dialog / menu around the field
+    if (isTextField(t) && e.code !== "Escape") return;
 
     if (e.code === "Escape") {
+      if (e.defaultPrevented) return; // a dialog / field already handled this Escape
       if (escapeHandlers.some((h) => h())) { e.preventDefault(); return; }
       app.fullscreen.exit();
       return;

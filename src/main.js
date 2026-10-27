@@ -137,8 +137,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   app.view = app.playbackMenus;
   app.sleep = createSleepTimer(app);
   createModals(app);
-  initDialogA11y(); // every .modal-overlay: dialog role, focus in / trapped / restored (Q03)
+  const dialogs = initDialogA11y(); // every .modal-overlay: dialog role, focus in / trapped / restored (Q03)
   app.shortcuts = initShortcuts(app);
+  app.shortcuts.onEscape(dialogs.closeTopmost); // registered first = asked last
   initWindowControls(dom);
   app.video.syncEngineUi();
   // Diagnostics / E2E: which engine is active (read-only view)

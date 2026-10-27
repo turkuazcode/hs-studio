@@ -9,6 +9,8 @@
 //   - focus moves into the dialog when it opens (unless the dialog already focused something)
 //   - Tab / Shift+Tab stay inside the topmost open dialog
 //   - when it closes, focus returns to the control that opened it
+//   - Escape closes it through its own Cancel / Close button (`closeTopmost`, the lowest
+//     priority Escape handler: dialogs with their own Escape logic run first)
 // ==========================================================================
 
 const FOCUSABLE = [
@@ -93,5 +95,14 @@ export function initDialogA11y(doc = document) {
     }
   }, true);
 
-  return { sync, topmost };
+  /** Clicks the topmost dialog's Cancel / Close button; false when there is none. */
+  function closeTopmost() {
+    const dlg = topmost();
+    const btn = dlg?.querySelector("[data-dialog-close], [id^='btn-cancel'], [id^='btn-close']");
+    if (!btn || !isShown(btn) || btn.disabled) return false;
+    btn.click();
+    return true;
+  }
+
+  return { sync, topmost, closeTopmost };
 }
