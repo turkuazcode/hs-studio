@@ -199,15 +199,18 @@ export function createSmartTools(host, stage, canvas, deps, editor) {
           }
         },
       });
-      const output = final.result?.results?.[0]?.output;
-      if (final.state === "completed" && output) {
+      // the queue's own record holds the output (AI jobs have no batch-style result list)
+      const item = (await deps.invoke("jobs_get", { id: final.id }).catch(() => null))?.items?.[0];
+      if (editor.base() !== path) {
+        // another photo (or another base) is open now: the result stays in the jobs panel
+      } else if (final.state === "completed" && item?.outputPath) {
         strokes = [];
-        editor.onResult(output, op);
+        editor.onResult(item.outputPath, op);
         editor.setStatus(t("studio.smart.done"));
       } else if (final.state === "cancelled" || final.state === "paused") {
         editor.setStatus(t("studio.smart.cancelled"));
       } else {
-        const code = final.result?.results?.[0]?.errorCode ?? final.errorCode ?? "failed";
+        const code = item?.errorCode ?? final.errorCode ?? "failed";
         const key = `jobs.error.${code}`;
         editor.setStatus(t("studio.smart.failed", { error: t(key) !== key ? t(key) : final.errorDetail || t("jobs.error.failed") }));
       }
