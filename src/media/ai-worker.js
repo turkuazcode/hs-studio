@@ -9,12 +9,15 @@
 // Messages out:
 //   { type: "progress", phase: "load" | "run", fraction }
 //   { type: "done", width, height, data: ArrayBuffer, stats? }
-//   (run: stats = { nonFinite, min, max } of the raw model output before clamping to 0..255,
+//   (run: alpha = the input had transparency: transparent colours were bled from visible
+//    neighbours before the model and the alpha channel is upscaled separately (A04);
+//    stats = { nonFinite, min, max } of the raw model output before clamping to 0..255,
 //    so a NaN/Inf or out-of-range output is visible to callers and the real-model smoke test)
 //   { type: "error", message }
 //   probe (A03): { type: "probe", runtime, backend, model, input, shape } -> done { ok, maxError }
 // ==========================================================================
 
+import { bleedTransparent, hasTransparency, upscaleAlpha } from "./alpha.js";
 import { restoreFaces } from "./face-restore.js";
 import { fixOutputDimNames } from "./onnx-patch.js";
 
@@ -107,7 +110,11 @@ async function run(msg) {
   const session = await getSession(ort, model.url, backend, model.scale);
 
   const W = image.width, H = image.height, S = model.scale;
-  const src = new Uint8ClampedArray(image.data);
+  const original = new Uint8ClampedArray(image.data);
+  // A04: transparent pixels get their visible neighbours' colour (no dark halo), the alpha
+  // channel is scaled separately below
+  const alpha = hasTransparency(original);
+  const src = alpha ? bleedTransparent(original, W, H) : original;
   const dst = new Uint8ClampedArray(W * S * H * S * 4);
   const inputName = session.inputNames[0];
   const outputName = session.outputNames[0];
@@ -155,7 +162,8 @@ async function run(msg) {
       postMessage({ type: "progress", phase: "run", fraction: ++done / (rows * cols) });
     }
   }
-  postMessage({ type: "done", width: W * S, height: H * S, data: dst.buffer, stats }, [dst.buffer]);
+  if (alpha) upscaleAlpha(original, W, H, S, dst);
+  postMessage({ type: "done", width: W * S, height: H * S, data: dst.buffer, stats, alpha }, [dst.buffer]);
 }
 
 /**

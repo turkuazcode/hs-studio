@@ -23,6 +23,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 
 use super::scheduler::{Adapter, Planned, RunCtx};
+use crate::photo::exif::MetadataPolicy;
 use super::{JobEnv, JobError, ModelPin, code, parent_dir};
 
 /// Kinds the webview runs. `components`: AI components pinned at submit (validated on continue).
@@ -127,8 +128,64 @@ struct AiRequest {
 struct AiOutput {
     /// Output folder; None = the app's AI result folder (not the user's folders)
     dir: Option<String>,
-    /// Name suffix before `.png` (default `_restored`)
+    /// Name suffix before the extension (default `_restored`)
     suffix: Option<String>,
+    /// "png" (default) | "jpeg" | "webp"
+    format: Option<String>,
+    /// JPEG / WebP quality (default 95)
+    quality: Option<u8>,
+    /// keep (default) | stripGps | strip — like the photo batch
+    #[serde(default)]
+    metadata: MetadataPolicy,
+    /// JPEG has no alpha: transparent pixels are composited onto this colour (default white)
+    background: Option<[u8; 3]>,
+}
+
+/// Encoded output (A04): RGBA from the page (sRGB, upright, 8 bit) -> file bytes.
+/// - colour: the page's pixels are sRGB (the browser converted the source profile); the
+///   source ICC profile is NOT copied (it would mislabel the pixels), no profile = sRGB;
+/// - orientation: the pixels are upright, EXIF orientation is written as 1;
+/// - EXIF: date / camera / copyright kept from the source, GPS by policy, pixel size updated,
+///   stale thumbnail dropped; PNG also gets a `Software` text naming the AI components;
+/// - alpha: kept in PNG/WebP when any pixel is not opaque; JPEG composites onto `background`.
+pub struct Encoded {
+    pub bytes: Vec<u8>,
+    pub ext: &'static str,
+    pub alpha: bool,
+    pub format: &'static str,
+}
+
+fn encode_output(src: &Path, rgba: Vec<u8>, w: u32, h: u32, out: &AiOutput, software: &str) -> Result<Encoded, JobError> {
+    use crate::photo::ops::{self, OutFormat};
+    let bad = |e: String| JobError::new(code::FAILED, e);
+    let img = image::RgbaImage::from_raw(w, h, rgba).ok_or_else(|| JobError::new(code::INVALID_REQUEST, "bad image buffer"))?;
+    let has_alpha = img.pixels().any(|p| p.0[3] < 255);
+    let (format, fmt, ext) = match out.format.as_deref().unwrap_or("png") {
+        "jpeg" | "jpg" => ("jpeg", OutFormat::Jpeg, "jpg"),
+        "webp" => ("webp", OutFormat::Webp, "webp"),
+        _ => ("png", OutFormat::Png, "png"),
+    };
+    let keep_alpha = has_alpha && fmt != OutFormat::Jpeg;
+    let dynimg = if keep_alpha {
+        image::DynamicImage::ImageRgba8(img)
+    } else {
+        let [br, bg, bb] = out.background.unwrap_or([255, 255, 255]).map(f32::from);
+        let rgb = image::RgbImage::from_fn(w, h, |x, y| {
+            let p = img.get_pixel(x, y).0;
+            let a = p[3] as f32 / 255.0;
+            let mix = |c: u8, b: f32| (c as f32 * a + b * (1.0 - a)).round() as u8;
+            image::Rgb([mix(p[0], br), mix(p[1], bg), mix(p[2], bb)])
+        });
+        image::DynamicImage::ImageRgb8(rgb)
+    };
+    let quality = out.quality.unwrap_or(95).clamp(1, 100);
+    let bytes = ops::encode(&dynimg, fmt, quality, None).map_err(bad)?;
+    let tiff = crate::photo::exif::blob_for_output(src, out.metadata, 1, Some((w, h)));
+    let mut bytes = ops::embed_exif(bytes, fmt, tiff.as_deref(), w, h);
+    if fmt == OutFormat::Png {
+        bytes = ops::png_with_text(&bytes, "Software", software);
+    }
+    Ok(Encoded { bytes, ext, alpha: keep_alpha, format })
 }
 
 pub struct ExternalAdapter {
@@ -260,7 +317,7 @@ impl ExternalAdapter {
                     let r = if running != Some(idx) {
                         Err(JobError::new(code::INVALID_STATE, format!("item {idx} was not begun")))
                     } else {
-                        let r = self.write_output(ctx, req, idx, width, height, &rgba);
+                        let r = self.write_output(ctx, req, idx, width, height, rgba);
                         if r.is_ok() {
                             running = None;
                         }
@@ -291,32 +348,43 @@ impl ExternalAdapter {
         Ok(())
     }
 
-    /// RGBA -> PNG in the job's temp dir -> reserved final name (no overwrite) -> completed.
-    fn write_output(&self, ctx: &RunCtx<'_>, req: &AiRequest, idx: i64, w: u32, h: u32, rgba: &[u8]) -> Result<String, JobError> {
+    /// RGBA -> encoded file (A04 colour / orientation / EXIF / alpha rules, see `encode_output`)
+    /// in the job's temp dir -> reserved final name (no overwrite) -> completed, with the
+    /// recipe record in the artifact.
+    fn write_output(&self, ctx: &RunCtx<'_>, req: &AiRequest, idx: i64, w: u32, h: u32, rgba: Vec<u8>) -> Result<String, JobError> {
         let src = Path::new(&req.input);
         let dir = match &req.output.dir {
             Some(d) => PathBuf::from(d),
             None => ctx.env().results_dir().ok_or_else(|| JobError::new(code::FAILED, "no AI result folder"))?,
         };
-        std::fs::create_dir_all(&dir).map_err(|e| JobError::new(code::FAILED, e.to_string()))?;
-        let stem = src.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| "photo".into());
-        let wanted = dir.join(format!("{stem}{}.png", clean_suffix(req.output.suffix.as_deref())));
+        std::fs::create_dir_all(&dir).map_err(|e| JobError::new(super::classify_error(&e.to_string()), e.to_string()))?;
         ctx.check_space(&dir, rgba.len() as u64 + (16 << 20))?;
+        let software = format!("VHO {} AI ({})", env!("CARGO_PKG_VERSION"), req.components.join(", "));
+        let enc = encode_output(src, rgba, w, h, &req.output, &software)?;
+        let stem = src.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| "photo".into());
+        let wanted = dir.join(format!("{stem}{}.{}", clean_suffix(req.output.suffix.as_deref()), enc.ext));
         let final_name = ctx.reserve(idx, &wanted, false)?;
         let temp = ctx.temp_dir(&parent_dir(&final_name))?;
         let part = temp.join(format!("{idx}.part"));
-        let img = image::RgbaImage::from_raw(w, h, rgba.to_vec()).ok_or_else(|| JobError::new(code::INVALID_REQUEST, "bad image buffer"))?;
-        let mut bytes = Vec::new();
-        image::DynamicImage::ImageRgba8(img)
-            .write_to(&mut std::io::Cursor::new(&mut bytes), image::ImageFormat::Png)
-            .map_err(|e| JobError::new(code::FAILED, e.to_string()))?;
         {
             use std::io::Write;
-            let mut f = std::fs::File::create(&part).map_err(|e| JobError::new(super::classify_error(&e.to_string()), e.to_string()))?;
-            f.write_all(&bytes).and_then(|_| f.sync_all()).map_err(|e| JobError::new(super::classify_error(&e.to_string()), e.to_string()))?;
+            let io = |e: std::io::Error| JobError::new(super::classify_error(&e.to_string()), e.to_string());
+            let mut f = std::fs::File::create(&part).map_err(io)?;
+            f.write_all(&enc.bytes).and_then(|_| f.sync_all()).map_err(io)?;
         }
         let placed = crate::actions::files::place_no_clobber(&part, &final_name).map_err(|e| JobError::new(code::FAILED, e))?;
-        ctx.complete_item(idx, &placed, bytes.len() as u64)?;
+        let source = ctx.pending.iter().find(|p| p.idx == idx);
+        let extra = json!({
+            "recipe": ctx.request,
+            "models": ctx.model.and_then(|m| serde_json::from_str::<Value>(m).ok()),
+            "source": { "size": source.and_then(|p| p.size), "fingerprint": source.and_then(|p| p.fp.clone()) },
+            "output": {
+                "width": w, "height": h, "format": enc.format, "bitDepth": 8, "colorSpace": "sRGB",
+                "iccCopied": false, "alpha": enc.alpha, "orientation": 1, "metadata": req.output.metadata,
+            },
+            "app": env!("CARGO_PKG_VERSION"),
+        });
+        ctx.complete_item_with(idx, &placed, enc.bytes.len() as u64, extra)?;
         Ok(placed.to_string_lossy().into_owned())
     }
 }
