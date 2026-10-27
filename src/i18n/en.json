@@ -588,7 +588,11 @@
     "deepToast": "✨ Photo enhanced with AI",
     "deepCancelled": "Cancelled.",
     "deepFailed": "⚠️ Enhancement failed: {error}",
-    "deepSaved": "Enhanced photo saved"
+    "deepSaved": "Enhanced photo saved",
+    "deepTooLarge": "This photo is {w}×{h}. A 4× output exceeds this device's AI memory budget: the input will be reduced to {iw}×{ih} and the result will be {ow}×{oh}. Continue?",
+    "deepQueued": "Queued: starts when the previous long job finishes…",
+    "deepRunningEta": "Enhancing… {pct}% — {hw}, about {eta} s left",
+    "deepPaused": "Paused (during playback or when the app closed). It continues from the Jobs panel in the title bar."
   },
   "ui": {
     "docTitle": "VHO - Video Player",
@@ -1189,7 +1193,8 @@
       "export": "Export: {name}",
       "photoOne": "Photo job: {name}",
       "photoBatch": "Photo batch ({n} files)",
-      "other": "Job"
+      "other": "Job",
+      "aiPhoto": "AI enhancement: {name}"
     },
     "state": {
       "queued": "Queued",
@@ -1222,7 +1227,28 @@
       "invalidState": "The job cannot do that right now.",
       "notFound": "Job not found.",
       "storageUnavailable": "The job queue is not available.",
-      "failed": "The job failed."
+      "failed": "The job failed.",
+      "memory": "Not enough memory (graphics card and processor were tried). Try a smaller photo.",
+      "modelFailed": "The model could not be loaded or run. Repair it in Settings > AI models.",
+      "runnerUnavailable": "The AI runner was not ready; continue the job to try again."
+    }
+  },
+  "aiRuntime": {
+    "hwCpu": "Processor (WebAssembly)",
+    "hwGpu": "Graphics card (WebGPU: {name})",
+    "hwGpuGeneric": "Graphics card (WebGPU)",
+    "failed": "The AI model could not be run",
+    "facesFailed": "Face restoration could not be run",
+    "backend": {
+      "webgpu": "graphics card (WebGPU)",
+      "wasm": "processor (WebAssembly)"
+    },
+    "settings": {
+      "pauseDuringPlayback": "Pause AI jobs while a video or music plays",
+      "pauseDuringPlaybackHelp": "A running AI job pauses so playback does not stutter; it continues (validated) when playback stops.",
+      "lastRun": "Last AI run: {backend}, tile {tile} px, {sec} s.",
+      "noRun": "No AI run in this session yet.",
+      "fallbacks": "Fallbacks: {list}."
     }
   }
 }

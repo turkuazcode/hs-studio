@@ -23,6 +23,7 @@ import { createEngineFacade } from "./media/engine/engine.js";
 import { createHtml5Engine } from "./media/engine/html5-engine.js";
 import { createMpvEngine } from "./media/engine/mpv-engine.js";
 import { createLoader } from "./media/loader.js";
+import { createAiJobRunner } from "./media/ai-jobs.js";
 import { createPhotoAi } from "./media/photo-ai.js";
 import { createPhotoViewer } from "./media/photo-viewer.js";
 import { createSnapshot } from "./media/snapshot.js";
@@ -99,6 +100,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     .catch((e) => console.warn("platform_capabilities", e));
   // Persistent job queue (Plan 11/A02): exports and photo batches survive a restart
   app.jobs = createJobs({ invoke, listen });
+  // AI jobs of the queue run in this page (Web Worker inference, A03)
+  app.aiJobs = createAiJobRunner(app, { invoke, listen, convertFileSrc });
 
   // Leaf services first: everything below may toast / poke the HUD
   Object.assign(app, createToasts(dom));
@@ -167,6 +170,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       registerAiModelSettings(app);
       app.mediaActions.registerSettings().catch((e) => console.error("[actions] settings", e));
       app.jobsPanel?.init();
+      app.aiJobs.start().catch((e) => console.error("[ai-jobs]", e));
       invoke?.("initial_files")
         .then((paths) => app.loader.openPaths(paths))
         .catch((e) => console.warn("initial_files", e));
