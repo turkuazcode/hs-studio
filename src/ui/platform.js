@@ -9,6 +9,7 @@ import { listen } from "../core/tauri.js";
 import { initMenus } from "./menus.js";
 import { initSettingsBindings } from "./settings-bindings.js";
 import { createSettingsModal, registerBaseFields } from "./settings-modal.js";
+import { createUpdates } from "./updates.js";
 import { createShortcutHelp } from "./shortcut-help.js";
 import { createRecentFiles } from "./recent-files.js";
 import { initTheme } from "./theme.js";
@@ -52,6 +53,7 @@ export async function initPlatform(app) {
 
   app.recentFiles = createRecentFiles(app);
   registerBaseFields(app);
+  app.updates = createUpdates(app);
   app.settingsModal = createSettingsModal(app);
   app.shortcutHelp = createShortcutHelp(app);
   app.menus = initMenus(app);

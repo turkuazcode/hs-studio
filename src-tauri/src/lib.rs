@@ -9,6 +9,7 @@ mod platform;
 mod restoration;
 mod storage;
 mod transcode;
+mod updater;
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -229,6 +230,7 @@ async fn suspend_system() -> Result<(), String> {
 pub fn run() {
     let mut context = tauri::generate_context!();
     platform::apply_test_isolation(&mut context);
+    updater::apply_test_overrides(&mut context);
 
     let builder = tauri::Builder::default();
     // Must be the first plugin: a second launch exits here, before any window exists.
@@ -249,11 +251,13 @@ pub fn run() {
     let app = builder
         .manage(platform::PendingOpen::default())
         .manage(storage::StorageState::default())
+        .manage(updater::PendingUpdate::default())
         .manage(library::LibraryState::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(window_state.build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             prune_transcode_cache(app.handle());
 
@@ -285,6 +289,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            updater::updater_check,
+            updater::updater_install,
             suspend_system,
             get_compat_mode,
             set_compat_mode,
