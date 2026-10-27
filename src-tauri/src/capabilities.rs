@@ -54,6 +54,7 @@ impl Support {
         }
     }
     /// Text used in docs/platform-support.md
+    #[cfg_attr(not(test), allow(dead_code))]
     pub fn doc(self) -> &'static str {
         match self {
             Support::Tested => "destekli/testli",
