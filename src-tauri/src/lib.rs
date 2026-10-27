@@ -3,10 +3,13 @@ mod ai;
 mod capabilities;
 mod engine;
 mod jobs;
+mod library;
 mod photo;
 mod platform;
+mod restoration;
 mod storage;
 mod transcode;
+mod updater;
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -106,7 +109,7 @@ fn fnv1a(bytes: &[u8]) -> u64 {
 }
 
 fn transcode_cache_dir(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app.path().app_cache_dir().map_err(|e| e.to_string())?.join("transcode");
+    let dir = crate::platform::cache_dir(app)?.join("transcode");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir)
 }
@@ -227,6 +230,7 @@ async fn suspend_system() -> Result<(), String> {
 pub fn run() {
     let mut context = tauri::generate_context!();
     platform::apply_test_isolation(&mut context);
+    updater::apply_test_overrides(&mut context);
 
     let builder = tauri::Builder::default();
     // Must be the first plugin: a second launch exits here, before any window exists.
@@ -247,10 +251,13 @@ pub fn run() {
     let app = builder
         .manage(platform::PendingOpen::default())
         .manage(storage::StorageState::default())
+        .manage(updater::PendingUpdate::default())
+        .manage(library::LibraryState::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(window_state.build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             prune_transcode_cache(app.handle());
 
@@ -282,6 +289,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            updater::updater_check,
+            updater::updater_install,
             suspend_system,
             get_compat_mode,
             set_compat_mode,
@@ -364,7 +373,33 @@ pub fn run() {
             jobs::jobs_ext_progress,
             jobs::jobs_ext_fail,
             jobs::jobs_ext_done,
-            jobs::jobs_ext_output
+            jobs::jobs_ext_output,
+            restoration::restoration_probe,
+            restoration::restoration_recipe,
+            library::library_folders,
+            library::library_add_folder,
+            library::library_remove_folder,
+            library::library_rescan,
+            library::library_scan_cancel,
+            library::library_status,
+            library::library_set_options,
+            library::library_query,
+            library::library_music_groups,
+            library::library_media_meta,
+            library::library_set_rating,
+            library::library_set_tags,
+            library::library_tags,
+            library::library_mark_played,
+            library::library_folder_favorites,
+            library::library_set_folder_favorite,
+            library::library_import_folder_favorites,
+            library::library_playlists,
+            library::library_playlist_get,
+            library::library_playlist_save,
+            library::library_playlist_delete,
+            library::library_playlist_import,
+            library::library_playlist_read,
+            library::library_playlist_export
         ])
         .build(context)
         .expect("error while building tauri application");

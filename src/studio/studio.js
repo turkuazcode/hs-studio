@@ -6,6 +6,7 @@
 // ==========================================================================
 
 import { t } from "../core/i18n.js";
+import { createLibraryApi, parseTags, stars } from "../core/library-api.js";
 import { convertFileSrc, dialogOpen, invoke, listen } from "../core/tauri.js";
 import { isTextField } from "../ui/shortcuts.js";
 import { createBatch } from "./batch.js";
@@ -103,6 +104,23 @@ export function createPhotoStudio(app) {
   }
 
   const thumbs = createThumbService({ invoke, listen, convertFileSrc });
+  // Ratings, tags and favorite folders live in the shared library (Plan 13/L02); browsing a
+  // folder here does not add it to the library.
+  const lib = createLibraryApi(invoke);
+  let favs = settings.get("favorites", []);
+  const favReady = lib
+    ? lib.importFolderFavorites(favs).then((list) => { favs = list; }).catch((e) => console.warn("library favorites", e))
+    : Promise.resolve();
+  async function toggleFolderFavorite(path) {
+    const on = !favs.some((p) => sameDir(p, path));
+    if (lib) {
+      try { favs = await lib.setFolderFavorite(path, on); } catch (e) { console.warn("library favorites", e); }
+    } else {
+      favs = toggleFavorite(favs, path);
+      settings.set("favorites", favs);
+    }
+    renderFavorites();
+  }
 
   // ------------------------------------------------------------------ state
   let dir = "";
@@ -116,7 +134,7 @@ export function createPhotoStudio(app) {
   let sortKey = settings.get("sort", "name");
   let descending = settings.get("descending", false);
   let recursive = settings.get("recursive", false);
-  let filter = { type: "all", from: null, to: null, query: "" };
+  let filter = { type: "all", from: null, to: null, query: "", minRating: 0 };
   let scanStarted = 0;
   let firstPaintDone = false;
   let viewRaf = 0;
@@ -228,6 +246,7 @@ export function createPhotoStudio(app) {
         syncSelection();
       }
       if (focusPath) focusOn(focusPath);
+      loadMeta(id);
       if (!items.length) showEmpty(t(s.folders.length ? "studio.empty.pickSubfolder" : "studio.empty.none"));
       updateStatus(s.elapsedMs);
     } catch (e) {
@@ -236,6 +255,68 @@ export function createPhotoStudio(app) {
       showEmpty(t("studio.empty.openFailed", { error: String(e).replace(/^\[[a-z-]+\]\s*/, "") }));
       statusEl.textContent = "";
     }
+  }
+
+  /** Ratings / tags of the listed files from the library (only files that have some). */
+  async function loadMeta(id) {
+    if (!lib || !items.length) return;
+    const byPath = new Map();
+    const all = items.map((i) => i.path);
+    try {
+      for (let k = 0; k < all.length; k += 1000) {
+        for (const m of await lib.mediaMeta(all.slice(k, k + 1000))) byPath.set(m.path, m);
+        if (id !== scanId) return;
+      }
+    } catch (e) {
+      console.warn("library_media_meta", e);
+      return;
+    }
+    let changed = false;
+    for (const it of items) {
+      const m = byPath.get(it.path);
+      if (m || it.rating || it.tags) {
+        it.rating = m?.rating ?? 0;
+        it.tags = m?.tags ?? [];
+        changed = true;
+      }
+    }
+    gridEl.dataset.meta = String(byPath.size);
+    if (changed) { applyView({ reset: false }); grid.setItems(view, { keepScroll: true }); syncSelection(); }
+  }
+
+  const chosenItems = () => (selectedItems().length ? selectedItems() : focusedItem() ? [focusedItem()] : []);
+
+  /** 0-5 stars on the selection (keys 0-5 in the grid). */
+  async function rateSelection(rating) {
+    const chosen = chosenItems();
+    if (!lib || !chosen.length) return;
+    try {
+      await lib.setRating(chosen.map((i) => i.path), rating);
+    } catch (e) { app.toast(`⚠️ ${String(e?.message ?? e)}`); return; }
+    for (const it of chosen) it.rating = rating;
+    grid.setItems(view, { keepScroll: true });
+    syncSelection();
+    app.toast(rating ? t("library.photo.ratingSaved", { n: chosen.length, stars: stars(rating) }) : t("library.photo.ratingCleared"));
+  }
+
+  async function editTags() {
+    const chosen = chosenItems();
+    if (!lib || !chosen.length || !app.dialogs?.prompt) return;
+    const low = (x) => x.toLocaleLowerCase("tr");
+    const common = (chosen[0].tags ?? []).filter((tag) => chosen.every((i) => (i.tags ?? []).some((x) => low(x) === low(tag))));
+    const text = await app.dialogs.prompt({ id: "vho-tags", title: t("library.photo.tagsTitle"), label: t("library.photo.tagsLabel"), value: common.join(", ") });
+    if (text === null || text === undefined) return;
+    const next = parseTags(text);
+    const remove = common.filter((tag) => !next.some((n) => low(n) === low(tag)));
+    try {
+      await lib.setTags(chosen.map((i) => i.path), next, remove);
+    } catch (e) { app.toast(`⚠️ ${String(e?.message ?? e)}`); return; }
+    for (const it of chosen) {
+      const kept = (it.tags ?? []).filter((tag) => !remove.some((r) => low(r) === low(tag)));
+      it.tags = [...kept, ...next.filter((n) => !kept.some((k) => low(k) === low(n)))];
+    }
+    app.toast(t("library.photo.tagsSaved"));
+    applyView({ reset: false });
   }
 
   const rescan = (focusPath) => dir && openFolder(dir, { keepScroll: true, focusPath: focusPath ?? paths[sel.focus] });
@@ -481,7 +562,6 @@ export function createPhotoStudio(app) {
 
   // ---------------------------------------------------- favourites & crumbs
   function renderFavorites() {
-    const favs = settings.get("favorites", []);
     favsEl.replaceChildren(...favs.map((p) => {
       const li = document.createElement("li");
       li.className = "ps-fav" + (dir && sameDir(p, dir) ? " current" : "");
@@ -506,10 +586,8 @@ export function createPhotoStudio(app) {
   favsEl.addEventListener("click", (e) => {
     const li = e.target.closest(".ps-fav");
     if (!li) return;
-    if (e.target.closest(".ps-fav-remove")) {
-      settings.set("favorites", toggleFavorite(settings.get("favorites", []), li.dataset.path));
-      renderFavorites();
-    } else openFolder(li.dataset.path);
+    if (e.target.closest(".ps-fav-remove")) toggleFolderFavorite(li.dataset.path);
+    else openFolder(li.dataset.path);
   });
 
   function renderBreadcrumb() {
@@ -594,10 +672,9 @@ export function createPhotoStudio(app) {
   });
   $("ps-up").addEventListener("click", () => parentDir(dir) && openFolder(parentDir(dir)));
   $("ps-fav-toggle").addEventListener("click", () => {
-    if (!dir) return;
-    settings.set("favorites", toggleFavorite(settings.get("favorites", []), dir));
-    renderFavorites();
+    if (dir) toggleFolderFavorite(dir);
   });
+  favReady.then(() => renderFavorites());
   const pickFolder = async () => {
     if (!dialogOpen) return;
     const picked = await dialogOpen({ directory: true, multiple: false, defaultPath: dir || undefined }).catch(() => null);
@@ -628,7 +705,18 @@ export function createPhotoStudio(app) {
     filtersEl.hidden = !filtersEl.hidden;
     filterBtn.classList.toggle("active", !filtersEl.hidden);
   });
-  const markFilter = () => filterBtn.classList.toggle("has-filter", filter.type !== "all" || filter.from != null || filter.to != null || recursive);
+  const markFilter = () => filterBtn.classList.toggle("has-filter", filter.type !== "all" || filter.from != null || filter.to != null || recursive || filter.minRating > 0);
+
+  // Minimum star rating filter (library ratings, Plan 13/L02)
+  const ratingSel = Object.assign(document.createElement("select"), { id: "ps-filter-rating", className: "ps-select" });
+  ratingSel.replaceChildren(...[0, 1, 2, 3, 4, 5].map((n) =>
+    Object.assign(document.createElement("option"), { value: String(n), textContent: n ? `${stars(n)}+` : t("library.photo.anyRating") })));
+  const ratingLabel = Object.assign(document.createElement("label"), { className: "ps-field", hidden: !lib });
+  const ratingText = Object.assign(document.createElement("span"), { textContent: t("library.photo.minRating") });
+  ratingText.dataset.i18n = "library.photo.minRating";
+  ratingLabel.append(ratingText, ratingSel);
+  filtersEl.querySelector(".ps-spacer")?.before(ratingLabel);
+  ratingSel.addEventListener("change", () => { filter = { ...filter, minRating: Number(ratingSel.value) }; applyView(); markFilter(); });
   for (const id of ["ps-filter-type", "ps-date-from", "ps-date-to", "ps-recursive"]) $(id).addEventListener("change", markFilter);
 
   // "⋯" menu and right-click on the grid: everything that is not used all the time
@@ -653,6 +741,8 @@ export function createPhotoStudio(app) {
     { id: "s1", separator: true },
     // File actions (Plan 06, ui/media-actions.js) on the selection
     { id: "s2", separator: true },
+    { id: "tags", get label() { return t("library.photo.tags"); }, run: () => editTags(), enabled: () => !!lib && chosenItems().length > 0 },
+    { id: "rateClear", get label() { return t("library.photo.ratingClear"); }, run: () => rateSelection(0), enabled: () => !!lib && chosenItems().some((i) => i.rating > 0) },
     { id: "addToPlaylist", get label() { return t("actions.menu.addToPlaylist"); }, run: () => app.mediaActions?.forPaths.addToPlaylist(selectedItems()), enabled: hasSelection },
     { id: "copyFiles", get label() { return t("actions.menu.copyFile"); }, run: () => app.mediaActions?.forPaths.copyFiles(selectedPaths()), enabled: hasSelection },
     { id: "copyPaths", get label() { return t("actions.menu.copyPath"); }, run: () => app.mediaActions?.forPaths.copyPaths(selectedPaths()), enabled: hasSelection },
@@ -709,6 +799,7 @@ export function createPhotoStudio(app) {
         if (opts.ctrl && k === "f") { $("ps-search").focus(); break; }
         if (!opts.ctrl && k === "i") { $("ps-act-info").click(); break; }
         if (!opts.ctrl && k === "e") { $("ps-act-edit").click(); break; }
+        if (!opts.ctrl && !e.altKey && /^[0-5]$/.test(k) && lib) { rateSelection(Number(k)); break; }
         return false;
       }
     }

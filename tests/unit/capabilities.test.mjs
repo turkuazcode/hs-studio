@@ -9,7 +9,8 @@ const byId = (list) => Object.fromEntries(list.map((e) => [e.id, e]));
 
 test("capability entries carry the platform contract fields", () => {
   for (const e of frontendCapabilities({ engineKind: "html5", webgl2: true })) {
-    assert.deepEqual(Object.keys(e).sort(), ["available", "id", "implementation", "reasonCode", "verified"]);
+    assert.deepEqual(Object.keys(e).sort(), ["available", "id", "implementation", "reasonCode", "support", "verified"]);
+    assert.ok(["supported-tested", "supported-untested", "unsupported"].includes(e.support), e.id);
   }
   assert.equal(cap("x", false).reasonCode, "unavailable");
   assert.equal(cap("x", true).reasonCode, null);
@@ -34,6 +35,7 @@ test("video restoration is never offered as ready; photo AI needs the desktop ba
     const c = byId(frontendCapabilities({ engineKind, webgl2: true, webgpu: true, platform: { verifiedPlatform: true } }));
     assert.equal(c["video.aiRestore"].available, false);
     assert.equal(c["video.aiRestore"].reasonCode, "not-ready");
+    assert.equal(c["video.aiRestore"].support, "unsupported");
   }
   const browser = byId(frontendCapabilities({ webgpu: true }));
   assert.equal(browser["photo.aiEnhance"].available, false);

@@ -3,8 +3,9 @@ name = "vho"
 version = "0.1.0"
 description = "VHO - Video H Oynatıcısı: video & fotoğraf medya stüdyosu"
 authors = ["Halil SARITAŞ (hsrts)"]
-license = "MIT"
+license = "Apache-2.0"
 edition = "2024"
+publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -55,6 +56,9 @@ lofty = "0.22"
 # pinned: 0.40.2 released 2026-08-08. uuid (MIT OR Apache-2.0) for media ids.
 rusqlite = { version = "=0.40.2", features = ["bundled", "backup"] }
 uuid = { version = "1", features = ["v4"] }
+# Library folder watcher (Plan 13/L02; only an accelerator, reconciliation scans stay the
+# source of truth): notify CC0-1.0, pinned 8.2.0 released 2025-08-03.
+notify = "=8.2.0"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [
@@ -99,6 +103,8 @@ libc = "0.2"
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 # Second launch with a file opens it in the running window (MIT OR Apache-2.0)
 tauri-plugin-single-instance = "2"
+# Signed self-update (R02 updater card; MIT OR Apache-2.0). Pinned: 2.13.3 released 2026-10-10.
+tauri-plugin-updater = "=2.13.3"
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

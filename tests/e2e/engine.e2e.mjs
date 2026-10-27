@@ -60,10 +60,15 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
       const c = Object.fromEntries(r.entries.map((e) => [e.id, e]));
       assert.equal(r.platform.os, "windows");
       assert.equal(r.platform.verifiedPlatform, true);
-      assert.deepEqual(c["engine.libmpv"], { id: "engine.libmpv", available: true, implementation: "libmpv-lgpl", verified: true, reasonCode: null });
+      assert.deepEqual(c["engine.libmpv"], { id: "engine.libmpv", available: true, implementation: "libmpv-lgpl", verified: true, reasonCode: null, support: "supported-tested" });
       assert.equal(c["video.surface"].implementation, "win32-owned-popup");
       assert.equal(c["system.mediaControls"].reasonCode, "not-implemented");
       assert.equal(c["actions.share"].reasonCode, "system-changes-disabled"); // E2E guard active
+      // P04: every entry carries the per-OS support claim; the H.264 encoder is the runtime-probed one
+      for (const e of r.entries) assert.ok(["supported-tested", "supported-untested", "unsupported"].includes(e.support), e.id);
+      assert.deepEqual([c["encode.h264"].available, c["encode.h264"].implementation, c["encode.h264"].reasonCode], [true, "h264_mf", "runtime-probed"]);
+      assert.deepEqual([c["photo.heicEncode"].available, c["photo.heicEncode"].reasonCode, c["photo.heicEncode"].support], [false, "export-as-jpeg", "unsupported"]);
+      assert.equal(c["actions.clipboardFiles"].implementation, "arboard-cf-hdrop");
       const ui = await app.waitFor(`(() => { const m = Object.fromEntries(window.__vhoEngine.capabilities.map((e) => [e.id, e]));
         return m["engine.libmpv"] && m; })()`, { timeoutMs: 10000, message: "backend capabilities in the UI" });
       assert.equal(ui["engine.libmpv"].available, true);
