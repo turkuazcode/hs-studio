@@ -280,6 +280,8 @@ pub fn run() {
             }
             let window = builder.build()?;
             engine::setup(app.handle(), &window, mpv_dll);
+            #[cfg(target_os = "linux")]
+            engine::smoke::maybe_start(app.handle());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
