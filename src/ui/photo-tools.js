@@ -52,7 +52,7 @@ export function createPhotoTools(app, current) {
       }
       app.toast(t("actions.toast.imageCopied"));
     } catch (e) {
-      app.toast(`⚠️ ${errorText(e)}`);
+      app.toast(`⚠️ ${errorText(e, t)}`);
     }
   }
 
@@ -160,7 +160,7 @@ export function createPhotoTools(app, current) {
       await invoke("set_wallpaper", { path: await readablePath(item), target });
       app.toast(t(target === "lock" ? "actions.toast.lockScreenSet" : "actions.toast.wallpaperSet"));
     } catch (e) {
-      app.toast(`⚠️ ${errorText(e)}`);
+      app.toast(`⚠️ ${errorText(e, t)}`);
     }
   }
 
@@ -220,7 +220,7 @@ export function createPhotoTools(app, current) {
       count,
       h("button", {
         type: "button", id: "vho-ocr-copy", class: "btn-primary btn-sm", text: t("actions.ocr.copyAll"), disabled: !res.text,
-        onclick: () => invoke("clipboard_copy_text", { text: res.text }).then(() => app.toast(t("actions.toast.textCopied"))).catch((e) => app.toast(`⚠️ ${errorText(e)}`)),
+        onclick: () => invoke("clipboard_copy_text", { text: res.text }).then(() => app.toast(t("actions.toast.textCopied"))).catch((e) => app.toast(`⚠️ ${errorText(e, t)}`)),
       }),
       h("button", { type: "button", id: "vho-ocr-close", class: "btn-secondary btn-sm", text: t("actions.common.close"), onclick: () => closeOcr() }));
     const viewport = document.getElementById("viewport");

@@ -506,6 +506,9 @@
       "toolsInfo": "{version} · H.264 kodlayıcı: {encoder}",
       "none": "yok",
       "fallbackEncoder": "{name} (H.264 yok, yedek kodlayıcı)"
+    },
+    "error": {
+      "clipboardBusy": "Pano başka bir uygulama tarafından kullanılıyor ({detail}). Biraz sonra yeniden deneyin."
     }
   },
   "effects": {

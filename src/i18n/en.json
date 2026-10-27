@@ -506,6 +506,9 @@
       "toolsInfo": "{version} · H.264 encoder: {encoder}",
       "none": "none",
       "fallbackEncoder": "{name} (no H.264, fallback encoder)"
+    },
+    "error": {
+      "clipboardBusy": "The clipboard is in use by another app ({detail}). Try again in a moment."
     }
   },
   "effects": {
