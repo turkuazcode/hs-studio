@@ -155,6 +155,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     openPaths: (paths) => app.loader.openPaths(paths),
   };
   app.studio = createPhotoStudio(app);
+  window.__vhoStudio = app.studio;
   // File / photo / video / music actions (Plan 06): toolbar, "⋯" + right-click menus, dialogs
   app.mediaActions = createMediaActions(app);
   window.__vhoActions = app.mediaActions;

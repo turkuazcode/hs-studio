@@ -274,5 +274,7 @@ export function createSmartTools(host, stage, canvas, deps, editor) {
     get strokes() { return strokes; },
     /** Test hook: a stroke in normalized image coordinates. */
     addStroke(stroke) { strokes.push(stroke); drawMask(); },
+    /** Test hook: what a finished queue job does with its result file (E2E has no models). */
+    applyResult(path, op) { strokes = []; editor.onResult(path, op); },
   };
 }

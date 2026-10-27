@@ -935,6 +935,8 @@ export function createPhotoStudio(app) {
     get isOpen() { return !root.hidden; },
     get dir() { return dir; },
     get view() { return view; },
+    /** The editor (tests / automation). */
+    get editor() { return editor; },
     get selection() { return selectedInOrder(sel, paths); },
     settings,
     thumbs,
