@@ -357,4 +357,5 @@ export function fromHalf(h) {
 }
 
 export const toHalfArray = (a) => Uint16Array.from(a, toHalf);
-export const fromHalfArray = (a) => Float32Array.from(a, (h) => (typeof h === "number" && !(a instanceof Uint16Array) ? h : fromHalf(h)));
+/** float16 tensor data -> Float32Array: raw bits (Uint16Array) or an already decoded Float16Array. */
+export const fromHalfArray = (a) => (a instanceof Uint16Array ? Float32Array.from(a, fromHalf) : Float32Array.from(a));
