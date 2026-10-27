@@ -114,7 +114,7 @@ Komutlar `..\with-lock.ps1` kuyruğundan çalıştırıldı. Sonuç dosyası `te
 
 | Adım | Sonuç |
 |---|---|
-| Paketler | `VHO PackageTest_0.1.0_x64-setup.exe` (28,05 MB, SHA-256 `61d9da02…4b15`) ve `…_0.1.1_x64-setup.exe` (SHA-256 `db666875…15c1`); manifestte 48 dosya. NSIS 3.13 ve nsis_tauri_utils 0.5.3, Tauri tarafından `%LOCALAPPDATA%	auri` altına indirildi |
+| Paketler | `VHO PackageTest_0.1.0_x64-setup.exe` (28,05 MB, SHA-256 `61d9da02…4b15`) ve `…_0.1.1_x64-setup.exe` (SHA-256 `db666875…15c1`); manifestte 48 dosya. NSIS 3.13 ve nsis_tauri_utils 0.5.3, Tauri tarafından `%LOCALAPPDATA%\tauri` altına indirildi |
 | Kurulum | Sessiz kurulum (`/S /NS`), yönetici izni yok, hedef `%TEMP%\…\Kurulum Dizini ğüşıöç`. Yalnızca HKCU'ya kayıt yapıldı (HKLM'ye değil). `vho.exe`, `mpv\` (38 DLL + ffmpeg/ffprobe) ve `legal\` (LICENSE, NOTICE, THIRD_PARTY_NOTICES, SOURCE-OFFER, SBOM) yerinde; manifestle SHA-256 olarak birebir aynı |
 | Ortam | Dosya ilişkilendirmesi, kısayol veya autostart oluşmadı (HKCU Classes, Run, Başlat menüsü ve masaüstü anlık görüntüleri aynı) |
 | E2E (kurulan exe) | `smoke` + `engine`: **39/39 geçti, 0 atlandı**. PATH yalnızca System32 + node; ayrı veri ve WebView2 profili, portlar 10900–10999. libmpv, kurulum klasöründeki `mpv\` altından yüklendi |
