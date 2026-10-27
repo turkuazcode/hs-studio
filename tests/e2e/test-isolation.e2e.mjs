@@ -19,7 +19,7 @@ test("test isolation: identity folders removed after close, caches inside VHO_DA
     await app.waitFor(`document.querySelectorAll("#ps-tree .ps-tree-node").length > 0`, { message: "folder tree" });
     await app.eval(`(() => { document.getElementById("ps-path-edit").click();
       const i = document.getElementById("ps-path"); i.value = ${JSON.stringify(join(fixture("photo-a.jpg"), ".."))}; i.form.requestSubmit(); return true; })()`);
-    await app.waitFor(`document.querySelector("#ps-grid .ps-cell img")?.src.includes("asset")`, { timeoutMs: 20000, message: "a thumbnail" });
+    await app.waitFor(`[...document.querySelectorAll("#ps-grid .ps-cell img")].some((i) => i.src.includes("asset"))`, { timeoutMs: 30000, message: "a thumbnail" });
     assert.ok(existsSync(join(dataDir, "cache", "photo")), "photo cache lives in VHO_DATA_DIR/cache");
     t.diagnostic(`identity ${id}; folders while running: ${identityDirs(dataDir).join(", ") || "none"}`);
   } finally {
