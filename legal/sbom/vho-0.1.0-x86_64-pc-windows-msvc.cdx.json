@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:fa29364b-f45e-563a-9187-6229a486a582",
+ "serialNumber": "urn:uuid:02c3dadc-b48b-59cb-87e0-589e49db6dc6",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-27T06:56:26Z",
+  "timestamp": "2026-10-27T17:47:36Z",
   "tools": {
    "components": [
     {
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "8af0a5dbe539b78af7a7d2c132b4bc1c90df7bcd"
+    "value": "2076bec42706aa9bd1ba33a34fce198300982d25"
    },
    {
     "name": "vho:native-binaries",
@@ -17362,6 +17362,45 @@
   },
   {
    "type": "library",
+   "bom-ref": "pkg:npm/axe-core@4.14.0",
+   "name": "axe-core",
+   "version": "4.14.0",
+   "purl": "pkg:npm/axe-core@4.14.0",
+   "scope": "excluded",
+   "licenses": [
+    {
+     "expression": "MPL-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "npm"
+    },
+    {
+     "name": "vho:linking",
+     "value": "dev/build tool, not shipped"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-512",
+     "content": "f564d9c448ec67b6f5dd31fc24f99b576cfc0876e5f34ff6866dd73c41b826035d40b2bcd480515e64b11df3003a44aa41e4714ffd1dc0d0f3d863a6df3ce971"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "distribution",
+     "url": "https://registry.npmjs.org/axe-core/-/axe-core-4.14.0.tgz"
+    }
+   ]
+  },
+  {
+   "type": "library",
    "bom-ref": "pkg:npm/detect-libc@2.1.2",
    "name": "detect-libc",
    "version": "2.1.2",
@@ -21673,14 +21712,14 @@
     },
     {
      "name": "vho:file-sha256",
-     "value": "a92621f6408711e0df0362107776c7ba210ae506cd49cf005a7abf4a329c5582  tests/ai/fixtures/photo-x4-ref.png"
+     "value": "2f91cf5f3e9fa4dd8ea8fdd9ab75bcdcfbe48d312044f04764680f99c2ab1348  tests/ai/fixtures/photo-x4-ref.png"
     }
    ],
    "author": "VHO authors (generated)",
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "f984b1704f9da227192c5d03e1290828fa23e39752e6a16bd1758888e5967eae"
+     "content": "8c9871906d488c139c11e63275938f9a6a308ee4b23493e6a04df565642fe0e6"
     }
    ]
   },
