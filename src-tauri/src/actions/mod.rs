@@ -77,15 +77,18 @@ pub(crate) async fn blocking<T: Send + 'static>(f: impl FnOnce() -> Result<T, St
 
 /// Moves a file to the recycle bin / trash.
 #[tauri::command]
-pub async fn file_trash(path: String) -> Result<(), String> {
-    blocking(move || files::trash_file(Path::new(&path))).await
+pub async fn file_trash(app: AppHandle, path: String) -> Result<(), String> {
+    // library operation log (L02): the media row becomes "deleted", a crash is reconciled
+    blocking(move || crate::library::tracked_trash(&app, &path, || files::trash_file(Path::new(&path)))).await
 }
 
 /// Renames a file inside its folder. Returns the new full path.
 /// Errors: `[invalid]` bad name, `[exists]` another file has that name.
 #[tauri::command]
 pub async fn file_rename(app: AppHandle, path: String, new_name: String) -> Result<String, String> {
-    let out = blocking(move || files::rename(Path::new(&path), &new_name)).await?;
+    // library operation log (L02): identity, favorite, resume position and bookmarks follow
+    let app2 = app.clone();
+    let out = blocking(move || crate::library::tracked_rename(&app2, &path, &new_name, || files::rename(Path::new(&path), &new_name))).await?;
     let _ = app.asset_protocol_scope().allow_file(&out);
     Ok(out.to_string_lossy().into_owned())
 }
