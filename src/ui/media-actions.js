@@ -57,7 +57,7 @@ export function createMediaActions(app) {
   const { dom, state } = app;
   app.dialogs = createDialogs(app);
   const { dialogs } = app;
-  let caps = { wallpaper: true, lockScreen: true, share: true, openWith: true, ocr: true, ffmpeg: true };
+  let caps = { wallpaper: true, lockScreen: true, share: true, openWith: true, ocr: true, print: true, ffmpeg: true };
   invoke?.("actions_capabilities").then((c) => { caps = c; render(); }).catch(() => {});
 
   /** The shown media: { item, kind: "photo" | "video" | "music" | "none" }. */
@@ -369,7 +369,7 @@ export function createMediaActions(app) {
     copyPath: { label: "actions.menu.copyPath", run: withPath((i) => copyPaths([i.path])) },
     showInFolder: { label: "actions.menu.showInFolder", run: withPath((i) => reveal(i.path)) },
     openWith: { label: "actions.menu.openWith", run: withPath((i) => call("file_open_with", { path: i.path })), when: () => caps.openWith },
-    shareFile: { label: "actions.menu.share", run: withPath(share) },
+    shareFile: { label: "actions.menu.share", run: withPath(share), when: () => caps.share },
     properties: { label: "actions.menu.properties", run: withPath((i) => properties(i, current().kind)) },
     favorite: { label: "actions.menu.favorite", run: withPath(toggleFav) },
     addToPlaylist: { label: "actions.menu.addToPlaylist", run: () => app.loader.pickFiles(dom.playlistFileInput, { playFirstNew: false }), any: true },
@@ -380,7 +380,7 @@ export function createMediaActions(app) {
       if (sel.trim()) return call("clipboard_copy_text", { text: sel }, "actions.toast.textCopied"); // OCR text layer
       return photo.copyImage();
     } },
-    printPhoto: { label: "actions.menu.print", kinds: ["photo"], any: true, run: () => photo.print() },
+    printPhoto: { label: "actions.menu.print", kinds: ["photo"], any: true, run: () => photo.print(), when: () => caps.print !== false },
     ocr: { label: "actions.menu.ocr", kinds: ["photo"], run: () => photo.ocr(), when: () => caps.ocr },
     setWallpaper: { label: "actions.menu.setWallpaper", kinds: ["photo"], run: () => photo.setBackground("desktop"), when: () => caps.wallpaper },
     setLockScreen: { label: "actions.menu.setLockScreen", kinds: ["photo"], run: () => photo.setBackground("lock"), when: () => caps.lockScreen },
@@ -608,7 +608,8 @@ export function createMediaActions(app) {
           row.append(p);
           invoke?.("media_tools").then((m) => {
             p.textContent = m.available
-              ? t("actions.settings.toolsInfo", { version: m.version ?? "", encoder: m.h264Available ? m.h264Encoder : t("actions.settings.none") })
+              ? t("actions.settings.toolsInfo", { version: m.version ?? "", encoder: m.h264Available ? m.h264Encoder
+                : m.videoEncoder?.fallback ? t("actions.settings.fallbackEncoder", { name: m.videoEncoder.encoder.name }) : t("actions.settings.none") })
               : t("actions.job.noFfmpeg");
           }).catch(() => { p.textContent = t("actions.job.noFfmpeg"); });
         },

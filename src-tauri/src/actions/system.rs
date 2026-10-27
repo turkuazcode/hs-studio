@@ -77,10 +77,15 @@ pub fn set_wallpaper(path: &str) -> Result<(), String> {
 pub fn set_wallpaper(path: &str) -> Result<(), String> {
     let p = absolute(path)?;
     let uri = format!("file://{}", p.to_string_lossy());
+    // GNOME (and GNOME-based desktops) only; other desktops report an error instead of a fake success
+    let mut ok = false;
     for key in ["picture-uri", "picture-uri-dark"] {
-        let _ = std::process::Command::new("gsettings").args(["set", "org.gnome.desktop.background", key, &uri]).status();
+        ok |= std::process::Command::new("gsettings")
+            .args(["set", "org.gnome.desktop.background", key, &uri])
+            .status()
+            .is_ok_and(|s| s.success());
     }
-    Ok(())
+    if ok { Ok(()) } else { Err(format!("{} Arka plan yalnızca GNOME masaüstünde ayarlanabiliyor", super::ERR_UNSUPPORTED)) }
 }
 
 #[cfg(not(windows))]
@@ -145,10 +150,11 @@ pub fn share(app: &AppHandle, path: &str) -> Result<String, String> {
     Ok("share".into())
 }
 
+/// No share sheet outside Windows yet (macOS NSSharingServicePicker / Linux portal: not
+/// implemented). Not imitated by "show in folder": the UI hides the action.
 #[cfg(not(windows))]
-pub fn share(_app: &AppHandle, path: &str) -> Result<String, String> {
-    tauri_plugin_opener::reveal_item_in_dir(path).map_err(|e| e.to_string())?;
-    Ok("reveal".into())
+pub fn share(_app: &AppHandle, _path: &str) -> Result<String, String> {
+    Err(format!("{} Paylaşım bu sistemde desteklenmiyor", super::ERR_UNSUPPORTED))
 }
 
 // ---------------------------------------------------------------------------
@@ -178,11 +184,10 @@ pub fn open_with(app: &AppHandle, path: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Finder's "Open With" chooser needs AppKit (not implemented); not imitated by a reveal.
 #[cfg(target_os = "macos")]
-pub fn open_with(_app: &AppHandle, path: &str) -> Result<(), String> {
-    // Finder's "Open With" needs AppKit; the Finder selection is the closest portable step
-    let _ = absolute(path)?;
-    std::process::Command::new("open").args(["-R", path]).spawn().map(|_| ()).map_err(|e| e.to_string())
+pub fn open_with(_app: &AppHandle, _path: &str) -> Result<(), String> {
+    Err(format!("{} Birlikte aç bu sistemde desteklenmiyor", super::ERR_UNSUPPORTED))
 }
 
 #[cfg(target_os = "linux")]

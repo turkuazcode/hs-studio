@@ -133,15 +133,20 @@ pub async fn set_wallpaper(path: String, target: String) -> Result<(), String> {
     blocking(move || if action == "lock-screen" { system::set_lock_screen(&path) } else { system::set_wallpaper(&path) }).await
 }
 
-/// What OS integrations this build supports (the UI hides the rest).
+/// What OS integrations this build supports (the UI hides the rest). Same answers as the
+/// P04 support table in `capabilities.rs`: an action the platform does not offer is hidden,
+/// never imitated by another one (e.g. no "share" that only reveals the file).
 #[tauri::command]
 pub fn actions_capabilities() -> serde_json::Value {
     serde_json::json!({
         "wallpaper": system::WALLPAPER_SUPPORTED,
         "lockScreen": cfg!(windows),
         "share": cfg!(windows),
-        "openWith": cfg!(any(windows, target_os = "linux", target_os = "macos")),
-        "ocr": cfg!(windows),
+        // macOS: Finder's chooser needs AppKit (not implemented); Linux: xdg-desktop-portal
+        "openWith": cfg!(any(windows, target_os = "linux")),
+        // window.print(): WebView2 and WebKitGTK; a silent no-op in WKWebView (macOS)
+        "print": cfg!(any(windows, target_os = "linux")),
+        "ocr": ocr::engine_name().is_some(),
         "ffmpeg": ffmpeg::locate().is_ok(),
         "systemChangesDisabled": system_changes_disabled(),
     })

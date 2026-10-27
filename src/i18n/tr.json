@@ -414,7 +414,7 @@
       "found": "{n} satır tanındı · metni seçebilirsiniz",
       "none": "Metin bulunamadı",
       "copyAll": "Tümünü kopyala",
-      "noLanguage": "Windows'ta metin tanıma dili yüklü değil (Ayarlar > Dil)",
+      "noLanguage": "Metin tanıma dili yüklü değil (Windows: Ayarlar > Dil; Linux: tesseract-ocr-<dil> paketi)",
       "unsupported": "Metin tanıma bu dosyada / sistemde kullanılamıyor"
     },
     "props": {
@@ -500,6 +500,7 @@
       "ocrNoLanguage": "Bu bilgisayarda metin tanıma dili bulunamadı.",
       "toolsHeading": "Medya araçları (ffmpeg)",
       "toolsInfo": "{version} · H.264 kodlayıcı: {encoder}",
+      "fallbackEncoder": "{name} (H.264 yok, yedek kodlayıcı)",
       "none": "yok"
     }
   },
