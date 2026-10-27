@@ -99,6 +99,9 @@ pub const SUPPORT: &[(&str, Support, Support, Support)] = &[
     ("system.mediaControls", T, No, No),
     ("audio.gapless", T, No, No),
     ("audio.replayGain", T, U, U),
+    ("net.streams", T, U, U),
+    ("cast.dlna", U, U, U),
+    ("cast.chromecast", No, No, No),
 ];
 
 /// Support of `id` on `os` (unknown OS or id: unsupported).
@@ -304,6 +307,17 @@ pub fn build(i: &Inputs) -> Vec<Capability> {
             Some(if i.engine_available { "mpv-replaygain" } else { "webview-volume" }),
             (!i.engine_available).then_some("attenuation-only"),
         ),
+        // Network streams (L04): http(s) only; libmpv reconnects and plays HLS, the <video> fallback plays what the WebView can
+        entry(
+            "net.streams",
+            true,
+            Some(if i.engine_available { "mpv-lavf-reconnect" } else { "webview-video" }),
+            (!i.engine_available).then_some("webview-codecs-only"),
+        ),
+        // UPnP/DLNA renderer: tested against a simulated renderer only (no real device yet)
+        entry("cast.dlna", true, Some("upnp-avtransport"), None),
+        // Chromecast (CASTV2: TLS + protobuf) is not implemented
+        entry("cast.chromecast", false, None, Some("not-implemented")),
     ]
 }
 

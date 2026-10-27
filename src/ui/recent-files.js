@@ -10,6 +10,7 @@ import { formatTime } from "../core/format.js";
 import { recentId } from "../core/library.js";
 import { convertFileSrc, invoke } from "../core/tauri.js";
 import { isAudioOnlyName } from "../media/classify.js";
+import { hasSecret } from "../media/net-logic.js";
 import { resumeKey } from "../media/video-player.js";
 
 const THUMB_W = 192;
@@ -18,7 +19,8 @@ const THUMB_H = 108;
 /** Library entry for a playlist item (null for items that cannot be reopened, e.g. dropped File objects). */
 export function entryFromItem(item, now = Date.now()) {
   const id = recentId(item);
-  if (!id) return null;
+  // a stream URL with a password / token is not written to disk (L04)
+  if (!id || (!item.path && hasSecret(item.url))) return null;
   const name = item.name || id.split(/[\\/]/).pop() || id;
   const type = item.isImage ? "image" : isAudioOnlyName(name) ? "audio" : "video";
   return {
