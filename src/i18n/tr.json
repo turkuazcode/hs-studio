@@ -591,7 +591,8 @@
     "deepTooLarge": "Bu fotoğraf {w}×{h}. 4 kat çıktı bu cihazın AI bellek sınırını aşar: giriş {iw}×{ih} boyutuna küçültülecek, sonuç {ow}×{oh} olacak. Devam edilsin mi?",
     "deepQueued": "Sırada: önceki uzun iş bitince başlayacak…",
     "deepRunningEta": "İyileştiriliyor… %{pct} — {hw}, yaklaşık {eta} sn kaldı",
-    "deepPaused": "Duraklatıldı (oynatma sırasında veya uygulama kapanırken). Başlık çubuğundaki İşler panelinden devam eder."
+    "deepPaused": "Duraklatıldı (oynatma sırasında veya uygulama kapanırken). Başlık çubuğundaki İşler panelinden devam eder.",
+    "deepSavedTo": "Kopya kaydedildi: {name} (fotoğrafın klasöründe; EXIF ve saydamlık korundu)"
   },
   "ui": {
     "docTitle": "VHO - Video Oynatıcı",
@@ -1247,7 +1248,8 @@
       "pauseDuringPlaybackHelp": "Oynatma takılmasın diye çalışan AI işi duraklar; oynatma durunca kaldığı işten (doğrulanarak) devam eder.",
       "lastRun": "Son AI çalışması: {backend}, karo {tile} px, {sec} sn.",
       "noRun": "Bu oturumda henüz AI çalışması yok.",
-      "fallbacks": "Geri çekilmeler: {list}."
+      "fallbacks": "Geri çekilmeler: {list}.",
+      "metadata": "AI sonucunda meta veri (tarih, kamera, konum)"
     }
   }
 }
