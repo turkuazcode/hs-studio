@@ -1,0 +1,113 @@
+{
+  "about": "Performance budgets on the reference machine (Plan 14 Q02). Value = measured median x 1.5 (rounded up; timings at least median + 100 ms), so only a clear regression fails `npm run bench:media -- --check`. Plan 04/Q02 targets are listed separately under `targets`.",
+  "machine": {
+    "cpu": "AMD Ryzen 5 7535U with Radeon Graphics",
+    "threads": 12,
+    "ramGB": 31,
+    "gpu": "AMD Radeon(TM) Graphics",
+    "os": "Windows 10.0.26300",
+    "measured": "2026-10-26"
+  },
+  "budgets": {
+    "startup.firstDocumentMs": {
+      "max": 1003,
+      "measuredMedian": 668.4
+    },
+    "startup.cdpReachableMs": {
+      "max": 537,
+      "measuredMedian": 357.4
+    },
+    "firstFrame.html5.1080pH264Ms": {
+      "max": 241,
+      "measuredMedian": 140.4
+    },
+    "firstFrame.mpv.1080pH264Ms": {
+      "max": 335,
+      "measuredMedian": 223.1
+    },
+    "grid5000.firstPaintMs": {
+      "max": 136,
+      "measuredMedian": 36
+    },
+    "grid5000.scanMs": {
+      "max": 144,
+      "measuredMedian": 44
+    },
+    "grid5000.firstScreenThumbsColdMs": {
+      "max": 272,
+      "measuredMedian": 172
+    },
+    "playback.html5.1080pH264.cpuPercentOfOneCore": {
+      "max": 24,
+      "measuredMedian": 15.5
+    },
+    "playback.html5.1080pH264.peakTreeRamMB": {
+      "max": 960,
+      "measuredMedian": 639.8
+    },
+    "playback.html5.1080pH264.droppedFrames": {
+      "max": 5,
+      "measuredMedian": 1
+    },
+    "playback.mpv.1080pH264.cpuPercentOfOneCore": {
+      "max": 33,
+      "measuredMedian": 21.5
+    },
+    "playback.mpv.1080pH264.peakTreeRamMB": {
+      "max": 962,
+      "measuredMedian": 640.9
+    },
+    "playback.mpv.1080pH264.droppedFrames": {
+      "max": 5,
+      "measuredMedian": 0
+    },
+    "ai.photoX4.128px.webgpu.coldMs": {
+      "max": 38896,
+      "measuredMedian": 25930.5
+    },
+    "ai.photoX4.128px.webgpu.warmMs": {
+      "max": 17042,
+      "measuredMedian": 11361.1
+    },
+    "ai.photoX4.128px.webgpu.peakTreeRamMB": {
+      "max": 3314,
+      "measuredMedian": 2209
+    },
+    "ai.photoX4.128px.webgpu.peakGpuDedicatedMB": {
+      "max": 520,
+      "measuredMedian": 314.1
+    },
+    "ai.photoX4.128px.webgpu.peakGpuSharedMB": {
+      "max": 1610,
+      "measuredMedian": 1050.3
+    },
+    "ai.photoX4.128px.wasm.coldMs": {
+      "max": 143345,
+      "measuredMedian": 95563.1
+    },
+    "ai.photoX4.128px.wasm.warmMs": {
+      "max": 134839,
+      "measuredMedian": 89892.4
+    },
+    "ai.photoX4.128px.wasm.peakTreeRamMB": {
+      "max": 2334,
+      "measuredMedian": 1555.7
+    },
+    "ai.photoX4.128px.wasm.peakGpuDedicatedMB": {
+      "max": 233,
+      "measuredMedian": 150.8
+    },
+    "ai.photoX4.128px.wasm.peakGpuSharedMB": {
+      "max": 47,
+      "measuredMedian": 21.4
+    },
+    "grid5000.peakTreeRamMB": {
+      "max": 797,
+      "measuredMedian": 531
+    }
+  },
+  "targets": {
+    "grid5000.firstPaintMs": 2000,
+    "uiFeedbackP95Ms": 200
+  }
+}

@@ -13,6 +13,12 @@
 //!     a successful build or runtime probe never sets it.
 //!
 //! `reason_code` says why something is unavailable or limited (stable, machine readable).
+//!
+//! P04: `support` is the per-OS claim from the ONE feature table (`SUPPORT`, mirrored in
+//! docs/platform-support.md and checked against it by a test): `supported-tested`,
+//! `supported-untested` (code exists, no real-device test) or `unsupported` (the platform
+//! does not offer it or VHO does not implement it: never imitated by another action). An
+//! `unsupported` feature is never `available`, whatever the runtime inputs say.
 
 use serde::Serialize;
 
@@ -24,6 +30,87 @@ pub struct Capability {
     pub implementation: Option<&'static str>,
     pub verified: bool,
     pub reason_code: Option<&'static str>,
+    /// `supported-tested` | `supported-untested` | `unsupported` for this OS (`SUPPORT`)
+    pub support: &'static str,
+}
+
+/// Per-OS support of a feature.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Support {
+    /// Implemented and covered by automated tests on a real device of that OS
+    Tested,
+    /// Implemented (compiles for that OS) but not tested on a real device
+    Untested,
+    /// Not offered on that OS
+    No,
+}
+
+impl Support {
+    pub fn code(self) -> &'static str {
+        match self {
+            Support::Tested => "supported-tested",
+            Support::Untested => "supported-untested",
+            Support::No => "unsupported",
+        }
+    }
+    /// Text used in docs/platform-support.md
+    #[cfg_attr(not(test), allow(dead_code))]
+    pub fn doc(self) -> &'static str {
+        match self {
+            Support::Tested => "destekli/testli",
+            Support::Untested => "destekli/test bekliyor",
+            Support::No => "desteklenmiyor",
+        }
+    }
+}
+
+use Support::{No, Tested as T, Untested as U};
+
+/// THE feature table: (id, Windows x64, macOS arm64, Linux x64). Backend entries only; the
+/// WebView entries (`video.gpuFilter`, `video.compare`...) live in src/core/capabilities.js.
+/// Changing a cell needs the matching row in docs/platform-support.md (test
+/// `caps_support_table_matches_docs`) and, for `T`, the test that proves it.
+pub const SUPPORT: &[(&str, Support, Support, Support)] = &[
+    ("engine.libmpv", T, No, No),
+    ("engine.html5", T, U, U),
+    ("video.surface", T, No, No),
+    ("video.hwdec", U, No, No),
+    ("video.legacyTranscode", T, No, No),
+    ("encode.ffmpeg", T, U, U),
+    ("encode.h264", T, U, U),
+    ("photo.heic", U, U, U),
+    ("photo.avif", T, U, U),
+    ("photo.avifEncode", T, U, U),
+    ("photo.heicEncode", No, No, No),
+    ("photo.raw", T, U, U),
+    ("photo.rawEncode", No, No, No),
+    ("photo.exifOrientation", T, U, U),
+    ("photo.colorProfile", T, U, U),
+    ("actions.ocr", T, No, U),
+    ("actions.share", U, No, No),
+    ("actions.openWith", U, No, U),
+    ("actions.reveal", U, U, U),
+    ("actions.clipboardText", T, U, U),
+    ("actions.clipboardFiles", T, U, U),
+    ("actions.clipboardImage", T, U, U),
+    ("actions.print", U, No, U),
+    ("actions.wallpaper", U, U, U),
+    ("actions.lockScreen", U, No, No),
+    ("system.mediaControls", No, No, No),
+];
+
+/// Support of `id` on `os` (unknown OS or id: unsupported).
+pub fn support(id: &str, os: &str) -> Support {
+    SUPPORT
+        .iter()
+        .find(|r| r.0 == id)
+        .map(|&(_, w, m, l)| match os {
+            "windows" => w,
+            "macos" => m,
+            "linux" => l,
+            _ => No,
+        })
+        .unwrap_or(No)
 }
 
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
@@ -60,6 +147,11 @@ pub struct Inputs {
     pub raw_os: bool,
     pub os_codec: &'static str,
     pub ocr: bool,
+    /// OCR engine found at run time ("windows-media-ocr", "tesseract")
+    pub ocr_engine: Option<&'static str>,
+    /// Video encoder chosen by the runtime probe and whether it is the non-H.264 fallback
+    pub video_encoder: Option<(&'static str, bool)>,
+    pub print: bool,
     pub share: bool,
     pub wallpaper: bool,
     pub lock_screen: bool,
@@ -73,19 +165,6 @@ pub struct Inputs {
 pub fn verified_platform(os: &str, arch: &str) -> bool {
     matches!((os, arch), ("windows", "x86_64"))
 }
-
-/// Features with automated test evidence on a verified platform (Rust and/or E2E suite).
-/// Anything not listed stays `verified: false` even where it is available.
-const TESTED_ON_VERIFIED_PLATFORM: &[&str] = &[
-    "engine.libmpv",
-    "engine.html5",
-    "video.surface",
-    "encode.ffmpeg",
-    "photo.avif",
-    "photo.avifEncode",
-    "photo.raw",
-    "actions.ocr",
-];
 
 pub fn webview_for(os: &str) -> &'static str {
     match os {
@@ -113,12 +192,27 @@ pub fn engine_reason(os: &str, error: Option<&str>) -> &'static str {
 /// Pure: inputs -> entries. Unit tested with the Windows scenarios of P01.
 pub fn build(i: &Inputs) -> Vec<Capability> {
     let verified_os = verified_platform(i.os, i.arch);
-    let entry = |id: &'static str, available: bool, implementation: Option<&'static str>, reason: Option<&'static str>| Capability {
-        id,
-        available,
-        implementation,
-        verified: available && verified_os && TESTED_ON_VERIFIED_PLATFORM.contains(&id),
-        reason_code: if available { reason } else { Some(reason.unwrap_or("unavailable")) },
+    let entry = |id: &'static str, available: bool, implementation: Option<&'static str>, reason: Option<&'static str>| {
+        let sup = support(id, i.os);
+        // the table wins: an unsupported feature is never offered, whatever a probe says
+        let available = available && sup != No;
+        Capability {
+            id,
+            available,
+            implementation: if available { implementation } else { None },
+            verified: available && verified_os && sup == T,
+            reason_code: if available {
+                reason
+            } else if sup == No {
+                Some(match reason {
+                    Some(r) if r != "unavailable" && !r.starts_with("system-") => r,
+                    _ => "unsupported-platform",
+                })
+            } else {
+                Some(reason.unwrap_or("unavailable"))
+            },
+            support: sup.code(),
+        }
     };
     let windows = i.os == "windows";
     let engine_reason = (!i.engine_available).then(|| engine_reason(i.os, i.engine_error.as_deref()));
@@ -148,6 +242,18 @@ pub fn build(i: &Inputs) -> Vec<Capability> {
         // Legacy-codec transcode for the HTML5 fallback (Media Foundation)
         entry("video.legacyTranscode", windows, windows.then_some("media-foundation"), (!windows).then_some("unsupported-platform")),
         entry("encode.ffmpeg", i.ffmpeg, i.ffmpeg.then_some("ffmpeg-lgpl"), (!i.ffmpeg).then_some("ffmpeg-missing")),
+        // H.264 export: runtime-probed encoder (P04); the mpeg4 fallback keeps exports working
+        entry(
+            "encode.h264",
+            i.ffmpeg && i.video_encoder.is_some_and(|(_, fallback)| !fallback),
+            i.video_encoder.map(|(name, _)| name),
+            Some(match i.video_encoder {
+                _ if !i.ffmpeg => "ffmpeg-missing",
+                Some((_, true)) => "h264-unavailable-fallback-mpeg4",
+                Some((_, false)) => "runtime-probed",
+                None => "not-probed",
+            }),
+        ),
         entry("photo.heic", i.heic, i.heic.then_some(i.os_codec), (!i.heic).then_some("codec-missing")),
         entry(
             "photo.avif",
@@ -156,10 +262,32 @@ pub fn build(i: &Inputs) -> Vec<Capability> {
             if i.avif_works { None } else if i.avif_installed { Some("codec-failed") } else { Some("codec-missing") },
         ),
         entry("photo.avifEncode", true, Some("rust-image-ravif"), None),
+        // Viewable is not exportable: HEIC/RAW sources are written as JPEG (or another chosen format)
+        entry("photo.heicEncode", false, None, Some("export-as-jpeg")),
+        entry("photo.rawEncode", false, None, Some("export-as-jpeg")),
+        // EXIF orientation: applied by VHO for native/RAW decodes; the OS HEIF decoder applies irot/imir
+        entry("photo.exifOrientation", true, Some("exif-and-os-heif"), None),
+        // ICC profiles pass through native decodes and (Windows) WIC decodes into the display copy and exports
+        entry(
+            "photo.colorProfile",
+            true,
+            Some(if windows { "icc-passthrough-wic" } else { "icc-passthrough-native" }),
+            (!windows).then_some("os-decoder-icc-dropped"),
+        ),
         // RAW: the embedded JPEG preview always; a full OS RAW decoder only where installed
         entry("photo.raw", true, Some(if i.raw_os { "os-raw-codec" } else { "embedded-jpeg-preview" }), (!i.raw_os).then_some("raw-preview-only")),
-        entry("actions.ocr", i.ocr, i.ocr.then_some("windows-media-ocr"), (!i.ocr).then_some("unsupported-platform")),
+        entry(
+            "actions.ocr",
+            i.ocr,
+            i.ocr_engine,
+            if i.ocr { Some("installed-languages-only") } else if i.os == "linux" { Some("tesseract-missing") } else { Some("not-implemented") },
+        ),
         entry("actions.share", i.share, i.share.then_some("windows-share-ui"), os_action(i.share)),
+        entry("actions.reveal", true, Some("os-file-manager"), os_action(true)),
+        entry("actions.clipboardText", true, Some("arboard"), None),
+        entry("actions.clipboardFiles", true, Some(if windows { "arboard-cf-hdrop" } else { "arboard-file-list" }), None),
+        entry("actions.clipboardImage", true, Some("arboard"), None),
+        entry("actions.print", i.print, i.print.then_some("webview-print"), os_action(i.print)),
         entry("actions.wallpaper", i.wallpaper, i.wallpaper.then_some("os-wallpaper"), os_action(i.wallpaper)),
         entry("actions.lockScreen", i.lock_screen, i.lock_screen.then_some("windows-lockscreen"), os_action(i.lock_screen)),
         entry("actions.openWith", i.open_with, i.open_with.then_some("os-open-with"), os_action(i.open_with)),
@@ -191,6 +319,13 @@ pub fn gather(engine: &serde_json::Value) -> Inputs {
         wallpaper: flag("wallpaper"),
         lock_screen: flag("lockScreen"),
         open_with: flag("openWith"),
+        print: flag("print"),
+        ocr_engine: actions::ocr::engine_name(),
+        video_encoder: if flag("ffmpeg") {
+            actions::ffmpeg::encoder_choice().map(|c| (c.encoder.name, c.fallback))
+        } else {
+            None
+        },
         system_changes_disabled: flag("systemChangesDisabled"),
     }
 }
@@ -230,6 +365,9 @@ mod tests {
             wallpaper: true,
             lock_screen: true,
             open_with: true,
+            print: true,
+            ocr_engine: Some("windows-media-ocr"),
+            video_encoder: Some(("h264_mf", false)),
             ..Default::default()
         }
     }
@@ -327,5 +465,91 @@ mod tests {
         }
         assert_eq!(report(&windows()).platform.webview, "webview2");
         assert!(!get(&build(&windows()), "system.mediaControls").available);
+    }
+
+    #[test]
+    fn caps_support_table_rules() {
+        // every built entry has a table row (and vice versa)
+        let built = build(&windows());
+        for c in &built {
+            assert!(SUPPORT.iter().any(|r| r.0 == c.id), "{} missing in SUPPORT", c.id);
+        }
+        for r in SUPPORT {
+            assert!(built.iter().any(|c| c.id == r.0), "{} in SUPPORT but not built", r.0);
+        }
+        // an unsupported cell is never available, even when the probe inputs say yes
+        for os in ["windows", "macos", "linux"] {
+            let mut i = windows();
+            i.os = os;
+            i.arch = if os == "macos" { "aarch64" } else { "x86_64" };
+            for c in build(&i) {
+                let sup = support(c.id, os);
+                assert_eq!(c.support, sup.code());
+                if sup == No {
+                    assert!(!c.available && c.implementation.is_none() && c.reason_code.is_some(), "{os} {}", c.id);
+                }
+                if c.verified {
+                    assert!(os == "windows" && sup == T, "{os} {}", c.id);
+                }
+            }
+        }
+        // no imitation: macOS share / open-with / lock screen / OCR / print are unsupported
+        for id in ["actions.share", "actions.openWith", "actions.lockScreen", "actions.ocr", "actions.print"] {
+            assert_eq!(support(id, "macos"), No, "{id}");
+        }
+        // viewable != exportable
+        for id in ["photo.heicEncode", "photo.rawEncode"] {
+            let c = get(&built, id);
+            assert!(!c.available);
+            assert_eq!(c.reason_code, Some("export-as-jpeg"));
+        }
+    }
+
+    #[test]
+    fn caps_encoder_and_ocr_runtime_inputs() {
+        let c = get(&build(&windows()), "encode.h264");
+        assert!(c.available && c.verified);
+        assert_eq!((c.implementation, c.reason_code), (Some("h264_mf"), Some("runtime-probed")));
+        let mut i = windows();
+        i.video_encoder = Some(("mpeg4", true));
+        let c = get(&build(&i), "encode.h264");
+        assert!(!c.available);
+        assert_eq!(c.reason_code, Some("h264-unavailable-fallback-mpeg4"));
+        i.ffmpeg = false;
+        assert_eq!(get(&build(&i), "encode.h264").reason_code, Some("ffmpeg-missing"));
+        // Linux OCR: only with a tesseract binary found at run time
+        let mut l = windows();
+        l.os = "linux";
+        l.ocr = false;
+        l.ocr_engine = None;
+        assert_eq!(get(&build(&l), "actions.ocr").reason_code, Some("tesseract-missing"));
+        l.ocr = true;
+        l.ocr_engine = Some("tesseract");
+        let c = get(&build(&l), "actions.ocr");
+        assert!(c.available && !c.verified);
+        assert_eq!((c.implementation, c.support), (Some("tesseract"), "supported-untested"));
+    }
+
+    /// docs/platform-support.md shows the same three cells for every `SUPPORT` id.
+    #[test]
+    fn caps_support_table_matches_docs() {
+        let doc = std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../docs/platform-support.md")).unwrap();
+        for &(id, w, m, l) in SUPPORT {
+            let tick = format!("(`{id}`)");
+            // the matrix row: first cell "<name> (`id`)" and five cells (reason-code rows also mention ids)
+            let cells: Vec<&str> = doc
+                .lines()
+                .filter(|r| r.starts_with('|'))
+                .map(|r| r.split('|').map(str::trim).collect::<Vec<_>>())
+                .find(|c| c.len() == 7 && c[1].ends_with(&tick))
+                .unwrap_or_else(|| panic!("docs: no matrix row for {id}"));
+            for (k, sup) in [(2, w), (3, m), (4, l)] {
+                assert!(cells[k].starts_with(sup.doc()), "docs {id} column {k}: '{}' should start with '{}'", cells[k], sup.doc());
+                // "destekli/test" must not match "destekli/testli" and vice versa
+                if sup == U {
+                    assert!(!cells[k].starts_with("destekli/testli"), "{id}");
+                }
+            }
+        }
     }
 }

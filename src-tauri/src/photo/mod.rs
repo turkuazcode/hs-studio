@@ -141,7 +141,7 @@ fn new_job_id(prefix: &str) -> String {
 // ---------------------------------------------------------------------------
 
 fn cache_root(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app.path().app_cache_dir().map_err(|e| e.to_string())?.join("photo");
+    let dir = crate::platform::cache_dir(app)?.join("photo");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     // Thumbnails + converted images are served to the webview through the asset protocol
     static ALLOWED: OnceLock<()> = OnceLock::new();

@@ -1,0 +1,7 @@
+blank_issues_enabled: false
+# Security problems are reported privately to turkuazcode@gmail.com (SECURITY.md), never as issues.
+# Once the repository URL exists, add a contact link to its security policy page, e.g.:
+# contact_links:
+#   - name: Security vulnerability / Güvenlik açığı
+#     url: https://github.com/<owner>/<repo>/security/policy
+#     about: Report privately to turkuazcode@gmail.com (see SECURITY.md), not as a public issue.
