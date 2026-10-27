@@ -49,7 +49,7 @@ export function playbackAction({ playing, media, enabled, running = [], paused =
 }
 
 /** Decodes a local photo (HEIC/RAW through the backend's display copy) at the given size. */
-async function loadPixels(invoke, convertFileSrc, path, width, height) {
+export async function loadPixels(invoke, convertFileSrc, path, width, height) {
   const d = await invoke("photo_decode", { path, maxSize: null });
   // fetch + ImageBitmap: same-origin pixels (an <img> from the asset protocol taints the
   // canvas); EXIF orientation applied once, colours converted to sRGB by the browser
