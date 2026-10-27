@@ -12,7 +12,7 @@ Bu belge her desteklenen özelliğin hangi test katmanında kanıtlandığını 
 | Rust / entegrasyon | `npm run test:rust` (= `cargo test --release --lib --manifest-path src-tauri/Cargo.toml`) | `src-tauri/src/**` içindeki `#[cfg(test)]` modülleri | Dosya/DB göçü, indirme+hash (yerel HTTP fixture), zip güvenliği, fotoğraf codec/EXIF, ffmpeg işleri, yetenek matrisi | Yalnızca loopback | Her değişiklik |
 | Uygulama E2E | `npm run e2e` | `tests/e2e/*.e2e.mjs` | **Yeni release binary** + gerçek libmpv/WebView2; kullanıcı akışları CDP ile | Yerel fixture sunucuları; dış istek yok (`i18n-offline` kanıtlar) | Windows PR |
 | Gerçek AI smoke | `npm run test:ai` | `tests/ai/*.ai.mjs` | Gerçek, hash doğrulanmış model + ORT Web ile uygulama içinde çıkarım; çıktı referansla karşılaştırılır | İlk çalıştırmada model indirme (bir kez), sonra önbellekten | AI değişikliği, sürüm adayı |
-| Kalite / performans | `npm run test:quality`, `npm run bench:media` | `tests/quality/*.quality.mjs` (henüz yok) | Q02: doğallık, yüz/yazı, zamansal tutarlılık, hız/bellek | — | **HENÜZ DOLDURULMADI** (Q02). Komutlar “0 test çalıştı, hiçbir şey geçmedi” yazar |
+| Kalite / performans | `npm run test:quality`, `npm run bench:media` (+ `npm run quality:ab`) | `tests/quality/*.quality.mjs`, `tests/quality/manifest.json`, `scripts/bench-media.mjs` | Q02: kamu malı + sentetik küme (15 fotoğraf, 6 klip, 3 yapısal), eşit çözünürlükte profiller, PSNR/SSIM/GMSD + yüz/yazı bölgeleri, zamansal hata, kırmızı bayraklar, tabana göre gerileme kapısı; açılış/ilk kare/ızgara/oynatma/AI süre-bellek bütçeleri | İlk çalıştırmada kaynak indirme (~29 MB, bir kez; GFPGAN 170 MB AI önbelleğine bir kez) | Model/recipe değişikliği, beta öncesi. Ayrıntı: [benchmarks/README.md](../benchmarks/README.md) |
 
 `scripts/run-tests.mjs` her katmanda:
 
@@ -71,13 +71,19 @@ Dosya argümanı verilirse varsayılan liste yerine o dosyalar çalışır (`npm
 | Medya eylemleri (kes/dönüştür/GIF/altyazı/etiket/OCR/sil/yeniden adlandır) | `actions` | `actions::*` | `actions` | — | — | Paylaş/yazdır/duvar kâğıdı tasarım gereği yalnızca loglanır |
 | Kalıcı depolama (`library.db`, göç, yedek) | `library-db` | `storage::*` | `storage` | — | — | |
 | AI bileşen yönetimi (manifest, indirme, hash, iptal, onarım, zip) | `ai-status` | `ai::tests` (yerel HTTP) | `ai-models` (yerel fixture sunucusu) | **gerçek CDN/HF indirmesi + tam SHA-256** | — | |
-| Fotoğraf AI ×4 (DAT-2, WebGPU→WASM, parçalı çıkarım) | `onnx-patch` | — | `smoke` (worker modülü yüklenir) | **`photo-x4.ai`**: boyut/sonlu/sabit değil/kanal/alpha/referans | Q02 (yok) | Alpha 255'e sabit, EXIF/ICC korunmuyor (A04) |
-| Yüz iyileştirme (GFPGAN + YuNet) | — | — | — | **kanıt yok** | Q02 (yok) | Sonraki gerçek AI smoke adayı (170 MB model) |
+| Fotoğraf AI ×4 (DAT-2, WebGPU→WASM, parçalı çıkarım) | `onnx-patch` | — | `smoke` (worker modülü yüklenir) | **`photo-x4.ai`**: boyut/sonlu/sabit değil/kanal/alpha/referans | `photo.quality` (15 örnek), `bench:media` ai | Alpha 255'e sabit, EXIF/ICC korunmuyor (A04) |
+| Yüz iyileştirme (GFPGAN + YuNet) | — | — | — | gerçek model `photo.quality` içinde (`vho-x4-faces`) | `photo.quality` | Sonraki gerçek AI smoke adayı (170 MB model) |
 | Video “AI” restorasyonu | — | — | `video` (“hazır değil” etiketi) | — | — | V01–V06 |
 | Video restorasyonu V01: kaynak ölçümü (alan sırası/idet, CFR/VFR, SAR/rotation, renk/HDR, çoklu ses) + reçete/hash | — | `restoration::tests` (saf kurallar + ffmpeg lavfi ile üretilen fixture'lar; ffmpeg `VHO_FFMPEG` ya da `src-tauri/target/release` içinde **olmalı**, yoksa test başarısız) | `restoration` (IPC, üretilmiş fixture'lar) | — | taban çizgisi CPU hızı: `experiments/video-restoration/baseline-speed.ps1` (Q02 değil) | UI yok (V04) |
-| Kalite karşılaştırması, hız/bellek bütçeleri | — | — | — | — | **HENÜZ DOLDURULMADI** | Q02 |
+| Kalite karşılaştırması, hız/bellek bütçeleri | `quality-metrics` (ölçütler, manifest) | — | — | `photo.quality` (photo-x4, GFPGAN) | `photo.quality`, `video.quality`, `bench:media` | Kör A/B değerlendirmesi henüz yapılmadı |
 | Lisans envanteri, bildirimler, SBOM (R01) | `legal-inventory` (AI manifest ↔ models.json, yerel DLL listesi ↔ derleme kanıtı, bildirimde her DLL/model, gönderilen varlıklar envanterde, SBOM hash'leri, politika reddi yok) | — | `smoke` (Lisanslar penceresi) | — | — | SBOM üretimi `npm run sbom` (cargo metadata, ağsız) birim testte çalışmaz; commit edilen SBOM denetlenir |
 | İş kuyruğu (A02), kütüphane UI (L02) | paralel dallarda ekleniyor | | | | | Testleri kendi katmanına eklenir; bu harita birleştirmede güncellenir |
+
+## Test yalıtımı
+
+- `VHO_DATA_DIR` verilen her test örneği kendi kimliğini alır (`com.vho.app.test<fnv1a(küçük harf veri klasörü)>`, `platform.rs` `test_identifier`). Tauri bu kimlikle `%APPDATA%` / `%LOCALAPPDATA%` altında klasör açar; `tests/e2e/lib/app.mjs` kapanışta **yalnızca o veri klasörünün** kimlik klasörlerini siler (`removeIdentityDirs`). Kimlik türetmesi Rust ve JS testlerinde aynı vektörle bağlanır; `tests/e2e/test-isolation.e2e.mjs` kapanış sonrası klasör kalmadığını kanıtlar.
+- Önbellekler (fotoğraf küçük resimleri, kare yakalama, dönüştürme) test modunda `<VHO_DATA_DIR>/cache` altındadır; kullanıcının önbellek klasörüne yazılmaz.
+- Eski koşulardan kalanlar: `npm run clean:test-artifacts` (varsayılan kuru çalışma, `-- --apply` siler) yalnızca 2 saatten eski ve kullanımda olmayan `com.vho.app.test<16 hex>` ve kurulu olarak kayıtlı olmayan `com.vho.app.packagetest*` klasörlerini siler; `com.vho.app` hiçbir zaman. 2026-10-26 ilk çalıştırma: 974 klasör, 31,7 MB silindi; 135 yeni klasör (2 saatten genç, başka ajanların koşuları) atlandı.
 
 ## Bilinen sınırlar
 
