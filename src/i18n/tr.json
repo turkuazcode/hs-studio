@@ -54,7 +54,8 @@
       "shortcuts": "Kısayollar",
       "advanced": "Gelişmiş",
       "about": "Hakkında / Lisanslar",
-      "components": "AI modelleri"
+      "components": "AI modelleri",
+      "library": "Kütüphane"
     },
     "headings": {
       "enhance": "Görüntü filtreleri",
@@ -101,7 +102,8 @@
       "subPosition": "Altyazı konumu (100 = en alt)",
       "eqPreset": "Ekolayzır hazır ayarı",
       "hwdec": "Donanım ile video çözme",
-      "fastProfile": "Hızlı görüntü profili (profile=fast)"
+      "fastProfile": "Hızlı görüntü profili (profile=fast)",
+      "checkUpdates": "Güncellemeleri otomatik denetle"
     },
     "help": {
       "defaultApps": "Windows, uygulamaların kendini varsayılan yapmasına izin vermez; açılan pencerede VHO'yu seçin.",
@@ -111,7 +113,8 @@
       "normalize": "Sessiz ve gürültülü sahneleri dengeler (dynaudnorm).",
       "fastProfile": "Dahili ekran kartlarında GPU yükünü azaltır.",
       "fastProfileGpu": "Dahili ekran kartlarında GPU yükünü azaltır. Bu bilgisayar: {gpu}.",
-      "fastProfileGpuIntegrated": "Dahili ekran kartlarında GPU yükünü azaltır. Bu bilgisayar: {gpu} (dahili)."
+      "fastProfileGpuIntegrated": "Dahili ekran kartlarında GPU yükünü azaltır. Bu bilgisayar: {gpu} (dahili).",
+      "checkUpdates": "Açılışta bir kez. Güncellemeler imzalıdır ve yalnızca Kur'a tıkladığınızda kurulur; medyanızla ilgili hiçbir şey gönderilmez."
     },
     "options": {
       "languageSystem": "Sistem dili",
@@ -146,7 +149,7 @@
     },
     "about": {
       "description": "Video, fotoğraf ve müzik için açık kaynak medya stüdyosu.",
-      "license": "MIT lisansı · Geliştirici: Halil SARITAŞ · TurkuazCode"
+      "license": "Apache-2.0 lisansı · Geliştirici: Halil SARITAŞ · TurkuazCode"
     }
   },
   "shortcuts": {
@@ -220,7 +223,8 @@
       "openWith": "Birlikte aç",
       "showInFolder": "Klasörde göster",
       "lyrics": "Şarkı sözleri",
-      "tagEditor": "Etiketler"
+      "tagEditor": "Etiketler",
+      "library": "Kütüphane"
     }
   },
   "actions": {
@@ -414,7 +418,7 @@
       "found": "{n} satır tanındı · metni seçebilirsiniz",
       "none": "Metin bulunamadı",
       "copyAll": "Tümünü kopyala",
-      "noLanguage": "Windows'ta metin tanıma dili yüklü değil (Ayarlar > Dil)",
+      "noLanguage": "Metin tanıma dili yüklü değil (Windows: Ayarlar > Dil; Linux: tesseract-ocr-<dil> paketi)",
       "unsupported": "Metin tanıma bu dosyada / sistemde kullanılamıyor"
     },
     "props": {
@@ -500,7 +504,8 @@
       "ocrNoLanguage": "Bu bilgisayarda metin tanıma dili bulunamadı.",
       "toolsHeading": "Medya araçları (ffmpeg)",
       "toolsInfo": "{version} · H.264 kodlayıcı: {encoder}",
-      "none": "yok"
+      "none": "yok",
+      "fallbackEncoder": "{name} (H.264 yok, yedek kodlayıcı)"
     }
   },
   "effects": {
@@ -587,7 +592,12 @@
     "deepToast": "✨ Fotoğraf AI ile iyileştirildi",
     "deepCancelled": "İptal edildi.",
     "deepFailed": "⚠️ İyileştirme başarısız: {error}",
-    "deepSaved": "İyileştirilmiş fotoğraf kaydedildi"
+    "deepSaved": "İyileştirilmiş fotoğraf kaydedildi",
+    "deepTooLarge": "Bu fotoğraf {w}×{h}. 4 kat çıktı bu cihazın AI bellek sınırını aşar: giriş {iw}×{ih} boyutuna küçültülecek, sonuç {ow}×{oh} olacak. Devam edilsin mi?",
+    "deepQueued": "Sırada: önceki uzun iş bitince başlayacak…",
+    "deepRunningEta": "İyileştiriliyor… %{pct} — {hw}, yaklaşık {eta} sn kaldı",
+    "deepPaused": "Duraklatıldı (oynatma sırasında veya uygulama kapanırken). Başlık çubuğundaki İşler panelinden devam eder.",
+    "deepSavedTo": "Kopya kaydedildi: {name} (fotoğrafın klasöründe; EXIF ve saydamlık korundu)"
   },
   "ui": {
     "docTitle": "VHO - Video Oynatıcı",
@@ -1173,6 +1183,201 @@
       "busy": "Bileşen şu anda indiriliyor veya doğrulanıyor.",
       "archive-invalid": "Model arşivi geçersiz veya izin verilmeyen içerik barındırıyor.",
       "io": "Dosya işlemi başarısız oldu."
+    }
+  },
+  "library": {
+    "title": "Kütüphane",
+    "entry": "Kütüphane",
+    "search": "Kütüphanede ara (ad, başlık, sanatçı, etiket)…",
+    "viewLabel": "Görünüm",
+    "more": "Diğer seçenekler",
+    "tabs": {
+      "video": "Videolar",
+      "audio": "Müzik",
+      "lists": "Listeler"
+    },
+    "views": {
+      "all": "Tümü",
+      "continue": "Devam et",
+      "recentlyAdded": "Son eklenenler",
+      "favorites": "Favoriler",
+      "missing": "Bulunamayanlar",
+      "mostPlayed": "En çok oynatılanlar"
+    },
+    "status": {
+      "offline": "çevrimdışı",
+      "missing": "bulunamadı"
+    },
+    "resumeAt": "{time} konumunda kaldı",
+    "count": "{n} öğe",
+    "empty": {
+      "noFolders": "Kütüphanede klasör yok. Bir klasör eklediğinizde VHO onu tarar ve güncel tutar.",
+      "noMatch": "Aramayla eşleşen öğe yok.",
+      "none": "Bu görünümde öğe yok."
+    },
+    "scan": {
+      "running": "Taranıyor… {n} dosya",
+      "tags": "Müzik etiketleri okunuyor…"
+    },
+    "toast": {
+      "nothingToPlay": "Oynatılabilecek dosya yok",
+      "offline": "{name}: disk çevrimdışı",
+      "missing": "{name}: dosya bulunamadı",
+      "folder": {
+        "added": "Kütüphaneye eklendi: {name}",
+        "exists": "Bu klasör zaten kütüphanede: {name}",
+        "covered": "Bu klasör zaten kütüphanedeki {name} içinde"
+      }
+    },
+    "addFolder": "Klasör ekle…",
+    "rescan": "Şimdi tara",
+    "cancelScan": "Taramayı durdur",
+    "settings": "Kütüphane ayarları",
+    "removeFolder": "Kütüphaneden çıkar",
+    "removeConfirm": "\"{name}\" kütüphaneden çıkarılsın mı? Dosyalar diskte kalır; favori, yıldız ve etiketler korunur.",
+    "settingsIntro": "Kütüphane klasörleri sürekli taranır ve güncel tutulur. Fotoğraf Stüdyosu'nda bir klasöre göz atmak veya bir dosyayı açmak onu kütüphaneye eklemez.",
+    "folderStatus": {
+      "online": "bağlı",
+      "offline": "çevrimdışı (disk/ağ bağlı değil)",
+      "missing": "klasör bulunamadı"
+    },
+    "fields": {
+      "watch": "Klasörlerdeki değişiklikleri anında izle",
+      "reconcile": "Klasörleri düzenli olarak yeniden denetle"
+    },
+    "reconcile": {
+      "off": "Yalnızca açılışta ve elle",
+      "m15": "15 dakikada bir",
+      "m30": "30 dakikada bir",
+      "m60": "Saatte bir",
+      "m240": "4 saatte bir"
+    },
+    "lists": {
+      "import": "Liste dosyası içe aktar…",
+      "saveQueue": "Oynatma listesini kaydet…",
+      "count": "{n} öğe",
+      "play": "Oynat",
+      "export": "Dışa aktar…",
+      "delete": "Listeyi sil",
+      "empty": "Kayıtlı liste yok.",
+      "fileType": "Oynatma listesi",
+      "saveTitle": "Listeyi kaydet",
+      "name": "Liste adı",
+      "save": "Kaydet",
+      "queueEmpty": "Oynatma listesi boş",
+      "defaultName": "Yeni liste",
+      "saved": "\"{name}\" kaydedildi ({n} öğe)",
+      "imported": "\"{name}\" içe aktarıldı: {n} öğe, {missing} bulunamadı",
+      "skippedEntries": "{n} desteklenmeyen satır atlandı (uzak içerik indirilmez, çalıştırılmaz)",
+      "missingItems": "{n} dosya bulunamadı ve atlandı",
+      "exported": "Liste kaydedildi ({n} öğe)",
+      "more": "Liste seçenekleri",
+      "openFile": "Liste dosyası aç…",
+      "exportQueue": "Dışa aktar (M3U/PLS)…",
+      "manage": "Kayıtlı listeler…"
+    },
+    "photo": {
+      "rating": "Yıldız",
+      "ratingClear": "Yıldızı kaldır",
+      "tags": "Etiketler…",
+      "tagsTitle": "Etiketler",
+      "tagsLabel": "Etiketler (virgülle ayırın)",
+      "tagsSaved": "Etiketler kaydedildi",
+      "ratingSaved": "{n} öğeye {stars} verildi",
+      "ratingCleared": "Yıldız kaldırıldı",
+      "minRating": "En az yıldız",
+      "anyRating": "Tümü",
+      "tagsInfo": "Etiketler"
+    }
+  },
+  "jobs": {
+    "title": "İşler",
+    "button": "Arka plan işleri",
+    "clearFinished": "Bitenleri temizle",
+    "empty": "İş yok",
+    "waiting": "Sırada bekliyor…",
+    "interruptedNotice": "Uygulama kapanırken yarıda kalan işler var. Devam etmek için başlık çubuğundaki İşler düğmesini kullanın.",
+    "continueHint": "Biten dosyalar tekrar işlenmez",
+    "items": "{done} / {total}",
+    "kind": {
+      "export": "Dışa aktarma: {name}",
+      "photoOne": "Fotoğraf işlemi: {name}",
+      "photoBatch": "Toplu fotoğraf işlemi ({n} dosya)",
+      "other": "İş",
+      "aiPhoto": "AI ile iyileştirme: {name}"
+    },
+    "state": {
+      "queued": "Sırada",
+      "running": "Çalışıyor",
+      "pausing": "Duraklatılıyor…",
+      "paused": "Duraklatıldı",
+      "cancelling": "İptal ediliyor…",
+      "cancelled": "İptal edildi",
+      "completed": "Tamamlandı",
+      "failed": "Hata",
+      "interrupted": "Yarıda kaldı"
+    },
+    "action": {
+      "continue": "Devam et",
+      "restart": "Baştan başlat",
+      "pause": "Duraklat",
+      "cancel": "İptal",
+      "reveal": "Klasörde göster",
+      "remove": "Listeden kaldır"
+    },
+    "error": {
+      "sourceChanged": "Kaynak dosya değişti; yalnızca baştan başlatılabilir.",
+      "sourceMissing": "Kaynak dosya bulunamadı.",
+      "modelChanged": "Kullanılan araç/model sürümü değişti; yalnızca baştan başlatılabilir.",
+      "recipeChanged": "İş ayarları bu sürümle uyuşmuyor; baştan başlatın.",
+      "diskFull": "Diskte yeterli boş alan yok.",
+      "itemsFailed": "{n} dosya işlenemedi.",
+      "noFfmpeg": "ffmpeg bulunamadı.",
+      "unsupported": "Bu biçim desteklenmiyor.",
+      "invalidState": "Bu iş şu an bu işlemi kabul etmiyor.",
+      "notFound": "İş bulunamadı.",
+      "storageUnavailable": "İş kuyruğu kullanılamıyor.",
+      "failed": "İşlem başarısız oldu.",
+      "memory": "Bellek yetmedi (ekran kartı ve işlemci denendi). Daha küçük bir fotoğrafla deneyin.",
+      "modelFailed": "Model yüklenemedi veya çalıştırılamadı. Ayarlar > AI modelleri'nden onarın.",
+      "runnerUnavailable": "AI çalıştırıcısı hazır değildi; devam ettirerek yeniden deneyin."
+    }
+  },
+  "aiRuntime": {
+    "hwCpu": "İşlemci (WebAssembly)",
+    "hwGpu": "Ekran kartı (WebGPU: {name})",
+    "hwGpuGeneric": "Ekran kartı (WebGPU)",
+    "failed": "Yapay zekâ modeli çalıştırılamadı",
+    "facesFailed": "Yüz iyileştirme çalıştırılamadı",
+    "backend": {
+      "webgpu": "ekran kartı (WebGPU)",
+      "wasm": "işlemci (WebAssembly)"
+    },
+    "settings": {
+      "pauseDuringPlayback": "Video veya müzik oynarken AI işlerini duraklat",
+      "pauseDuringPlaybackHelp": "Oynatma takılmasın diye çalışan AI işi duraklar; oynatma durunca kaldığı işten (doğrulanarak) devam eder.",
+      "lastRun": "Son AI çalışması: {backend}, karo {tile} px, {sec} sn.",
+      "noRun": "Bu oturumda henüz AI çalışması yok.",
+      "fallbacks": "Geri çekilmeler: {list}.",
+      "metadata": "AI sonucunda meta veri (tarih, kamera, konum)"
+    }
+  },
+  "updates": {
+    "checkNow": "Şimdi denetle",
+    "install": "Kur",
+    "toast": "{version} sürümü hazır (Ayarlar > Genel).",
+    "confirmInstall": "{version} sürümü kurulsun mu? Kurulum sırasında uygulama kapanır; ayarlarınız ve kütüphaneniz korunur.",
+    "status": {
+      "checking": "Denetleniyor…",
+      "available": "{version} sürümü hazır (sizdeki: {current}).",
+      "none": "En güncel sürümü kullanıyorsunuz ({current}).",
+      "offline": "Güncelleme sunucusuna bağlanılamadı.",
+      "notConfigured": "Henüz bir güncelleme sunucusu tanımlı değil.",
+      "signature": "Güncelleme reddedildi: imzası geçerli değil.",
+      "download": "Güncelleme indirilemedi.",
+      "verified": "Güncelleme indirildi ve doğrulandı.",
+      "installing": "Kurulum başlatılıyor…",
+      "error": "Güncelleme denetimi başarısız oldu."
     }
   }
 }

@@ -1,0 +1,77 @@
+/* ==========================================================================
+   Background jobs (Plan 11/A02): small titlebar indicator (only while jobs exist) and a
+   compact popover panel. Functional and sparse, like the other Plan 06+ surfaces.
+   ========================================================================== */
+
+.vho-jobs-btn { position: relative; gap: 4px; }
+.vho-jobs-btn[hidden] { display: none !important; }
+.vho-jobs-btn.is-running svg { animation: vho-jobs-pulse 1.6s ease-in-out infinite; }
+.vho-jobs-count:empty { display: none; }
+.vho-jobs-count { font-size: 11px; font-variant-numeric: tabular-nums; }
+.vho-jobs-btn[data-attention="1"]::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-warning);
+}
+@keyframes vho-jobs-pulse { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .vho-jobs-btn.is-running svg { animation: none; } }
+
+.vho-jobs-panel {
+  position: fixed;
+  z-index: 96;
+  width: min(380px, calc(100vw - 16px));
+  max-height: min(60vh, 520px);
+  overflow: auto;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-specular);
+  border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.6);
+  color: var(--text-pure);
+  font-size: 13px;
+}
+.vho-jobs-panel[hidden] { display: none; }
+.vho-jobs-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.vho-jobs-head h3 { flex: 1; margin: 0; font-size: 14px; font-weight: 600; }
+.vho-jobs-link { background: none; border: 0; color: var(--text-secondary); cursor: pointer; font: inherit; font-size: 12px; }
+.vho-jobs-link:hover, .vho-jobs-link:focus-visible { color: var(--text-pure); text-decoration: underline; }
+.vho-jobs-link[hidden] { display: none; }
+
+.vho-jobs-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.vho-jobs-item { border-top: 1px solid var(--border-subtle); padding-top: 8px; }
+.vho-jobs-item:first-child { border-top: 0; padding-top: 0; }
+.vho-jobs-line { display: flex; gap: 8px; align-items: baseline; }
+.vho-jobs-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vho-jobs-state { color: var(--text-secondary); font-size: 12px; white-space: nowrap; }
+.vho-jobs-item[data-state="interrupted"] .vho-jobs-state,
+.vho-jobs-item[data-state="failed"] .vho-jobs-state { color: var(--color-warning); }
+.vho-jobs-item[data-state="completed"] .vho-jobs-state { color: var(--color-success); }
+.vho-jobs-error { margin: 4px 0 0; color: var(--text-secondary); font-size: 12px; }
+.vho-jobs-empty { color: var(--text-muted); }
+
+.vho-jobs-progress { height: 4px; margin-top: 6px; border-radius: 2px; background: var(--bg-pill); overflow: hidden; }
+.vho-jobs-progress[hidden] { display: none; }
+.vho-jobs-progress-bar { height: 100%; width: 0; background: var(--accent-ruby); transition: width 0.2s; }
+.vho-jobs-progress.is-indeterminate .vho-jobs-progress-bar { width: 30%; animation: vho-jobs-slide 1.2s linear infinite; }
+@keyframes vho-jobs-slide { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
+@media (prefers-reduced-motion: reduce) { .vho-jobs-progress.is-indeterminate .vho-jobs-progress-bar { animation: none; width: 100%; opacity: 0.4; } }
+
+.vho-jobs-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.vho-jobs-actions:empty { display: none; }
+.vho-jobs-act {
+  background: var(--bg-pill);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  border-radius: 7px;
+  padding: 3px 9px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.vho-jobs-act:hover, .vho-jobs-act:focus-visible { background: var(--bg-pill-hover); color: var(--text-pure); }
+.vho-jobs-act[data-act="continue"] { border-color: var(--border-glow-ruby); color: var(--text-pure); }

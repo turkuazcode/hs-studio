@@ -10,6 +10,8 @@ import { DatabaseSync } from "node:sqlite";
 import { HTML5_ENGINE, fixture, launchApp, makeDataDir, removeDir } from "./lib/app.mjs";
 import { dbPath, readLibraryDb, waitLibraryDb } from "./lib/db.mjs";
 
+/** Latest schema version of this build (storage/migrations.rs; v2 = A02 job queue, v3 = L02 library). */
+const APP_SCHEMA = 3;
 const VIDEO = fixture("sample-h264.mp4");
 const PHOTO = fixture("photo-a.jpg");
 const VIDEO_KEY = `vho_file_sample-h264.mp4_${statSync(VIDEO).size}`;
@@ -65,7 +67,7 @@ test("storage: old JSON stores move into library.db once", { timeout: 150000 }, 
       await t.test("library.db holds recent/resume/favorites; old files kept and backed up", async () => {
         const db = await waitLibraryDb(dataDir, (l) => l.imported, "import marker");
         marker = db.imported;
-        assert.equal(db.version, 1);
+        assert.equal(db.version, APP_SCHEMA);
         assert.deepEqual(db.recent.map((r) => r.path), [PHOTO, VIDEO]);
         assert.deepEqual(db.resume.map((r) => [r.key, r.seconds]), [["vho_file_other.mkv_1", 40], [VIDEO_KEY, 1.5]]);
         assert.deepEqual(db.favorites, [VIDEO]);
@@ -74,7 +76,7 @@ test("storage: old JSON stores move into library.db once", { timeout: 150000 }, 
         const backups = readdirSync(join(dataDir, "backups"));
         assert.ok(backups.some((f) => /^library\.json\.\d+\.pre-db\.bak$/.test(f)), backups.join());
         assert.ok(backups.some((f) => /^settings\.json\.\d+\.pre-db\.bak$/.test(f)), backups.join());
-        assert.ok(backups.some((f) => /^library-v1-\d+-periodic\.db$/.test(f)), backups.join());
+        assert.ok(backups.some((f) => new RegExp(`^library-v${APP_SCHEMA}-\\d+-periodic\\.db$`).test(f)), backups.join());
       });
       await t.test("the migrated favorite is used by the favorite action", async () => {
         await app.eval(`window.__vhoEngine.openPaths([${JSON.stringify(VIDEO)}]), true`);
@@ -133,7 +135,7 @@ test("storage: a damaged library.db is restored from the backup", { timeout: 150
         const report = await app.eval(`__TAURI__.core.invoke("library_load").then((r) => r.report)`);
         assert.equal(report.recovered, "backup");
         assert.ok(existsSync(report.quarantined), "damaged file kept");
-        assert.match(report.restoredFrom, /library-v1-\d+-periodic\.db$/);
+        assert.match(report.restoredFrom, new RegExp(`library-v${APP_SCHEMA}-\\d+-periodic\\.db$`));
       });
       assert.deepEqual(await app.errors(), []);
     } finally {
@@ -151,7 +153,8 @@ test("storage: a library.db from a newer VHO is not opened or changed", { timeou
     await importOnce(dataDir);
     {
       const db = new DatabaseSync(dbPath(dataDir));
-      db.exec("INSERT INTO schema_migrations (version, name, applied_at, app_version) VALUES (2, 'future', 0, '99.0.0'); PRAGMA user_version = 2;");
+      const future = APP_SCHEMA + 1;
+      db.exec(`INSERT INTO schema_migrations (version, name, applied_at, app_version) VALUES (${future}, 'future', 0, '99.0.0'); PRAGMA user_version = ${future};`);
       db.close();
     }
     const dbHash = sha(dbPath(dataDir));
@@ -170,7 +173,7 @@ test("storage: a library.db from a newer VHO is not opened or changed", { timeou
         assert.equal(sha(dbPath(dataDir)), dbHash);
         const db = new DatabaseSync(dbPath(dataDir), { readOnly: true });
         try {
-          assert.equal(db.prepare("SELECT MAX(version) AS v FROM schema_migrations").get().v, 2);
+          assert.equal(db.prepare("SELECT MAX(version) AS v FROM schema_migrations").get().v, APP_SCHEMA + 1);
         } finally {
           db.close();
         }

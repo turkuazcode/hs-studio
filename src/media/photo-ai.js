@@ -5,7 +5,10 @@
 
 import { upscaleImage, restoreFacesInImage, downloadConsentText, describeHardware, releaseAi, MODELS, FACE_MODEL } from "./ai-engine.js";
 import { i18n, t } from "../core/i18n.js";
-import { invoke } from "../core/tauri.js";
+import { convertFileSrc, invoke } from "../core/tauri.js";
+import { photoEnhanceRequest } from "./ai-jobs.js";
+import { keepGrayscale } from "./grayscale.js";
+import { etaSeconds, memoryBudget, planInput } from "./ai-policy.js";
 import { safeFileName } from "../core/format.js";
 
 export const DEEP_MAX_OUTPUT_PIXELS = 40e6; // keeps memory sane for already-large photos
@@ -41,9 +44,10 @@ export function createPhotoAi(app) {
   });
 
   function resetDeepEnhance() {
-    deepJob?.abort();
+    // a queued AI job keeps running for its output file (jobs panel); only the view detaches
+    if (!deepJob?.queued) deepJob?.abort();
     deepJob = null;
-    if (deepResult) URL.revokeObjectURL(deepResult.url);
+    if (deepResult?.url.startsWith("blob:")) URL.revokeObjectURL(deepResult.url);
     deepResult = null;
     deepProgress.hidden = true;
     deepResultActions.hidden = true;
@@ -57,9 +61,8 @@ export function createPhotoAi(app) {
     setStatus(() => t(key, vars));
   }
 
-  /** Reads the original photo pixels, shrinking huge photos so the 4x output stays reasonable. */
-  function readOriginalPixels() {
-    const { width: w, height: h } = deepInputSize(imageElement.naturalWidth, imageElement.naturalHeight);
+  /** Reads the original photo pixels at the planned input size (planInput, confirmed by the user). */
+  function readOriginalPixels({ width: w, height: h }) {
     const c = document.createElement("canvas");
     c.width = w;
     c.height = h;
@@ -92,6 +95,7 @@ export function createPhotoAi(app) {
 
     const withFaces = checkDeepFaces.checked;
     const components = withFaces ? ["photo-x4", FACE_MODEL.component] : ["photo-x4"];
+    const path = currentPath();
     // First use: size, author and license of each missing component (from the manifest)
     let consent;
     try {
@@ -101,7 +105,130 @@ export function createPhotoAi(app) {
       return;
     }
     if (consent && !window.confirm(consent)) return;
+    // Local photo: a persistent AI job (A03; one heavy job at a time, survives a restart, the
+    // result is a PNG file). Remote / unsaved images keep the in-memory path below.
+    if (path && app.jobs && app.aiJobs && app.jobs.available !== false) {
+      await deepQueued(path, withFaces);
+      return;
+    }
+    await deepDirect(withFaces);
+  }
 
+  const currentPath = () => state.get("playlist")?.[state.get("currentPlaylistIndex")]?.path ?? null;
+
+  /** Done text of a finished run (sizes, time, backend, faces, model credits). */
+  function doneStatus({ from, to, seconds, backend, faceNote = () => "" }, withFaces) {
+    const vars = { from, to, sec: Math.round(seconds) };
+    const credits = `${MODELS["photo-x4"].title}, ${MODELS["photo-x4"].credit}` +
+      (withFaces ? `; ${FACE_MODEL.title}, ${FACE_MODEL.credit}` : "");
+    const where = t(backend === "webgpu" ? "enhance.onGpu" : "enhance.onCpu");
+    setStatus(() => `${t("enhance.deepDone", { ...vars, where })}${faceNote()} ${t("enhance.deepModel", { credits })}`);
+  }
+
+  async function deepQueued(path, withFaces) {
+    const nw = imageElement.naturalWidth;
+    const nh = imageElement.naturalHeight;
+    // memory budget from output size + copies; a reduced job is never run silently
+    const plan = planInput(nw, nh, 4, { budget: memoryBudget(navigator.deviceMemory) });
+    if (plan.downscaled && !window.confirm(t("enhance.deepTooLarge", {
+      w: nw, h: nh, iw: plan.width, ih: plan.height, ow: plan.outWidth, oh: plan.outHeight,
+    }))) return;
+
+    const gen = loadGen();
+    const hw = await describeHardware();
+    const originalSrc = imageElement.currentSrc;
+    const startedAt = performance.now();
+    let jobId = null;
+    let cancelRequested = false;
+    const handle = {
+      queued: true,
+      abort() {
+        cancelRequested = true;
+        if (jobId) app.jobs.cancel(jobId).catch(() => {});
+      },
+    };
+    deepJob = handle;
+    renderButton();
+    deepResultActions.hidden = true;
+    let result = null;
+    let runStarted = null;
+    const unsub = app.aiJobs.subscribe((r) => {
+      if (r.jobId !== jobId || gen !== loadGen()) return;
+      if (r.type === "result") result = r;
+      if (r.type !== "progress") return;
+      if (r.phase === "download") setDeepProgress("enhance.deepDownloading", { pct: Math.round(r.raw * 100) }, r.raw);
+      else if (r.phase === "load") setDeepProgress("enhance.deepLoading", { hw }, 0);
+      else if (r.fraction != null) {
+        runStarted ??= performance.now();
+        const eta = etaSeconds({ fraction: r.fraction, elapsed: (performance.now() - runStarted) / 1000 });
+        setDeepProgress(eta != null ? "enhance.deepRunningEta" : "enhance.deepRunning",
+          { pct: Math.round(r.fraction * 100), hw, eta }, r.fraction);
+      }
+    });
+    try {
+      const final = await app.jobs.run("ai-photo-enhance",
+        photoEnhanceRequest({
+          path, faces: withFaces, inputWidth: plan.width, inputHeight: plan.height,
+          // A04: EXIF/GPS policy of the result (Settings > AI models)
+          output: { metadata: app.settings?.get?.("ai.output.metadata") ?? "keep" },
+        }), {
+          onSubmitted: (snap) => {
+            jobId = snap.id;
+            if (cancelRequested) app.jobs.cancel(snap.id).catch(() => {});
+          },
+          onUpdate: (job) => {
+            if (job.state === "queued" && gen === loadGen()) setDeepProgress("enhance.deepQueued", null, 0);
+          },
+        });
+      if (gen !== loadGen()) return; // another photo: the result stays in the jobs panel
+      deepProgress.hidden = true;
+      const output = result?.output ?? final.result?.results?.[0]?.output;
+      if (final.state === "completed" && output) {
+        const url = convertFileSrc(output);
+        deepResult = { url, path: output, jobId, blob: null, originalSrc, showingEnhanced: false };
+        const info = result?.info;
+        const faces = info?.faces;
+        const faceNote = !withFaces || !faces ? () => ""
+          : faces.failed ? () => " " + t("enhance.facesFailed")
+          : faces.found ? () => " " + t("enhance.facesDone", { restored: faces.restored, found: faces.found })
+          : () => " " + t("enhance.facesNone");
+        doneStatus({
+          from: info ? `${info.from[0]}×${info.from[1]}` : `${plan.width}×${plan.height}`,
+          to: info ? `${info.to[0]}×${info.to[1]}` : `${plan.outWidth}×${plan.outHeight}`,
+          seconds: (performance.now() - startedAt) / 1000, backend: info?.backend, faceNote,
+        }, withFaces);
+        deepResultActions.hidden = false;
+        showDeepVariant(true);
+        app.toast(t("enhance.deepToast"));
+      } else if (final.state === "cancelled") {
+        setStatus(() => t("enhance.deepCancelled"));
+      } else if (final.state === "paused" || final.state === "interrupted") {
+        setStatus(() => t("enhance.deepPaused"));
+      } else {
+        const code = final.result?.results?.[0]?.errorCode ?? final.errorCode ?? "failed";
+        const key = `jobs.error.${code}`;
+        const error = t(key) !== key ? t(key) : final.errorDetail || t("jobs.error.failed");
+        setStatus(() => t("enhance.deepFailed", { error }));
+      }
+    } catch (e) {
+      if (gen !== loadGen()) return;
+      deepProgress.hidden = true;
+      setStatus(() => t("enhance.deepFailed", { error: e?.message || String(e) }));
+    } finally {
+      unsub();
+      if (deepJob === handle) deepJob = null;
+      if (gen === loadGen()) renderButton();
+    }
+  }
+
+  /** In-memory path (no file on disk): the result is only shown and saved by "Save". */
+  async function deepDirect(withFaces) {
+    const nw = imageElement.naturalWidth;
+    const nh = imageElement.naturalHeight;
+    const plan = planInput(nw, nh, 4, { budget: memoryBudget(navigator.deviceMemory) });
+    if (plan.downscaled && !window.confirm(t("enhance.deepTooLarge", {
+      w: nw, h: nh, iw: plan.width, ih: plan.height, ow: plan.outWidth, oh: plan.outHeight,
+    }))) return;
     const gen = loadGen();
     const job = new AbortController();
     deepJob = job;
@@ -112,7 +239,7 @@ export function createPhotoAi(app) {
     const startedAt = performance.now();
 
     try {
-      const pixels = readOriginalPixels();
+      const pixels = readOriginalPixels(plan);
       const res = await upscaleImage("photo-x4", pixels, {
         signal: job.signal,
         onProgress: (phase, f) => {
@@ -150,6 +277,7 @@ export function createPhotoAi(app) {
         }
       }
 
+      keepGrayscale(pixels.data, finalImage.data); // A04: B/W stays B/W
       const c = document.createElement("canvas");
       c.width = finalImage.width;
       c.height = finalImage.height;
@@ -200,9 +328,22 @@ export function createPhotoAi(app) {
 
   btnDeepEnhance?.addEventListener("click", deepEnhancePhoto);
   btnDeepCompare?.addEventListener("click", () => showDeepVariant(!deepResult?.showingEnhanced));
-  btnDeepSave?.addEventListener("click", () => {
+  btnDeepSave?.addEventListener("click", async () => {
     if (!deepResult) return;
     const base = safeFileName((currentFilename.textContent || "VHO").replace(/\.[^.]+$/, ""));
+    // queued job: a copy of the result file (EXIF/alpha kept) next to the photo, never
+    // overwriting; the file comes from the queue's own record
+    if (deepResult.jobId) {
+      try {
+        const saved = await invoke("jobs_output_copy", { id: deepResult.jobId, idx: 0 });
+        btnDeepSave.dataset.saved = saved;
+        app.toast(t("enhance.deepSavedTo", { name: saved.split(/[\\/]/).pop() }));
+      } catch (e) {
+        const key = `jobs.error.${e?.code}`;
+        app.toast(t("enhance.deepFailed", { error: t(key) !== key ? t(key) : e?.message ?? String(e) }));
+      }
+      return;
+    }
     if (app.snapshot.downloadBlob(deepResult.blob, `${base}_AI_4x.png`)) app.toast(t("enhance.deepSaved"));
   });
 

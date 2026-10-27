@@ -168,8 +168,179 @@ CREATE TABLE artifacts (
 CREATE INDEX artifacts_media ON artifacts(media_id);
 "#;
 
+/// v2: persistent job queue (Plan 11/A02). Columns/indexes are specified in docs/jobs-api.md.
+const V2_JOBS: &str = r#"
+CREATE TABLE jobs (
+  id             TEXT PRIMARY KEY,                -- UUID v4
+  kind           TEXT NOT NULL,                   -- 'export' | 'photo-batch' (later AI / video kinds)
+  schema_version INTEGER NOT NULL,                -- version of the request JSON of this kind
+  state          TEXT NOT NULL CHECK (state IN ('queued','running','pausing','paused','cancelling',
+                                                 'cancelled','completed','failed','interrupted')),
+  title          TEXT NOT NULL DEFAULT '',
+  request        TEXT NOT NULL,                   -- JSON adapter input (local paths; never logged)
+  recipe_hash    TEXT NOT NULL,                   -- SHA-256 hex of the canonical request
+  model          TEXT,                            -- JSON {id, version} pinned at submit
+  attempt_id     TEXT,
+  attempts       INTEGER NOT NULL DEFAULT 0,
+  seq            INTEGER NOT NULL DEFAULT 0,      -- last event sequence number
+  priority       INTEGER NOT NULL DEFAULT 0,
+  stage          TEXT NOT NULL DEFAULT 'queued',
+  done           INTEGER NOT NULL DEFAULT 0,
+  total          INTEGER,                         -- NULL = unknown
+  fraction       REAL,                            -- within the current item; NULL = unknown
+  result         TEXT,                            -- JSON summary
+  error_code     TEXT,
+  error_detail   TEXT,
+  resume_block   TEXT,                            -- why "continue" is not possible
+  created_at     INTEGER NOT NULL,
+  updated_at     INTEGER NOT NULL,
+  started_at     INTEGER,
+  finished_at    INTEGER
+);
+CREATE INDEX jobs_queue ON jobs(state, priority DESC, created_at);
+
+CREATE TABLE job_items (
+  job_id         TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  idx            INTEGER NOT NULL,
+  input_path     TEXT NOT NULL,
+  input_size     INTEGER,
+  input_mtime_ns INTEGER,
+  input_fp       TEXT,
+  media_id       TEXT REFERENCES media(id) ON DELETE SET NULL,
+  state          TEXT NOT NULL CHECK (state IN ('pending','running','completed','skipped','failed','cancelled')),
+  attempt_id     TEXT,
+  reserved_path  TEXT,
+  reserved_norm  TEXT,
+  output_path    TEXT,
+  output_bytes   INTEGER,
+  error_code     TEXT,
+  error_detail   TEXT,
+  started_at     INTEGER,
+  finished_at    INTEGER,
+  PRIMARY KEY (job_id, idx)
+);
+CREATE INDEX job_items_state ON job_items(job_id, state);
+CREATE UNIQUE INDEX job_items_reserved ON job_items(reserved_norm) WHERE reserved_norm IS NOT NULL;
+
+CREATE TABLE job_checkpoints (
+  job_id     TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  kind       TEXT NOT NULL,                       -- 'item' (A02 photo batch), 'segment' (V05)
+  key        TEXT NOT NULL,
+  attempt_id TEXT NOT NULL,
+  data       TEXT NOT NULL,                       -- JSON
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (job_id, kind, key)
+);
+
+CREATE TABLE job_temp_dirs (
+  job_id     TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  path       TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (job_id, path)
+);
+
+ALTER TABLE artifacts ADD COLUMN job_id TEXT REFERENCES jobs(id) ON DELETE SET NULL;
+CREATE INDEX artifacts_job ON artifacts(job_id);
+"#;
+
+/// v3: persistent library (Plan 13/L02): library folders state, tags, operation log for
+/// file-system changes, FTS5 index over name / title / artist / album / tags.
+///
+/// The FTS index is kept in sync by triggers, so every writer (L01 `upsert_media`, scans,
+/// D1 rename hooks, tag edits) updates it in the same transaction. Its rowid is the rowid of
+/// the `media` row (`media_id` is stored too; [`crate::library::query::rebuild_fts`] repairs
+/// the index should rowids ever change, e.g. after a manual VACUUM).
+const V3_LIBRARY: &str = r#"
+ALTER TABLE folders ADD COLUMN status TEXT NOT NULL DEFAULT 'online' CHECK (status IN ('online', 'offline', 'missing'));
+ALTER TABLE folders ADD COLUMN file_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE folders ADD COLUMN scan_error TEXT;
+
+-- in_library: found by a scan of a library folder (an item that was only opened once is 0)
+ALTER TABLE media ADD COLUMN in_library INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE media ADD COLUMN missing_since INTEGER;
+ALTER TABLE media ADD COLUMN play_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE media ADD COLUMN last_played_at INTEGER;
+CREATE INDEX media_folder_status ON media(folder_id, status);
+CREATE INDEX media_library_kind ON media(kind, added_at) WHERE in_library = 1;
+CREATE INDEX media_rated ON media(rating) WHERE rating > 0;
+
+-- User tags (photo studio / library). tag = as typed, tag_norm = folded for matching.
+CREATE TABLE media_tags (
+  media_id TEXT NOT NULL REFERENCES media(id) ON DELETE CASCADE,
+  tag      TEXT NOT NULL,
+  tag_norm TEXT NOT NULL,
+  PRIMARY KEY (media_id, tag_norm)
+);
+CREATE INDEX media_tags_norm ON media_tags(tag_norm);
+
+-- File-system operations are not atomic with SQLite: an operation is recorded 'pending'
+-- before the rename/trash, finished in the same transaction as the media update, and a
+-- pending entry left by a crash is reconciled on the next start (old/new path checked).
+-- Finished renames/moves also let a stale frontend document (old path / resume key) be
+-- mapped to the new location.
+CREATE TABLE media_ops (
+  id          INTEGER PRIMARY KEY,
+  op          TEXT NOT NULL CHECK (op IN ('rename', 'move', 'trash')),
+  media_id    TEXT,
+  old_path    TEXT NOT NULL,
+  old_norm    TEXT NOT NULL,
+  new_path    TEXT,
+  old_key     TEXT,
+  new_key     TEXT,
+  state       TEXT NOT NULL DEFAULT 'pending' CHECK (state IN ('pending', 'done', 'failed')),
+  created_at  INTEGER NOT NULL,
+  finished_at INTEGER
+);
+CREATE INDEX media_ops_state ON media_ops(state);
+CREATE INDEX media_ops_old ON media_ops(old_norm);
+
+CREATE VIRTUAL TABLE media_fts USING fts5(
+  media_id UNINDEXED, name, title, artist, album, tags,
+  tokenize = 'unicode61 remove_diacritics 2'
+);
+INSERT INTO media_fts (rowid, media_id, name, title, artist, album, tags)
+  SELECT m.rowid, m.id, replace(replace(m.name, 'ı', 'i'), 'İ', 'i'), replace(replace(a.title, 'ı', 'i'), 'İ', 'i'), replace(replace(a.artist, 'ı', 'i'), 'İ', 'i'), replace(replace(a.album, 'ı', 'i'), 'İ', 'i'),
+         replace(replace((SELECT group_concat(tag, ' ') FROM media_tags t WHERE t.media_id = m.id), 'ı', 'i'), 'İ', 'i')
+  FROM media m LEFT JOIN audio_tags a ON a.media_id = m.id;
+
+CREATE TRIGGER media_fts_insert AFTER INSERT ON media BEGIN
+  INSERT INTO media_fts (rowid, media_id, name, title, artist, album, tags)
+  VALUES (new.rowid, new.id, replace(replace(new.name, 'ı', 'i'), 'İ', 'i'), NULL, NULL, NULL, NULL);
+END;
+CREATE TRIGGER media_fts_delete AFTER DELETE ON media BEGIN
+  DELETE FROM media_fts WHERE rowid = old.rowid;
+END;
+CREATE TRIGGER media_fts_name AFTER UPDATE OF name ON media BEGIN
+  UPDATE media_fts SET name = replace(replace(new.name, 'ı', 'i'), 'İ', 'i') WHERE rowid = new.rowid;
+END;
+CREATE TRIGGER media_fts_audio_insert AFTER INSERT ON audio_tags BEGIN
+  UPDATE media_fts SET title = replace(replace(new.title, 'ı', 'i'), 'İ', 'i'), artist = replace(replace(new.artist, 'ı', 'i'), 'İ', 'i'), album = replace(replace(new.album, 'ı', 'i'), 'İ', 'i')
+  WHERE rowid = (SELECT rowid FROM media WHERE id = new.media_id);
+END;
+CREATE TRIGGER media_fts_audio_update AFTER UPDATE ON audio_tags BEGIN
+  UPDATE media_fts SET title = replace(replace(new.title, 'ı', 'i'), 'İ', 'i'), artist = replace(replace(new.artist, 'ı', 'i'), 'İ', 'i'), album = replace(replace(new.album, 'ı', 'i'), 'İ', 'i')
+  WHERE rowid = (SELECT rowid FROM media WHERE id = new.media_id);
+END;
+CREATE TRIGGER media_fts_audio_delete AFTER DELETE ON audio_tags BEGIN
+  UPDATE media_fts SET title = NULL, artist = NULL, album = NULL
+  WHERE rowid = (SELECT rowid FROM media WHERE id = old.media_id);
+END;
+CREATE TRIGGER media_fts_tag_insert AFTER INSERT ON media_tags BEGIN
+  UPDATE media_fts SET tags = replace(replace((SELECT group_concat(tag, ' ') FROM media_tags WHERE media_id = new.media_id), 'ı', 'i'), 'İ', 'i')
+  WHERE rowid = (SELECT rowid FROM media WHERE id = new.media_id);
+END;
+CREATE TRIGGER media_fts_tag_delete AFTER DELETE ON media_tags BEGIN
+  UPDATE media_fts SET tags = replace(replace((SELECT group_concat(tag, ' ') FROM media_tags WHERE media_id = old.media_id), 'ı', 'i'), 'İ', 'i')
+  WHERE rowid = (SELECT rowid FROM media WHERE id = old.media_id);
+END;
+"#;
+
 /// The ordered schema history. Append only.
-pub const MIGRATIONS: &[Migration] = &[Migration { version: 1, name: "core", up: MigrationStep::Sql(V1_CORE) }];
+pub const MIGRATIONS: &[Migration] = &[
+    Migration { version: 1, name: "core", up: MigrationStep::Sql(V1_CORE) },
+    Migration { version: 2, name: "jobs", up: MigrationStep::Sql(V2_JOBS) },
+    Migration { version: 3, name: "library", up: MigrationStep::Sql(V3_LIBRARY) },
+];
 
 /// Highest schema version this build understands.
 #[allow(dead_code)] // diagnostics / A02 tests
@@ -283,7 +454,8 @@ mod tests {
         let t = tables(&c);
         for name in [
             "schema_migrations", "meta", "folders", "media", "audio_tags", "playlists", "playlist_items", "bookmarks",
-            "artifacts", "recent", "resume_positions",
+            "artifacts", "recent", "resume_positions", "jobs", "job_items", "job_checkpoints", "job_temp_dirs",
+            "media_tags", "media_ops", "media_fts",
         ] {
             assert!(t.contains(&name.to_string()), "missing table {name}: {t:?}");
         }
@@ -370,6 +542,42 @@ mod tests {
         assert!(matches!(migrate(&mut c, &renamed), Err(StorageError::MigrationMismatch { version: 1, .. })));
         let gap = [Migration { version: 2, name: "x", up: MigrationStep::Sql("SELECT 1") }];
         assert!(matches!(migrate(&mut c, &gap), Err(StorageError::MigrationMismatch { .. })));
+    }
+
+    #[test]
+    fn v2_jobs_upgrade_keeps_v1_data() {
+        // a database of the L01 build (v1) with data -> this build adds the A02 job tables
+        let mut c = mem();
+        migrate(&mut c, &MIGRATIONS[..1]).unwrap();
+        c.execute("INSERT INTO media (id, path, name, added_at, updated_at) VALUES ('m', 'p', 'n', 0, 0)", []).unwrap();
+        c.execute("INSERT INTO artifacts (id, media_id, kind, path, created_at) VALUES ('a', 'm', 'export', 'o.mp4', 1)", []).unwrap();
+        assert_eq!(migrate(&mut c, &MIGRATIONS[..2]).unwrap(), vec![2]);
+        let (path, job): (String, Option<String>) =
+            c.query_row("SELECT path, job_id FROM artifacts WHERE id = 'a'", [], |r| Ok((r.get(0)?, r.get(1)?))).unwrap();
+        assert_eq!((path.as_str(), job), ("o.mp4", None));
+        // job rows: state check, cascade to items, artifacts keep their file record
+        c.execute(
+            "INSERT INTO jobs (id, kind, schema_version, state, request, recipe_hash, created_at, updated_at)
+             VALUES ('j', 'export', 1, 'queued', '{}', 'h', 0, 0)",
+            [],
+        )
+        .unwrap();
+        assert!(c
+            .execute(
+                "INSERT INTO jobs (id, kind, schema_version, state, request, recipe_hash, created_at, updated_at)
+                 VALUES ('k', 'export', 1, 'sleeping', '{}', 'h', 0, 0)",
+                [],
+            )
+            .is_err());
+        c.execute("INSERT INTO job_items (job_id, idx, input_path, state, reserved_norm) VALUES ('j', 0, 'p', 'running', 'x')", []).unwrap();
+        // two items can never reserve the same output name
+        assert!(c.execute("INSERT INTO job_items (job_id, idx, input_path, state, reserved_norm) VALUES ('j', 1, 'p', 'running', 'x')", []).is_err());
+        c.execute("UPDATE artifacts SET job_id = 'j' WHERE id = 'a'", []).unwrap();
+        c.execute("DELETE FROM jobs WHERE id = 'j'", []).unwrap();
+        let n: u32 = c.query_row("SELECT COUNT(*) FROM job_items", [], |r| r.get(0)).unwrap();
+        assert_eq!(n, 0);
+        let job: Option<String> = c.query_row("SELECT job_id FROM artifacts WHERE id = 'a'", [], |r| r.get(0)).unwrap();
+        assert_eq!(job, None, "artifact stays, link cleared");
     }
 
     #[test]

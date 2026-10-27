@@ -48,7 +48,7 @@ yok). Bulma sırası (libmpv DLL'leri gibi): `VHO_FFMPEG` (dosya ya da klasör) 
 ### Kodlayıcı bulguları (`ffmpeg -encoders`, bu derleme)
 | Amaç | Var | Not |
 |---|---|---|
-| H.264 | `h264_mf` ✔ (çalıştı), `h264_d3d12va` (bu GPU'da filtre biçimi hatası), `h264_vulkan` | x264 yok. VHO Windows'ta `h264_mf` kullanır (`-pix_fmt nv12`, `-rate_control u_vbr`; e-posta ön ayarında `cbr`) |
+| H.264 | `h264_mf` ✔ (çalıştı), `h264_d3d12va` (bu GPU'da filtre biçimi hatası), `h264_vulkan` | x264 yok. Kodlayıcı **çalışma anında** seçilir (P04): listede olan ve kısa gerçek kodlamayı geçen ilk aday (Windows'ta `h264_mf`: `-pix_fmt nv12`, `-rate_control u_vbr`; e-posta ön ayarında `cbr`), hiçbiri çalışmazsa `mpeg4` yedeği. Boyut/piksel biçimi kısıtları ve HDR reddi: [platform-support.md](platform-support.md#kodlayıcı-seçimi-p04) |
 | HEVC / AV1 | `hevc_mf`, `av1_mf`, d3d12va/vulkan | Kullanılmıyor |
 | AAC | `aac` (yerleşik) ✔, `aac_mf` | `aac` kullanılır |
 | MP3 | `mp3_mf` ✔ | LAME yok |
@@ -63,7 +63,7 @@ yok). Bulma sırası (libmpv DLL'leri gibi): `VHO_FFMPEG` (dosya ya da klasör) 
 LGPL derlemesinde mevcut), Linux `libopenh264` (Cisco OpenH264, BSD-2; ffmpeg `--enable-libopenh264`
 ile derlenmeli, ikili Cisco'dan indirilirse patent lisansı Cisco'da kalır) ya da donanım varsa
 `h264_vaapi` (`-vaapi_device` + `format=nv12,hwupload` filtresi gerekir). MP3 için `libmp3lame`
-(LGPL, yalnızca ayrı süreç/dinamik). Bulunamayan kodlayıcı `[unsupported]` hatası verir.
+(LGPL, yalnızca ayrı süreç/dinamik). Aday listesi `H264_CANDIDATES`; çalışan H.264 yoksa `mpeg4` yedeği kullanılır.
 
 ### Hazır ayarlar
 | Ön ayar | Çıktı |
@@ -82,9 +82,9 @@ paylaşım, yazdırma (ön yüz `system_action_allowed` ile sorar), birlikte aç
 yalnızca günlüğe yazılır. Silme her zaman Geri Dönüşüm Kutusu'na taşır (kalıcı silme yok).
 
 ## Bilinen sınırlar
-- Paylaşım yalnızca Windows'ta; diğer sistemlerde "Klasörde göster" yedeği. macOS "Birlikte aç"
-  Finder'da seçili gösterir (AppKit seçicisi henüz yok).
+- Paylaşım yalnızca Windows'ta; diğer sistemlerde düğme gizlidir ("klasörde göster" ile taklit edilmez, P04). macOS'ta
+  "Birlikte aç" ve yazdırma gizlidir (AppKit seçicisi yok; WKWebView `window.print()` çalışmıyor).
 - Kilit ekranı: paketlenmemiş masaüstü uygulamalarında bazı Windows sürümleri erişimi
   reddedebilir (hata mesajı gösterilir).
-- OCR: Windows dışında `[unsupported]` (macOS Vision / Linux Tesseract sonraki iş).
-- Favoriler ve "Listeye ekle" Plan 05 kütüphanesi gelene kadar ayar deposunda / mevcut listede.
+- OCR: Linux'ta kurulu `tesseract` + dil paketleriyle (test edilmedi); macOS'ta yok (Vision Türkçe tanımıyor). Ayrıntı: [platform-support.md](platform-support.md).
+- Favoriler `library.db`'de (L01); yeniden adlandırma/silme L02 işlem kaydıyla medya kimliğine bağlıdır (favori, kaldığı yer, yer imleri ve kayıtlı listeler yeni yolu izler; ayrıntı [storage-schema.md](storage-schema.md#kütüphane-şema-v3-library-plan-13l02)). "Listeye ekle" o anki oynatma listesine ekler; kayıtlı listeler oynatma listesi ⋯ menüsünde.

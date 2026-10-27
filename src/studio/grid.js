@@ -59,6 +59,9 @@ export function createGrid(el, { thumbs, onActivate, onPointerSelect, onRender }
     c.classList.toggle("selected", selected.has(it.path));
     c.classList.toggle("focused", i === focus);
     c.classList.toggle("is-video", it.kind === "video");
+    // library star rating (Plan 13/L02), drawn by CSS
+    if (it.rating > 0) c.dataset.stars = "★".repeat(Math.min(5, it.rating));
+    else delete c.dataset.stars;
     const name = c.lastChild;
     if (name.textContent !== it.name) name.textContent = it.name;
     setThumb(c, it);

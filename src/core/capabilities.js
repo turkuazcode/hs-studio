@@ -7,13 +7,18 @@
 //     verified        a real-device test exists for this OS/arch (docs/platform-support.md);
 //                     a build flag or a runtime probe alone never sets it
 //     reasonCode      why it is unavailable / limited ("engine-mpv", "no-webgl2", "not-ready", ...)
+//     support         per-OS claim: "supported-tested" | "supported-untested" | "unsupported" (P04)
 // Backend entries come from the Rust `platform_capabilities` command (engine, photo codecs,
 // OS actions); the front end adds what only the WebView knows (WebGL2/WebGPU, active engine).
 // ==========================================================================
 
 /** Builds one entry (missing fields get safe defaults). */
-export function cap(id, available, implementation = null, { verified = false, reasonCode = null } = {}) {
-  return { id, available: !!available, implementation, verified: !!verified, reasonCode: available ? reasonCode : (reasonCode ?? "unavailable") };
+export function cap(id, available, implementation = null, { verified = false, reasonCode = null, support = null } = {}) {
+  return {
+    id, available: !!available, implementation, verified: !!verified, reasonCode: available ? reasonCode : (reasonCode ?? "unavailable"),
+    // P04 per-OS claim (backend entries: SUPPORT table in capabilities.rs)
+    support: support ?? (verified ? "supported-tested" : "supported-untested"),
+  };
 }
 
 /**
@@ -35,10 +40,10 @@ export function frontendCapabilities({ engineKind = "html5", webgl2 = false, web
     // A/B split view = the WebGL2 shader drawing half of the frame
     cap("video.compare", gpuFilter, gpuFilter ? "webgl2" : null, { verified, reasonCode: gpuFilter ? null : gpuReason }),
     // Neural video restoration: not ready until Plan 12's V06 gate passes
-    cap("video.aiRestore", false, null, { reasonCode: "not-ready" }),
+    cap("video.aiRestore", false, null, { reasonCode: "not-ready", support: "unsupported" }),
     // Neural photo enhancement (ONNX Runtime Web); model download needed on first use
     cap("photo.aiEnhance", !!aiBackend && !!platform, aiBackend, {
-      verified, reasonCode: !platform ? "no-backend" : aiBackend ? "model-download-on-first-use" : "no-ai-backend",
+      verified, reasonCode: !platform ? "no-backend" : aiBackend ? "model-download-on-first-use" : "no-ai-backend", support: "supported-untested",
     }),
     // Booster above 100 % always ends in a limiter (HTML5: DynamicsCompressor, libmpv: lavfi alimiter)
     cap("audio.boostLimiter", true, engineKind === "mpv" ? "lavfi-alimiter" : "webaudio-compressor", { verified }),

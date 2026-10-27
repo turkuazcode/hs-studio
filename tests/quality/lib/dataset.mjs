@@ -22,6 +22,12 @@ export const MANIFEST_PATH = join(QUALITY_DIR, "manifest.json");
 export const LOCK_PATH = join(QUALITY_DIR, "set-lock.json");
 const USER_AGENT = "VHO-quality-set/1 (open-source media player test fixtures; https://commons.wikimedia.org/wiki/Commons:Reusing_content_outside_Wikimedia)";
 const CLIP_SECONDS = 3;
+// Container files must be byte-identical between builds (set-lock.json hashes the bytes):
+// without bitexact, Matroska writes a random SegmentUID + muxing date and the encoders an
+// encoder-version tag, and multi-threaded MPEG-2 encoding (interlaced DCT decisions) is not
+// deterministic. Applied to every video/audio output below; the clips are tiny, one thread
+// costs nothing.
+const BITEXACT = ["-fflags", "+bitexact", "-map_metadata", "-1", "-flags:a", "+bitexact", "-threads", "1"];
 
 export const loadManifest = () => JSON.parse(readFileSync(MANIFEST_PATH, "utf8"));
 export const sha256File = (p) => createHash("sha256").update(readFileSync(p)).digest("hex");
@@ -148,9 +154,9 @@ async function buildClip(c, sources, dir) {
   const ref = join(dir, "ref.mkv"), input = join(dir, "input.mkv");
   const { args, graph } = clipGraph(c.graph, sources);
   const fc = `${graph},trim=duration=${CLIP_SECONDS},setpts=PTS-STARTPTS,format=bgr0[out]`;
-  await ffmpeg([...args, "-filter_complex", fc, "-map", "[out]", "-c:v", "ffv1", "-level", "3", "-g", "1", "-r", "25", ref]);
+  await ffmpeg([...args, "-filter_complex", fc, "-map", "[out]", "-c:v", "ffv1", "-level", "3", "-g", "1", "-r", "25", "-flags:v", "+bitexact", ...BITEXACT, ref]);
   const vf = [c.inputFilter, "scale=80:44:flags=area+accurate_rnd", "format=yuv420p"].filter(Boolean).join(",");
-  await ffmpeg(["-i", ref, "-vf", vf, "-c:v", "mpeg2video", "-q:v", "6", "-g", "12", "-bf", "0", input]);
+  await ffmpeg(["-i", ref, "-vf", vf, "-c:v", "mpeg2video", "-q:v", "6", "-g", "12", "-bf", "0", "-flags:v", "+bitexact", ...BITEXACT, input]);
   return [ref, input];
 }
 
@@ -158,20 +164,20 @@ async function buildStructural(s, dir) {
   if (s.id === "s01-interlaced-tff") {
     const out = join(dir, "interlaced-tff.mpg"); // MPEG-PS: ffprobe reports the coded field order (mkv shows "tb")
     await ffmpeg(["-f", "lavfi", "-i", "testsrc2=s=320x176:r=50:d=2", "-vf", "scale=320:88:flags=area,weave=first_field=top,setfield=tff,format=yuv420p",
-      "-c:v", "mpeg2video", "-flags", "+ilme+ildct", "-top", "1", "-q:v", "4", out]);
+      "-c:v", "mpeg2video", "-flags:v", "+ilme+ildct+bitexact", "-top", "1", "-q:v", "4", ...BITEXACT, out]);
     return [out];
   }
   if (s.id === "s02-vfr") {
     const out = join(dir, "vfr.mkv");
     await ffmpeg(["-f", "lavfi", "-i", "testsrc2=s=320x176:r=30:d=3", "-vf", "select='not(between(n,20,40)*mod(n,2))',format=yuv420p",
-      "-fps_mode", "passthrough", "-c:v", "ffv1", out]);
+      "-fps_mode", "passthrough", "-c:v", "ffv1", "-flags:v", "+bitexact", ...BITEXACT, out]);
     return [out];
   }
   if (s.id === "s03-av-sync") {
     const out = join(dir, "av-sync.mkv");
     await ffmpeg(["-f", "lavfi", "-i", "color=c=black:s=320x176:r=25:d=3", "-f", "lavfi", "-i", "sine=f=1000:r=48000:d=3",
       "-filter_complex", "[0:v]drawbox=x=0:y=0:w=iw:h=ih:color=white:t=fill:enable='lt(mod(t,1),0.04)',format=yuv420p[v];[1:a]volume=enable='gte(mod(t,1),0.04)':volume=0[a]",
-      "-map", "[v]", "-map", "[a]", "-c:v", "ffv1", "-c:a", "flac", out]);
+      "-map", "[v]", "-map", "[a]", "-c:v", "ffv1", "-c:a", "flac", "-flags:v", "+bitexact", ...BITEXACT, out]);
     return [out];
   }
   throw new Error(`unknown structural fixture ${s.id}`);
@@ -191,7 +197,9 @@ export async function prepareSet({ update = process.env.VHO_QUALITY_UPDATE_LOCK 
   const lock = loadLock();
   const files = {};
   const setDir = join(CACHE, "set");
-  const stamp = createHash("sha256").update(JSON.stringify({ manifest, version })).digest("hex").slice(0, 16);
+  // The recipe code is part of the stamp: a changed builder rebuilds an existing cache
+  const recipe = readFileSync(fileURLToPath(import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  const stamp = createHash("sha256").update(JSON.stringify({ manifest, version, recipe })).digest("hex").slice(0, 16);
   const stampFile = join(setDir, "stamp.txt");
   const fresh = !existsSync(stampFile) || readFileSync(stampFile, "utf8") !== stamp;
   if (fresh) rmSync(setDir, { recursive: true, force: true });
