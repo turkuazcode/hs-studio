@@ -1,0 +1,182 @@
+/* ==========================================================================
+   Per-media layout (approved mockup 2026-10-28; ui/mode-layout.js). <html data-media-mode>:
+   none | video | photo | music. Titlebar: logo/menu, name, at most two buttons, "⋯".
+   Every control in the bottom bars is 40 px high on one centre line.
+   ========================================================================== */
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---------------------------------------------------------------- titlebar */
+.titlebar { height: 48px; gap: 12px; justify-content: flex-start; padding: 0 0 0 12px; }
+.titlebar-brand { flex: 1 1 auto; min-width: 0; gap: 10px; }
+.brand-menu-btn {
+  flex: none; width: 34px; height: 34px; padding: 0; border: 1px solid transparent; border-radius: 9px;
+  background: transparent; display: grid; place-items: center; cursor: pointer;
+  transition: var(--transition-smooth);
+}
+.brand-menu-btn:hover, .brand-menu-btn[aria-expanded="true"] { background: var(--bg-pill-hover); border-color: var(--border-subtle); }
+.brand-menu-btn .brand-logo-img { width: 26px; height: 26px; }
+.brand-text-group { flex: none; }
+.app-title { font-size: 15px; font-weight: 600; letter-spacing: 0; white-space: nowrap; }
+.current-filename, .music-titlebar-title {
+  flex: 0 1 auto; min-width: 0; max-width: none; font-size: 14px; font-weight: 500;
+  color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.titlebar-actions { flex: none; gap: 8px; }
+.titlebar-action-btn {
+  height: 32px; padding: 0 12px; box-sizing: border-box; font-size: 13px; white-space: nowrap; border-radius: 8px;
+}
+.titlebar-icon-btn { width: 32px; padding: 0; justify-content: center; }
+.titlebar-controls { flex: none; }
+
+/* "⋯" of the media actions (and photo "Düzenle") */
+.media-actions { margin: 0; gap: 8px; }
+.media-actions .ma-btn {
+  height: 32px; min-width: 32px; box-sizing: border-box; border-radius: 8px;
+  border-color: var(--border-subtle); background: var(--bg-pill); color: var(--text-secondary);
+}
+.media-actions .ma-labeled { width: auto; gap: 8px; padding: 0 12px; font: 500 13px var(--font-family); white-space: nowrap; }
+.media-actions .ma-more[aria-expanded="true"] { border-color: var(--accent-ruby); background: var(--accent-ruby-dim); color: var(--text-pure); }
+
+/* rarely used titlebar controls live in the menus now */
+#btn-search-subtitles,
+.titlebar-actions > #btn-toggle-ai-restore { display: none !important; }
+/* the sleep timer button only shows while a timer runs (its countdown) */
+#btn-sleep-timer { display: none; }
+#btn-sleep-timer:has(#sleep-badge[style*="inline"]) { display: flex; }
+
+/* each mode's two buttons */
+#btn-toggle-playlist, #btn-open-library, #btn-titlebar-settings, #btn-music-queue { display: none; }
+:root[data-media-mode="video"] #btn-toggle-playlist,
+:root[data-media-mode="music"] #btn-music-queue,
+:root[data-media-mode="none"] #btn-open-library,
+:root[data-media-mode="none"] #btn-titlebar-settings { display: flex; }
+:root[data-media-mode="none"] #btn-sleep-timer { display: none; }
+
+/* name area */
+.titlebar-photo-nav { display: none; align-items: center; gap: 2px; flex: none; }
+:root[data-media-mode="photo"] .titlebar-photo-nav { display: inline-flex; }
+.titlebar-photo-nav .hud-btn { width: 28px; height: 28px; }
+.titlebar-photo-nav .photo-counter-badge { font-size: 13px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.music-titlebar-title { display: none; }
+:root[data-media-mode="music"] .music-titlebar-title:not(:empty) { display: block; }
+:root[data-media-mode="music"] .titlebar-brand:has(.music-titlebar-title:not(:empty)) #current-filename { display: none; }
+:root:not([data-media-mode="none"]) .brand-text-group,
+:root:not([data-media-mode="none"]) .titlebar-divider { display: none; }
+:root[data-media-mode="none"] #current-filename { display: none; }
+
+/* ---------------------------------------------------------------- bottom bars */
+:root[data-media-mode="none"] #controls-hud { display: none !important; }
+.controls-row { min-height: 40px; gap: 8px; }
+.controls-group { gap: 6px; }
+.controls-row .hud-btn, .photo-hud .hud-btn { width: 40px; height: 40px; border-radius: 10px; }
+.controls-row .btn-play {
+  width: 40px; height: 40px; border-radius: 10px; background: var(--accent-ruby); color: #fff; box-shadow: none;
+}
+.controls-row .btn-play:hover { background: var(--accent-ruby-bright); transform: none; }
+.volume-container { height: 40px; box-sizing: border-box; padding: 0 10px; border-radius: 10px; }
+.time-display { height: 40px; }
+.hud-more { width: 40px; height: 40px; }
+
+/* CC ▾: one split control, the caret is part of it */
+.cc-split {
+  display: inline-flex; align-items: stretch; height: 40px; box-sizing: border-box;
+  border: 1px solid var(--border-subtle); border-radius: 10px; background: var(--bg-pill);
+}
+.cc-split > .hud-badge-btn {
+  height: 38px; box-sizing: border-box; margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none;
+}
+.cc-split > #btn-toggle-subtitles { padding: 0 12px; border-radius: 9px 0 0 9px; font-size: 13px; }
+.cc-split > #btn-sub-menu {
+  width: 30px; padding: 0; justify-content: center; border-left: 1px solid var(--border-subtle);
+  border-radius: 0 9px 9px 0; color: var(--text-secondary);
+}
+.cc-split > .hud-badge-btn:hover { background: var(--bg-pill-hover); }
+.cc-split > #btn-toggle-subtitles.sub-active { background: var(--accent-ruby-dim); color: var(--accent-ruby-text); box-shadow: none; }
+
+/* "Filtreler" (video) / "İyileştir" (photo): the same button, placed by ui/mode-layout.js */
+#btn-toggle-ai-restore.hud-text-btn {
+  height: 40px; box-sizing: border-box; padding: 0 14px; gap: 8px; border-radius: 10px;
+  font: 500 13px var(--font-family); white-space: nowrap;
+}
+#btn-toggle-ai-restore .label-video { display: none; }
+:root[data-media-mode="video"] #btn-toggle-ai-restore .label-video { display: inline; }
+:root[data-media-mode="video"] #btn-toggle-ai-restore .label-photo { display: none; }
+:root[data-media-mode="video"] #btn-toggle-ai-restore svg { color: var(--text-secondary) !important; }
+:root[data-media-mode="photo"] #btn-toggle-ai-restore.hud-text-btn {
+  background: var(--accent-ruby); border-color: transparent; color: #fff; font-weight: 600;
+}
+:root[data-media-mode="photo"] #btn-toggle-ai-restore.hud-text-btn svg { color: #fff !important; }
+:root[data-media-mode="photo"] #btn-toggle-ai-restore.hud-text-btn:hover { background: var(--accent-ruby-bright); }
+
+/* photo bottom bar: zoom · fit/rotate · İyileştir (info is in "⋯", previous / next in the titlebar) */
+.photo-hud { gap: 8px; padding: 6px 8px; border-radius: 14px; }
+.photo-hud-left, .photo-hud-center, .photo-hud-right { gap: 4px; }
+.photo-hud #btn-photo-info { display: none; }
+.photo-hud .hud-pill-btn { height: 40px; min-width: 52px; box-sizing: border-box; border-radius: 10px; font-size: 13px; }
+
+/* music bottom bar: shuffle · previous · play · next · repeat · volume */
+.music-hud-btn { display: none; }
+:root[data-media-mode="music"] .music-hud-btn { display: flex; }
+:root[data-media-mode="music"] .music-hud-btn.active { color: var(--accent-ruby-text); background: var(--accent-ruby-dim); }
+:root[data-media-mode="music"] #btn-skip-backward,
+:root[data-media-mode="music"] #btn-skip-forward,
+:root[data-media-mode="music"] #btn-fullscreen,
+:root[data-media-mode="music"] .cc-split { display: none !important; }
+:root[data-media-mode="music"] .controls-row .btn-play { border-radius: 50%; }
+
+/* ---------------------------------------------------------------- music view */
+/* its own opaque ground: readable in every theme, whatever the engine draws behind the page */
+.music-mode {
+  inset: 48px 0 0 0; padding: 24px 0 128px 48px; gap: 40px;
+  grid-template-columns: minmax(0, 1fr) 320px; align-items: stretch;
+  background: var(--bg-canvas); color: var(--text-pure);
+}
+:root[data-theme="light"] .music-mode { background: #eef0f5; }
+.music-now { align-self: center; justify-content: center; }
+.music-title { color: var(--text-pure); }
+.music-queue {
+  border-left: 1px solid var(--border-subtle); padding: 0 16px; overflow-y: auto; min-height: 0;
+}
+:root.music-queue-hidden .music-mode { grid-template-columns: minmax(0, 1fr); padding-right: 48px; }
+:root.music-queue-hidden .music-queue { display: none; }
+:root[data-media-mode="music"] .controls-hud { left: calc(50% - 160px); width: calc(100% - 400px); }
+:root.music-queue-hidden[data-media-mode="music"] .controls-hud { left: 50%; width: calc(100% - 48px); }
+
+/* ---------------------------------------------------------------- empty screen */
+.drop-card { background: transparent; border: 0; box-shadow: none; padding: 32px; gap: 16px; max-width: 560px; }
+:root[data-theme="light"] .drop-card { background: transparent; box-shadow: none; }
+.drop-title { font-size: 28px; font-weight: 600; margin: 0; }
+.drop-subtitle { margin: 0; font-size: 15px; }
+.drop-actions { margin-top: 8px; }
+.drop-open { height: 48px; padding: 0 28px; font-size: 16px; border-radius: 12px; white-space: nowrap; }
+.drop-links { display: flex; align-items: center; gap: 24px; }
+.btn-link {
+  position: relative; min-height: 40px; padding: 0 4px; border: 0; background: none; cursor: pointer;
+  color: var(--accent-ruby-text); font: 500 14px var(--font-family); white-space: nowrap;
+}
+.btn-link:hover { text-decoration: underline; }
+.drop-links > .btn-link + .btn-link::before {
+  content: "·"; position: absolute; left: -15px; color: var(--text-muted); pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- small window / 200 % (Q03) */
+@media (max-width: 760px) {
+  .media-actions .ma-labeled { width: 32px; padding: 0; }
+  .media-actions .ma-labeled > span {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  :root[data-media-mode="none"] .brand-text-group { display: none; }
+  :root[data-media-mode="music"] .controls-hud { left: 50%; width: calc(100% - 48px); }
+}
+@media (max-width: 640px) {
+  #btn-toggle-ai-restore.hud-text-btn > span:not(#ai-restore-badge) {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  #btn-toggle-ai-restore.hud-text-btn { width: 40px; padding: 0; justify-content: center; }
+}

@@ -25,7 +25,6 @@ import { createThumbService } from "./thumbs.js";
 const dialogSave = globalThis.window?.__TAURI__?.dialog?.save
   ? (opts) => window.__TAURI__.dialog.save(opts) : undefined;
 
-const STUDIO_ICON = '<svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>';
 
 function safeLocalStorage() {
   try {
@@ -891,7 +890,6 @@ export function createPhotoStudio(app) {
     app.photo?.toggleSlideshow(false, { silent: true });
     filmstrip.hide();
     if (infoEl.parentElement !== contentEl) setInfoVisible(settings.get("infoOpen", false));
-    $("btn-photo-studio")?.classList.add("active");
     loadTreeRoots();
     renderFavorites();
     const last = settings.get("lastFolder", "");
@@ -909,25 +907,17 @@ export function createPhotoStudio(app) {
     root.hidden = true;
     layer.classList.remove("open");
     document.body.classList.remove("ps-open");
-    $("btn-photo-studio")?.classList.remove("active");
     if (state.get("currentMediaType") === "none") dom.dropZone?.classList.add("visible");
   }
 
-  // -------------------------------------------- entry points (titlebar, start)
-  const titleBtn = Object.assign(document.createElement("button"), {
-    id: "btn-photo-studio", className: "titlebar-action-btn", title: t("studio.entry.title"),
-    innerHTML: `${STUDIO_ICON}<span data-i18n="studio.entry.button">${t("studio.entry.button")}</span>`,
-  });
-  titleBtn.dataset.i18nTitle = "studio.entry.title";
-  dom.titlebar?.querySelector(".titlebar-actions")?.prepend(titleBtn);
-  titleBtn.addEventListener("click", () => (root.hidden ? show() : hide()));
-
+  // -------------------------------------------- entry points (start screen link, app menu "Fotoğraf stüdyosu")
   const startBtn = Object.assign(document.createElement("button"), {
-    id: "btn-open-studio", className: "btn-secondary",
-    innerHTML: `${STUDIO_ICON} <span data-i18n="studio.entry.browse">${t("studio.entry.browse")}</span>`,
+    id: "btn-open-studio", type: "button", className: "btn-link", title: t("studio.entry.title"),
+    innerHTML: `<span data-i18n="studio.entry.browse">${t("studio.entry.browse")}</span>`,
   });
+  startBtn.dataset.i18nTitle = "studio.entry.title";
 
-  dom.dropZone?.querySelector(".drop-actions")?.append(startBtn);
+  (dom.dropZone?.querySelector(".drop-links") ?? dom.dropZone?.querySelector(".drop-actions"))?.append(startBtn);
   startBtn.addEventListener("click", () => show());
 
   return {
