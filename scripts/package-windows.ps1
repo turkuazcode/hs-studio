@@ -15,7 +15,7 @@
               real install. Hash differences of the DLL set are only warnings.
 
   Layout inside the install folder (what engine/mod.rs and actions/ffmpeg.rs look for):
-    <install>\vho.exe (main binary), <install>\mpv\libmpv-2.dll + dependent DLLs + ffmpeg.exe +
+    <install>\HS Studio.exe (main binary, tauri.conf.json mainBinaryName), <install>\mpv\libmpv-2.dll + dependent DLLs + ffmpeg.exe +
     ffprobe.exe, <install>\legal\{LICENSE.txt, NOTICE.txt, THIRD_PARTY_NOTICES.txt, SOURCE-OFFER.txt,
     native-inventory.json, sbom.cdx.json}, uninstall.exe.
   Output: src-tauri\target\release\bundle\nsis\*.exe + .sha256 + package-manifest.json
@@ -57,6 +57,8 @@ $MpvBin = (Resolve-Path $MpvBin).Path
 
 $conf = Get-Content (Join-Path $tauriDir 'tauri.conf.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 if (-not $Version) { $Version = $conf.version }
+# main binary: tauri.conf.json mainBinaryName ("HS Studio"), else the crate name
+$exeName = "$(if ($conf.mainBinaryName) { $conf.mainBinaryName } else { 'vho' }).exe"
 if (-not $SourceUrl) { $SourceUrl = "<repository URL to be set before the first public release>/tree/v$Version" }
 $native = Get-Content (Join-Path $root 'legal\inventory\native-windows-x64.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 
@@ -145,7 +147,7 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "tauri $Phase failed ($LASTEXITCODE)" }
 } finally { Pop-Location; $env:RUSTFLAGS = $oldFlags }
 if ($Phase -eq 'build') {
-  Write-Host "`n== built $(Join-Path $tauriDir 'target\release\vho.exe'); sign it, then run -Phase bundle"
+  Write-Host "`n== built $(Join-Path $tauriDir "target\release\$exeName"); sign it, then run -Phase bundle"
   return
 }
 
@@ -155,11 +157,11 @@ if (-not $installer) { throw "no new installer in $bundleDir" }
 # ---------------------------------------------------------------- 3. checksums + manifest
 $hash = (Get-FileHash -Algorithm SHA256 $installer.FullName).Hash.ToLowerInvariant()
 [IO.File]::WriteAllText("$($installer.FullName).sha256", "$hash  $($installer.Name)`n", (New-Object Text.UTF8Encoding $false))
-$exe = Join-Path $tauriDir 'target\release\vho.exe'
+$exe = Join-Path $tauriDir "target\release\$exeName"
 $files = @(Get-ChildItem $stage -Recurse -File | Where-Object { $_.Name -notin 'version.conf.json', 'hooks.conf.json', 'legacy-install.nsh' } | ForEach-Object {
   [ordered]@{ path = $_.FullName.Substring($stage.Length + 1).Replace('\', '/'); bytes = $_.Length; sha256 = (Get-FileHash -Algorithm SHA256 $_.FullName).Hash.ToLowerInvariant() }
 })
-$files += [ordered]@{ path = 'vho.exe (main binary, before installation)'; bytes = (Get-Item $exe).Length; sha256 = (Get-FileHash -Algorithm SHA256 $exe).Hash.ToLowerInvariant() }
+$files += [ordered]@{ path = "$exeName (main binary, before installation)"; bytes = (Get-Item $exe).Length; sha256 = (Get-FileHash -Algorithm SHA256 $exe).Hash.ToLowerInvariant() }
 $commit = (& git -C $root rev-parse HEAD).Trim()
 $manifest = [ordered]@{
   installer = $installer.Name; sha256 = $hash; bytes = $installer.Length; variant = $Variant; version = $Version

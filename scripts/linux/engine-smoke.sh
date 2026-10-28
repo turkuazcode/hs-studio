@@ -6,7 +6,10 @@
 # Isolated: fresh VHO_DATA_DIR / HOME-independent temp folder, system actions disabled.
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
-BIN=${VHO_EXE:-$ROOT/src-tauri/target/release/vho}
+# Binary name: "hs-studio" when built with src-tauri/packaging/linux/appimage-deb.conf.json,
+# "HS Studio" (tauri.conf.json mainBinaryName) for a plain release build
+BIN=${VHO_EXE:-$ROOT/src-tauri/target/release/hs-studio}
+[ -n "${VHO_EXE:-}" ] || [ -x "$BIN" ] || BIN="$ROOT/src-tauri/target/release/HS Studio"
 # Staged dev build: ffmpeg next to the binary. Installed deb: <resources>/mpv/ (under /usr/lib/<product name>/)
 FF=${VHO_FFMPEG:-$(dirname "$BIN")/ffmpeg}
 MODE=${1:-both}
