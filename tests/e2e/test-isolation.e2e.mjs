@@ -1,17 +1,19 @@
 // Test isolation of the harness itself: a test instance (VHO_DATA_DIR) gets its own identifier
-// `com.vho.app.test<hash>`; Tauri creates %APPDATA% / %LOCALAPPDATA% folders under it. The
-// harness removes exactly those folders after close (never the user's com.vho.app), and the
+// `<app identifier>.test<hash>`; Tauri creates %APPDATA% / %LOCALAPPDATA% folders under it. The
+// harness removes exactly those folders after close (never the user's app folder), and the
 // app's caches (thumbnails, frame grabs, transcodes) stay inside VHO_DATA_DIR.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fixture, identityDirs, launchApp, makeDataDir, removeDir, testIdentity } from "./lib/app.mjs";
+import { TEST_ID } from "../lib/test-identity.mjs";
 
 test("test isolation: identity folders removed after close, caches inside VHO_DATA_DIR", { timeout: 120000 }, async (t) => {
   const dataDir = await makeDataDir();
   const id = testIdentity(dataDir);
-  assert.match(id, /^com\.vho\.app\.test[0-9a-f]{16}$/);
+  assert.match(id, /^com\.turkuazcode\.hsstudio\.test[0-9a-f]{16}$/);
+  assert.ok(TEST_ID.test(id), "clean-test-artifacts recognises it");
   const app = await launchApp({ dataDir, args: [fixture("photo-a.jpg")] });
   try {
     // open the photo studio on the fixtures folder: thumbnails are written to the cache root
