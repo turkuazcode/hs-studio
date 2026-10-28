@@ -22,8 +22,12 @@ async fn blocking<T: Send + 'static>(f: impl FnOnce() -> Result<T, String> + Sen
 /// Measures an album (track + joint album loudness); `write`: stores track and album
 /// ReplayGain tags in every file (the caller releases a file the player holds open).
 #[tauri::command]
-pub async fn replaygain_album(paths: Vec<String>, write: Option<bool>) -> Result<ffmpeg::AlbumLoudness, String> {
+pub async fn replaygain_album(app: tauri::AppHandle, paths: Vec<String>, write: Option<bool>) -> Result<ffmpeg::AlbumLoudness, String> {
     blocking(move || {
+        if write.unwrap_or(false) {
+            // Q04: tags are only written into the user's files
+            crate::grants::require_all(&app, &paths, crate::grants::Access::Content)?;
+        }
         let mut channels = Vec::new();
         let mut durations = Vec::new();
         for p in &paths {

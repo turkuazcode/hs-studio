@@ -3,10 +3,15 @@
 //   while the commands the player uses keep working
 // - a tiny image claiming a huge size (decompression bomb) is refused at once
 // - Settings > General > Cache shows the sizes and clears one kind, keeping a file in use
+// - path grants: write / delete / rename / tag / export commands only touch paths the user chose
+//   (here: a file handed over on the command line); everything else is refused when the user
+//   says no (VHO_GRANT_PROMPT=deny answers the native question)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, open, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, open, writeFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fixture, launchApp, makeDataDir, removeDir } from "./lib/app.mjs";
 
@@ -98,5 +103,80 @@ test("security: IPC hardening (mpv bridge, decompression bomb, cache clearing)",
   } finally {
     await app.close();
     await removeDir(dataDir);
+  }
+});
+
+test("security: path grants (Q04) for write / delete / rename / tag / export commands", { timeout: 180000 }, async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "vho-grants-"));
+  const mine = join(root, "chosen"), other = join(root, "other");
+  await mkdir(mine);
+  await mkdir(other);
+  await copyFile(fixture("photo-a.jpg"), join(mine, "opened.jpg"));
+  await copyFile(fixture("photo-a.jpg"), join(mine, "sibling.jpg"));
+  await copyFile(fixture("sample-h264.mp4"), join(mine, "clip.mp4"));
+  await copyFile(fixture("photo-a.jpg"), join(other, "victim.jpg"));
+  await copyFile(fixture("engine-tone.m4a"), join(other, "victim.m4a"));
+  // a junction inside the chosen folder that leads to the other one
+  execFileSync("cmd", ["/c", "mklink", "/J", join(mine, "link"), other], { stdio: "ignore" });
+  const dataDir = await makeDataDir();
+  const env = { VHO_GRANT_PROMPT: "deny" };
+  let app = await launchApp({ args: [join(mine, "opened.jpg")], dataDir, env });
+  const jobErr = (job) => app.eval(`__TAURI__.core.invoke("jobs_submit", { job: ${J(job)} }).then(() => "OK", (e) => e.code ?? String(e))`);
+  try {
+    await app.waitFor(`document.documentElement.dataset.platformReady === "1"`, { timeoutMs: 15000, message: "platform ready" });
+    const victim = join(other, "victim.jpg");
+
+    await t.test("outside the chosen folder: every write command is refused, nothing changes", async () => {
+      const refused = /^\[path-not-granted\]/;
+      assert.match(await invokeErr(app, "file_trash", { path: victim }), refused);
+      assert.match(await invokeErr(app, "file_rename", { path: victim, newName: "renamed.jpg" }), refused);
+      assert.match(await invokeErr(app, "tags_write", { path: join(other, "victim.m4a"), tags: { title: "x" } }), refused);
+      assert.match(await invokeErr(app, "replaygain_analyze", { path: join(other, "victim.m4a"), write: true }), refused);
+      assert.match(await invokeErr(app, "tags_save_cover", { path: join(other, "victim.m4a"), output: join(other, "cover.jpg") }), refused);
+      assert.match(await invokeErr(app, "media_job", { job: { input: join(mine, "clip.mp4"), outputDir: other, kind: "cut", start: 0, end: 0.5 } }), refused);
+      assert.match(await invokeErr(app, "media_job", { job: { input: join(mine, "clip.mp4"), output: join(other, "out.mp4"), kind: "cut", start: 0, end: 0.5 } }), refused);
+      assert.match(await invokeErr(app, "photo_batch", { job: { files: [join(mine, "opened.jpg")], ops: [], output: { format: "png", dir: other } } }), refused);
+      assert.match(await invokeErr(app, "photo_batch", { job: { files: [victim], ops: [], output: { format: "png", dir: mine, removeSource: true } } }), refused);
+      assert.match(await invokeErr(app, "library_playlist_export", { path: join(other, "list.m3u8"), items: [] }), refused);
+      assert.match(await invokeErr(app, "library_add_folder", { path: other }), refused);
+      assert.equal(await jobErr({ kind: "export", request: { input: join(mine, "clip.mp4"), outputDir: other, kind: "cut", start: 0, end: 0.5 } }), "pathNotGranted");
+      assert.equal(await jobErr({ kind: "photo-batch", request: { files: [join(mine, "opened.jpg")], ops: [], output: { format: "png", dir: other } } }), "pathNotGranted");
+      for (const f of ["victim.jpg", "victim.m4a"]) assert.ok(existsSync(join(other, f)), f);
+      for (const f of ["renamed.jpg", "cover.jpg", "out.mp4", "list.m3u8", "victim.png"]) assert.ok(!existsSync(join(other, f)), f);
+    });
+
+    await t.test("escapes: junction, '..', relative and short paths do not leave the grant", async () => {
+      const refused = /^\[path-not-granted\]/;
+      assert.match(await invokeErr(app, "file_rename", { path: join(mine, "link", "victim.jpg"), newName: "x.jpg" }), refused);
+      assert.match(await invokeErr(app, "file_trash", { path: join(mine, "..", "other", "victim.jpg") }), refused);
+      assert.match(await invokeErr(app, "photo_batch", { job: { files: [join(mine, "opened.jpg")], ops: [], output: { format: "png", dir: join(mine, "link") } } }), refused);
+      assert.match(await invokeErr(app, "file_rename", { path: "other\\victim.jpg", newName: "x.jpg" }), refused);
+      assert.ok(existsSync(victim));
+    });
+
+    await t.test("the chosen file and its folder: normal actions keep working", async () => {
+      const renamed = await app.eval(`__TAURI__.core.invoke("file_rename", { path: ${J(join(mine, "sibling.jpg"))}, newName: "sibling 2.jpg" })`);
+      assert.equal(renamed, join(mine, "sibling 2.jpg"));
+      const s = await app.eval(`__TAURI__.core.invoke("photo_batch", { job: { files: [${J(join(mine, "opened.jpg"))}], ops: [], output: { format: "png" } } })`);
+      assert.equal(s.results[0].ok, true, J(s.results[0]));
+      assert.ok(existsSync(join(mine, "opened.png")));
+      assert.equal(await invokeErr(app, "library_playlist_export", { path: join(mine, "list.m3u8"), items: [{ path: join(mine, "clip.mp4"), title: "clip" }] }), "OK");
+    });
+    assert.deepEqual(await app.errors(), []);
+    await app.close();
+
+    // grants from the user's own actions survive a restart (backend-owned grants.json)
+    app = await launchApp({ dataDir, env });
+    await t.test("after a restart: the earlier chosen folder is still granted, the other one not", async () => {
+      await app.waitFor(`document.documentElement.dataset.platformReady === "1"`, { timeoutMs: 15000, message: "platform ready" });
+      assert.equal(await invokeErr(app, "file_rename", { path: join(mine, "sibling 2.jpg"), newName: "sibling 3.jpg" }), "OK");
+      assert.match(await invokeErr(app, "file_rename", { path: victim, newName: "renamed.jpg" }), /^\[path-not-granted\]/);
+    });
+    assert.deepEqual(await app.errors(), []);
+  } finally {
+    await app.close();
+    await removeDir(dataDir);
+    try { execFileSync("cmd", ["/c", "rmdir", join(mine, "link")], { stdio: "ignore" }); } catch { /* already gone */ }
+    await removeDir(root);
   }
 });

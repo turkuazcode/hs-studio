@@ -4,6 +4,7 @@ mod cache;
 mod capabilities;
 mod cast;
 mod engine;
+mod grants;
 mod identity;
 mod jobs;
 mod library;
@@ -94,9 +95,11 @@ fn prepare_media(app: AppHandle, paths: Vec<String>) -> Vec<MediaEntry> {
 /// Files passed on the command line ("Open with VHO" / double-click in Explorer), plus
 /// files the OS handed over before the page was ready (macOS Finder).
 #[tauri::command]
-fn initial_files(pending: tauri::State<'_, platform::PendingOpen>) -> Vec<String> {
+fn initial_files(app: AppHandle, pending: tauri::State<'_, platform::PendingOpen>) -> Vec<String> {
     let cwd = std::env::current_dir().unwrap_or_default();
     let mut files = platform::file_args(std::env::args().skip(1), &cwd);
+    // handed over by the OS: the user chose them (Q04 path grants)
+    grants::grant_opened(&app, &files);
     files.extend(pending.take_and_mark_ready());
     files
 }
@@ -266,6 +269,8 @@ pub fn run() {
         .plugin(window_state.build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
+            // Q04: before the window exists, so every command sees the grants
+            app.manage(grants::Grants::load(app.handle()));
             prune_transcode_cache(app.handle());
 
             // Pencere tauri.conf.json'da "create": false olarak tanımlı; argümanları
@@ -418,7 +423,9 @@ pub fn run() {
             cast::cast_discover,
             cast::cast_start,
             cast::cast_control,
-            cast::cast_status
+            cast::cast_status,
+            grants::dialog_open,
+            grants::dialog_save
         ])
         .build(context)
         .expect("error while building tauri application");
@@ -428,6 +435,10 @@ pub fn run() {
         #[cfg(target_os = "macos")]
         if let tauri::RunEvent::Opened { urls } = &_event {
             platform::on_opened_urls(_app, urls);
+        }
+        // OS file drop: the dropped paths are the user's choice (Q04 path grants)
+        if let tauri::RunEvent::WindowEvent { event: tauri::WindowEvent::DragDrop(tauri::DragDropEvent::Drop { paths, .. }), .. } = &_event {
+            grants::grant_opened(_app, paths);
         }
         if let tauri::RunEvent::Exit = _event {
             engine::shutdown(_app);

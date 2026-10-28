@@ -98,6 +98,15 @@ struct ChangedEvent<'a> {
     folders: bool,
 }
 
+/// Library folders (Q04: write grants for everything below them).
+pub(crate) fn library_roots(app: &AppHandle) -> Vec<PathBuf> {
+    storage_of(app)
+        .ok()
+        .and_then(|s| s.read(folders::library_folders).ok())
+        .map(|v| v.into_iter().map(|f| PathBuf::from(f.path)).collect())
+        .unwrap_or_default()
+}
+
 fn storage_of(app: &AppHandle) -> Result<Arc<Storage>, String> {
     app.state::<StorageState>().get(|| crate::platform::data_dir(app)).map_err(|e| format!("[{}] {e}", e.code()))
 }
@@ -422,6 +431,11 @@ pub async fn library_folders(app: AppHandle) -> Res<Vec<folders::Folder>> {
 /// "Kütüphaneye ekle": adds a persistent library folder and scans it.
 #[tauri::command]
 pub async fn library_add_folder(app: AppHandle, path: String) -> Res<folders::AddResult> {
+    // Q04: a library folder becomes a write grant for everything below it, so only a folder the
+    // user picked (folder dialog) or confirms now can be added
+    let app2 = app.clone();
+    let p2 = path.clone();
+    crate::actions::blocking(move || crate::grants::require(&app2, Path::new(&p2), crate::grants::Access::IntoFolder)).await?;
     run(app, move |st, s| {
         let r = s.write(|tx| folders::add(tx, &path))?;
         if r.status != "covered" {
@@ -600,6 +614,9 @@ pub async fn library_playlist_export(
     items: Option<Vec<playlist::Entry>>,
     relative: Option<bool>,
 ) -> Res<usize> {
+    let app2 = app.clone();
+    let p2 = path.clone();
+    crate::actions::blocking(move || crate::grants::require(&app2, Path::new(&p2), crate::grants::Access::Create)).await?;
     run(app, move |_, s| {
         let entries: Vec<playlist::Entry> = match (id, items) {
             (Some(id), _) => s

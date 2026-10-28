@@ -166,7 +166,7 @@ export function ocrLayer(result) {
 export const errorCode = (e) => String(e?.message ?? e ?? "").match(/^\[([a-z-]+)\]/)?.[1] ?? null;
 
 /** Tagged backend errors that have their own TR/EN text; the last "(...)" is passed as {detail}. */
-const ERROR_KEYS = { "clipboard-busy": "actions.error.clipboardBusy" };
+const ERROR_KEYS = { "clipboard-busy": "actions.error.clipboardBusy", "path-not-granted": "actions.error.pathNotGranted" };
 
 /** Backend error without its tag; translated through `t` when the tag has its own text. */
 export const errorText = (e, t) => {

@@ -305,7 +305,7 @@ export function createDialogs(app) {
         return null;
       }
       d.el.dataset.error = String(e);
-      d.setStatus(errorCode(e) === "no-ffmpeg" ? t("actions.job.noFfmpeg") : errorText(e), "error");
+      d.setStatus(errorCode(e) === "no-ffmpeg" ? t("actions.job.noFfmpeg") : errorText(e, t), "error");
       d.setActions([{ id: "close", label: t("actions.common.close"), primary: true }]);
       return null;
     }

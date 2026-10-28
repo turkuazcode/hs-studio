@@ -520,7 +520,8 @@
       "fallbackEncoder": "{name} (H.264 yok, yedek kodlayıcı)"
     },
     "error": {
-      "clipboardBusy": "Pano başka bir uygulama tarafından kullanılıyor ({detail}). Biraz sonra yeniden deneyin."
+      "clipboardBusy": "Pano başka bir uygulama tarafından kullanılıyor ({detail}). Biraz sonra yeniden deneyin.",
+      "pathNotGranted": "Bu konumu değiştirme izni yok ({detail}). Dosyayı veya klasörü açma ya da kaydetme penceresinden seçin."
     }
   },
   "effects": {
@@ -1388,6 +1389,7 @@
     "error": {
       "sourceChanged": "Kaynak dosya değişti; yalnızca baştan başlatılabilir.",
       "sourceMissing": "Kaynak dosya bulunamadı.",
+      "pathNotGranted": "Çıktı klasörü veya kaynak, sizin seçtiğiniz bir konum değil; işlem yapılmadı.",
       "modelChanged": "Kullanılan araç/model sürümü değişti; yalnızca baştan başlatılabilir.",
       "recipeChanged": "İş ayarları bu sürümle uyuşmuyor; baştan başlatın.",
       "diskFull": "Diskte yeterli boş alan yok.",

@@ -7,9 +7,9 @@
 > write files, open an IPC pipe) is now an allowlist; images larger than 268 MP are refused from
 > the header (decompression bombs); an AppleScript injection in the macOS wallpaper path; a
 > thumbnail error was put into markup. Added: cache size/clear controls that keep files in use,
-> a privacy/CSP unit test, an OSV dependency audit. Open: write/delete commands still trust any
-> path the webview sends (mitigated by CSP + no remote content; see §4). This is a review, not a
-> security certification.
+> a privacy/CSP unit test, an OSV dependency audit. Closed later (2026-10-28, `wave4/q04-paths`):
+> write/delete/rename/tag/export commands only touch paths the user chose (path grants, §3.6).
+> This is a review, not a security certification.
 
 ## 1. Tehdit modeli
 
@@ -21,7 +21,7 @@
   ayrıştırıcılarında bellek/zaman tüketimi.
 - Kapsam dışı: yerel yönetici, değiştirilmiş kurulum dosyaları, işletim sistemi codec'lerinin (WIC/Media Foundation) kendi açıkları.
 
-## 2. IPC komut envanteri (115 komut)
+## 2. IPC komut envanteri (117 komut)
 
 Sınıf: **O** okuma · **Y** kullanıcının seçtiği yere yazma/değiştirme · **S** sistem eylemi (`actions::gate`, testte
 `VHO_DISABLE_SYSTEM_CHANGES` ile yalnızca günlüğe) · **A** ağ (yalnızca kullanıcı eylemi) · **D** uygulamanın kendi
@@ -34,13 +34,14 @@ veri/önbellek klasörü.
 | Uygulama | `suspend_system`, `get_compat_mode`, `set_compat_mode`, `prepare_media`, `initial_files`, `probe_media`, `transcode_media`, `cancel_transcode`, `platform_capabilities`, `settings_dir`, `open_default_apps_settings` | S / D / O | Uyku: `VHO_DISABLE_SYSTEM_SUSPEND` + E2E sarmalayıcı; dönüştürme çıktısı önbellekte, hash adı |
 | Güncelleme | `updater_check`, `updater_install` | A | Varsayılan kapalı, uç nokta boş, `requireSignedVersion`, minisign imzası (R02) |
 | AI bileşenleri | `ai_status`, `ai_status_all`, `ai_install`, `ai_cancel_download`, `ai_verify`, `ai_remove`, `ai_acquire`, `ai_release` | A / D | Yalnızca manifestteki sabit URL'ler; boyut + SHA-256; zip: yol kaçışı/symlink/bomba reddi (`ai::tests::zip_rejects_*`); kullanımdaki model lease ile korunur |
-| Fotoğraf | `photo_scan`, `photo_list_dirs`, `photo_thumb(s)`, `photo_info`, `photo_decode`, `photo_capabilities`, `photo_batch`, `photo_cancel` | O / D / Y | Toplu iş: ayrı çıktı, üzerine yazmayan ad; **Q04: 268 MP üstü görüntü başlıktan reddedilir** |
-| Dosya eylemleri | `file_trash`, `file_rename`, `file_properties`, `export_dir` | Y / O | Silme yalnızca Geri Dönüşüm Kutusu'na; yeniden adlandırma ayırıcı/ayrılmış ad/çakışma denetimi; kütüphane işlem kaydı |
+| Fotoğraf | `photo_scan`, `photo_list_dirs`, `photo_thumb(s)`, `photo_info`, `photo_decode`, `photo_capabilities`, `photo_batch`, `photo_cancel` | O / D / Y | Toplu iş: ayrı çıktı, üzerine yazmayan ad; **Q04: 268 MP üstü görüntü başlıktan reddedilir**; `photo_batch` çıktı klasörü (ve taşımada kaynaklar) yol izni ister (§3.6) |
+| Dosya eylemleri | `file_trash`, `file_rename`, `file_properties`, `export_dir` | Y / O | Silme yalnızca Geri Dönüşüm Kutusu'na; yeniden adlandırma ayırıcı/ayrılmış ad/çakışma denetimi; kütüphane işlem kaydı; silme/yeniden adlandırma yol izni ister (§3.6) |
+| Dosya diyalogları (**yeni**) | `dialog_open`, `dialog_save` | Y (izin kaynağı) | Diyaloğu Rust gösterir; seçilen yollar yol izni olur. Eklentinin JS komutları (`dialog:allow-open/save`) yetenekten kaldırıldı (§3.6) |
 | Sistem eylemleri | `file_reveal`, `file_open_with`, `file_share`, `set_wallpaper`, `system_action_allowed`, `actions_system_log`, `actions_capabilities` | S | `actions::gate`; yol `canonicalize` + dosya olmalı; argv ile çağrı (kabuk yok); **Q04: macOS AppleScript tırnaklama düzeltildi** |
 | Pano | `clipboard_*` (8) | O / Y | Görüntü verisi boyut sınırlı base64; meşgul pano yeniden deneme + kodlu hata |
-| OCR, ffmpeg işleri, etiketler | `ocr_image`, `ocr_languages`, `media_tools`, `media_probe`, `media_job`, `media_job_cancel`, `replaygain_analyze`, `tags_read`, `tags_write`, `tags_save_cover`, `lyrics_read` | Y / O | ffmpeg argv (kabuk yok), `.part` dosyası + yerleştirme, iptalde süreç öldürülür, Windows'ta job object ile uygulama kapanınca alt süreç de kapanır |
-| Kalıcı depolama, işler | `library_load`, `library_save`, `jobs_*` (15) | D / Y | Tek göç sahibi; iş başına geçici klasör, `jobs_output_copy` üzerine yazmaz |
-| Kütüphane | `library_*` (24) | O / D / Y | Klasör ekleme yalnızca kullanıcı seçimiyle; symlink/junction izlenmez; çalma listesi içe aktarmada yalnızca akış şemaları (`javascript:`, `data:` vb. atlanır), 16 MB / 100.000 öğe sınırı |
+| OCR, ffmpeg işleri, etiketler | `ocr_image`, `ocr_languages`, `media_tools`, `media_probe`, `media_job`, `media_job_cancel`, `replaygain_analyze`, `tags_read`, `tags_write`, `tags_save_cover`, `lyrics_read` | Y / O | ffmpeg argv (kabuk yok), `.part` dosyası + yerleştirme, iptalde süreç öldürülür, Windows'ta job object ile uygulama kapanınca alt süreç de kapanır; `media_job` çıktısı, `tags_write`, `replaygain_analyze`/`replaygain_album` yazımı, `tags_save_cover` yol izni ister (§3.6) |
+| Kalıcı depolama, işler | `library_load`, `library_save`, `jobs_*` (15) | D / Y | Tek göç sahibi; iş başına geçici klasör, `jobs_output_copy` üzerine yazmaz; `jobs_submit` (`export`, `photo-batch`) ve `jobs_output_copy` hedefi yol izni ister (§3.6) |
+| Kütüphane | `library_*` (24) | O / D / Y | Klasör ekleme yalnızca kullanıcı seçimiyle (**Q04: izinli klasör şartı arka uçta denetlenir**); `library_playlist_export` yol izni ister; symlink/junction izlenmez; çalma listesi içe aktarmada yalnızca akış şemaları (`javascript:`, `data:` vb. atlanır), 16 MB / 100.000 öğe sınırı |
 | Restorasyon | `restoration_probe`, `restoration_recipe` | O | ffprobe/ffmpeg argv |
 | Önbellek (**Q04 yeni**) | `cache_usage`, `cache_clear` | D | Yalnızca 3 sabit tür; kullanımdaki ve yazılmakta olan dosya atlanır |
 | Cihaza yayın (**L04**) | `cast_discover`, `cast_start`, `cast_control`, `cast_status` | A | Yalnızca kullanıcı “Cihaza yayınla…” diyaloğunu açınca; SSDP yanıtındaki `LOCATION` ve denetim URL'leri yanıtın geldiği IP'de olmalı; XML 256 KB / 5 s, `<!DOCTYPE` reddedilir; dosya sunucusu tek dosya + 128 bit belirteç, durdurunca kapanır; güvenlik duvarı değiştirilmez ([network.md](../network.md)) |
@@ -88,11 +89,49 @@ boyut ve "Temizle". Yazılmakta olan (`.part.`) ve başka bir tutamacın açık 
 denemesi) silinmez; diğer platformlarda son 10 dakikada değişen dosya korunur. AI modelleri önbellek değil: Ayarlar > AI
 modelleri'nde, kullanımdaki model lease ile korunarak kaldırılır. Test: Rust `cache::tests`, E2E `security.e2e`.
 
+### 3.6 Yol izinleri: yazma/silme komutları yalnızca kullanıcının seçtiği yerlere (orta → düzeltildi, 2026-10-28)
+
+Önceden `file_trash`, `file_rename`, `tags_write`, `media_job` çıktısı, `library_playlist_export` vb. webview'in gönderdiği
+her yolu kabul ediyordu. Artık arka uçta tek bir yol izni kaydı var (`src-tauri/src/grants.rs`). İzin kaynakları yalnızca
+webview'in taklit edemeyeceği yerlerdir:
+- Rust'ın gösterdiği aç/kaydet/klasör diyalogları (`dialog_open`, `dialog_save`). Eklentinin JS komutları yetenekten
+  kaldırıldı; arayüz aynı seçenek ve sonuçlarla bu komutları çağırır.
+- İşletim sisteminin verdiği dosyalar: komut satırı / "Birlikte aç" / ikinci örnek / macOS açma olayı (`deliver_files`,
+  `initial_files`).
+- Pencereye bırakılan dosyalar (Tauri `DragDrop` olayı, Rust'ta).
+- Kütüphane klasörleri (`library.db`; yeni klasör eklemek de izinli bir klasör ister).
+- Uygulamanın kendi klasörleri (veri, önbellek, `<Videolar|Resimler|Müzik>\HS Studio`).
+
+Kapsam: açılan dosya için dosyanın kendisi ve **bulunduğu klasör** (alt klasörleri değil: fotoğraf/oynatma listesinde
+yanındaki dosyalara geçilir, dışa aktarma varsayılanı o klasördür); seçilen klasör ve kütüphane klasörü için **altındaki her
+şey**; kaydetme hedefi için dosya ve klasörü. Kullanıcı kaynaklı izinler veri klasöründeki `grants.json`'a yazılır (en çok
+2.000; webview'in yazabildiği bir dosya değil), böylece yeniden açılışta korunur. Son açılanlar listesi (`library.json`,
+webview yazar) bilerek izin kaynağı **değildir**.
+
+Kayıtta olmayan bir yol için kullanıcıya bir kez **yerel onay penceresi** sorulur (TR/EN, "İzin ver / İptal"): örneğin
+Fotoğraf Stüdyosu'nun klasör ağacında gezilen ve diyalogla seçilmemiş bir klasörde ilk silme. "İzin ver" o klasöre bu oturum
+boyunca izin verir (kalıcı değil); "İptal" `[path-not-granted]` döner (TR/EN metin; işler için `pathNotGranted`). Pencereyi
+Rust gösterir, webview yanıtlayamaz. Testlerde soru gösterilmez: `VHO_GRANT_PROMPT=allow|deny` (E2E varsayılanı `allow`,
+güvenlik testi `deny`).
+
+Denetim kanonik yolda yapılır: `..`, sembolik bağ/junction, 8.3 kısa ad, `\\?\` öneki ve (Windows'ta) harf büyüklüğü
+hedefi izinden çıkaramaz. Silme/yeniden adlandırma girdinin kendisine bakar (bağın bulunduğu klasör), etiket yazma bağın
+hedefine; henüz olmayan çıktı yolunun eksik kısmında `..` reddedilir; göreli yollar reddedilir.
+
+Kapsanan komutlar: `file_trash`, `file_rename`, `tags_write`, `tags_save_cover`, `replaygain_analyze` / `replaygain_album`
+(yazarken), `media_job`, `photo_batch` (çıktı klasörü; `removeSource` ile kaynaklar), `jobs_submit` (`export`,
+`photo-batch`), `jobs_output_copy`, `library_playlist_export`, `library_add_folder`. Okuma komutları bu kapsamda değildir.
+Testler: Rust `grants::tests` (dosya/klasör/ağaç kapsamı, `..`/göreli yol, harf/`\\?\`/eğik çizgi/kısa ad, junction
+kaçışı, sürücü kökü); E2E `security.e2e` "path grants" (komut satırıyla açılan dosyanın klasörü dışındaki her yazma reddedilir
+ve hiçbir dosya değişmez; junction/`..`/göreli yol; aynı klasörde yeniden adlandırma, toplu iş, liste dışa aktarma çalışır;
+izin yeniden açılışta korunur).
+
 ## 4. Açık riskler (kabul edilen / sonraki iş)
 
 | Risk | Önem | Durum |
 |---|---|---|
-| Yazma/silme komutları (`file_trash`, `file_rename`, `tags_write`, `media_job` çıktı yolu, `library_playlist_export`) webview'in gönderdiği her yolu kabul ediyor; "kullanıcının seçtiği dosya" belirteci yok | Orta (yalnızca webview ele geçirilirse; CSP satır içi betiği engeller, uzak içerik IPC alamaz) | Açık. Öneri: arka uçta seçilen/açılan yolların kaydı ve yazma komutlarında bu kayda karşı denetim. Kararlı yayından önce yeniden değerlendirilmeli |
+| ~~Yazma/silme komutları webview'in gönderdiği her yolu kabul ediyor~~ | Orta | **Kapatıldı** (2026-10-28, §3.6). Kalan: onay penceresinde "İzin ver" denirse o klasör oturum boyunca yazılabilir (bilinçli kullanıcı kararı); okuma komutları (`photo_scan`, `prepare_media` vb.) yol izni istemez ve varlık protokolüne dizin açar |
+| Kullanıcının açtığı bir dosyanın klasörü (alt klasörleri değil) kalıcı olarak yazılabilir | Düşük | Kabul: fotoğraf/oynatma listesinde yanındaki dosyalara geçiş ve "kaynak klasöre dışa aktar" bunu gerektirir. `grants.json` silinirse izinler sıfırlanır |
 | `img-src`/`media-src` `https:`/`http:` içeriyor (URL ile açılan medya ve harita karoları için) | Düşük (izleme pikseli için HTML enjeksiyonu gerekir) | Kabul. `connect-src` yerel kaldığı için sayfa betikleri uzak sunucuya veri gönderemez |
 | mpv/ffmpeg ayrıştırıcıları (LGPL derleme) | Bilinmiyor | Sürümler `legal/inventory` içinde; güncelleme takvimi R02/P05. Bulanık test (fuzzing) eklenmedi |
 | `engine_get` açık | Düşük (okuma) | Kabul |
@@ -131,6 +170,6 @@ Erişilebilir kritik/yüksek bulgu yok. npm paketleri yalnızca geliştirme ara�
 
 ## 7. Kalan
 
-- Seçilen yol kaydı (§4 ilk satır), bulanık test altyapısı, altyazı/çalma listesi için ek düşmanca fixture'lar (çalma listesi
+- Bulanık test altyapısı, altyazı/çalma listesi için ek düşmanca fixture'lar (çalma listesi
   şema reddi L02 testlerinde var).
-- macOS/Linux'ta hiçbir Q04 denetimi cihazda çalıştırılmadı.
+- macOS/Linux'ta hiçbir Q04 denetimi cihazda çalıştırılmadı (yol izinlerinin yerel onay penceresi ve kanonikleştirme dahil).

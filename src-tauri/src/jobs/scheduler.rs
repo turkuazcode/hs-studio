@@ -477,6 +477,22 @@ impl Scheduler {
     /// Copies a completed item's output next to its source (or into `dir`) without
     /// overwriting anything (A04 "save a copy"). The file comes from the queue's own record,
     /// never from a path the UI sends.
+    /// Folder of the source of a completed item (default target of `copy_output`).
+    pub fn output_source_dir(&self, id: &str, idx: i64) -> Result<PathBuf, JobError> {
+        let input: String = self
+            .storage
+            .read(|c| {
+                c.query_row(
+                    "SELECT input_path FROM job_items WHERE job_id = ?1 AND idx = ?2 AND state = 'completed'",
+                    params![id, idx],
+                    |r| r.get(0),
+                )
+                .optional()
+            })?
+            .ok_or_else(|| JobError::new(code::INVALID_STATE, "no completed output"))?;
+        Ok(super::parent_dir(Path::new(&input)))
+    }
+
     pub fn copy_output(&self, id: &str, idx: i64, dir: Option<PathBuf>) -> Result<String, JobError> {
         let (input, output): (String, Option<String>) = self
             .storage
