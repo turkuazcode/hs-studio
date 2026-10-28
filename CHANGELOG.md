@@ -43,8 +43,8 @@ preview**; there is no macOS build (its video engine is not written yet).
 
 ### Changed
 
-- Product name **HS Studio** (working name VHO); data of the old identifier is migrated on first
-  start. License **Apache-2.0** with a NOTICE file, © 2026 TurkuazCode; name and logo in
+- Product renamed to **HS Studio** (working name VHO); data of the old identifier is migrated on
+  first start. License **Apache-2.0** with a NOTICE file, © 2026 TurkuazCode; name and logo in
   [TRADEMARKS.md](TRADEMARKS.md).
 - The earlier neural photo enhancer (DAT-2 ×4, GFPGAN) is switched off in this release.
 

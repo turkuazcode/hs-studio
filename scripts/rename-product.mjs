@@ -79,6 +79,8 @@ export function rules({ name, identifier, exeName }) {
     { file: "SECURITY.md", replace: [[WORD, name]] },
     {
       file: "CHANGELOG.md",
+      // the rename is recorded once; after the first release it lives in that release's section
+      done: (text) => text.includes(`Product name **${name}**`) || text.includes(`Product renamed to **${name}**`),
       replace: [["## [Unreleased]\n", `## [Unreleased]\n\n- Product renamed to **${name}** (formerly VHO). On first start the app copies the data of\n  the old identifier (${OLD_IDENTIFIER}) to ${identifier}; the installer removes an old per-user "VHO"\n  install first. Exports now go to the "${name}" folder (existing "VHO" folders are left as they are).\n`]],
     },
     { file: "tests/unit/i18n-coverage.test.mjs", replace: [["const NEUTRAL_TEXT = /^(VHO.*|", `const NEUTRAL_TEXT = /^(VHO.*|${esc(name)}.*|`]] },
@@ -134,6 +136,7 @@ export function run({ root = ROOT, apply = false, name = "HS Studio", identifier
     const p = join(root, rule.file);
     if (!existsSync(p)) { missing.push(rule.file); continue; }
     const before = readFileSync(p, "utf8");
+    if (rule.done?.(before)) continue;
     let text = before;
     let count = 0;
     for (const rep of rule.replace) {
