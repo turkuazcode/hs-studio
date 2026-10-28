@@ -161,7 +161,7 @@ export function createPhotoStudio(app) {
   const info = createInfoPanel(infoEl, { invoke, convertFileSrc, onClose: () => setInfoVisible(false) });
 
   const editor = createEditor($("ps-editor"), {
-    invoke, convertFileSrc, dialogSave, toast: app.toast,
+    invoke, convertFileSrc, dialogSave, toast: app.toast, jobs: app.jobs, settings: app.settings,
     onSaved: (r, mode, item) => {
       thumbs.forget(item.path);
       if (r.output) thumbs.forget(r.output);
@@ -935,6 +935,8 @@ export function createPhotoStudio(app) {
     get isOpen() { return !root.hidden; },
     get dir() { return dir; },
     get view() { return view; },
+    /** The editor (tests / automation). */
+    get editor() { return editor; },
     get selection() { return selectedInOrder(sel, paths); },
     settings,
     thumbs,

@@ -94,3 +94,18 @@ test("booster: HTML5 soft-clip safety stage never reaches full scale, is transpa
   for (const x of [0, 0.25, 0.5, -0.7]) assert.ok(Math.abs(at(x) - x) < 0.003, `identity at ${x}: ${at(x)}`);
   for (let i = 1; i < n; i++) assert.ok(c[i] >= c[i - 1], "monotonic");
 });
+
+test("smart editing (A06): inpaint/colorize like the enhancement, background removal experimental", () => {
+  const list = frontendCapabilities({ webgpu: true, platform: { os: "windows", verifiedPlatform: true } });
+  const c = Object.fromEntries(list.map((e) => [e.id, e]));
+  for (const id of ["photo.aiInpaint", "photo.aiColorize"]) {
+    assert.equal(c[id].available, true);
+    assert.equal(c[id].implementation, "onnx-webgpu");
+    assert.equal(c[id].reasonCode, "model-download-on-first-use");
+  }
+  assert.equal(c["photo.aiBackground"].reasonCode, "experimental-memory");
+  assert.equal(c["photo.aiBackground"].verified, false, "never claimed verified");
+  const none = Object.fromEntries(frontendCapabilities({ webgpu: false, wasm: false, platform: { os: "windows" } }).map((e) => [e.id, e]));
+  assert.equal(none["photo.aiBackground"].available, false);
+  assert.equal(none["photo.aiBackground"].reasonCode, "no-ai-backend");
+});

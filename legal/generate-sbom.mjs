@@ -128,6 +128,12 @@ export function parseAiManifest(src = readFileSync(join(ROOT, "src-tauri/src/ai/
       bytes: Number(m[5].replace(/_/g, "")),
     }));
     if (files.length !== calls) throw new Error(`manifest.rs: could not parse every file() of ${field("id")} (${files.length}/${calls})`);
+    // archive downloads (Download { url, extract: [Extract { entry, name, sha256, bytes }] }): the
+    // extracted files are what the app keeps; the distribution URL is the archive's
+    const zip = (b.match(/\burl: "([^"]+)"\.into\(\)/) || [])[1];
+    const entries = [...b.matchAll(/Extract \{\s*entry: "([^"]+)"\.into\(\),\s*name: "([^"]+)"\.into\(\),\s*sha256: "([0-9a-f]{64})"\.into\(\),\s*bytes: ([\d_]+)/g)];
+    if ((b.match(/Extract \{/g) || []).length !== entries.length) throw new Error(`manifest.rs: could not parse every Extract of ${field("id")}`);
+    for (const m of entries) files.push({ url: zip, entry: m[1], name: m[2], sha256: m[3], bytes: Number(m[4].replace(/_/g, "")) });
     return { id: field("id"), version: field("version"), title: field("title"), author: field("author"), license: field("license"), source: field("source"), files };
   });
 }

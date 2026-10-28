@@ -39,6 +39,18 @@ export const FACE_MODEL = {
   credit: "Tencent ARC (Apache-2.0), Shiqi Yu / OpenCV (MIT)",
 };
 
+/**
+ * Plan 07 smart editing (A06): op -> component, model file and (DDColor) ONNX external data.
+ * Pre/post-processing lives in smart-edit.js; the queue job kinds are in ai-jobs.js.
+ */
+export const SMART_MODELS = Object.freeze({
+  inpaint: { component: "lama", file: "lama_fp32.onnx", title: "LaMa", credit: "Samsung AI Center (Apache-2.0)" },
+  matting: { component: "birefnet-portrait", file: "birefnet_portrait_fp16.onnx", title: "BiRefNet portrait", credit: "Peng Zheng et al. (MIT)" },
+  // optional second background model for objects / products (Settings > AI models)
+  "matting-general": { op: "matting", component: "birefnet-general", file: "birefnet_general_fp16.onnx", title: "BiRefNet", credit: "Peng Zheng et al. (MIT)" },
+  colorize: { component: "ddcolor", file: "ddcolor.onnx", data: "ddcolor.data", title: "DDColor", credit: "Xiaoyang Kang et al. (Apache-2.0)" },
+});
+
 const RUNTIME = {
   component: "ort-web",
   entry: "ort.webgpu.min.mjs",
@@ -409,7 +421,7 @@ export function createInferenceAdapter() {
           if (recipe.op === "upscale") store.set(tileKey(backend === "wasm" ? "cpu" : dev, recipe.modelId, backend), String(st.ti));
           const seconds = (performance.now() - started) / 1000;
           attempts.push({ backend, tile, outcome: "ok" });
-          lastRun = { op: recipe.op, model: recipe.modelId ?? "face-restore", backend, tile, seconds, attempts, inputPixels: input.width * input.height };
+          lastRun = { op: recipe.op, model: recipe.modelId ?? recipe.smartOp ?? "face-restore", backend, tile, seconds, attempts, inputPixels: input.width * input.height };
           diag({ op: recipe.op, backend, tile, outcome: "ok", seconds });
           if (recipe.op === "upscale" && seconds > 0) store.set(`vho.ai.rate.${backend === "wasm" ? "cpu" : dev}.${recipe.modelId}`, String(input.width * input.height / seconds));
           return { ...res, backend, tile, seconds, attempts };
@@ -436,6 +448,13 @@ export function createInferenceAdapter() {
             image: { width: input.width, height: input.height, data: pixels } },
           [pixels], onProgress, signal);
         return { imageData: new ImageData(new Uint8ClampedArray(res.data), res.width, res.height), stats: res.stats };
+      }
+      if (recipe.op === "smart") {
+        const res = await runInWorker(
+          { type: "smart", runtime, backend, op: recipe.smartOp, model: recipe.model, params: recipe.params, fault: takeFault(),
+            image: { width: input.width, height: input.height, data: pixels } },
+          [pixels], onProgress, signal);
+        return { imageData: new ImageData(new Uint8ClampedArray(res.data), res.width, res.height) };
       }
       const o = recipe.original;
       const orig = o ? o.data.slice().buffer : null;
@@ -499,6 +518,29 @@ export async function upscaleImage(modelId, source, { onProgress, signal } = {})
     return await ad.run(source, {
       op: "upscale", modelId, url: assetUrl(joinPath(dirs[m.component], m.file)), scale: m.scale, multiple: m.multiple,
     }, (phase, f) => onProgress?.(phase, f), signal);
+  } finally {
+    ad.release();
+    release();
+  }
+}
+
+/**
+ * Plan 07 smart edit of an image (A06), off the UI thread, one heavy AI job at a time.
+ * model: a SMART_MODELS key — "inpaint" (params.strokes) | "matting" / "matting-general"
+ * (params: { mode, color, blur }) | "colorize". Returns { imageData, backend, seconds, attempts }.
+ */
+export async function smartEdit(model, source, params, { onProgress, signal } = {}) {
+  const m = SMART_MODELS[model];
+  if (!m) throw new Error(`unknown smart edit ${model}`);
+  const op = m.op ?? model;
+  const release = await slot.acquire();
+  const ad = createInferenceAdapter();
+  try {
+    const dirs = await ad.prepare([m.component], { onProgress: (f) => onProgress?.("download", f), signal });
+    const dir = dirs[m.component];
+    const files = { url: assetUrl(joinPath(dir, m.file)) };
+    if (m.data) files.externalData = [{ path: m.data, data: assetUrl(joinPath(dir, m.data)) }];
+    return await ad.run(source, { op: "smart", smartOp: op, modelId: m.component, model: files, params }, (phase, f) => onProgress?.(phase, f), signal);
   } finally {
     ad.release();
     release();
