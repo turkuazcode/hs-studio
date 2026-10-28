@@ -1,6 +1,6 @@
 # ADR 0002 — Linux video yüzeyi: libmpv render API (OpenGL) + GtkGLArea, WebKitGTK altında
 
-- **Durum:** Kabul edildi (P03, 2026-10-27) — WSLg (sanal) ortamında doğrulandı; gerçek donanımda Wayland + X11 doğrulaması **ortam bekliyor**.
+- **Durum:** Kabul edildi (P03, 2026-10-27) — WSLg (sanal, yazılım GL) ortamında denendi (aşağıdaki kayıt); gerçek GPU'lu Linux masaüstünde Wayland + X11 doğrulaması **ortam bekliyor**.
 - **İlgili:** [ADR 0001](0001-oynatma-motoru.md) (Windows: sahipli açılır pencere, `wid`), [Plan 10 / P03](../plans/10-platform-ve-paketleme.md), [platform-support](../platform-support.md), [build-linux.md](../../third_party/mpv/build-linux.md)
 - **Kod:** `src-tauri/src/engine/linux.rs` (yüzey), `engine/mpv.rs` → `render` modülü (render API bağlaması), `engine/mod.rs` (`surface_options`, `locate`), `engine/smoke.rs` (uygulama içi senaryo), `scripts/linux/*`, `third_party/mpv/build-linux.sh`
 
@@ -76,3 +76,41 @@ mpv `ao` otomatik: PipeWire (`pipewire`), PulseAudio (`pulse`), ALSA sırasıyla
 - Sonuçlar ve ortam: aşağıdaki kayıt. WSLg sanal bir ortamdır (GPU sanal/yazılım, tek sanal masaüstü): **GPU kalite/performans kanıtı sayılmaz**, platform `verified` yapılmaz.
 
 ## Kayıt
+
+**2026-10-27/28 — WSL2 + WSLg, Ubuntu 24.04, Mesa 25.2.8 llvmpipe (yazılım GL; GPU yok, VAAPI yok).** Uygulama içi
+senaryo `scripts/linux/engine-smoke.sh both`, LGPL `libmpv.so.2` (mpv v0.41.0, FFmpeg n8.1.3; `third_party/mpv/evidence/linux/`).
+
+| Adım | X11 (`GDK_BACKEND=x11`, XWayland, GLX) | Wayland (`GDK_BACKEND=wayland`, EGL) |
+|---|---|---|
+| libmpv yüklendi (sistem mpv/FFmpeg yok) | geçti | geçti |
+| Render bağlamı (GtkGLArea) | geçti (`glx`, GL 4.5 core) | geçti (`egl`, GL 4.5 core) |
+| Ön yüzün normal yoluyla dosya açma | geçti | geçti |
+| Oynatma / GL alanına kare çizimi | geçti; yük altında yavaş (1,2 s'de 3–26 kare) | geçti (1,2 s'de 14–31 kare) |
+| `engine_show` → yüzey görünür | geçti | geçti |
+| Duraklat, 1,0 s'ye ara | geçti | geçti |
+| Ses izi 2, altyazı izi + metin | geçti | geçti |
+| Ses çıkışı | `pulse` (WSLg PulseAudio) | `pulse` |
+| `current-vo` | `libmpv` | `libmpv` |
+| Birleştirilmiş pencerede arayüz çubuğu videonun üstünde, video alanı şeffaf | geçti (alttaki arayüz satırı görünür, video alanı mpv çıktısı) | geçti |
+| FBO / pencere merkez pikseli video rengi | **kurulu deb paketiyle geçti**: 6/6 probe [41,41,255], pencere 5×5 örneği renk şeritlerini gösteriyor; geliştirme derlemesinde bazı koşularda mpv karesi siyah | siyah (her koşuda) |
+
+Siyah kare çözümlemesi: GL durumu temiz (scissor/blend/unpack varsayılan), mpv günlüğünde GL hatası yok (`gpu-debug=yes`),
+VO 640×360 yuv420p ile yapılandırılmış, video alanı `(0,71) 1100×618` (merkezi kapsıyor). Aynı sonuç **VHO olmadan**
+mpv'nin kendi `--vo=gpu --gpu-context=wayland` çıktısında da çıkıyor (`screenshot window`: 6 denemenin 5'inde siyah,
+1'inde doğru renk), oysa aynı dosya `--vo=image` ile doğru çözülüyor. Sonuç: WSLg'nin llvmpipe GL sürücüsünde mpv'nin
+GL çiziciyle ilgili ortam sorunu; VHO entegrasyonuna özgü değil. **Gerçek GPU'lu bir Linux masaüstünde (Wayland + X11)
+merkez piksel denetimi ortam bekliyor.** Bu nedenle Linux hücreleri `destekli/test bekliyor`, `verified=false` kalır.
+
+Kurulu paket (2026-10-28): `scripts/linux/package.sh` → `VHO_0.1.0_amd64.AppImage` (103,75 MiB) ve
+`VHO_0.1.0_amd64.deb` (25,22 MiB); deb, sistemde mpv/FFmpeg paketi **olmayan** dağıtıma `apt` ile kuruldu, `/usr/bin/vho`
+libmpv'yi `/usr/lib/VHO/mpv/` altından yükledi, smoke iki oturumda çalıştı (sonuçlar tabloda), paket kaldırıldı.
+AppImage çalıştırılarak denenmedi.
+
+Diğer bulgular:
+- Ön yüzün saklanan "donanım çözme: otomatik" değeri (`auto-safe`) Linux'ta `auto-copy-safe` seçimini eziyordu;
+  `engine_set` artık Linux'ta `auto-copy-safe`'e çeviriyor (Rust testi `engine_hwdec_setting_is_copy_back_on_linux`).
+- WSLg'de VAAPI yok (`Could not create a VA display`) → yazılım çözme; beklenen yedek çalıştı.
+- `report_swap`, GTK frame clock `after-paint` sinyalinde, mpv karesi çizildiyse çağrılır.
+- Tanı için: `VHO_MPV_LOG_LEVEL=v` (mpv günlüğü stderr'e), `VHO_MPV_OPTIONS="gpu-debug=yes"`; smoke raporu FBO
+  boyutu/ölçek/viewport, render öncesi GL durumu ve birleştirilmiş pencereden 5×5 örnek içerir.
+- HiDPI (ölçek 1), çoklu monitör, GNOME/KDE pencere yöneticisi davranışı: WSLg'de denenemez → ortam bekliyor.

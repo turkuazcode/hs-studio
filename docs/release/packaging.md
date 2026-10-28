@@ -97,15 +97,35 @@ Bu makinede Mac veya Linux yok. Yapılandırmalar ve tarifler hazırdır ama **t
     Xcode komut satırı araçları, Rust hedefi `aarch64-apple-darwin` ve/veya `x86_64-apple-darwin`.
   - libmpv macOS'ta henüz gömülmüyor (Plan 02 yol B). ffmpeg kullanıcının sistemindekiyle çalışır.
   - İmza ve notarization R02'de; hesap bekliyor.
-- **Linux:** `src-tauri/packaging/linux/appimage-deb.conf.json` (AppImage + deb; bağımlılıklar `libwebkit2gtk-4.1-0`,
-  `libgtk-3-0`).
-  - Derleme Ubuntu 22.04+ üzerinde yapılır: `sudo apt install libwebkit2gtk-4.1-dev build-essential libssl-dev librsvg2-dev`,
-    ardından `npx tauri build --bundles appimage,deb --config ...`.
-  - libmpv gömülmüyor. Dağıtımların GPL derlemeli mpv/ffmpeg paketlerine bağımlılık **bilerek eklenmedi**
-    (bağımlılık politikası; [legal/INVENTORY.md](../../legal/INVENTORY.md)).
+- **Linux (P03):** `src-tauri/packaging/linux/appimage-deb.conf.json` (AppImage + deb).
+  - Geliştirme ortamı `sudo bash scripts/linux/setup-dev.sh` (Ubuntu 24.04), LGPL libmpv/FFmpeg
+    `bash third_party/mpv/build-linux.sh`, paket `bash scripts/linux/package.sh`.
+  - Paket betiği LGPL dosya setini `legal/inventory/native-linux-x64.json` ile karşılaştırır, sistem FFmpeg'ine
+    bağlanan dosya varsa durur, seti `<resources>/mpv/` altına (RUNPATH=$ORIGIN) ve `legal/` klasörünü (LICENSE, NOTICE,
+    bildirimler, kaynak teklifi, envanter, SBOM) pakete koyar, SHA-256 manifesti yazar.
+  - deb bağımlılıkları Ubuntu 24.04 paket adlarıdır (`libgtk-3-0t64`, `libasound2t64`, `libpipewire-0.3-0t64`, libass,
+    libplacebo338, libva, wayland, …); dağıtımın mpv/FFmpeg paketlerine bağımlılık **bilerek yok**
+    (bağımlılık politikası; [legal/INVENTORY.md](../../legal/INVENTORY.md)). Daha eski glibc tabanı (AppImage taşınabilirliği)
+    R02 CI koşucusu bekliyor.
+  - WSLg sonuçları: aşağıda "Linux (WSLg)". Gerçek Linux masaüstünde temiz kurulum: ortam bekliyor.
 - İki platformda da `legal/` klasörünün hazırlanması `package-windows.ps1` içindeki adımla aynıdır (LICENSE,
   bildirimler, kaynak teklifi, SBOM). Bunun platformdan bağımsız bir betiğe taşınması P02/P03 gerçek testleriyle
   birlikte yapılacak.
+
+## Linux (WSLg)
+
+**2026-10-28**, WSL2 + WSLg, Ubuntu 24.04 (sanal ortam, yazılım GL; **gerçek Linux masaüstü kanıtı sayılmaz**):
+
+| Adım | Sonuç |
+|---|---|
+| Paketler | `VHO_0.1.0_amd64.AppImage` (103,75 MiB, SHA-256 `549c0154…045a`), `VHO_0.1.0_amd64.deb` (25,22 MiB, SHA-256 `04bfa211…04f5`) |
+| deb içeriği | `usr/bin/vho`, `usr/lib/VHO/mpv/` (libmpv + 7 FFmpeg `.so` + ffmpeg/ffprobe, envanterle aynı set), `usr/lib/VHO/legal/` (LICENSE, NOTICE, bildirimler, kaynak teklifi, envanter, SBOM) |
+| Kurulum | `apt install ./VHO_0.1.0_amd64.deb`; dağıtımda mpv/FFmpeg paketi yok (0) |
+| Kurulan uygulama | libmpv `/usr/lib/VHO/mpv/` altından yüklendi; motor smoke X11 ve Wayland'de: açma, oynatma, duraklat/ara, ses/altyazı izleri, `pulse` çıkışı geçti; X11'de video görüntüsü pencerede doğrulandı; Wayland'de llvmpipe kaynaklı siyah kare (ADR 0002 kaydı) |
+| Kaldırma | `apt remove` sonrası paket kurulu değil |
+
+Test edilmeyenler: AppImage'ın çalıştırılması, eski glibc dağıtımları, gerçek GPU/VAAPI, HiDPI ve çoklu monitör,
+GNOME/KDE oturumu, kullanıcı verisinin yükseltmede korunması. Bunlar gerçek Linux masaüstünde **ortam bekliyor**.
 
 ## Test sonuçları (Windows 11 x64)
 
