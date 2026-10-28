@@ -1,0 +1,11 @@
+Available video outputs:
+  gpu-next         Video output based on libplacebo
+  gpu              Shader-based GPU Renderer
+  wlshm            Wayland SHM video output (software scaling)
+  dmabuf-wayland   Wayland dmabuf video output
+  libmpv           render API for libmpv
+  null             Null video output
+  image            Write video frames to image files
+  tct              true-color terminals
+  kitty            Kitty terminal graphics protocol
+

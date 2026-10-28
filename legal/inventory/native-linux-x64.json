@@ -1,0 +1,83 @@
+{
+  "$comment": "Native binaries VHO ships on Linux x64 in <resources>/mpv/ of the AppImage/deb (scripts/linux/package.sh) or next to the binary (scripts/linux/stage-mpv.sh). Hashes are those of the local reference build; scripts/linux/package.sh checks the file set against this list. See third_party/mpv/build-linux.md and ADR 0002.",
+  "platform": "linux-x86_64",
+  "delivery": "Separate files in <resources>/mpv/ with RUNPATH=$ORIGIN. libmpv.so.2 is loaded at runtime (libloading, never from the system library path) and may be replaced by the user (VHO_MPV_DLL); ffmpeg/ffprobe run as separate processes. Nothing here is linked into the vho binary.",
+  "build": {
+    "recipe": "third_party/mpv/build-linux.sh",
+    "doc": "third_party/mpv/build-linux.md",
+    "evidence": "third_party/mpv/evidence/linux/",
+    "toolchain": "Ubuntu 24.04 (WSL2), gcc 13, meson 1.3.2",
+    "builtOn": "2026-10-27",
+    "reproducible": false,
+    "hashesNote": "sha256 of the local reference build of 2026-10-27 (WSL). A release build (glibc baseline runner, R02) must refresh them and ship exactly the hashed files."
+  },
+  "sources": {
+    "ffmpeg": {
+      "tag": "n8.1.3",
+      "commit": "1041abdc962f4cc4f394aa8de9dc5236c0c3b9e7",
+      "localPatches": "none (clean checkout)",
+      "repository": "https://git.ffmpeg.org/ffmpeg.git",
+      "mirror": "https://github.com/FFmpeg/FFmpeg",
+      "configure": [
+        "--enable-shared",
+        "--disable-static",
+        "--disable-doc",
+        "--disable-debug",
+        "--disable-ffplay",
+        "--enable-libdav1d",
+        "--enable-vaapi",
+        "--enable-zlib"
+      ],
+      "licenseEvidence": "third_party/mpv/evidence/linux/ffmpeg-buildconf.txt (no --enable-gpl / --enable-version3 / --enable-nonfree), ffmpeg-license.txt (LGPL 2.1+)"
+    },
+    "mpv": {
+      "tag": "v0.41.0",
+      "commit": "41f6a645068483470267271e1d09966ca3b9f413",
+      "localPatches": "none (clean checkout)",
+      "repository": "https://github.com/mpv-player/mpv",
+      "meson": [
+        "--buildtype=release",
+        "--default-library=shared",
+        "-Dgpl=false",
+        "-Dlibmpv=true",
+        "-Dcplayer=true",
+        "-Dwayland=enabled",
+        "-Degl=enabled",
+        "-Degl-wayland=enabled",
+        "-Dgl=enabled",
+        "-Dvaapi=enabled",
+        "-Dvaapi-drm=auto",
+        "-Dvaapi-wayland=auto",
+        "-Dpulse=enabled",
+        "-Dpipewire=enabled",
+        "-Dalsa=enabled",
+        "-Dlua=disabled",
+        "-Djavascript=disabled",
+        "-Drubberband=disabled",
+        "-Dcdda=disabled",
+        "-Ddvdnav=disabled",
+        "-Dlibbluray=disabled",
+        "-Dlibarchive=disabled",
+        "-Dvapoursynth=disabled",
+        "-Dzimg=disabled"
+      ],
+      "licenseEvidence": "third_party/mpv/evidence/linux/mpv-options.txt (gpl = False; the GPL-gated X11 VO is absent, see mpv-vo.txt)"
+    }
+  },
+  "systemDependencies": {
+    "note": "Resolved from the distribution, not shipped in the deb (declared as package dependencies). The AppImage bundles them via linuxdeploy; all are LGPL/MIT/BSD/ISC/MPL (no GPL-only library): libass (ISC), libplacebo (LGPL-2.1+), lcms2 (MIT), uchardet (MPL-1.1/GPL-2+/LGPL-2.1+), dav1d (BSD-2), libva (MIT), PipeWire (MIT), PulseAudio client (LGPL-2.1+), alsa-lib (LGPL-2.1+), wayland (MIT), libxkbcommon (MIT), libvulkan (Apache-2.0), libEGL/glvnd (MIT-like), harfbuzz (MIT), fribidi (LGPL-2.1+), freetype (FTL), fontconfig (MIT), libjpeg-turbo (IJG/BSD), zlib (Zlib).",
+    "evidence": "third_party/mpv/evidence/linux/ldd-libmpv.txt"
+  },
+  "files": [
+    { "name": "libmpv.so.2", "component": "mpv", "license": "LGPL-2.1-or-later", "sha256": "d80f56e246d0710003c41339db4a359c3f1612c502d8739abae6962324e2177a" },
+    { "name": "libavcodec.so.62", "component": "ffmpeg", "license": "LGPL-2.1-or-later", "sha256": "c8410658d138dcd98a71a7ba89dc1959698459e07cf82a16fb0e1a19820a8bb6" },
+    { "name": "libavdevice.so.62", "component": "ffmpeg", "license": "LGPL-2.1-or-later", "sha256": "b56a405ebaa2b4fd709ae2a6dc99339c0d4aa53827342228d0e3353d5666550c" },
+    { "name": "libavfilter.so.11", "component": "ffmpeg", "license": "LGPL-2.1-or-later", "sha256": "1758b4a8dd67fadf1b162f97c543a4bebf5edb9743facdb34d9f04bbce2c8897" },
+    { "name": "libavformat.so.62", "component": "ffmpeg", "license": "LGPL-2.1-or-later", "sha256": "723456530c9cfb8d56e6b013835d10f179c2ad4d65e89256502ea072cd0c0bd2" },
+    { "name": "libavutil.so.60", "component": "ffmpeg", "license": "LGPL-2.1-or-later", "sha256": "55bf114118a136f9e816330982884f45c1ab7ea492a926a98e770646598084a7" },
+    { "name": "libswresample.so.6", "component": "ffmpeg", "license": "LGPL-2.1-or-later", "sha256": "1c552214717f98e5d74c6fd6fa59b2c5425ff21638759bb629b96cead8e0a449" },
+    { "name": "libswscale.so.9", "component": "ffmpeg", "license": "LGPL-2.1-or-later", "sha256": "a6d89cb54e6cc8791ed09c104084246d8c154ddd07abc10741185d848b0dac98" },
+    { "name": "ffmpeg", "component": "ffmpeg", "license": "LGPL-2.1-or-later", "sha256": "3f11a56d9886a9e2baeea0314abb03695b8a33dfafffcf8d32627c4afeefb94e" },
+    { "name": "ffprobe", "component": "ffmpeg", "license": "LGPL-2.1-or-later", "sha256": "941124c9273ce586d3e4a3136917b4a0742b15a014b84c2a4c9c408b170c1239" }
+  ]
+}

@@ -6,7 +6,9 @@
 //! macOS: System Events (osascript) for the background, `open -R` fallback for share.
 //! Linux: GNOME gsettings for the background, `xdg-open` / the portal for "open with".
 
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
+#[cfg(windows)]
+use tauri::Manager;
 
 pub const WALLPAPER_SUPPORTED: bool = cfg!(any(windows, target_os = "macos", target_os = "linux"));
 

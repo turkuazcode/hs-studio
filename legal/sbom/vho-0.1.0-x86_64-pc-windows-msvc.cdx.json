@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:8eaac326-1cd0-5e59-af75-cce197194d27",
+ "serialNumber": "urn:uuid:be279e6b-02f4-5490-b879-b825880d85f1",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-28T07:47:28Z",
+  "timestamp": "2026-10-28T07:50:33Z",
   "tools": {
    "components": [
     {
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "eb4a98fb8a9f84109119cee2bb5f20f290f52647"
+    "value": "e8594691fe84b5e857ddb2a7fc528e19978887e2"
    },
    {
     "name": "vho:native-binaries",
