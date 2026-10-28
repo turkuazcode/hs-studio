@@ -165,6 +165,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   };
   app.studio = createPhotoStudio(app);
   window.__vhoStudio = app.studio;
+  window.__vhoSettings = app.settings; // E2E / automation (experimental switches)
   // File / photo / video / music actions (Plan 06): toolbar, "⋯" + right-click menus, dialogs
   app.mediaActions = createMediaActions(app);
   window.__vhoActions = app.mediaActions;

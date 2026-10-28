@@ -9,7 +9,7 @@ Kod: `src/studio/smart-tools.js` (düzenleyicideki "✨ Akıllı" bölümü), `s
 - Fotoğraf **Düzenle** ekranında tek bir **✨ Akıllı** bölümü: *Nesne sil · Arka plan · Renklendir*. Ana ekrana ve video/müzik düzenine bir şey eklenmedi.
 - **Renklendir** yalnızca siyah-beyaz veya çok soluk fotoğraflarda görünür (`isColorizeCandidate`: ortalama Lab kroma ≤ 8).
 - **Nesne sil:** fırça (boyut kaydırıcısı), silgi, temizle, "Sil". Maske, önizlemenin üstündeki ayrı bir katmana çizilir.
-- **Arka plan:** Şeffaf (PNG) · Beyaz · Siyah · Renk (seçici) · Bulanık (yoğunluk). Model varsayılan olarak **Kişi (portre)**. **Nesne ve ürün** modeli Ayarlar > AI modelleri > "Arka plan kaldırma modeli" ile seçilir ve ikinci bir model indirir.
+- **Arka plan (deneysel, varsayılan gizli; kullanıcı kararı 2026-10-28):** Ayarlar > AI modelleri > "Deneysel: arka plan kaldırma" açıkken "Deneysel" etiketiyle görünür. Seçenekler: Şeffaf (PNG) · Beyaz · Siyah · Renk (seçici) · Bulanık (yoğunluk). Model varsayılan olarak **Kişi (portre)**; **Nesne ve ürün** modeli "Arka plan kaldırma modeli" ile seçilir ve ikinci bir model indirir. Bellek yetmezse (`memory`) anlaşılır bir TR/EN mesaj çıkar; fotoğraf değişmez. Yetenek tablosunda `photo.aiBackground`, `reasonCode: experimental-memory`.
 - Döndürme, kırpma veya ayar değişikliği bekliyorsa araçlar kapalıdır ve kısa bir not çıkar: önce kaydet veya sıfırla. Akıllı araçlar dik, kırpılmamış görüntüde çalışır.
 - İlk kullanımda mevcut A01 onayı çıkar: model adı, yazar, lisans ve indirme boyutu.
 - İş, A02 kuyruğunda kalıcı bir AI işi olarak çalışır (A03 tek ağır iş kuralı, ilerleme, iptal, oynatma sırasında duraklatma). Arayüz donmaz (Web Worker).
@@ -26,7 +26,7 @@ Kod: `src/studio/smart-tools.js` (düzenleyicideki "✨ Akıllı" bölümü), `s
 | `birefnet-general` (isteğe bağlı) | `onnx-community/BiRefNet-ONNX` @ `534d3c8…` | `onnx/model_fp16.onnx` → `birefnet_general_fp16.onnx` (490 MB) | MIT |
 | `ddcolor` | Qualcomm AI Hub v0.65.0 `ddcolor-onnx-float.zip` (zip özeti doğrulanır) | `ddcolor.onnx` + harici ağırlık `ddcolor.data` (228 MB) | Apache-2.0 |
 
-Boyutlar ve özetler 2026-10-27'de Hugging Face API'sinden (LFS oid) ve yayımlanan zipten doğrulandı. Genel BiRefNet'in özeti Plan 07'deki önekle (`3654c741eb80bd92`) eşleşir. Lisans ve eğitim verisi kayıtları: `legal/inventory/models.json`, `legal/NOTICES_HEADER.txt` §1.5–1.8, `legal/INVENTORY.md`. Eğitim verisi sorusu (Places365, P3M-10k, DIS5K, ImageNet) YuNet/GFPGAN ile aynıdır ve **sahibin kararını bekliyor**.
+Boyutlar ve özetler 2026-10-27'de Hugging Face API'sinden (LFS oid) ve yayımlanan zipten doğrulandı. Genel BiRefNet'in özeti Plan 07'deki önekle (`3654c741eb80bd92`) eşleşir. Lisans ve eğitim verisi kayıtları: `legal/inventory/models.json`, `legal/NOTICES_HEADER.txt` §1.5–1.8, `legal/INVENTORY.md`. Eğitim verisi sorusu (Places365, P3M-10k, DIS5K, ImageNet) YuNet/GFPGAN ile aynıdır: **kabul edilen risk (sahip onayı 2026-10-28)**; yayından önce resmi kaynaklardan yeniden doğrulanır.
 
 ## Teknik notlar
 
@@ -54,10 +54,7 @@ Plan 07'deki "Python betiğiyle referans eşdeğerlik" testi yapılamadı: önce
   - WASM: `std::bad_alloc`, 32 bit WASM belleği yetmiyor. Bellek arenası ve bellek deseni kapalıyken ve `basic` optimizasyonla da aynı sonuç. Bu ORT sürümünde wasm64 yapısı yok.
   - WebGPU: 16 çıkışlı `Split` ve 16–1024 girişli `Concat` düğümleri gölgelendirici başına 17 depolama tamponu istiyor; cihaz sınırı 16. Bu düğümleri matematiği değiştirmeden bölen deneysel bir grafik yeniden yazımı bu sınırı aştı, ama ardından fp16 model `bad_alloc` verdi, fp32 model çöktü.
   - Sonuç: iş yaklaşık 2 dakika sonra temiz biçimde `memory` hata koduyla biter. Çıktı yazılmaz, kaynak değişmez, kullanıcı hata metnini görür.
-  - Çözüm seçenekleri **kullanıcı kararı**:
-    1. Yerel ONNX Runtime (Rust tarafında; Plan 07 ölçümü 30 s CPU bu yolla yapılmıştı).
-    2. Daha hafif bir arka plan modeli (Plan 07'de onaylanan sonuç değil).
-    3. Aracın bu cihazlarda gizlenmesi veya deneysel kalması.
+  - Kullanıcı kararı (2026-10-28): araç **deneysel ve varsayılan gizli**. Yerel ONNX Runtime yolu yapılmayacak.
 - Nesne silme (LaMa) ve renklendirme (DDColor) aynı makinede WASM'de ve WebGPU'da çalışıyor; WebGPU sonucu WASM ile aynı.
 - Yalnızca Windows (WebView2, AMD 1 GB iGPU + WASM) denendi; macOS/Linux denenmedi.
 - Çok büyük maskelerde parçalara bölme yok; maske kırpması 512'den büyükse tek geçişte küçültülür.

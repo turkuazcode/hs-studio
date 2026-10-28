@@ -1161,10 +1161,14 @@
       },
       "settings": {
         "background": "Arka plan kaldırma modeli",
-        "backgroundHelp": "Fotoğraf düzenleyicisindeki “Arka plan” aracı. “Nesne ve ürün” ikinci bir model indirir (yaklaşık 490 MB).",
+        "backgroundHelp": "Deneysel arka plan kaldırma açıkken kullanılır. “Nesne ve ürün” ikinci bir model indirir (yaklaşık 490 MB).",
         "portrait": "Kişi (portre)",
-        "general": "Nesne ve ürün"
-      }
+        "general": "Nesne ve ürün",
+        "experimental": "Deneysel: arka plan kaldırma",
+        "experimentalHelp": "Fotoğraf düzenleyicisinde “Arka plan” aracını gösterir. Bazı cihazlarda bellek yetersizliğiyle çalışmayabilir."
+      },
+      "experimental": "Deneysel",
+      "bgMemory": "Arka plan kaldırma bu cihazda bellek yetersizliği nedeniyle çalışmadı. Bu özellik deneyseldir; fotoğraf değiştirilmedi."
     }
   },
   "storage": {

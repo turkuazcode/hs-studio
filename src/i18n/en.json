@@ -1161,10 +1161,14 @@
       },
       "settings": {
         "background": "Background removal model",
-        "backgroundHelp": "The “Background” tool of the photo editor. “Objects and products” downloads a second model (about 490 MB).",
+        "backgroundHelp": "Used when the experimental background removal is on. “Objects and products” downloads a second model (about 490 MB).",
         "portrait": "People (portrait)",
-        "general": "Objects and products"
-      }
+        "general": "Objects and products",
+        "experimental": "Experimental: background removal",
+        "experimentalHelp": "Shows the “Background” tool in the photo editor. It may not work on some devices because of insufficient memory."
+      },
+      "experimental": "Experimental",
+      "bgMemory": "Background removal did not run on this device: not enough memory. This feature is experimental; the photo was not changed."
     }
   },
   "storage": {

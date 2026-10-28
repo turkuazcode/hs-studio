@@ -46,11 +46,12 @@ test("smart tools in the photo editor", { timeout: 180000 }, async (t) => {
   };
 
   try {
-    await t.test("availability: colour photo has remove + background, no colorize; pending edits disable the tools", async () => {
+    await t.test("availability: colour photo has remove, no colorize, background hidden (experimental, off); pending edits disable the tools", async () => {
       await openEditor(color, "color.png");
       assert.equal(await hidden(smart('[data-act="smart-color"]')), true, "colorize hidden for a colour photo");
       assert.equal(await disabled(smart('[data-act="smart-remove"]')), false);
-      assert.equal(await disabled(smart('[data-act="smart-bg"]')), false);
+      assert.equal(await app.eval(`__vhoSettings.get("ai.smart.backgroundExperimental")`), false, "experimental switch off by default");
+      assert.equal(await hidden(smart('[data-act="smart-bg"]')), true, "background removal hidden by default");
       assert.equal(await hidden(smart(".ps-smart-applied")), true);
       await app.click(`#ps-editor [data-act="rotr"]`);
       assert.equal(await disabled(smart('[data-act="smart-remove"]')), true, "pending rotate disables the tools");
@@ -89,7 +90,10 @@ test("smart tools in the photo editor", { timeout: 180000 }, async (t) => {
       await app.click(smart('[data-panel="remove"] [data-act="smart-close"]'));
     });
 
-    await t.test("background panel: colour picker only for a custom colour, blur amount only for blur", async () => {
+    await t.test("experimental switch shows background removal with its tag; colour picker / blur amount per mode", async () => {
+      await app.eval(`__vhoSettings.set("ai.smart.backgroundExperimental", true), true`);
+      await app.waitFor(`!document.querySelector(${J(smart('[data-act="smart-bg"]'))}).hidden`, { timeoutMs: 5000, message: "background tool shown" });
+      assert.ok((await app.eval(`document.querySelector(${J(smart('[data-act="smart-bg"] .ps-smart-tag'))}).textContent`)).length > 3, "experimental tag");
       await app.click(smart('[data-act="smart-bg"]'));
       assert.equal(await hidden(smart('[data-panel="bg"]')), false);
       await app.click(smart('[data-bg="color"]'));
@@ -99,6 +103,8 @@ test("smart tools in the photo editor", { timeout: 180000 }, async (t) => {
       assert.equal(await hidden(smart(".ps-smart-color")), true);
       assert.equal(await hidden(smart(".ps-smart-blur")), false);
       await app.click(smart('[data-panel="bg"] [data-act="smart-close"]'));
+      await app.eval(`__vhoSettings.set("ai.smart.backgroundExperimental", false), true`);
+      await app.waitFor(`document.querySelector(${J(smart('[data-act="smart-bg"]'))}).hidden`, { timeoutMs: 5000, message: "background tool hidden again" });
     });
 
     await t.test("an AI result becomes the undoable base image; the applied step is shown", async () => {

@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:e4f27e5d-3993-59b6-a63d-a94e8f2bb4a3",
+ "serialNumber": "urn:uuid:8eaac326-1cd0-5e59-af75-cce197194d27",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-28T06:56:37Z",
+  "timestamp": "2026-10-28T07:47:28Z",
   "tools": {
    "components": [
     {
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "809bb4ec92d907f12249e2b20496ac3b90c03e4f"
+    "value": "eb4a98fb8a9f84109119cee2bb5f20f290f52647"
    },
    {
     "name": "vho:native-binaries",
@@ -21271,8 +21271,12 @@
      "value": "review"
     },
     {
+     "name": "vho:acknowledged",
+     "value": "2026-10-28 owner decision: LaMa, BiRefNet (portrait/general) and DDColor stay in the app. The research-only training-data question (Places365 / P3M-10k, TR-humans / DIS5K / ImageNet) is an accepted, owner-decided risk, like YuNet/GFPGAN; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
+    },
+    {
      "name": "vho:training-data",
-     "value": "big-lama is reported upstream as trained on Places365-Challenge (Places dataset terms: non-commercial research/education). Open item for the owner (legal/INVENTORY.md), same question as YuNet/GFPGAN: dataset terms vs. permissively licensed weights. To be re-verified from the official repository before release."
+     "value": "big-lama is reported upstream as trained on Places365-Challenge (Places dataset terms: non-commercial research/education). Accepted risk (owner decision 2026-10-28), same as YuNet/GFPGAN. To be re-verified from the official repository before release."
     }
    ]
   },
@@ -21327,8 +21331,12 @@
      "value": "review"
     },
     {
+     "name": "vho:acknowledged",
+     "value": "2026-10-28 owner decision: LaMa, BiRefNet (portrait/general) and DDColor stay in the app. The research-only training-data question (Places365 / P3M-10k, TR-humans / DIS5K / ImageNet) is an accepted, owner-decided risk, like YuNet/GFPGAN; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
+    },
+    {
      "name": "vho:training-data",
-     "value": "Model card: P3M-10k (except TE-P3M-500-P), TR-humans (schirrmacher/humans), TE-P3M-500-P. Open item for the owner (legal/INVENTORY.md), same question as YuNet/GFPGAN: dataset terms vs. permissively licensed weights. To be re-verified from the official repository before release."
+     "value": "Model card: P3M-10k (except TE-P3M-500-P), TR-humans (schirrmacher/humans), TE-P3M-500-P. Accepted risk (owner decision 2026-10-28), same as YuNet/GFPGAN. To be re-verified from the official repository before release."
     }
    ]
   },
@@ -21383,8 +21391,12 @@
      "value": "review"
     },
     {
+     "name": "vho:acknowledged",
+     "value": "2026-10-28 owner decision: LaMa, BiRefNet (portrait/general) and DDColor stay in the app. The research-only training-data question (Places365 / P3M-10k, TR-humans / DIS5K / ImageNet) is an accepted, owner-decided risk, like YuNet/GFPGAN; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
+    },
+    {
      "name": "vho:training-data",
-     "value": "Model card: DIS-TR (DIS5K), validated on DIS-TEs/DIS-VD. Open item for the owner (legal/INVENTORY.md), same question as YuNet/GFPGAN: dataset terms vs. permissively licensed weights. To be re-verified from the official repository before release."
+     "value": "Model card: DIS-TR (DIS5K), validated on DIS-TEs/DIS-VD. Accepted risk (owner decision 2026-10-28), same as YuNet/GFPGAN. To be re-verified from the official repository before release."
     }
    ]
   },
@@ -21439,8 +21451,12 @@
      "value": "review"
     },
     {
+     "name": "vho:acknowledged",
+     "value": "2026-10-28 owner decision: LaMa, BiRefNet (portrait/general) and DDColor stay in the app. The research-only training-data question (Places365 / P3M-10k, TR-humans / DIS5K / ImageNet) is an accepted, owner-decided risk, like YuNet/GFPGAN; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
+    },
+    {
      "name": "vho:training-data",
-     "value": "DDColor is reported upstream as trained on ImageNet (ImageNet terms: non-commercial research/education). Open item for the owner (legal/INVENTORY.md), same question as YuNet/GFPGAN: dataset terms vs. permissively licensed weights. To be re-verified from the official repository before release."
+     "value": "DDColor is reported upstream as trained on ImageNet (ImageNet terms: non-commercial research/education). Accepted risk (owner decision 2026-10-28), same as YuNet/GFPGAN. To be re-verified from the official repository before release."
     }
    ]
   },
@@ -21495,8 +21511,12 @@
      "value": "review"
     },
     {
+     "name": "vho:acknowledged",
+     "value": "2026-10-28 owner decision: LaMa, BiRefNet (portrait/general) and DDColor stay in the app. The research-only training-data question (Places365 / P3M-10k, TR-humans / DIS5K / ImageNet) is an accepted, owner-decided risk, like YuNet/GFPGAN; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
+    },
+    {
      "name": "vho:training-data",
-     "value": "DDColor is reported upstream as trained on ImageNet (ImageNet terms: non-commercial research/education). Open item for the owner (legal/INVENTORY.md), same question as YuNet/GFPGAN: dataset terms vs. permissively licensed weights. To be re-verified from the official repository before release."
+     "value": "DDColor is reported upstream as trained on ImageNet (ImageNet terms: non-commercial research/education). Accepted risk (owner decision 2026-10-28), same as YuNet/GFPGAN. To be re-verified from the official repository before release."
     }
    ]
   },

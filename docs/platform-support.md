@@ -35,6 +35,7 @@ Desteklenmeyen kontrol ya gizlenir ya da **devre dışı + nedeni yazılı** gö
 | `engine-unsupported-platform` | Bu platformda libmpv gömme henüz yok (macOS/Linux: P02/P03) |
 | `engine-mpv` | Özellik libmpv'nin kendi çizdiği karede yapılamıyor (WebGL erişimi yok) |
 | `no-webgl2` | WebGL2 yok |
+| `experimental-memory` | Deneysel özellik: bazı cihazlarda bellek yetersizliğiyle çalışmayabilir (A06 arka plan kaldırma) |
 | `webview-codecs-only` | HTML5 yedeği: codec yelpazesi WebView'inki kadar |
 | `success-not-measured` | İstenen yol (ör. `hwdec=auto-safe`) etkin; dosya başına başarı burada ölçülmüyor |
 | `codec-missing` / `codec-failed` | OS codec'i yok / kurulu ama çözemiyor (S03, `0x88982F8B`) |
@@ -108,6 +109,9 @@ Arka uç satırlarının tek kaynağı `src-tauri/src/capabilities.rs` → `SUPP
 | Renk filtresi (`video.colorFilter`) | destekli/testli | destekli/test bekliyor | destekli/test bekliyor | libmpv özellikleri veya CSS |
 | %200 ses + sınırlayıcı (`audio.boostLimiter`) | destekli/testli | destekli/test bekliyor | destekli/test bekliyor | `tests/e2e/audio-limiter.e2e.mjs` |
 | Fotoğraf AI (`photo.aiEnhance`) | destekli/test bekliyor | destekli/test bekliyor | destekli/test bekliyor | ONNX Runtime Web; gerçek model kalite testi yok (Q02) |
+| Nesne silme (`photo.aiInpaint`) | destekli/test bekliyor | destekli/test bekliyor | destekli/test bekliyor | LaMa, ONNX Runtime Web; Windows'ta gerçek model testi var (`smart-edit.ai`), renk/kalite insan incelemesi yok |
+| Renklendirme (`photo.aiColorize`) | destekli/test bekliyor | destekli/test bekliyor | destekli/test bekliyor | DDColor (harici ağırlık); Windows'ta gerçek model testi var; renk doğruluğu Q02 incelemesi bekliyor |
+| Arka plan kaldırma (`photo.aiBackground`) | **deneysel** (`experimental-memory`; test makinesinde bellek yetersiz) | deneysel | deneysel | BiRefNet 1024²; varsayılan gizli, Ayarlar > AI modelleri > "Deneysel: arka plan kaldırma" ile açılır ([smart-edit.md](smart-edit.md)) |
 | Video restorasyonu (`video.aiRestore`) | desteklenmiyor (`not-ready`) | desteklenmiyor | desteklenmiyor | Plan 12 |
 
 ### Kodlayıcı seçimi (P04)
