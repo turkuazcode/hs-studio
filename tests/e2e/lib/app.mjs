@@ -22,8 +22,15 @@ export const fixture = (name) => join(FIXTURES, name);
 const PORT_MIN = Number(process.env.VHO_E2E_PORT_MIN) || 9500;
 const PORT_MAX = Number(process.env.VHO_E2E_PORT_MAX) || 9599;
 
+/** Name of the built app binary: tauri.conf.json `mainBinaryName` ("HS Studio"), else the crate name. */
+export function appBinaryName() {
+  const conf = JSON.parse(readFileSync(join(REPO_ROOT, "src-tauri", "tauri.conf.json"), "utf8"));
+  const base = conf.mainBinaryName || "vho";
+  return process.platform === "win32" ? `${base}.exe` : base;
+}
+
 export function defaultExe() {
-  return process.env.VHO_EXE || join(REPO_ROOT, "src-tauri", "target", "release", process.platform === "win32" ? "vho.exe" : "vho");
+  return process.env.VHO_EXE || join(REPO_ROOT, "src-tauri", "target", "release", appBinaryName());
 }
 
 function portFree(port) {
