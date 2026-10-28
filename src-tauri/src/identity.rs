@@ -25,6 +25,7 @@ use std::path::{Path, PathBuf};
 /// (current identifier, identifiers whose data it takes over, newest first). Empty until the rename.
 pub const MIGRATIONS: &[(&str, &[&str])] = &[
     // RENAME-PRODUCT: migration entry (inserted by scripts/rename-product.mjs)
+    ("com.turkuazcode.hsstudio", &["com.vho.app"]),
 ];
 
 /// Folder names never copied (regenerable caches).

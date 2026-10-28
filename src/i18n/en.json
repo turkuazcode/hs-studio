@@ -107,7 +107,7 @@
       "cache": "Cache"
     },
     "help": {
-      "defaultApps": "Windows does not let apps make themselves the default; choose VHO in the window that opens.",
+      "defaultApps": "Windows does not let apps make themselves the default; choose HS Studio in the window that opens.",
       "pcSleep": "Off by default.",
       "compat": "Turn on only if you hear sound but the picture stays black. Uses more CPU.",
       "subPosition": "libmpv: sub-pos. Subtitles move up automatically while the control bar is visible.",
@@ -502,7 +502,7 @@
       "outputLocation": "Exported files",
       "outputLocationHelp": "Where cuts, conversions, GIFs and extracted audio are saved.",
       "outputSource": "Folder of the source file",
-      "outputLibrary": "VHO folder in Videos / Music / Pictures",
+      "outputLibrary": "HS Studio folder in Videos / Music / Pictures",
       "favorites": "Favorites: {n} files",
       "clearFavorites": "Clear favorites",
       "exportHeading": "Export",
@@ -615,12 +615,12 @@
     "deepSavedTo": "Copy saved: {name} (in the photo's folder; EXIF and transparency kept)"
   },
   "ui": {
-    "docTitle": "VHO - Video Player",
+    "docTitle": "HS Studio - Video Player",
     "win": {
       "minimize": "Minimize",
       "maximize": "Maximize"
     },
-    "logoAlt": "VHO logo",
+    "logoAlt": "HS Studio logo",
     "titlebar": {
       "findSubsTitle": "Find subtitles online",
       "findSubs": "Find subtitles",
@@ -801,7 +801,7 @@
       "empty": "Click the button above to search for subtitles."
     },
     "licenses": {
-      "desc": "VHO is made possible by the open source projects below. AI components are downloaded on first use and stored together with their license files.",
+      "desc": "HS Studio is made possible by the open source projects below. AI components are downloaded on first use and stored together with their license files.",
       "loading": "Loading…",
       "readFailed": "Could not read the license file."
     },
@@ -1172,7 +1172,7 @@
     }
   },
   "storage": {
-    "schemaNewer": "The library database belongs to a newer VHO version and was left untouched. Recent files are read from the old store in this session.",
+    "schemaNewer": "The library database belongs to a newer HS Studio version and was left untouched. Recent files are read from the old store in this session.",
     "unavailable": "The library database could not be opened; recent files are read from the old store in this session.",
     "recoveredBackup": "The library database was damaged and has been restored from the latest backup. The damaged file was kept.",
     "recoveredFresh": "The library database was damaged and no backup existed; it was rebuilt from the old records. The damaged file was kept."
@@ -1271,7 +1271,7 @@
     "resumeAt": "stopped at {time}",
     "count": "{n} items",
     "empty": {
-      "noFolders": "The library has no folders yet. Add a folder and VHO scans it and keeps it up to date.",
+      "noFolders": "The library has no folders yet. Add a folder and HS Studio scans it and keeps it up to date.",
       "noMatch": "Nothing matches the search.",
       "none": "Nothing in this view."
     },

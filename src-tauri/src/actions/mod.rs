@@ -357,7 +357,7 @@ pub async fn lyrics_read(path: String) -> Result<Option<tags::Lyrics>, String> {
     blocking(move || tags::lyrics(Path::new(&path))).await
 }
 
-/// Output folder for exports when the user picked "Videos\VHO" in Settings.
+/// Output folder for exports when the user picked "Videos\HS Studio" in Settings.
 #[tauri::command]
 pub fn export_dir(app: AppHandle, kind: String) -> Result<String, String> {
     let p = app.path();
@@ -367,7 +367,7 @@ pub fn export_dir(app: AppHandle, kind: String) -> Result<String, String> {
         _ => p.video_dir(),
     }
     .map_err(|e| e.to_string())?;
-    let dir = base.join("VHO");
+    let dir = base.join("HS Studio");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir.to_string_lossy().into_owned())
 }

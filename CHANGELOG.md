@@ -11,6 +11,10 @@ public releases.
 
 ## [Unreleased]
 
+- Product renamed to **HS Studio** (formerly VHO). On first start the app copies the data of
+  the old identifier (com.vho.app) to com.turkuazcode.hsstudio; the installer removes an old per-user "VHO"
+  install first. Exports now go to the "HS Studio" folder (existing "VHO" folders are left as they are).
+
 Status: pre-alpha, no public release. Verified on a real device only on **Windows 11 x64**;
 macOS and Linux builds are untested ([docs/platform-support.md](docs/platform-support.md)).
 

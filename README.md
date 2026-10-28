@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎬 VHO — Video H Oynatıcısı
+# 🎬 HS Studio — Video H Oynatıcısı
 ### Açık kaynak video, fotoğraf ve müzik oynatıcısı / stüdyosu
 
 [![Tauri 2.0](https://img.shields.io/badge/Tauri-2.0-24C8DB?style=for-the-badge&logo=tauri&logoColor=white)](https://tauri.app/)
@@ -11,7 +11,7 @@
 
 <br/>
 
-**VHO (Video H Oynatıcısı)**, oynatma motoru olarak LGPL **libmpv**'yi, arayüz için **Tauri 2.0 + Rust + sade bir web arayüzünü** kullanan masaüstü medya uygulamasıdır: video oynatıcı, fotoğraf stüdyosu ve müzik araçları bir arada.
+**HS Studio** (eski adı VHO), oynatma motoru olarak LGPL **libmpv**'yi, arayüz için **Tauri 2.0 + Rust + sade bir web arayüzünü** kullanan masaüstü medya uygulamasıdır: video oynatıcı, fotoğraf stüdyosu ve müzik araçları bir arada.
 
 </div>
 
@@ -149,7 +149,7 @@ Saf mantık (sınıflandırma, zaman biçimleme, altyazı ayrıştırma/kod çö
 ### Uçtan uca (E2E) testler
 `tests/e2e/` altındaki testler `vho.exe`'yi `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port=<9500-9599>` ile başlatır ve Chrome DevTools Protocol üzerinden sayfayı sürer (`lib/cdp.mjs`, `lib/app.mjs`). Medya dosyaları komut satırı argümanı olarak açılır ("Birlikte aç" yolu).
 
-- Her çalıştırma ayrı, geçici bir WebView2 profili (`WEBVIEW2_USER_DATA_FOLDER`) ve ayrı bir veri klasörü (`VHO_DATA_DIR`: `settings.json`, `library.json`, pencere konumu) kullanır: kullanıcının ayarlarına ve kaldığı yer kayıtlarına dokunmaz. `VHO_DATA_DIR` tek örnek (single-instance) kilidini de o klasöre özgü yapar; test VHO'su dosyalarını kullanıcının açık VHO'suna iletmez. Testler yalnızca kendi başlattıkları süreci kapatır.
+- Her çalıştırma ayrı, geçici bir WebView2 profili (`WEBVIEW2_USER_DATA_FOLDER`) ve ayrı bir veri klasörü (`VHO_DATA_DIR`: `settings.json`, `library.json`, pencere konumu) kullanır: kullanıcının ayarlarına ve kaldığı yer kayıtlarına dokunmaz. `VHO_DATA_DIR` tek örnek (single-instance) kilidini de o klasöre özgü yapar; test HS Studio'su dosyalarını kullanıcının açık HS Studio'suna iletmez. Testler yalnızca kendi başlattıkları süreci kapatır.
 - CDP port aralığı varsayılan 9500-9599; paralel çalışmalar için `VHO_E2E_PORT_MIN` / `VHO_E2E_PORT_MAX` ile değiştirilebilir.
 - Arka plandaki pencere yeniden çizilmeyebilir; bu yüzden testler ekran görüntüsüne değil, DOM ve medya durumuna (`videoWidth`, `getVideoPlaybackQuality()`, metinler) bakar.
 - **Güvenlik (sistem eylemleri):** `vho.exe` her zaman `VHO_DISABLE_SYSTEM_CHANGES=1` ile başlatılır: masaüstü arka planı, kilit ekranı, paylaşım, yazdırma, "Birlikte aç" ve "Klasörde göster" yalnızca `actions_system_log` günlüğüne yazılır, uygulanmaz. Silme testi yalnızca testin kendi geçici kopyasını Geri Dönüşüm Kutusu'na taşır ve o öğeyi yeniden kalıcı olarak siler; panodaki metin test öncesi saklanıp sonra geri yüklenir.
@@ -196,7 +196,7 @@ Katkılar memnuniyetle karşılanır. Temiz klondan kurulum, test katmanları, m
 
 ### Üçüncü taraf bileşenler
 
-VHO yalnızca açık kaynak lisanslı (MIT, Apache-2.0, BSD, CC-BY-4.0 vb.; libmpv/FFmpeg LGPL, ayrı DLL olarak) bileşenler kullanır. Makinece okunur envanter ve CycloneDX SBOM: [legal/INVENTORY.md](legal/INVENTORY.md), `npm run sbom`. Tam liste ve lisans metinleri [src/legal/THIRD_PARTY_NOTICES.txt](src/legal/THIRD_PARTY_NOTICES.txt) dosyasında ve uygulamada **Ayarlar → Hakkında / Lisanslar** ile **İyileştir → Lisanslar ve Teşekkürler** penceresindedir.
+HS Studio yalnızca açık kaynak lisanslı (MIT, Apache-2.0, BSD, CC-BY-4.0 vb.; libmpv/FFmpeg LGPL, ayrı DLL olarak) bileşenler kullanır. Makinece okunur envanter ve CycloneDX SBOM: [legal/INVENTORY.md](legal/INVENTORY.md), `npm run sbom`. Tam liste ve lisans metinleri [src/legal/THIRD_PARTY_NOTICES.txt](src/legal/THIRD_PARTY_NOTICES.txt) dosyasında ve uygulamada **Ayarlar → Hakkında / Lisanslar** ile **İyileştir → Lisanslar ve Teşekkürler** penceresindedir.
 
 - **Yapay zeka bileşenleri uygulamayla birlikte gelmez.** İlk kullanımda, kullanıcı onayıyla, sabit sürüm/commit adreslerinden indirilir ve SHA-256 ile doğrulanır. Lisans dosyaları da yanlarında saklanır.
   - [ONNX Runtime Web](https://github.com/microsoft/onnxruntime) 1.30.0: Microsoft, MIT

@@ -149,7 +149,7 @@ export function registerBaseFields(app) {
           el("div", { class: "vho-about" },
             el("img", { src: "assets/icon-192.png", alt: "", class: "vho-about-logo" }),
             el("div", {},
-              el("strong", { text: "VHO" }, version),
+              el("strong", { text: "HS Studio" }, version),
               el("p", { "data-i18n": "settings.about.description", text: t("settings.about.description") }),
               el("p", { "data-i18n": "settings.about.license", text: t("settings.about.license") }))),
         );

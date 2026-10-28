@@ -98,7 +98,7 @@ fn is_cancelled(rx: &watch::Receiver<bool>) -> bool {
 
 pub fn client(url: &str, policy: &Policy) -> AiResult<reqwest::Client> {
     let mut b = reqwest::Client::builder()
-        .user_agent(concat!("VHO/", env!("CARGO_PKG_VERSION")))
+        .user_agent(concat!("HS-Studio/", env!("CARGO_PKG_VERSION")))
         .connect_timeout(policy.connect_timeout)
         .read_timeout(policy.stall_timeout);
     if url.starts_with("http://127.0.0.1") || url.starts_with("http://localhost") {

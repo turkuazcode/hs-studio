@@ -107,7 +107,7 @@
       "cache": "Önbellek"
     },
     "help": {
-      "defaultApps": "Windows, uygulamaların kendini varsayılan yapmasına izin vermez; açılan pencerede VHO'yu seçin.",
+      "defaultApps": "Windows, uygulamaların kendini varsayılan yapmasına izin vermez; açılan pencerede HS Studio'yu seçin.",
       "pcSleep": "Varsayılan olarak kapalıdır.",
       "compat": "Yalnızca ses gelip görüntü siyah kalıyorsa açın. CPU kullanımı artar.",
       "subPosition": "libmpv: sub-pos. Kontrol çubuğu görünürken altyazı otomatik yükselir.",
@@ -502,7 +502,7 @@
       "outputLocation": "Dışa aktarılan dosyalar",
       "outputLocationHelp": "Kesme, dönüştürme, GIF ve ses çıkarma sonuçlarının kaydedileceği yer.",
       "outputSource": "Kaynak dosyanın klasörü",
-      "outputLibrary": "Videolar / Müzik / Resimler içinde VHO klasörü",
+      "outputLibrary": "Videolar / Müzik / Resimler içinde HS Studio klasörü",
       "favorites": "Favoriler: {n} dosya",
       "clearFavorites": "Favorileri temizle",
       "exportHeading": "Dışa aktarma",
@@ -615,12 +615,12 @@
     "deepSavedTo": "Kopya kaydedildi: {name} (fotoğrafın klasöründe; EXIF ve saydamlık korundu)"
   },
   "ui": {
-    "docTitle": "VHO - Video Oynatıcı",
+    "docTitle": "HS Studio - Video Oynatıcı",
     "win": {
       "minimize": "Simge durumuna küçült",
       "maximize": "Ekranı kapla"
     },
-    "logoAlt": "VHO logosu",
+    "logoAlt": "HS Studio logosu",
     "titlebar": {
       "findSubsTitle": "İnternetten Altyazı Bul",
       "findSubs": "Altyazı Bul",
@@ -801,7 +801,7 @@
       "empty": "Altyazı aramak için yukarıdaki butona tıklayın."
     },
     "licenses": {
-      "desc": "VHO, aşağıdaki açık kaynak projeler sayesinde mümkün oldu. Yapay zeka bileşenleri ilk kullanımda indirilir ve lisans dosyalarıyla birlikte saklanır.",
+      "desc": "HS Studio, aşağıdaki açık kaynak projeler sayesinde mümkün oldu. Yapay zeka bileşenleri ilk kullanımda indirilir ve lisans dosyalarıyla birlikte saklanır.",
       "loading": "Yükleniyor…",
       "readFailed": "Lisans dosyası okunamadı."
     },
@@ -1172,7 +1172,7 @@
     }
   },
   "storage": {
-    "schemaNewer": "Kütüphane veritabanı daha yeni bir VHO sürümüne ait; ona dokunulmadı. Son açılanlar bu oturumda eski kayıttan okunuyor.",
+    "schemaNewer": "Kütüphane veritabanı daha yeni bir HS Studio sürümüne ait; ona dokunulmadı. Son açılanlar bu oturumda eski kayıttan okunuyor.",
     "unavailable": "Kütüphane veritabanı açılamadı; son açılanlar bu oturumda eski kayıttan okunuyor.",
     "recoveredBackup": "Kütüphane veritabanı bozulmuştu; en son yedekten geri yüklendi. Bozuk dosya yedekler klasöründe saklandı.",
     "recoveredFresh": "Kütüphane veritabanı bozulmuştu ve yedek yoktu; eski kayıtlardan yeniden oluşturuldu. Bozuk dosya saklandı."
@@ -1271,7 +1271,7 @@
     "resumeAt": "{time} konumunda kaldı",
     "count": "{n} öğe",
     "empty": {
-      "noFolders": "Kütüphanede klasör yok. Bir klasör eklediğinizde VHO onu tarar ve güncel tutar.",
+      "noFolders": "Kütüphanede klasör yok. Bir klasör eklediğinizde HS Studio onu tarar ve güncel tutar.",
       "noMatch": "Aramayla eşleşen öğe yok.",
       "none": "Bu görünümde öğe yok."
     },

@@ -219,7 +219,7 @@ fn screenshot_dir<R: Runtime>(app: &AppHandle<R>) -> Option<PathBuf> {
     if let Some(d) = std::env::var_os("VHO_SCREENSHOT_DIR") {
         return Some(PathBuf::from(d));
     }
-    app.path().picture_dir().ok().map(|d| d.join("VHO"))
+    app.path().picture_dir().ok().map(|d| d.join("HS Studio"))
 }
 
 /// Stops mpv on exit (the event thread ends with the shutdown event).
@@ -404,7 +404,7 @@ pub async fn engine_screenshot(
         .chars()
         .map(|c| if c.is_alphanumeric() || "-_".contains(c) { c } else { '_' })
         .collect();
-    let stem = if stem.is_empty() { "VHO".to_string() } else { stem };
+    let stem = if stem.is_empty() { "HS Studio".to_string() } else { stem };
     let mut path = dir.join(format!("{stem}.png"));
     let mut n = 2;
     while path.exists() {

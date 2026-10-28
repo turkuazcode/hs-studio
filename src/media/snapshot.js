@@ -42,7 +42,7 @@ export function createSnapshot(app) {
   }
 
   async function captureSnapshot() {
-    const safeName = safeFileName(currentFilename.textContent || "VHO");
+    const safeName = safeFileName(currentFilename.textContent || "HS Studio");
     const mediaType = state.get("currentMediaType");
     const enhancer = app.filters.enhancer;
 

@@ -81,18 +81,23 @@ test("AI smoke reference: x4 size of the fixture; compareRgb measures difference
 
 test("E2E harness derives the same test identity as platform.rs (vector shared with the Rust test)", async () => {
   const { testIdentity } = await import("../e2e/lib/app.mjs");
-  // src-tauri/src/platform.rs tests::test_identifier_matches_the_e2e_harness
-  assert.equal(testIdentity(String.raw`C:\Users\Test\AppData\Local\Temp\vho-e2e-ABC\vho-data`), "com.vho.app.test784bc84e15c2ff8b");
+  // src-tauri/src/platform.rs tests::test_identifier_matches_the_e2e_harness: same hash, the
+  // prefix is the app identifier from tauri.conf.json
+  const expected = "com.turkuazcode.hsstudio.test784bc84e15c2ff8b";
+  assert.equal(testIdentity(String.raw`C:\Users\Test\AppData\Local\Temp\vho-e2e-ABC\vho-data`), expected);
   // case-insensitive like the Rust side (to_lowercase before hashing)
-  assert.equal(testIdentity(String.raw`C:\USERS\TEST\APPDATA\LOCAL\TEMP\VHO-E2E-ABC\VHO-DATA`), "com.vho.app.test784bc84e15c2ff8b");
+  assert.equal(testIdentity(String.raw`C:\USERS\TEST\APPDATA\LOCAL\TEMP\VHO-E2E-ABC\VHO-DATA`), expected);
 });
 
 test("clean-test-artifacts only matches exact test identities, never the user's app folder", async () => {
   const { TEST_ID, PACKAGE_TEST_ID } = await import("../lib/test-identity.mjs");
   const match = (n) => TEST_ID.test(n) || PACKAGE_TEST_ID.test(n);
   assert.ok(match("com.vho.app.test784bc84e15c2ff8b"));
+  assert.ok(match("com.turkuazcode.hsstudio.test784bc84e15c2ff8b"));
   assert.ok(match("com.vho.app.packagetest"));
-  for (const n of ["com.vho.app", "com.vho.app.test", "com.vho.app.test784bc84e15c2ff8", "com.vho.app.test784BC84E15C2FF8B",
+  assert.ok(match("com.hsstudio.app.packagetest"));
+  for (const n of ["com.turkuazcode.hsstudio", "com.turkuazcode.hsstudio.test", "com.turkuazcode.hsstudio.packagetest",
+    "com.turkuazcode.hsstudio.test784bc84e15c2ff8b.migrating-12", "com.vho.app", "com.vho.app.test", "com.vho.app.test784bc84e15c2ff8", "com.vho.app.test784BC84E15C2FF8B",
     "com.vho.app.test784bc84e15c2ff8b.bak", "com.vho.mpvspike", "x.com.vho.app.test784bc84e15c2ff8b", "com.vho.app.testing"]) {
     assert.ok(!match(n), n);
   }
