@@ -104,6 +104,11 @@ jobs:
       - run: npm test
         env:
           VHO_TEST_NO_SKIP: "1"
+      - name: Stage ffmpeg/ffprobe for the Rust layer
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force src-tauri/target/release | Out-Null
+          ./scripts/stage-mpv.ps1 -Source mpv-build\dist -Targets release
       - run: npm run test:rust
 
       # ---------------- the one exe that is tested and shipped
