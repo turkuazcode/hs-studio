@@ -87,3 +87,13 @@ Toplam **4,5 oturum**. Bütçe dolduğunda sonuç ne olursa olsun karar kaydı y
 | + nlmeans (s=3, p=7, r=15) | 89,3 s | 500 | 5,6 fps |
 
 Sonuç: taban çizgisi (nlmeans hariç) gerçek zamanın çok üstünde; nlmeans SD'de ~gerçek zamanın 1/9'u — bir saatlik video için ~9 saat (2 iş parçacığıyla), yalnızca kısa kesit/önizleme veya güçlü cihaz için uygun. Sentetik kaynak gerçek gürültü içermez; kalite ölçümü değildir (Q02).
+
+## Ek (2026-10-28): modelsiz, aslına sadık iyileştirme (V03'ün yeniden kapsamı)
+
+Kullanıcı kararı (2026-10-28): model fizibilitesi (V02) ertelendi; küçük modellerin "plastik" görünümü yerine **model kullanmayan** bir video iyileştirme yayımlandı. Bu ADR'nin aday 1'i (taban çizgisi) ürünleşti; aday 2–5 açık kalır.
+
+- **Zincir** (`src-tauri/src/restoration/enhance.rs`, V01 reçetesi üzerinde): gerekiyorsa `bwdif` → `deblock` (hafif/güçlü) → `atadenoise` (hafif `s=5`, orta 9 kare) → `scale` lanczos (aynı boyut veya ×2, kısa kenar ≤ 1080) → `cas` (0,3 / 0,55) → BT.709 SDR 8 bit 4:2:0; ses ve altyazı kopyalanır. Tüm filtreler bu LGPL derlemede var; `deblock`, `cas`, `unsharp`, `bwdif`, `atadenoise` kaynak başlıkları LGPL-2.1+ (2026-10-28 doğrulandı). HDR ve dinamik aralığı bilinmeyen kaynak engellenir (`hdr-unsupported` / `dynamic-range-unknown`); alan sırası ölçülemezse kullanıcıya sorulur (dosyanın kendi bayrağı önden seçili).
+- **Önizleme:** 10 s, yan yana (sol: yalnızca geometri/renk adımları, sağ: tam zincir), sessiz MP4. **Tamamı:** `<ad>_enhanced.mkv` kaynağın yanında, üzerine yazmaz (A02 kuyruğu, Q04 yol izni).
+- **Kodlama bulgusu:** 2011 telefon kliplerinde (640×352, VFR, hızlı pan) `h264_mf` bit hızı kiplerinde (VBR/CBR, kaynak hızının 1,6 katında bile) bazı kareleri bulanık bloklara çevirdi; filtre zincirinin kendisi (kayıpsız ffv1 çıktısı) temizdi. `-rate_control quality -quality 65` kaynakla eşdeğer sonuç verdi (boyut ≈ 2,3×). Diğer kodlayıcılar kaynağa göre ölçeklenen cömert bit hızı kullanır.
+- **Ölçüm (geliştirme makinesi, h264_mf):** 60 s 854×480 → 7,1 s; ×2 (1708×960) → 19,1 s. Kullanıcı klipleri (yalnızca yerel kopyalar): 65 s → 6,8 s, 122 s → 12,9 s; ardışık kare farkı (titreşim ölçüsü) kaynaktan düşük (4,23 → 4,13; 4,94 → 4,91).
+- **Sınır:** gerçek ayrıntı eklenmez; fayda blok/gürültü azaltma ve hafif netlik ile sınırlıdır. macOS/Linux kodlayıcılarında kalite kipi denenmedi.

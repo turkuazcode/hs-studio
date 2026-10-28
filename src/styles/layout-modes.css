@@ -196,3 +196,9 @@
 .photo-enhance .pe-select { min-height: 32px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--border-specular); background: var(--bg-surface-elevated); color: var(--text-pure); font: inherit; }
 .photo-enhance .pe-actions { display: flex; gap: 8px; }
 .photo-enhance .pe-actions .btn-primary { flex: 1; }
+
+/* Faithful video enhance dialog: side-by-side preview */
+.vho-venh-preview { display: block; width: 100%; max-height: 46vh; margin-top: 12px; border-radius: 10px; background: #000; }
+.vho-venh-preview[hidden], .vho-venh-caption[hidden] { display: none; }
+.vho-venh-caption { margin: 6px 0 0; font-size: 13px; color: var(--text-muted, #9ca3af); text-align: center; }
+.vho-venh-recommended, .vho-venh-note { margin: 0 0 10px; font-size: 13px; color: var(--text-muted, #9ca3af); }

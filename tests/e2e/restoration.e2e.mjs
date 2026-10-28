@@ -59,7 +59,7 @@ test("restoration: probe + recipe (interlaced, lying flag, rotation+SAR, HDR, mu
     assert.equal(same.recipeHash, r.recipeHash);
     const changed = await app.eval(inv("restoration_recipe", { path: f("tff.mpg"), recipe: { ...r.recipe, denoise: { filter: "atadenoise", strength: "light" } } }));
     assert.notEqual(changed.recipeHash, r.recipeHash);
-    assert.match(changed.filter, /,atadenoise,/);
+    assert.match(changed.filter, /,atadenoise=s=5,/);
   });
 
   await t.test("progressive flag on interlaced content: blocked until the user confirms", async () => {
