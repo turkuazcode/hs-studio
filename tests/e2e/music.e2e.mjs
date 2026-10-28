@@ -24,7 +24,8 @@ function ffmpeg(args) {
 /** Three tagged FLAC tracks (6 s, different levels) + a cover image. */
 function makeAlbum(dir) {
   const tracks = [];
-  const levels = [-20, -10, -6];
+  // loud enough that the album gain is negative: the HTML5 element can only attenuate
+  const levels = [4, 10, 16];
   levels.forEach((db, i) => {
     const p = join(dir, `0${i + 1} Parça ${i + 1}.flac`);
     ffmpeg(["-f", "lavfi", "-i", `sine=frequency=${440 + i * 110}:sample_rate=48000:duration=6`, "-af", `volume=${db}dB`, "-ac", "2",
@@ -76,7 +77,8 @@ test("music mode: layout, system controls, gapless, ReplayGain, library views, r
     await t.test("ReplayGain options reach libmpv (album, clipping prevention)", async () => {
       assert.equal(await app.eval(`window.__vhoEngine && __TAURI__.core.invoke("engine_get", { name: "replaygain" })`), "album");
       assert.equal(await app.eval(`__TAURI__.core.invoke("engine_get", { name: "replaygain-clip" })`), true);
-      assert.equal(await app.eval(`__TAURI__.core.invoke("engine_get", { name: "gapless-audio" })`), "yes");
+      // mpv reports the choice "yes" as a flag value (true) through the JSON node API
+      assert.ok(["yes", true].includes(await app.eval(`__TAURI__.core.invoke("engine_get", { name: "gapless-audio" })`)));
     });
 
     await t.test("system media controls show the playing track; a media key moves to the next one", async () => {
@@ -125,7 +127,12 @@ test("music mode: layout, system controls, gapless, ReplayGain, library views, r
     await t.test("library: artist and album views, drill into the album; a saved list", async () => {
       await app.eval(`window.__vhoLibrary.api.addFolder(${J(join(work, "Müzik"))})`);
       await app.waitFor(`window.__vhoLibrary.api.query({ kind: "audio" }).then((p) => p.total === 3)`, { timeoutMs: 20000, message: "scanned" });
-      await app.waitFor(`window.__vhoLibrary.api.musicGroups("album").then((g) => g.length === 1 && g[0].name === "Sakla Samanı")`, { timeoutMs: 10000, message: "tags read" });
+      await app.waitFor(`window.__vhoLibrary.api.musicGroups("album").then((g) => g.length === 1 && g[0].name === "Sakla Samanı")`, { timeoutMs: 10000, message: "tags read" })
+        .catch(async (e) => {
+          const g = await app.eval(`window.__vhoLibrary.api.musicGroups("album")`);
+          const q = await app.eval(`window.__vhoLibrary.api.query({ kind: "audio" }).then((p) => p.items.map((i) => [i.name, i.album, i.title]))`);
+          throw new Error(`${e.message}; groups ${J(g)}; items ${J(q)}`);
+        });
       await app.eval(`(window.__vhoLibrary.show("audio"), true)`);
       await app.eval(`(() => { const s = document.getElementById("lib-view"); s.value = "albums"; s.dispatchEvent(new Event("change")); return true; })()`);
       await app.waitFor(`document.querySelector("#lib-list .lib-group .lib-name")?.textContent === "Sakla Samanı"`, { timeoutMs: 8000 });

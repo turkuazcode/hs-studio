@@ -287,7 +287,8 @@
       "lyrics": "Şarkı sözleri",
       "replayGain": "Ses seviyesini ölç (ReplayGain)",
       "ringtone": "Zil sesi / kesit…",
-      "settings": "Ayarlar…"
+      "settings": "Ayarlar…",
+      "cast": "Cihaza yayınla…"
     },
     "delete": {
       "title": "Geri Dönüşüm Kutusu'na taşınsın mı?",
@@ -806,11 +807,12 @@
     },
     "url": {
       "title": "Ağ Akışı / Video URL Aç",
-      "desc": "Desteklenen: HTTP / HTTPS üzerinden doğrudan video, ses veya görsel linkleri (MP4, WebM, MP3, JPG...)",
+      "desc": "Desteklenen: HTTP / HTTPS üzerinden video, ses, radyo veya görsel bağlantıları ve HLS (.m3u8) akışları. Bağlantı koparsa yeniden bağlanılır.",
       "placeholder": "https://ornek.com/video.mp4",
       "play": "Oynat",
       "invalid": "Geçerli bir http(s) URL girin",
-      "hlsUnsupported": "⚠️ HLS (.m3u8) akışları bu sürümde desteklenmiyor"
+      "hlsUnsupported": "⚠️ HLS (.m3u8) akışları yalnızca libmpv motoruyla oynatılır",
+      "secretNotSaved": "Parola veya erişim belirteci içeren adresler son açılanlara kaydedilmez."
     },
     "studio": {
       "name": "Fotoğraf Stüdyosu",
@@ -1432,6 +1434,37 @@
     "album": {
       "replayGain": "Albüm ReplayGain hesapla…",
       "replayGainDone": "Albüm ReplayGain: {gain} dB ({n} parça)"
+    }
+  },
+  "cast": {
+    "title": "Cihaza yayınla",
+    "intro": "Aynı ağdaki TV ve hoparlörler (UPnP/DLNA) aranır. Dosya yalnızca seçilen cihaza ve yayın durdurulana kadar açılır.",
+    "devices": "Cihazlar",
+    "searching": "Cihazlar aranıyor…",
+    "pick": "Bir cihaz seçin.",
+    "none": "Cihaz bulunamadı. Cihazın açık ve aynı ağda olduğundan emin olun.",
+    "search": "Yeniden ara",
+    "starting": "{name} cihazına gönderiliyor…",
+    "now": "{name}: {title}",
+    "play": "Oynat",
+    "pause": "Duraklat",
+    "stop": "Yayını durdur",
+    "stopped": "Yayın durduruldu; dosya bağlantısı kapatıldı.",
+    "blocked": "Cihaz dosyayı alamadı. Güvenlik duvarı bu uygulamanın yerel ağ bağlantısını engelliyor olabilir.",
+    "state": {
+      "playing": "Oynatılıyor",
+      "paused": "Duraklatıldı",
+      "stopped": "Durdu",
+      "loading": "Yükleniyor…"
+    },
+    "error": {
+      "format": "Cihaz bu dosya türünü desteklemiyor ({detail}). Otomatik dönüştürme yapılmaz.",
+      "unreachable": "Cihaza ulaşılamadı.",
+      "gone": "Cihaz listede yok; yeniden arayın.",
+      "rejected": "Cihaz komutu reddetti ({detail}).",
+      "network": "Ağ hatası: {detail}",
+      "file": "Dosya açılamadı: {detail}",
+      "inactive": "Etkin yayın yok."
     }
   }
 }

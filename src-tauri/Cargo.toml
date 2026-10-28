@@ -59,6 +59,9 @@ uuid = { version = "1", features = ["v4"] }
 # Library folder watcher (Plan 13/L02; only an accelerator, reconciliation scans stay the
 # source of truth): notify CC0-1.0, pinned 8.2.0 released 2025-08-03.
 notify = "=8.2.0"
+# UPnP/DLNA cast (Plan 13/L04): XML reader for device descriptions and SOAP answers. MIT,
+# pinned 0.42.0 (already in the tree via tauri); DOCTYPE/custom entities are refused by src/cast/xml.rs.
+quick-xml = "=0.42.0"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [

@@ -22,6 +22,8 @@ const SETTABLE: &[&str] = &[
     "brightness", "contrast", "saturation", "gamma", "hue", "hwdec",
     "scale", "dscale", "cscale", "dither", "correct-downscaling", "linear-downscaling", "sigmoid-upscaling",
     "hdr-compute-peak",
+    // music mode (L03): ReplayGain and gapless playback
+    "replaygain", "replaygain-preamp", "replaygain-clip", "gapless-audio", "prefetch-playlist",
 ];
 
 /// Audio filters of the EQ / sound filter chain (`src/media/engine/engine.js` audioFilterChain).
@@ -45,7 +47,9 @@ pub fn check_command(args: &Value) -> Result<(), String> {
     let rest = &list[1..];
     let scalar = |v: &Value| v.is_number() || v.is_string();
     let ok = match name {
-        "stop" | "frame-step" | "frame-back-step" => rest.is_empty(),
+        "stop" | "frame-step" | "frame-back-step" | "playlist-clear" => rest.is_empty(),
+        // gapless (L03): the next local track is queued in mpv's own playlist, never replaced
+        "loadfile" => rest.len() == 2 && rest[0].as_str().is_some_and(is_local_file) && rest[1].as_str() == Some("append"),
         "seek" => {
             !rest.is_empty()
                 && rest.len() <= 2
@@ -230,5 +234,30 @@ mod tests {
         }
         let dir = std::env::temp_dir();
         assert!(check_load(&dir.to_string_lossy()).is_err(), "a folder is not a file");
+    }
+
+    /// Music mode (L03): queue the next LOCAL track for gapless playback, ReplayGain options.
+    #[test]
+    fn engine_policy_allows_gapless_queue_and_replaygain_only() {
+        let dir = std::env::temp_dir().join(format!("vho-policy-gapless-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let track = dir.join("02 parça.flac");
+        std::fs::write(&track, b"x").unwrap();
+        let t = track.to_string_lossy().into_owned();
+        assert_eq!(check_command(&json!(["playlist-clear"])), Ok(()));
+        assert_eq!(check_command(&json!(["loadfile", t, "append"])), Ok(()));
+        for c in [
+            json!(["loadfile", t, "replace"]),
+            json!(["loadfile", "http://x/y.mp3", "append"]),
+            json!(["loadfile", "lavfi://sine", "append"]),
+            json!(["loadfile", dir.join("missing.flac").to_string_lossy(), "append"]),
+            json!(["playlist-clear", "x"]),
+        ] {
+            assert!(check_command(&c).is_err(), "allowed: {c}");
+        }
+        for (k, v) in [("replaygain", json!("album")), ("replaygain-preamp", json!(-3)), ("replaygain-clip", json!("yes")), ("gapless-audio", json!("yes")), ("prefetch-playlist", json!("no"))] {
+            assert_eq!(check_set(k, &v), Ok(()), "{k}");
+        }
+        std::fs::remove_dir_all(&dir).ok();
     }
 }
