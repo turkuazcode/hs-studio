@@ -85,6 +85,14 @@ const TEST_STUBS = `
   window.confirm = (msg) => { __confirms.push(String(msg)); return false; };
 `;
 
+// The app's default language setting ("system") follows navigator.languages. The tests assert
+// the Turkish UI, so the system languages are Turkish whatever the machine's language is (the
+// GitHub runner is en-US). Explicit language settings (i18n test) still win.
+const TURKISH_SYSTEM = `
+  Object.defineProperty(Navigator.prototype, "languages", { configurable: true, get: () => Object.freeze(["tr-TR", "tr"]) });
+  Object.defineProperty(Navigator.prototype, "language", { configurable: true, get: () => "tr-TR" });
+`;
+
 /**
  * SAFETY: commands that must never reach the backend from a test. suspend_system would put
  * the real PC to sleep (the sleep timer's "PC Uyku" box is checked by default);
@@ -249,7 +257,9 @@ export async function launchApp({ args = [], exe = defaultExe(), dataDir, env: e
     timings.loadedMs = performance.now() - spawnedAt;
     debug("launch: app page loaded");
     await cdp.send("Page.enable");
-    await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: INVOKE_GUARD + ERROR_COLLECTOR + TEST_STUBS });
+    // Turkish number / date formats (Intl, toLocaleString) like on the developer machines
+    await cdp.send("Emulation.setLocaleOverride", { locale: "tr-TR" }).catch((e) => debug("launch: no locale override:", e.message));
+    await cdp.send("Page.addScriptToEvaluateOnNewDocument", { source: INVOKE_GUARD + ERROR_COLLECTOR + TEST_STUBS + TURKISH_SYSTEM });
     // Reload so the collector also sees module loading / boot. initial_files is re-read
     // from the command line, so a media argument is opened again.
     await cdp.evaluate("window.__beforeReload = true");

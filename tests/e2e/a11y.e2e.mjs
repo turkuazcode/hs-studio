@@ -191,6 +191,9 @@ test("a11y: reduced motion, 200 % scale, long texts, UI Automation names", { tim
     await t.test("prefers-reduced-motion: transitions and animations are switched off", async () => {
       const dur = () => app.eval(`(() => { const els = [...document.querySelectorAll("button, .modal-card, .hud-btn")].slice(0, 40);
         return Math.max(...els.map((e) => parseFloat(getComputedStyle(e).transitionDuration) || 0)); })()`);
+      // the baseline must not depend on the machine: Windows with animations off (the GitHub
+      // runner) already reports "reduce"
+      await app.cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "no-preference" }] });
       assert.ok((await dur()) > 0.05, "the normal UI animates (otherwise this check proves nothing)");
       await app.cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
       assert.ok((await dur()) <= 0.0001, `transition still ${await dur()} s with reduced motion`);

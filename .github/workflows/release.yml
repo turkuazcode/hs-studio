@@ -146,6 +146,10 @@ jobs:
         run: npm run e2e
         env:
           VHO_TEST_NO_SKIP: "1"
+          # The runner has no audio device: libmpv would drop the audio track (no aid, no
+          # current-tracks/audio, audio-only files never advance). The null output keeps the
+          # timing of a real one.
+          VHO_MPV_OPTIONS: "ao=null"
       - name: Restore real-AI model cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
