@@ -20,6 +20,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { mkdir, readdir } from "node:fs/promises";
+import { hostname } from "node:os";
 import { join } from "node:path";
 import { REPO_ROOT, launchApp, removeDir } from "../e2e/lib/app.mjs";
 import { compareRgb, decodePng, encodePng } from "./lib/image.mjs";
@@ -40,6 +41,27 @@ const log = (...a) => console.log("[ai-smart]", ...a);
 /** Errors that mean "this model does not fit this machine's ORT Web" (not a wrong result). */
 const ENV_LIMIT = /bad_alloc|out of memory|storage buffers|allocat/i;
 const sha = (p) => createHash("sha256").update(readFileSync(p)).digest("hex");
+
+// A measured environment limit is remembered per machine in the test cache, so later runs skip
+// at once instead of spending ~3 min per test until ORT Web runs out of memory again. Still a SKIP
+// with its reason; re-measured after 30 days or with VHO_AI_RECHECK_LIMITS=1.
+const LIMITS_FILE = join(CACHE_ROOT, "env-limits.json");
+const LIMIT_TTL_MS = 30 * 24 * 3600 * 1000;
+const limitKey = (what) => `${hostname()}|${what}`;
+function knownLimit(what) {
+  if (process.env.VHO_AI_RECHECK_LIMITS === "1" || !existsSync(LIMITS_FILE)) return null;
+  try {
+    const e = JSON.parse(readFileSync(LIMITS_FILE, "utf8"))[limitKey(what)];
+    return e && Date.now() - Date.parse(e.at) < LIMIT_TTL_MS ? e : null;
+  } catch { return null; }
+}
+function recordLimit(what, reason) {
+  let all = {};
+  try { all = JSON.parse(readFileSync(LIMITS_FILE, "utf8")); } catch { /* new file */ }
+  all[limitKey(what)] = { reason, at: new Date().toISOString() };
+  writeFileSync(LIMITS_FILE, JSON.stringify(all, null, 2));
+}
+const knownSkip = (t, e) => t.skip(`environment limit measured on ${e.at.slice(0, 10)} (VHO_AI_RECHECK_LIMITS=1 re-measures): ${e.reason}`);
 const b64 = (u8) => Buffer.from(u8.buffer, u8.byteOffset, u8.byteLength).toString("base64");
 let app = null;
 let ready = false;
@@ -269,6 +291,8 @@ test("LaMa on WASM: the object is filled with its surroundings, the rest is unto
 
 test("BiRefNet portrait on WASM: background transparent, subject kept, reference", { timeout: 900000 }, async (t) => {
   if (!ready) return t.skip("blocked: model cache not verified");
+  const known = knownLimit("birefnet-portrait-wasm");
+  if (known) return knownSkip(t, known);
   const src = portrait();
   let out;
   try {
@@ -276,6 +300,7 @@ test("BiRefNet portrait on WASM: background transparent, subject kept, reference
   } catch (e) {
     if (!ENV_LIMIT.test(e.message)) throw e;
     log(`birefnet portrait wasm: environment limit: ${e.message}`);
+    recordLimit("birefnet-portrait-wasm", e.message);
     return t.skip(`environment limit (BiRefNet does not fit ORT Web WASM here): ${e.message}`);
   }
   log(`birefnet portrait wasm: ${out.seconds.toFixed(1)} s`);
@@ -286,6 +311,8 @@ test("BiRefNet portrait on WASM: background transparent, subject kept, reference
 
 test("BiRefNet general (objects) on WASM: runs and separates the figure", { timeout: 900000 }, async (t) => {
   if (!ready) return t.skip("blocked: model cache not verified");
+  const known = knownLimit("birefnet-general-wasm");
+  if (known) return knownSkip(t, known);
   const src = portrait();
   let out;
   try {
@@ -293,6 +320,7 @@ test("BiRefNet general (objects) on WASM: runs and separates the figure", { time
   } catch (e) {
     if (!ENV_LIMIT.test(e.message)) throw e;
     log(`birefnet general wasm: environment limit: ${e.message}`);
+    recordLimit("birefnet-general-wasm", e.message);
     return t.skip(`environment limit (BiRefNet does not fit ORT Web WASM here): ${e.message}`);
   }
   log(`birefnet general wasm: ${out.seconds.toFixed(1)} s`);
@@ -373,6 +401,8 @@ test("queue jobs: remove / colorize write PNGs with the right suffix, sources un
 
 test("queue job: background (cut-out, then white) through the A04 output, or a clean memory failure", { timeout: 1800000 }, async (t) => {
   if (!ready) return t.skip("blocked: model cache not verified");
+  const known = knownLimit("birefnet-queue");
+  if (known) return knownSkip(t, known);
   const img = portrait();
   for (const [name, params, suffix] of [["cutout-src.png", { mode: "transparent" }, "_cutout"], ["white-src.png", { mode: "color", color: [255, 255, 255] }, "_background"]]) {
     const file = join(DATA_DIR, name);
@@ -385,6 +415,7 @@ test("queue job: background (cut-out, then white) through the A04 output, or a c
       assert.equal(d.items[0].errorCode, "memory", JSON.stringify(d.items[0]));
       assert.ok(!d.items[0].outputPath, "no output");
       log(`${name}: failed cleanly (${d.items[0].errorDetail})`);
+      recordLimit("birefnet-queue", `the job failed cleanly with errorCode memory (${d.items[0].errorDetail})`);
       return t.skip("environment limit: BiRefNet does not fit ORT Web here; the job failed cleanly with errorCode memory");
     }
     assert.equal(d.job.state, "completed", JSON.stringify(d));
