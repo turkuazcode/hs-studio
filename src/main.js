@@ -26,6 +26,7 @@ import { createLoader } from "./media/loader.js";
 import { createAiJobRunner } from "./media/ai-jobs.js";
 import { createPhotoAi } from "./media/photo-ai.js";
 import { createPhotoEnhance } from "./media/photo-enhance.js";
+import { createVideoEnhance } from "./media/video-enhance.js";
 import { createPhotoViewer } from "./media/photo-viewer.js";
 import { createSnapshot } from "./media/snapshot.js";
 import { createSubtitles } from "./media/subtitles.js";
@@ -133,6 +134,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   app.snapshot = createSnapshot(app);
   app.photoAi = createPhotoAi(app);
   app.photoEnhance = createPhotoEnhance(app);
+  app.videoEnhance = createVideoEnhance(app);
   app.audioFx = createAudioFx(app);
 
   // UI
