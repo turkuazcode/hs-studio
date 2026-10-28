@@ -56,6 +56,8 @@ jobs:
 
   rust:
     runs-on: windows-latest
+    # restoration/music/export tests run the real ffmpeg/ffprobe of the LGPL set
+    needs: [native]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -66,6 +68,15 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: src-tauri
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: mpv-windows-x64
+          path: mpv-build
+      - name: Stage ffmpeg/ffprobe next to the test binary
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force src-tauri/target/release | Out-Null
+          ./scripts/stage-mpv.ps1 -Source mpv-build\dist -Targets release
       - run: cargo test --release --lib --locked --manifest-path src-tauri/Cargo.toml
 
   native:

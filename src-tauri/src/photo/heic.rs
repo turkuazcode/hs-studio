@@ -542,7 +542,8 @@ mod tests {
         junk.extend_from_slice(&[0u8; 200]);
         std::fs::write(&bad, junk).unwrap();
         let e = crate::photo::decode::decode(&bad, None).err().unwrap();
-        assert!(e.starts_with(crate::photo::ERR_CODEC_MISSING), "{e}");
+        // codec-failed when the HEIF extension is registered but cannot start (Windows Server runners)
+        assert!(e.starts_with(crate::photo::ERR_CODEC_MISSING) || e.starts_with(crate::photo::ERR_CODEC_FAILED), "{e}");
     }
 
     #[test]
