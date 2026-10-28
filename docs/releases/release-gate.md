@@ -22,7 +22,7 @@ Katmanlar: `unit`, `rust` (`npm run test:rust` → `scripts/run-rust-tests.mjs`)
 2. Commit kayıtlı ve HEAD ile aynı; çalışma ağacında commitlenmemiş değişiklik yoktu (`dirty: false`).
 3. Platform kayıtlı ve hedef platformla aynı (`win32-x64` …).
 4. Katmanın tamamı çalıştı (`full: true`: dosya listesi ya da ad filtresi yok).
-5. Süreç çıkış kodu 0; en az bir test geçti; başarısız ve iptal 0.
+5. Süreç çıkış kodu 0; en az bir test geçti; iptal 0; başarısız 0. Tek ayrık durum: her başarısız test adıyla listelenmiş ve hedefin `fail` türü bir kapsam istisnasıyla (yalnızca kapsam dışına alınmış bir özelliğin kendi testi) eşleşiyorsa çıkış kodu 1 kabul edilir.
 6. **skip / todo / ignored hiçbir zaman geçti sayılmaz.** Her biri adıyla listelenmiş olmalı ve hedefin bir **kapsam istisnasına** uymalı. Uymayan tek bir skip/todo kapıyı kapatır. Sayı ile liste uyuşmazsa kapı kapanır.
 7. Uygulamayı başlatan katmanlarda (`e2e`, `ai`, `quality`) binary kaydı var, kaynaklardan eski değil, SHA-256'sı kayıtlı; `--manifest` verilince paketteki ana binary ile **aynı**.
 
@@ -34,12 +34,13 @@ Her istisnanın kimliği, katmanı, türü (`skip`/`todo`), test adı deseni, ge
 |---|---|---|
 | `rust-manual-tools` | rust, skip | Altı adı belli `#[ignore]` testi elle çalıştırılan araç/ölçüm; yeni bir `#[ignore]` listede yoksa kapı reddeder |
 | `birefnet-experimental` | ai, skip | Arka plan kaldırma deneysel ve gizli; referans cihazda WASM bellek sınırı. Nesne silme ve renklendirme testleri zorunlu |
+| `legacy-photo-ai-out-of-scope` | quality, **fail** | Eski nöral fotoğraf AI bu sürümde kapalı (giriş noktası yok). Yalnızca kendi ayrı testi (`legacy experimental photo AI …`) için; başarısız kaydı silinmez ve raporda görünür. Lanczos ve klasik profillerin taban testi zorunlu |
 
 HLS için istisna yoktur: iki HLS testi düzeltildi ve normal testtir (D02). Ürünün vaat etmediği özellikler (`outOfScope`: L04 ağ/DLNA vaadi, V02/V04–V06) raporda ayrıca listelenir.
 
 ## Paket ve elle doğrulamalar
 
-- `--manifest`: `release` türünde, HEAD'den üretilmiş, yerel DLL seti envanterle eşleşen paket. Yoksa kapı karşılanmaz.
+- `--manifest`: `release` türünde, HEAD'den üretilmiş, yerel DLL seti envanterle eşleşen paket. Kapı manifestin adını verdiği kurulum dosyasını **diskte** bulur ve SHA-256'sını yeniden hesaplar; dosya yoksa, hash manifestle ya da `.sha256` dosyasıyla uyuşmazsa reddeder. Yoksa kapı karşılanmaz.
 - `--stage candidate` (release workflow): elle doğrulamalar henüz istenmez ama “açık” olarak listelenir. Aday, elle oturumların yapılacağı pakettir.
 - `--stage release` (varsayılan): kanıt dosyasındaki her elle kontrol `pass`, tarih/kişi/OS dolu ve `artifactSha256` test edilen kurulum dosyasıyla aynı olmalı.
 - `installer` katmanı test kimliğiyle yapılır (`identity: "test"`); gerçek kimlik yalnızca `win-clean-install` elle kontrolüyle kanıtlanır.

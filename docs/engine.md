@@ -59,6 +59,7 @@ dynaudnorm), AI ses anahtarları lavfi filtresi olarak, %200 ses (`volume-max=20
 (Ctrl+tekerlek, `video-zoom`) ve kaydırma (Ctrl+sürükle, `video-pan-*`), parlaklık/kontrast/
 doygunluk/gama/ton, en-boy (`video-aspect-override`, `keepaspect`), A-B döngü (`ab-loop-a/b`),
 `hwdec=auto-safe` (Ayarlar > Gelişmiş), `profile=fast` (dahili GPU'da varsayılan açık),
+`hwdec-codecs=h264,vc1,hevc,vp8,vp9,av1,prores` (2026-10-28): mpv 0.41 varsayılanından `prores_raw`, `ffv1`, `dpx` çıkarıldı. FFmpeg 8 bunları yalnızca Vulkan hesaplama gölgelendiricileriyle donanımda çözüyor; referans makinede (AMD tümleşik GPU) FFV1 MKV açılınca `ffv1-vulkan-copy` seçildi ve GPU kilitlendi, aynı GPU'yu kullanan WebView yanıt vermez oldu. Donma yalnızca FFV1 için yeniden üretildi; diğer ikisi aynı çözücü sınıfı olduğu için önlem olarak yazılımla çözülür. Regresyon testi `tests/e2e/ffv1.e2e.mjs`.
 `deinterlace=auto`, `tone-mapping=auto` (HDR → SDR), HLS URL'leri. PiP yalnızca HTML5 motorunda.
 
 ## Arayüz (minimal HUD)
