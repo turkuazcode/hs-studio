@@ -7,7 +7,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const DIR = join(ROOT, ".github", "workflows");
-const workflows = readdirSync(DIR).filter((f) => /\.ya?ml$/.test(f)).map((f) => [f, readFileSync(join(DIR, f), "utf8")]);
+// CRLF on a checkout with core.autocrlf=true (Git for Windows' default): compare as LF
+const workflows = readdirSync(DIR).filter((f) => /\.ya?ml$/.test(f)).map((f) => [f, readFileSync(join(DIR, f), "utf8").replace(/\r\n/g, "\n")]);
 
 test("every third-party action is pinned to a full commit SHA", () => {
   assert.ok(workflows.length >= 3, "ci.yml, native-windows.yml, release.yml");
