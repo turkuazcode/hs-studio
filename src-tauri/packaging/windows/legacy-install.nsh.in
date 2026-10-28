@@ -21,14 +21,38 @@
       ${EndIf}
       ${If} ${FileExists} "$R5\uninstall.exe"
         DetailPrint "Removing the previous @LEGACY@ installation (user data is kept): $R5"
-        ExecWait '"$R5\uninstall.exe" /S _?=$R5' $R6
+        ; The old uninstaller aborts (exit code 2) while the old app or its WebView2 processes are
+        ; still running: retry a few times, then ask the user to close it. Never continue with
+        ; both products installed: cancel (or a silent install) aborts this installation.
+        StrCpy $R7 0
+        ${Do}
+          ExecWait '"$R5\uninstall.exe" /S _?=$R5' $R6
+          IntOp $R7 $R7 + 1
+          ${If} $R6 == 0
+            ${Break}
+          ${EndIf}
+          ${If} $R7 < 4
+            Sleep 3000
+          ${Else}
+            MessageBox MB_RETRYCANCEL|MB_ICONEXCLAMATION "@LEGACY@ hâlâ açık görünüyor. Lütfen @LEGACY@ uygulamasını kapatıp Yeniden Dene'ye tıklayın.$\r$\n$\r$\n@LEGACY@ still seems to be running. Please close it and click Retry." /SD IDCANCEL IDRETRY legacy_retry
+            ${Break}
+            legacy_retry:
+          ${EndIf}
+        ${Loop}
+        Push $R7
         FileOpen $R7 "$TEMP\legacy-install-hook.log" a
         FileSeek $R7 0 END
         FileWrite $R7 "@LEGACY@ at $R5: uninstaller exit code $R6$\r$\n"
         FileClose $R7
+        Pop $R7
         ${If} $R6 == 0
           Delete "$R5\uninstall.exe"
           RMDir "$R5"
+        ${Else}
+          Pop $R7
+          Pop $R6
+          Pop $R5
+          Abort "@LEGACY@ kaldırılamadı; kurulum iptal edildi. / Could not remove @LEGACY@; installation cancelled."
         ${EndIf}
       ${Else}
         FileOpen $R7 "$TEMP\legacy-install-hook.log" a
