@@ -5,10 +5,13 @@
 //   options: --min-age-hours=2
 //
 // Only these exact names directly under %APPDATA% and %LOCALAPPDATA% are candidates:
-//   com.vho.app.test<16 hex>       test identity of a VHO_DATA_DIR run (platform.rs test_identifier)
-//   com.vho.app.packagetest<...>   package-test identity — only when no installed app with that
+//   com.turkuazcode.hsstudio.test<16 hex> / com.vho.app.test<16 hex> (before the rename)
+//                                  test identity of a VHO_DATA_DIR run (platform.rs test_identifier)
+//   com.vho.app.packagetest<...> / com.hsstudio.app.packagetest<...>
+//                                  package-test identity — only when no installed app with that
 //                                  identifier is registered (Uninstall keys, HKCU + HKLM)
-// Never com.vho.app itself or anything else. A folder is skipped when it changed within the
+// Never the real app folders (com.turkuazcode.hsstudio, com.vho.app) or anything else
+// (tests/lib/test-identity.mjs). A folder is skipped when it changed within the
 // minimum age (default 2 h: a test may be running) or when it is in use (renaming it fails on
 // Windows while a process holds a handle inside it).
 import { execFileSync } from "node:child_process";
