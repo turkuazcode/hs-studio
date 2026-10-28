@@ -219,7 +219,8 @@ test("library: folders, scan, search, watcher, reconciliation, rename, offline d
     await t.test("photo studio: star rating is stored in the shared library", async () => {
       const photoDir = join(root, "klasör 0", "alt0");
       await app.eval(`(window.__vhoLibrary.hide(), true)`);
-      await app.click("#btn-photo-studio");
+      await app.click("#btn-app-menu");
+      await app.click(`#app-menu [data-menu-id="photo-studio"]`);
       await app.eval(`(() => { document.getElementById("ps-path-edit").click(); const i = document.getElementById("ps-path"); i.value = ${J(photoDir)}; i.form.requestSubmit(); return true; })()`);
       await app.waitFor(`document.getElementById("ps-grid").dataset.loading === "0" && Number(document.getElementById("ps-grid").dataset.total) > 0`, { timeoutMs: 15000 });
       const path = await app.eval(`document.querySelector("#ps-grid .ps-cell").dataset.path`);

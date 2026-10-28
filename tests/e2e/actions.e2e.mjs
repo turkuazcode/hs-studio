@@ -85,6 +85,12 @@ function helpers(app) {
       await app.eval(`document.body.dispatchEvent(new MouseEvent("mousedown", { bubbles: true })), true`);
       return ids;
     },
+    /** Runs an action the way a user reaches it: "⋯" in the titlebar, then the menu item. */
+    fromMore: async (id) => {
+      await app.click("#ma-more");
+      await app.waitFor(`!!document.querySelector('#media-actions-menu [data-menu-id="${id}"]')`, { timeoutMs: 3000, message: `${id} in ⋯` });
+      await app.click(`#media-actions-menu [data-menu-id="${id}"]`);
+    },
     /** Waits for the export dialog to finish; returns the output path. */
     jobOutput: async (timeoutMs = 90000) => {
       await app.waitFor(`["done", "error"].includes(document.querySelector("#vho-job")?.dataset.state)`, { timeoutMs, message: "export job" });
@@ -126,11 +132,12 @@ test("actions: video (toolbar, clipboard, cut, extract audio, convert 720p, rena
     await saveClipboard(app);
     await app.waitFor(`${E}.duration > 2.5 && window.__vhoActions.current().kind === "video"`, { timeoutMs: 20000, message: "video loaded" });
 
-    await t.test("video toolbar: cut, save frame, convert, share, ⋯ (no photo / music buttons)", async () => {
+    await t.test("video titlebar: only ⋯; cut, save frame, convert, share lead its menu (no photo / music items)", async () => {
       await app.waitFor(`!document.getElementById("media-actions").hidden`, { timeoutMs: 5000 });
-      assert.deepEqual(await x.toolbar(), ["ma-cutVideo", "ma-saveFrame", "ma-convertMedia", "ma-shareFile", "ma-more"]);
+      assert.deepEqual(await x.toolbar(), ["ma-more"]);
       const ids = await x.moreMenu();
-      for (const id of ["openWith", "showInFolder", "copyFrame", "copyFile", "copyPath", "gif", "clip", "extractAudio", "rotateVideo",
+      assert.deepEqual(ids.slice(0, 4), ["cutVideo", "saveFrame", "convertMedia", "shareFile"]);
+      for (const id of ["findSubtitles", "sleepTimer", "castDevice", "openWith", "showInFolder", "copyFrame", "copyFile", "copyPath", "gif", "clip", "extractAudio", "rotateVideo",
         "embedSubtitle", "extractSubtitle", "contactSheet", "miniPlayer", "alwaysOnTop", "renameFile", "deleteFile", "properties", "settings"]) {
         assert.ok(ids.includes(id), `${id} in ⋯ (${ids})`);
       }
@@ -150,7 +157,7 @@ test("actions: video (toolbar, clipboard, cut, extract audio, convert 720p, rena
     });
 
     await t.test("lossless cut 0.5 s - 2.5 s -> output duration ±1 s", async () => {
-      await app.click("#ma-cutVideo");
+      await x.fromMore("cutVideo");
       await app.waitFor(`!!document.getElementById("vho-range-start")`, { timeoutMs: 3000 });
       await app.eval(`(() => { const s = document.getElementById("vho-range-start"), e = document.getElementById("vho-range-end");
         s.value = "0:00.5"; e.value = "0:02.5"; s.dispatchEvent(new Event("input")); return true; })()`);
@@ -180,7 +187,7 @@ test("actions: video (toolbar, clipboard, cut, extract audio, convert 720p, rena
     await t.test("convert 720p (H.264 via the platform encoder) -> 960x720", async () => {
       await app.eval(`${E}.openPaths(${JSON.stringify([hd])}), true`);
       await app.waitFor(`document.getElementById("current-filename").textContent === ${JSON.stringify(`vho-e2e-hd-${tag}.mp4`)} && ${E}.duration > 2`, { timeoutMs: 20000 });
-      await app.click("#ma-convertMedia");
+      await x.fromMore("convertMedia");
       await app.waitFor(`!!document.getElementById("vho-convert-720p")`, { timeoutMs: 3000 });
       for (const p of ["whatsapp", "email", "1080p", "audio"]) assert.ok(await app.eval(`!!document.getElementById("vho-convert-${p}")`), p);
       await app.click("#vho-convert-720p");
@@ -356,11 +363,13 @@ test("actions: photo (toolbar, copy image, print preview, wallpaper, OCR)", { ti
     await saveClipboard(app);
     await app.waitFor(`${IMG}.complete && ${IMG}.naturalWidth === 640 && window.__vhoActions.current().kind === "photo"`, { timeoutMs: 10000 });
 
-    await t.test("photo toolbar: edit, delete, print, share, ⋯", async () => {
+    await t.test("photo titlebar: Düzenle + ⋯; delete, print, share lead its menu", async () => {
       await app.waitFor(`!document.getElementById("media-actions").hidden`, { timeoutMs: 5000 });
-      assert.deepEqual(await x.toolbar(), ["ma-editPhoto", "ma-deleteFile", "ma-printPhoto", "ma-shareFile", "ma-more"]);
+      assert.deepEqual(await x.toolbar(), ["ma-editPhoto", "ma-more"]);
+      assert.equal(await app.text("#ma-editPhoto span"), "Düzenle");
       const ids = await x.moreMenu();
-      for (const id of ["copyImage", "copyPath", "ocr", "setWallpaper", "setLockScreen", "renameFile", "properties"]) assert.ok(ids.includes(id), id);
+      assert.deepEqual(ids.slice(0, 3), ["deleteFile", "printPhoto", "shareFile"]);
+      for (const id of ["photoInfo", "copyImage", "copyPath", "ocr", "setWallpaper", "setLockScreen", "renameFile", "properties"]) assert.ok(ids.includes(id), id);
       for (const id of ["gif", "cutVideo", "tagEditor", "miniPlayer"]) assert.ok(!ids.includes(id), `${id} not for photos`);
     });
 
@@ -374,7 +383,7 @@ test("actions: photo (toolbar, copy image, print preview, wallpaper, OCR)", { ti
     });
 
     await t.test("print preview -> print gated (logged, no dialog)", async () => {
-      await app.click("#ma-printPhoto");
+      await x.fromMore("printPhoto");
       await app.waitFor(`!!document.querySelector("#vho-print-preview img")`, { timeoutMs: 3000 });
       assert.equal(await app.eval(`document.getElementById("vho-print-orientation").value`), "landscape");
       await app.eval(`(() => { const s = document.getElementById("vho-print-fit"); s.value = "fill"; s.dispatchEvent(new Event("change")); return true; })()`);
@@ -430,27 +439,28 @@ test("actions: music (toolbar, tag edit, lyrics, ReplayGain, ringtone)", { timeo
   try {
     await app.waitFor(`${E}.duration > 7 && window.__vhoActions.current().kind === "music"`, { timeoutMs: 20000, message: "song loaded" });
 
-    await t.test("music toolbar: tags, lyrics, share, ⋯", async () => {
+    await t.test("music titlebar: only ⋯; tags, lyrics, share lead its menu", async () => {
       await app.waitFor(`!document.getElementById("media-actions").hidden`, { timeoutMs: 5000 });
-      assert.deepEqual(await x.toolbar(), ["ma-tagEditor", "ma-lyrics", "ma-shareFile", "ma-more"]);
+      assert.deepEqual(await x.toolbar(), ["ma-more"]);
       const ids = await x.moreMenu();
-      for (const id of ["convertMedia", "ringtone", "replayGain", "miniPlayer", "renameFile", "deleteFile"]) assert.ok(ids.includes(id), id);
+      assert.deepEqual(ids.slice(0, 3), ["tagEditor", "lyrics", "shareFile"]);
+      for (const id of ["castDevice", "sleepTimer", "convertMedia", "ringtone", "replayGain", "miniPlayer", "renameFile", "deleteFile"]) assert.ok(ids.includes(id), id);
       for (const id of ["gif", "printPhoto", "copyFrame"]) assert.ok(!ids.includes(id), `${id} not for music`);
     });
 
     await t.test("lyrics: .lrc panel follows playback", async () => {
-      await app.click("#ma-lyrics");
+      await x.fromMore("lyrics");
       await app.waitFor(`document.querySelectorAll("#vho-lyrics .vho-lyric-line").length === 3`, { timeoutMs: 5000 });
       assert.equal(await app.eval(`document.getElementById("vho-lyrics").dataset.source`), "lrc");
       assert.ok(await app.eval(`document.getElementById("vho-lyrics").classList.contains("is-synced")`));
       await app.eval(`${E}.paused && document.getElementById("btn-play-pause").click(), true`);
       await app.waitFor(`Number(document.getElementById("vho-lyrics").dataset.current) === 1`, { timeoutMs: 8000, message: "second line highlighted" });
-      await app.click("#ma-lyrics");
+      await x.fromMore("lyrics");
       assert.equal(await app.eval(`!!document.getElementById("vho-lyrics")`), false);
     });
 
     await t.test("tag edit -> re-read equals (file released while writing)", async () => {
-      await app.click("#ma-tagEditor");
+      await x.fromMore("tagEditor");
       await app.waitFor(`!!document.getElementById("vho-tag-title")`, { timeoutMs: 5000 });
       await app.eval(`(() => {
         const set = (id, v) => { document.getElementById(id).value = v; };

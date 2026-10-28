@@ -48,9 +48,10 @@ test("photo studio", { timeout: 300000 }, async (t) => {
   const invoke = (cmd, args) => app.eval(`__TAURI__.core.invoke(${J(cmd)}, ${J(args)})`, { timeoutMs: 30000 });
 
   try {
-    await t.test("open from the titlebar: grid shows every photo + the video", async () => {
-      assert.ok(await app.eval(`!!document.getElementById("btn-open-studio")`), "start screen button");
-      await app.click("#btn-photo-studio");
+    await t.test("open from the app menu (logo): grid shows every photo + the video", async () => {
+      assert.ok(await app.eval(`!!document.getElementById("btn-open-studio")`), "start screen link");
+      await app.click("#btn-app-menu");
+      await app.click(`#app-menu [data-menu-id="photo-studio"]`);
       assert.equal(await app.eval(`document.getElementById("photo-studio").hidden`), false);
       assert.equal(await app.eval(`document.getElementById("ps-empty").hidden`), false, "no folder yet: empty state");
       await app.waitFor(`document.querySelectorAll("#ps-tree .ps-tree-node").length > 0`, { message: "folder tree roots" });

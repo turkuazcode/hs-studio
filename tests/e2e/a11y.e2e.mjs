@@ -51,6 +51,9 @@ test("a11y: axe audit of every screen (TR/EN, dark/light/contrast)", { timeout: 
         await app.click("#btn-hud-more");
         await expectClean(app, `HUD more menu ${lang}`);
         await press(app, "Escape");
+        await app.click("#ma-more");
+        await expectClean(app, `titlebar more menu ${lang}`);
+        await press(app, "Escape");
       });
       await t.test(`settings window, every tab (${lang})`, async () => {
         await openSettings(app);
@@ -65,7 +68,9 @@ test("a11y: axe audit of every screen (TR/EN, dark/light/contrast)", { timeout: 
         await app.key("Slash", { key: "?", shiftKey: true });
         await expectClean(app, `shortcut help ${lang}`, { selector: "#shortcut-help" });
         await press(app, "Escape");
-        await app.click("#btn-sleep-timer");
+        // the sleep timer is in the titlebar "⋯" menu of a video (approved layout 2026-10-28)
+        await app.click("#ma-more");
+        await app.click(`#media-actions-menu [data-menu-id="sleepTimer"]`);
         await expectClean(app, `sleep timer ${lang}`, { selector: "#sleep-timer-modal" });
         await press(app, "Escape");
         for (const [open, close, id] of [["#btn-toggle-playlist", "#btn-close-playlist", "playlist"], ["#btn-toggle-ai-restore", "#btn-close-ai-restore", "filters"]]) {
@@ -104,7 +109,7 @@ test("a11y: axe audit of every screen (TR/EN, dark/light/contrast)", { timeout: 
           await a.click("#btn-open-url");
           await expectClean(a, "URL dialog", { selector: "#url-modal" });
           await press(a, "Escape");
-          await a.click("#btn-photo-studio");
+          await a.click("#btn-open-studio");
           await a.waitFor(`document.querySelectorAll("#ps-tree .ps-tree-node").length > 0`, { message: "studio" });
           await expectClean(a, "photo studio");
         }
@@ -133,21 +138,29 @@ test("a11y: keyboard only — focus ring, names, dialogs keep and return focus",
         assert.ok(f.name, `focused element without a name: ${J(f)}`);
       }
       const ids = new Set(seen.map((f) => f.id));
-      for (const id of ["btn-browse-file", "btn-open-url", "btn-app-menu", "btn-photo-studio"]) assert.ok(ids.has(id), `Tab never reaches #${id}`);
+      for (const id of ["btn-browse-file", "btn-open-url", "btn-open-studio", "btn-app-menu", "btn-open-library", "btn-titlebar-settings"]) {
+        assert.ok(ids.has(id), `Tab never reaches #${id}`);
+      }
     });
 
     for (const [opener, dialog, how] of [
       ["btn-open-url", "url-modal", "click"],
-      ["btn-sleep-timer", "sleep-timer-modal", "click"],
+      ["btn-titlebar-settings", "settings-modal", "click"],
       ["btn-app-menu", "settings-modal", "menu"],
+      // a video's titlebar "⋯" → Uyku zamanlayıcı… (the video is opened first, below)
+      ["ma-more", "sleep-timer-modal", "more"],
     ]) {
-      await t.test(`${dialog}: Enter opens, focus inside, Tab trapped, Escape closes, focus returns`, async () => {
+      await t.test(`${dialog} (${opener}): Enter opens, focus inside, Tab trapped, Escape closes, focus returns`, async () => {
+        if (how === "more") {
+          await app.eval(`window.__vhoEngine.openPaths([${J(fixture("sample-h264.mp4"))}]), true`);
+          await app.waitFor(`document.documentElement.dataset.mediaMode === "video" && !document.getElementById("media-actions").hidden`, { timeoutMs: 15000, message: "video open" });
+        }
         await app.eval(`document.getElementById(${J(opener)}).focus(), true`);
         await press(app, "Enter");
-        if (how === "menu") {
-          await app.waitFor(`!document.getElementById("app-menu").hidden`, { message: "menu open" });
-          // arrow keys to the settings item, Enter
-          await app.eval(`document.querySelector('#app-menu [data-menu-id="settings"]').focus(), true`);
+        if (how === "menu" || how === "more") {
+          const [menuId, item] = how === "menu" ? ["app-menu", "settings"] : ["media-actions-menu", "sleepTimer"];
+          await app.waitFor(`!document.getElementById(${J(menuId)}).hidden`, { message: "menu open" });
+          await app.eval(`document.querySelector(${J(`#${menuId} [data-menu-id="${item}"]`)}).focus(), true`);
           await press(app, "Enter");
         }
         await app.waitFor(`document.getElementById(${J(dialog)}).classList.contains("active")`, { message: `${dialog} open` });
@@ -159,7 +172,7 @@ test("a11y: keyboard only — focus ring, names, dialogs keep and return focus",
         }
         await press(app, "Escape");
         await app.waitFor(`!document.getElementById(${J(dialog)}).classList.contains("active")`, { message: `${dialog} closed` });
-        const back = how === "menu" ? "btn-app-menu" : opener;
+        const back = how === "menu" ? "btn-app-menu" : opener; // "more": the ⋯ button itself
         await app.waitFor(`document.activeElement?.id === ${J(back)}`, { timeoutMs: 2000, message: `focus back on #${back}` });
       });
     }

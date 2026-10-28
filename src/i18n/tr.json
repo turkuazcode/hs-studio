@@ -21,7 +21,9 @@
     "filters": "Görüntü ayarları",
     "settings": "Ayarlar…",
     "shortcuts": "Klavye kısayolları",
-    "licenses": "Lisanslar ve Teşekkürler"
+    "licenses": "Lisanslar ve Teşekkürler",
+    "library": "Kütüphane",
+    "photoStudio": "Fotoğraf stüdyosu"
   },
   "recent": {
     "title": "Son açılanlar",
@@ -288,7 +290,11 @@
       "replayGain": "Ses seviyesini ölç (ReplayGain)",
       "ringtone": "Zil sesi / kesit…",
       "settings": "Ayarlar…",
-      "cast": "Cihaza yayınla…"
+      "cast": "Cihaza yayınla…",
+      "findSubtitles": "Altyazı bul…",
+      "sleepTimer": "Uyku zamanlayıcı…",
+      "photoInfo": "Bilgi",
+      "playlist": "Oynatma listesi"
     },
     "delete": {
       "title": "Geri Dönüşüm Kutusu'na taşınsın mı?",
@@ -612,7 +618,8 @@
     "deepQueued": "Sırada: önceki uzun iş bitince başlayacak…",
     "deepRunningEta": "İyileştiriliyor… %{pct} — {hw}, yaklaşık {eta} sn kaldı",
     "deepPaused": "Duraklatıldı (oynatma sırasında veya uygulama kapanırken). Başlık çubuğundaki İşler panelinden devam eder.",
-    "deepSavedTo": "Kopya kaydedildi: {name} (fotoğrafın klasöründe; EXIF ve saydamlık korundu)"
+    "deepSavedTo": "Kopya kaydedildi: {name} (fotoğrafın klasöründe; EXIF ve saydamlık korundu)",
+    "filtersButton": "Filtreler"
   },
   "ui": {
     "docTitle": "HS Studio - Video Oynatıcı",
@@ -658,14 +665,15 @@
       "openFailed": "⚠️ \"{name}\" açılamadı: {error}"
     },
     "drop": {
-      "subtitle": "Video, fotoğraf veya altyazı dosyasını buraya sürükleyin",
+      "subtitle": "Video, fotoğraf veya müzik — ya da buraya sürükleyin",
       "hintPlay": "Oynat / Slayt",
       "hintFullscreen": "Tam Ekran",
       "hintNext": "Sonraki",
       "wheel": "Tekerlek",
       "zoom": "Yakınlaştır",
-      "chooseFile": "Dosya Seç",
-      "openUrl": "URL Aç"
+      "chooseFile": "Dosya aç",
+      "openUrl": "URL'den aç",
+      "title": "Bir dosya açın"
     },
     "resume": {
       "title": "Kaldığınız Yerden Devam Edin",
@@ -1014,7 +1022,7 @@
     "entry": {
       "title": "Fotoğraf Stüdyosu: klasöre göz at",
       "button": "Fotoğraflar",
-      "browse": "Klasöre Göz At"
+      "browse": "Klasöre göz at"
     },
     "info": {
       "seconds": "{v} sn",
@@ -1475,7 +1483,9 @@
     "album": {
       "replayGain": "Albüm ReplayGain hesapla…",
       "replayGainDone": "Albüm ReplayGain: {gain} dB ({n} parça)"
-    }
+    },
+    "prevTrack": "Önceki parça",
+    "nextTrack": "Sonraki parça"
   },
   "cast": {
     "title": "Cihaza yayınla",
