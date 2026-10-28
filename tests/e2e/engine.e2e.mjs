@@ -89,7 +89,8 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
     await t.test("minimal HUD: only frequent controls visible, the rest in the ⋯ menu", async () => {
       const visible = await app.eval(`[...document.querySelectorAll(".controls-group.right button")]
         .filter((b) => b.offsetParent !== null).map((b) => b.id)`);
-      assert.deepEqual(visible, ["btn-toggle-subtitles", "btn-sub-menu", "btn-hud-more", "btn-fullscreen"]);
+      // approved layout (2026-10-28): "Filtreler" (btn-toggle-ai-restore) sits in the video bottom bar
+      assert.deepEqual(visible, ["btn-toggle-subtitles", "btn-sub-menu", "btn-hud-more", "btn-toggle-ai-restore", "btn-fullscreen"]);
       assert.equal(await app.eval(`document.getElementById("btn-toggle-effects").offsetParent`), null);
       assert.equal(await app.eval(`document.getElementById("btn-toggle-audio-panel").offsetParent`), null);
       await app.waitFor(`window.__vhoEngine.tracks.audio.length === 2 && window.__vhoEngine.chapters.length === 3`, { timeoutMs: 8000 });
