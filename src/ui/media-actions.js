@@ -398,6 +398,8 @@ export function createMediaActions(app) {
     cutVideo: { label: "actions.menu.cut", kinds: ["video", "music"], run: needFfmpeg(() => exports.openRange(current().kind === "music" ? "segment" : "cut")) },
     gif: { label: "actions.menu.gif", kinds: ["video"], run: needFfmpeg(() => exports.openRange("gif")) },
     clip: { label: "actions.menu.clip", kinds: ["video"], run: needFfmpeg(() => exports.openRange("clip")) },
+    // faithful video enhance (model-free; media/video-enhance.js)
+    enhanceVideo: { label: "actions.menu.enhanceVideo", kinds: ["video"], run: needFfmpeg(() => withPath((i) => app.videoEnhance?.open(i))()), when: () => !!app.videoEnhance },
     convertMedia: { label: "actions.menu.convert", kinds: ["video", "music"], run: needFfmpeg(() => (current().kind === "music" ? exports.openAudioConvert() : exports.openConvert())) },
     extractAudio: { label: "actions.menu.extractAudio", kinds: ["video"], run: needFfmpeg(() => exports.openExtractAudio()) },
     rotateVideo: { label: "actions.menu.rotate", kinds: ["video"], run: needFfmpeg(() => exports.openRotate()) },
@@ -474,7 +476,7 @@ export function createMediaActions(app) {
         group("settings"));
     }
     return sections(
-      group("cutVideo", "saveFrame", "convertMedia", "shareFile"),
+      group("cutVideo", "saveFrame", "convertMedia", "shareFile", "enhanceVideo"),
       group("findSubtitles", "sleepTimer", "castDevice"),
       group("openWith", "showInFolder"),
       group("copyFrame", "copyFile", "copyPath"),

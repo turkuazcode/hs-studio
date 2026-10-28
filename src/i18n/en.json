@@ -294,7 +294,8 @@
       "findSubtitles": "Find subtitles…",
       "sleepTimer": "Sleep timer…",
       "photoInfo": "Info",
-      "playlist": "Playlist"
+      "playlist": "Playlist",
+      "enhanceVideo": "Enhance video…"
     },
     "delete": {
       "title": "Move to the Recycle Bin?",
@@ -1548,6 +1549,51 @@
       "openPhoto": "Open a photo first.",
       "desktopOnly": "This works in the desktop app.",
       "saved": "Saved: {name}"
+    }
+  },
+  "videoEnhance": {
+    "title": "Enhance video",
+    "recommended": "Recommended settings are selected. You can change them.",
+    "note": "The original is kept; the result is saved as a separate file.",
+    "denoise": "Noise and block reduction",
+    "sharpen": "Sharpness",
+    "level": {
+      "off": "Off",
+      "light": "Light",
+      "medium": "Medium"
+    },
+    "upscale": {
+      "label": "Upscale",
+      "none": "None (same size)",
+      "x2": "2× (up to 1080p)"
+    },
+    "fieldOrder": {
+      "label": "Field order (interlaced video)",
+      "hint": "Whether the video is interlaced could not be measured reliably.",
+      "ask": "The video may be interlaced: choose the field order, then preview.",
+      "tff": "Top field first",
+      "bff": "Bottom field first",
+      "progressive": "Not interlaced"
+    },
+    "preview": "Preview 10 s",
+    "full": "Process all",
+    "reset": "Reset to defaults",
+    "previewCaption": "Left: original · Right: enhanced",
+    "status": {
+      "planning": "Inspecting the video…",
+      "ready": "Ready: output {w}×{h}. You can look at a 10-second preview first.",
+      "previewRunning": "Preparing the preview… {pct}%",
+      "running": "Processing the video… {pct}%",
+      "previewDone": "Preview ready: original on the left, enhanced on the right.",
+      "done": "Done: {name} (saved next to the original).",
+      "cancelled": "Cancelled.",
+      "failed": "Could not enhance: {error}",
+      "desktopOnly": "Video enhance is only available in the desktop app."
+    },
+    "blocker": {
+      "hdr": "This video is HDR (or its dynamic range is unknown). It is not enhanced: without correct tone mapping the colours would be wrong.",
+      "filters": "This ffmpeg build lacks required filters ({codes}).",
+      "generic": "This video cannot be enhanced ({codes})."
     }
   }
 }
