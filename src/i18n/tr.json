@@ -103,7 +103,8 @@
       "eqPreset": "Ekolayzır hazır ayarı",
       "hwdec": "Donanım ile video çözme",
       "fastProfile": "Hızlı görüntü profili (profile=fast)",
-      "checkUpdates": "Güncellemeleri otomatik denetle"
+      "checkUpdates": "Güncellemeleri otomatik denetle",
+      "cache": "Önbellek"
     },
     "help": {
       "defaultApps": "Windows, uygulamaların kendini varsayılan yapmasına izin vermez; açılan pencerede VHO'yu seçin.",
@@ -114,7 +115,8 @@
       "fastProfile": "Dahili ekran kartlarında GPU yükünü azaltır.",
       "fastProfileGpu": "Dahili ekran kartlarında GPU yükünü azaltır. Bu bilgisayar: {gpu}.",
       "fastProfileGpuIntegrated": "Dahili ekran kartlarında GPU yükünü azaltır. Bu bilgisayar: {gpu} (dahili).",
-      "checkUpdates": "Açılışta bir kez. Güncellemeler imzalıdır ve yalnızca Kur'a tıkladığınızda kurulur; medyanızla ilgili hiçbir şey gönderilmez."
+      "checkUpdates": "Açılışta bir kez. Güncellemeler imzalıdır ve yalnızca Kur'a tıkladığınızda kurulur; medyanızla ilgili hiçbir şey gönderilmez.",
+      "cache": "Küçük resimler ve dönüştürülmüş videolar gerektiğinde yeniden oluşturulur. Kullanımdaki dosyalar silinmez."
     },
     "options": {
       "languageSystem": "Sistem dili",
@@ -150,6 +152,15 @@
     "about": {
       "description": "Video, fotoğraf ve müzik için açık kaynak medya stüdyosu.",
       "license": "Apache-2.0 lisansı · Geliştirici: Halil SARITAŞ · TurkuazCode"
+    },
+    "cache": {
+      "row": "{what}: {size}",
+      "photo": "Fotoğraf küçük resimleri ve önizlemeleri",
+      "video": "Video küçük resimleri",
+      "transcode": "Dönüştürülmüş videolar",
+      "clear": "Temizle",
+      "cleared": "{size} boşaltıldı",
+      "clearedSkipped": "{size} boşaltıldı; kullanımdaki {skipped} dosya korundu"
     }
   },
   "shortcuts": {
@@ -507,6 +518,9 @@
       "toolsInfo": "{version} · H.264 kodlayıcı: {encoder}",
       "none": "yok",
       "fallbackEncoder": "{name} (H.264 yok, yedek kodlayıcı)"
+    },
+    "error": {
+      "clipboardBusy": "Pano başka bir uygulama tarafından kullanılıyor ({detail}). Biraz sonra yeniden deneyin."
     }
   },
   "effects": {

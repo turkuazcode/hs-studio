@@ -103,7 +103,8 @@
       "eqPreset": "Equalizer preset",
       "hwdec": "Hardware video decoding",
       "fastProfile": "Fast picture profile (profile=fast)",
-      "checkUpdates": "Check for updates automatically"
+      "checkUpdates": "Check for updates automatically",
+      "cache": "Cache"
     },
     "help": {
       "defaultApps": "Windows does not let apps make themselves the default; choose VHO in the window that opens.",
@@ -114,7 +115,8 @@
       "fastProfile": "Reduces GPU load on integrated graphics.",
       "fastProfileGpu": "Reduces GPU load on integrated graphics. This computer: {gpu}.",
       "fastProfileGpuIntegrated": "Reduces GPU load on integrated graphics. This computer: {gpu} (integrated).",
-      "checkUpdates": "Once at startup. Updates are signed and installed only when you click Install; nothing about your media is sent."
+      "checkUpdates": "Once at startup. Updates are signed and installed only when you click Install; nothing about your media is sent.",
+      "cache": "Thumbnails and converted videos are made again when needed. Files in use are kept."
     },
     "options": {
       "languageSystem": "System language",
@@ -150,6 +152,15 @@
     "about": {
       "description": "Open source media studio for video, photos and music.",
       "license": "Apache-2.0 license · Developer: Halil SARITAŞ · TurkuazCode"
+    },
+    "cache": {
+      "row": "{what}: {size}",
+      "photo": "Photo thumbnails and previews",
+      "video": "Video thumbnails",
+      "transcode": "Converted videos",
+      "clear": "Clear",
+      "cleared": "{size} freed",
+      "clearedSkipped": "{size} freed; {skipped} file(s) in use were kept"
     }
   },
   "shortcuts": {
@@ -507,6 +518,9 @@
       "toolsInfo": "{version} · H.264 encoder: {encoder}",
       "none": "none",
       "fallbackEncoder": "{name} (no H.264, fallback encoder)"
+    },
+    "error": {
+      "clipboardBusy": "The clipboard is in use by another app ({detail}). Try again in a moment."
     }
   },
   "effects": {

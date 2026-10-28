@@ -23,6 +23,13 @@ fn absolute(path: &str) -> Result<std::path::PathBuf, String> {
     .map_err(|e| e.to_string())
 }
 
+/// AppleScript string literal of `s`. Backslashes are escaped before quotes: escaping only
+/// the quote let a file name like `a\" & do shell script "x` end the string and run a command.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn applescript_string(s: &str) -> String {
+    format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\""))
+}
+
 #[cfg(windows)]
 fn main_hwnd(app: &AppHandle) -> Result<windows::Win32::Foundation::HWND, String> {
     let w = app.webview_windows().into_values().next().ok_or("Pencere yok")?;
@@ -66,8 +73,8 @@ pub fn set_lock_screen(path: &str) -> Result<(), String> {
 pub fn set_wallpaper(path: &str) -> Result<(), String> {
     let p = absolute(path)?;
     let script = format!(
-        "tell application \"System Events\" to tell every desktop to set picture to POSIX file \"{}\"",
-        p.to_string_lossy().replace('"', "\\\"")
+        "tell application \"System Events\" to tell every desktop to set picture to POSIX file {}",
+        applescript_string(&p.to_string_lossy())
     );
     let st = std::process::Command::new("osascript").args(["-e", &script]).status().map_err(|e| e.to_string())?;
     if st.success() { Ok(()) } else { Err(format!("osascript: {st}")) }
@@ -205,4 +212,22 @@ pub fn open_with(_app: &AppHandle, path: &str) -> Result<(), String> {
         return Ok(());
     }
     std::process::Command::new("xdg-open").arg(path).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn applescript_string_cannot_be_broken_out_of() {
+        assert_eq!(applescript_string("/a b/c.jpg"), r#""/a b/c.jpg""#);
+        assert_eq!(applescript_string(r#"/x/a\" & do shell script "touch /tmp/p" & ".jpg"#), r#""/x/a\\\" & do shell script \"touch /tmp/p\" & \".jpg""#);
+        // every quote inside is preceded by an odd number of backslashes, so none ends the literal
+        let s = applescript_string(r#"\\"\""#);
+        let inner = &s[1..s.len() - 1];
+        for (i, _) in inner.match_indices('"') {
+            let run = inner[..i].chars().rev().take_while(|&c| c == '\\').count();
+            assert_eq!(run % 2, 1, "{s}");
+        }
+    }
 }

@@ -22,7 +22,7 @@ use crate::storage::{StorageError, now_ms};
 pub const MAX_FILE_BYTES: u64 = 16 * 1024 * 1024;
 pub const MAX_ITEMS: usize = 100_000;
 
-const URL_SCHEMES: &[&str] = &["http", "https", "rtsp", "rtsps", "rtmp", "rtmps", "rtp", "mms", "mmsh", "srt", "udp", "hls"];
+pub(crate) const URL_SCHEMES: &[&str] = &["http", "https", "rtsp", "rtsps", "rtmp", "rtmps", "rtp", "mms", "mmsh", "srt", "udp", "hls"];
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
