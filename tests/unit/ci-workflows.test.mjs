@@ -24,7 +24,17 @@ test("least privilege: read-only default permissions, no pull_request_target, no
   for (const [f, text] of workflows) {
     assert.match(text, /^permissions:\s*\n\s+contents: read/m, `${f}: top-level permissions must be contents: read`);
     assert.doesNotMatch(text, /pull_request_target/, `${f}: pull_request_target exposes secrets to fork PRs`);
-    assert.doesNotMatch(text, /^\s*contents:\s*write/m,`${f}: no write permission until publishing is decided`);
+    // write access only in release.yml's `publish` job (owner decision 2026-10-28: draft
+    // pre-release on a manual run): job-level, never top-level, never on a tag push
+    const writes = [...text.matchAll(/^(\s*)contents:\s*write/gm)];
+    if (f !== "release.yml") assert.equal(writes.length, 0, `${f}: no write permission`);
+    else {
+      assert.equal(writes.length, 1, "release.yml: exactly one write permission");
+      const job = text.slice(text.lastIndexOf("\n  publish:\n", writes[0].index) + 1, writes[0].index);
+      assert.match(job, /^  publish:\n\s+if: github\.event_name == 'workflow_dispatch' && inputs\.publish\n/, "only the manually started publish job writes");
+      assert.match(job, /needs: \[gate, linux\]/, "publishing waits for the release gate");
+      assert.match(text.slice(writes[0].index), /gh release create "v\$v" --draft --prerelease/, "it only creates a draft pre-release");
+    }
     for (const m of text.matchAll(/uses: actions\/checkout@[0-9a-f]{40}[^\n]*\n((?:\s+with:\s*\n(?:\s{8,}.*\n)*)?)/g)) {
       assert.match(m[1], /persist-credentials: false/, `${f}: checkout without persist-credentials: false`);
     }

@@ -14,6 +14,16 @@
 # (stage "candidate") is met. Manual checks (clean VM, screen reader, ...) are done afterwards on
 # that candidate and recorded in docs/releases/evidence/windows-alpha.json (stage "release").
 #
+# Linux (preview): the `linux` job builds the LGPL libmpv/FFmpeg set (third_party/mpv/build-linux.sh),
+# runs the unit and Rust layers and packages AppImage + deb (scripts/linux/package.sh). Linux has
+# no E2E driver and no real-device evidence yet (docs/status/platform-plan-macos-linux.md): its
+# files are named and labelled as an UNTESTED PREVIEW and are not covered by the Windows gate.
+# macOS: no job — the macOS video engine is not written yet (same document, tasks M1-M10).
+#
+# Publishing (`publish` job): only on a manual run with the `publish` input. It creates a DRAFT
+# pre-release `v<version>` with the gated Windows files and the Linux preview files; the owner
+# reviews and publishes it on GitHub. Tag pushes never publish.
+#
 # Code signing: SignPath Foundation (free OSS program, user decision 2026-10-26). The signing
 # steps run only when the repository variable SIGNPATH_ENABLED is 'true' (set it after SignPath
 # accepted the project and the secrets/variables below exist). Without it the artifacts are
@@ -33,6 +43,10 @@ on:
       version:
         description: "Version to build (must equal src-tauri/tauri.conf.json version)"
         required: true
+      publish:
+        description: "Create a draft GitHub pre-release with the gated files"
+        type: boolean
+        default: false
   push:
     tags: ["v*"]
 
@@ -310,5 +324,79 @@ jobs:
           path: release-out/
           retention-days: 90
 
-  # Publishing (GitHub Release draft, updater latest.json) is intentionally not automated yet:
-  # it needs `contents: write`, the final repository URL and the owner's go-ahead (plan 14/R02-R03).
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Version check
+        run: |
+          v="${VERSION_INPUT#v}"
+          conf=$(node -p "require('./src-tauri/tauri.conf.json').version")
+          [ "$v" = "$conf" ] || { echo "requested $v but tauri.conf.json has $conf"; exit 1; }
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+      # build tools, WebKitGTK/Tauri deps, LGPL libmpv/FFmpeg build deps, pinned Rust + Node
+      - run: sudo bash scripts/linux/setup-dev.sh
+      - name: LGPL libmpv + FFmpeg
+        run: bash third_party/mpv/build-linux.sh "$RUNNER_TEMP/mpv"
+      - run: npm ci
+      - run: npm test
+        env:
+          VHO_TEST_NO_SKIP: "1"
+      - name: Rust layer (ffmpeg/ffprobe of the LGPL set next to the test binary)
+        run: |
+          bash scripts/linux/stage-mpv.sh "$RUNNER_TEMP/mpv/dist" src-tauri/target/release
+          npm run test:rust
+      - name: Package (AppImage + deb)
+        run: bash scripts/linux/package.sh "$RUNNER_TEMP/mpv/dist"
+      - name: Collect preview files
+        run: |
+          out=release-out-linux; mkdir -p "$out"
+          for f in src-tauri/target/release/bundle/appimage/*.AppImage src-tauri/target/release/bundle/deb/*.deb; do
+            base=$(basename "$f"); ext="${base##*.}"
+            cp "$f" "$out/${base%.*}-PREVIEW-UNTESTED.$ext"
+          done
+          cp src-tauri/target/release/bundle/package-manifest-linux.txt "$out/"
+          (cd "$out" && sha256sum *.AppImage *.deb > SHA256SUMS-linux.txt && cat SHA256SUMS-linux.txt)
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-linux-x64-${{ env.VERSION_INPUT }}-preview
+          path: release-out-linux/
+          retention-days: 90
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: results-linux
+          path: tests/.results/*.json
+
+  publish:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    runs-on: ubuntu-24.04
+    needs: [gate, linux]
+    permissions:
+      contents: write # only this job: creates the draft release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-windows-x64-${{ env.VERSION_INPUT }}
+          path: dist/windows
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-linux-x64-${{ env.VERSION_INPUT }}-preview
+          path: dist/linux
+      - name: Draft pre-release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          v="${VERSION_INPUT#v}"
+          notes="docs/releases/notes/v$v.md"
+          [ -f "$notes" ] || { echo "release notes $notes missing"; exit 1; }
+          gh release create "v$v" --draft --prerelease --target "$GITHUB_SHA" --title "HS Studio $v" --notes-file "$notes" \
+            dist/windows/*-setup.exe dist/windows/*.sha256 dist/windows/SHA256SUMS.txt dist/windows/release-gate.md \
+            dist/windows/*.cdx.json dist/windows/THIRD_PARTY_NOTICES.txt dist/windows/SOURCE-OFFER.txt dist/windows/LICENSE.txt dist/windows/NOTICE.txt \
+            dist/linux/*.AppImage dist/linux/*.deb dist/linux/SHA256SUMS-linux.txt
