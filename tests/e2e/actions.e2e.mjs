@@ -35,13 +35,15 @@ function ffmpeg(args) {
 
 /** Recycle bin entries whose original location is `dir` and name starts with `stem`; purge = delete them for good. */
 function recycleBin(dir, stem, purge = false) {
+  // the recycle bin records the final (long) path: tmpdir() may be an 8.3 short path (RUNNER~1 on CI)
+  const where = realpathSync.native(dir);
   const ps = `
     $ErrorActionPreference = 'SilentlyContinue'
     $rb = (New-Object -ComObject Shell.Application).NameSpace(10)
     $n = 0
     foreach ($it in @($rb.Items())) {
       $orig = $rb.GetDetailsOf($it, 1)
-      if ($orig -eq '${dir.replace(/'/g, "''")}' -and $it.Name -like '${stem}*') {
+      if ($orig -eq '${where.replace(/'/g, "''")}' -and $it.Name -like '${stem}*') {
         $n++
         if (${purge ? "$true" : "$false"}) {
           $p = $it.Path
