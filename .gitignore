@@ -25,6 +25,7 @@ dist-ssr
 
 # Build outputs
 /VHO.exe
+/HS Studio.exe
 /WebView2Loader.dll
 src-tauri/target/
 
