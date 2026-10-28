@@ -27,7 +27,8 @@ test("photo enhance: recommended settings, reset, queued job, separate result, s
       await app.click("#btn-toggle-ai-restore");
       assert.equal(await laidOut("#photo-enhance"), true);
       assert.equal(await laidOut("#check-ai-master"), false, "video filter switch hidden for photos");
-      assert.equal(await laidOut("#btn-deep-enhance"), true, "AI option stays (experimental)");
+      // the legacy neural enhancer is out of the Windows alpha scope (core/scope.js)
+      assert.equal(await app.eval(`document.getElementById("btn-deep-enhance") === null && !document.querySelector(".deep-enhance-box")`), true, "no legacy AI section");
       assert.equal(await app.eval(`document.getElementById("pe-sharp").value`), "40");
       assert.equal(await app.eval(`document.getElementById("pe-shadow").value`), "33");
       assert.equal(await app.eval(`document.getElementById("pe-scale").value`), "2");

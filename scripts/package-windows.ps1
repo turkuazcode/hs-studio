@@ -67,6 +67,23 @@ $stage = Join-Path $tauriDir 'target\package-staging'
 $mismatch = @()
 if ($Phase -eq 'bundle') {
   if (-not (Test-Path (Join-Path $stage 'mpv\libmpv-2.dll'))) { throw "no staged payload in $stage (run -Phase build first)" }
+  # what is bundled is what is checked: the staged set may have changed since the build phase
+  $stagedMpv = Join-Path $stage 'mpv'
+  foreach ($c in $native.components) {
+    foreach ($f in $c.files) {
+      $p = Join-Path $stagedMpv $f.name
+      if (-not (Test-Path -LiteralPath $p)) { $mismatch += "$($f.name) (missing)"; continue }
+      $h = (Get-FileHash -Algorithm SHA256 -LiteralPath $p).Hash.ToLowerInvariant()
+      if ($h -ne $f.sha256) { $mismatch += "$($f.name) ($h)" }
+    }
+  }
+  $listed = @($native.components | ForEach-Object { $_.files.name })
+  $extra = @(Get-ChildItem $stagedMpv -File | Where-Object { $listed -notcontains $_.Name } | ForEach-Object Name)
+  if ($extra) { $mismatch += "not in the inventory: $($extra -join ', ')" }
+  if ($mismatch) {
+    $msg = "staged native files differ from legal/inventory/native-windows-x64.json: $($mismatch -join '; ')"
+    if ($Variant -eq 'release') { throw $msg } else { Write-Warning $msg }
+  }
 } else {
 if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
 $stageMpv = New-Item -ItemType Directory -Force (Join-Path $stage 'mpv')

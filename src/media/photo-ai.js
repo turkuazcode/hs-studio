@@ -22,6 +22,12 @@ export function deepInputSize(w, h, maxOutputPixels = DEEP_MAX_OUTPUT_PIXELS) {
 /**
  * app: { dom, state, bus, toast, snapshot }  (resolved lazily)
  */
+/** Removes the panel section of this feature (title + box) when it is out of scope. */
+export function removeLegacyPhotoAi(doc) {
+  doc.querySelector('[data-i18n="enhance.photoAiSection"]')?.remove();
+  doc.querySelector(".deep-enhance-box")?.remove();
+}
+
 export function createPhotoAi(app) {
   const { dom, state } = app;
   const {

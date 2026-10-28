@@ -2,10 +2,13 @@
 // incomplete evidence (failed exit code, todo, stale binary, zero tests, missing commit, partial
 // run, wrong suite / platform / artifact), while declared out-of-scope exceptions stay visible.
 import { test } from "node:test";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import assert from "node:assert/strict";
-import { checkArtifact, checkLayer, checkManual, classify, expandIds, gate, parseStatus, TARGETS, verifiedOn } from "../../scripts/release-gate.mjs";
-import { parseCargoTest } from "../../scripts/run-rust-tests.mjs";
+import { checkArtifact, checkLayer, readArtifactFile, checkManual, classify, expandIds, gate, parseStatus, TARGETS, verifiedOn } from "../../scripts/release-gate.mjs";
+import { isFullRun, parseCargoTest } from "../../scripts/run-rust-tests.mjs";
 
 const HEAD = "abc1234def5678abc1234def5678abc1234def56";
 const EXE = "e".repeat(64);
@@ -28,7 +31,8 @@ const manifest = (extra = {}) => ({
   files: [{ path: "HS Studio.exe (main binary, before installation)", sha256: EXE }], ...extra,
 });
 const evidence = (extra = {}) => ({ checks: alpha.manual.map((id) => ({ id, result: "pass", os: "Windows 11 24H2", date: "2026-11-01", tester: "t", artifactSha256: INSTALLER, ...extra })) });
-const opts = (o = {}) => ({ head: HEAD, manifest: manifest(), evidence: evidence(), ...o });
+const okFile = { exists: true, sha256: INSTALLER, checksumFile: INSTALLER };
+const opts = (o = {}) => ({ head: HEAD, manifest: manifest(), artifactFile: okFile, evidence: evidence(), ...o });
 const problemsOf = (layer, r, ctx = {}) => checkLayer(layer, r, alpha, { head: HEAD, platformKey: "win32-x64", ...ctx }).problems.join(" | ");
 
 test("card id cells expand ranges and lists; anything else is not a card id", () => {
@@ -134,6 +138,11 @@ test("layer: exceptions cover only their declared tests; the report names them",
 
 test("artifact: only the release package built from HEAD, and the tests must have used its binary", () => {
   assert.equal(checkArtifact(null, HEAD).result, "missing");
+  assert.match(checkArtifact(manifest(), HEAD).problems.join(), /kurulum dosyası okunmadı/, "a manifest alone is not a package");
+  assert.match(checkArtifact(manifest(), HEAD, { exists: false }).problems.join(), /kurulum dosyası yok/);
+  assert.match(checkArtifact(manifest(), HEAD, { ...okFile, sha256: "0".repeat(64) }).problems.join(), /sonradan değişmiş/);
+  assert.match(checkArtifact(manifest(), HEAD, { ...okFile, checksumFile: "0".repeat(64) }).problems.join(), /\.sha256 dosyası/);
+  assert.equal(checkArtifact(manifest(), HEAD, okFile).result, "ok");
   assert.match(checkArtifact(manifest({ variant: "test" }), HEAD).problems.join(), /paket türü "test"/);
   assert.match(checkArtifact(manifest({ sourceCommit: "0".repeat(40) }), HEAD).problems.join(), /0000000 commitinden/);
   assert.match(checkArtifact(manifest({ nativeHashesMatchInventory: false }), HEAD).problems.join(), /envanter/);
@@ -205,4 +214,36 @@ test("the real plan 08: every card row parses; V03 is the model-free row, V04-V0
   assert.match(s.get("V06").status, /^bekliyor/);
   assert.equal(classify("P02", s.get("P02"), TARGETS["desktop-beta"]), "missing");
   assert.match(s.get("P02").status, /kod eksik/);
+});
+
+test("rust runner: a run with libtest filters or skips is never the whole layer", () => {
+  const out = (filtered) => parseCargoTest(`test a ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; ${filtered} filtered out; finished in 0.1s`);
+  assert.equal(isFullRun(out(0), []), true);
+  assert.equal(out(218).filteredOut, 218);
+  assert.equal(isFullRun(out(218), []), false, "--skip=x or a name after -- filters tests out");
+  assert.equal(isFullRun(out(0), ["--skip=restoration"]), false, "an option that filters, even when nothing matched");
+  assert.equal(isFullRun(out(0), ["restoration"]), false);
+  assert.equal(isFullRun(parseCargoTest("error[E0425]: cannot find value"), []), false, "compile error: no result line");
+});
+
+test("artifact on disk: missing file, changed file and a stale .sha256 are found", () => {
+  const dir = mkdtempSync(join(tmpdir(), "vho-gate-art-"));
+  try {
+    const mp = join(dir, "package-manifest-release-0.1.0.json");
+    const bytes = Buffer.from("installer bytes");
+    const sha = createHash("sha256").update(bytes).digest("hex");
+    const m = { ...manifest(), installer: "HS Studio_0.1.0_x64-UNSIGNED-setup.exe", sha256: sha };
+    assert.equal(readArtifactFile(mp, { ...m, installer: "does-not-exist.exe" }).exists, false);
+    writeFileSync(join(dir, m.installer), bytes);
+    writeFileSync(join(dir, `${m.installer}.sha256`), `${sha}  ${m.installer}
+`);
+    const f = readArtifactFile(mp, m);
+    assert.deepEqual([f.exists, f.sha256 === sha, f.checksumFile === sha], [true, true, true]);
+    assert.equal(checkArtifact(m, HEAD, f).result, "ok");
+    writeFileSync(join(dir, m.installer), Buffer.concat([bytes, Buffer.from("x")]));
+    assert.match(checkArtifact(m, HEAD, readArtifactFile(mp, m)).problems.join(), /sonradan değişmiş/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

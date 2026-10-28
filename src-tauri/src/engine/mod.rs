@@ -142,6 +142,7 @@ fn start<R: Runtime>(app: &AppHandle<R>, win: &WebviewWindow<R>, dll: &Path, gpu
         ("keep-open", "yes".into()),
         ("volume-max", "200".into()),
         ("deinterlace", "auto".into()),
+        ("hwdec-codecs", HWDEC_CODECS.into()),
         ("tone-mapping", "auto".into()),
         ("screenshot-format", "png".into()),
         ("sub-auto", "fuzzy".into()),
@@ -188,6 +189,13 @@ fn start<R: Runtime>(app: &AppHandle<R>, win: &WebviewWindow<R>, dll: &Path, gpu
     });
     Ok(m)
 }
+
+/// Codecs hardware decoding may be tried for: mpv 0.41's default list without `prores_raw`, `ffv1`
+/// and `dpx`. FFmpeg 8 decodes those three only through Vulkan compute shaders; on the reference
+/// machine (AMD integrated GPU) an FFV1 MKV opened with `hwdec=auto-safe` picked `ffv1-vulkan-copy`
+/// and the GPU stalled — the WebView sharing it stopped answering (audit 2026-10-28; reproduced
+/// for FFV1 only, the other two are the same decoder class). Software decoding is used for them.
+pub const HWDEC_CODECS: &str = "h264,vc1,hevc,vp8,vp9,av1,prores";
 
 /// Video output options of this platform's surface.
 /// Windows: mpv's own `gpu-next` VO in the owned popup (`wid`). Linux: `vo=libmpv` (render API,
@@ -376,6 +384,17 @@ mod tests {
     fn base64_matches_rfc4648_vectors() {
         for (i, o) in [("", ""), ("f", "Zg=="), ("fo", "Zm8="), ("foo", "Zm9v"), ("foob", "Zm9vYg=="), ("foobar", "Zm9vYmFy")] {
             assert_eq!(super::base64(i.as_bytes()), o);
+        }
+    }
+
+    #[test]
+    fn engine_hwdec_skips_vulkan_compute_decoders() {
+        let codecs: Vec<&str> = super::HWDEC_CODECS.split(',').collect();
+        for c in ["ffv1", "prores_raw", "dpx"] {
+            assert!(!codecs.contains(&c), "{c} must decode in software (Vulkan compute stalled the GPU)");
+        }
+        for c in ["h264", "hevc", "vp9", "av1"] {
+            assert!(codecs.contains(&c), "{c} keeps hardware decoding");
         }
     }
 

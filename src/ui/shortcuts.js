@@ -59,7 +59,8 @@ export function defaultActions(app) {
     { id: "rotateRight", scope: "photo", keys: ["KeyR"], run: () => dom.btnPhotoRotateRight?.click() },
     { id: "rotateLeft", scope: "photo", keys: ["Shift+KeyR"], run: () => dom.btnPhotoRotateLeft?.click() },
     { id: "photoInfo", scope: "photo", keys: ["KeyI"], run: () => dom.btnPhotoInfo?.click() },
-    { id: "deepEnhance", scope: "photo", keys: ["KeyE"], run: () => app.photoAi.enhance() },
+    // only when the legacy photo AI is in scope (core/scope.js)
+    ...(app.photoAi ? [{ id: "deepEnhance", scope: "photo", keys: ["KeyE"], run: () => app.photoAi.enhance() }] : []),
     { id: "zoomIn", scope: "photo", keys: ["Equal", "NumpadAdd"], run: () => app.photo.zoom(1.25) },
     { id: "zoomOut", scope: "photo", keys: ["Minus", "NumpadSubtract"], run: () => app.photo.zoom(0.8) },
     { id: "zoomReset", scope: "photo", keys: ["Digit0", "Numpad0"], run: () => app.photo.resetTransform() },

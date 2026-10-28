@@ -97,8 +97,8 @@ test("photo: two photos from the command line", { timeout: 120000 }, async (t) =
       assert.equal(await app.eval(`document.documentElement.dataset.media`), "image");
       const drawerOpen = await app.eval(`document.getElementById("playlist-drawer").classList.contains("open")`);
       await app.click("#btn-toggle-ai-restore"); // (opening the panel closes the playlist drawer)
-      assert.equal(await laidOut("#btn-deep-enhance"), true, "Enhance photo with AI shown for photos");
-      assert.match(await app.text("#btn-deep-enhance"), /AI/);
+      assert.equal(await laidOut("#photo-enhance"), true, "model-free photo enhance shown for photos");
+      assert.equal(await app.eval(`document.getElementById("btn-deep-enhance")`), null, "legacy neural enhancer out of scope (core/scope.js)");
       assert.equal(await laidOut("#check-ai-voice-clarity"), false, "sound filters hidden for photos");
       assert.equal(await laidOut("#video-restore-note"), false);
       await app.click("#btn-close-ai-restore");
