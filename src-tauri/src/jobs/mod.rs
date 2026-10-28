@@ -511,6 +511,14 @@ fn require_job_targets(app: &AppHandle, kind: &str, request: &Value) -> Result<(
             let job: crate::photo::ops::BatchJob = serde_json::from_value(request.clone()).map_err(invalid)?;
             crate::photo::require_batch_targets(app, &job).map_err(denied)
         }
+        // A05: without `output.dir` the result goes to the app's result folder
+        "photo-enhance" => {
+            let req: adapters::EnhanceRequest = serde_json::from_value(request.clone()).map_err(invalid)?;
+            match &req.output.dir {
+                Some(d) => crate::grants::require(app, Path::new(d), crate::grants::Access::IntoFolder).map_err(denied),
+                None => Ok(()),
+            }
+        }
         _ => Ok(()),
     }
 }

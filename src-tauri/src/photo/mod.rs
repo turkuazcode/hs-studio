@@ -16,6 +16,7 @@
 //! (see `ERR_*` constants) followed by a Turkish message.
 
 pub mod decode;
+pub mod enhance;
 pub mod exif;
 pub mod heic;
 pub mod ops;

@@ -180,3 +180,19 @@
   }
   #btn-toggle-ai-restore.hud-text-btn { width: 40px; padding: 0; justify-content: center; }
 }
+
+/* Photo screen: one place per control (approved mockup). The edge arrows duplicate ‹ n/N › in
+   the title bar (← / → keys still work); the HUD pencil and ⋯ duplicate "Düzenle" / ⋯ in the
+   title bar ("Düzenle" clicks the hidden pencil, so it stays in the DOM). */
+#btn-floating-prev, #btn-floating-next,
+.photo-hud #ps-viewer-edit, .photo-hud #ps-viewer-more { display: none !important; }
+
+/* A05 enhance section of the panel */
+.photo-enhance { display: flex; flex-direction: column; gap: 12px; padding-bottom: 12px; margin-bottom: 4px; border-bottom: 1px solid var(--border-subtle); }
+.photo-enhance .pe-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.photo-enhance .pe-head .panel-note { margin: 0; }
+.photo-enhance .pe-recommended { flex: none; font-size: 12px; color: var(--text-muted); }
+.photo-enhance .pe-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
+.photo-enhance .pe-select { min-height: 32px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--border-specular); background: var(--bg-surface-elevated); color: var(--text-pure); font: inherit; }
+.photo-enhance .pe-actions { display: flex; gap: 8px; }
+.photo-enhance .pe-actions .btn-primary { flex: 1; }

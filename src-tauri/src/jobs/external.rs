@@ -125,20 +125,20 @@ struct AiRequest {
 
 #[derive(Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-struct AiOutput {
+pub(crate) struct AiOutput {
     /// Output folder; None = the app's AI result folder (not the user's folders)
-    dir: Option<String>,
+    pub(crate) dir: Option<String>,
     /// Name suffix before the extension (default `_restored`)
-    suffix: Option<String>,
+    pub(crate) suffix: Option<String>,
     /// "png" (default) | "jpeg" | "webp"
-    format: Option<String>,
+    pub(crate) format: Option<String>,
     /// JPEG / WebP quality (default 95)
-    quality: Option<u8>,
+    pub(crate) quality: Option<u8>,
     /// keep (default) | stripGps | strip — like the photo batch
     #[serde(default)]
-    metadata: MetadataPolicy,
+    pub(crate) metadata: MetadataPolicy,
     /// JPEG has no alpha: transparent pixels are composited onto this colour (default white)
-    background: Option<[u8; 3]>,
+    pub(crate) background: Option<[u8; 3]>,
 }
 
 /// Encoded output (A04): RGBA from the page (sRGB, upright, 8 bit) -> file bytes.
@@ -155,7 +155,9 @@ pub struct Encoded {
     pub format: &'static str,
 }
 
-fn encode_output(src: &Path, rgba: Vec<u8>, w: u32, h: u32, out: &AiOutput, software: &str) -> Result<Encoded, JobError> {
+/// `icc`: profile of the pixels (None = sRGB; the AI path's pixels are sRGB from the page,
+/// the faithful enhance keeps the source's colour space and its profile).
+pub(crate) fn encode_output(src: &Path, rgba: Vec<u8>, w: u32, h: u32, out: &AiOutput, software: &str, icc: Option<&[u8]>) -> Result<Encoded, JobError> {
     use crate::photo::ops::{self, OutFormat};
     let bad = |e: String| JobError::new(code::FAILED, e);
     let img = image::RgbaImage::from_raw(w, h, rgba).ok_or_else(|| JobError::new(code::INVALID_REQUEST, "bad image buffer"))?;
@@ -179,7 +181,7 @@ fn encode_output(src: &Path, rgba: Vec<u8>, w: u32, h: u32, out: &AiOutput, soft
         image::DynamicImage::ImageRgb8(rgb)
     };
     let quality = out.quality.unwrap_or(95).clamp(1, 100);
-    let bytes = ops::encode(&dynimg, fmt, quality, None).map_err(bad)?;
+    let bytes = ops::encode(&dynimg, fmt, quality, icc).map_err(bad)?;
     let tiff = crate::photo::exif::blob_for_output(src, out.metadata, 1, Some((w, h)));
     let mut bytes = ops::embed_exif(bytes, fmt, tiff.as_deref(), w, h);
     if fmt == OutFormat::Png {
@@ -200,7 +202,7 @@ impl ExternalAdapter {
     }
 }
 
-fn clean_suffix(s: Option<&str>) -> String {
+pub(crate) fn clean_suffix(s: Option<&str>) -> String {
     let s: String = s
         .unwrap_or("_restored")
         .chars()
@@ -360,7 +362,7 @@ impl ExternalAdapter {
         std::fs::create_dir_all(&dir).map_err(|e| JobError::new(super::classify_error(&e.to_string()), e.to_string()))?;
         ctx.check_space(&dir, rgba.len() as u64 + (16 << 20))?;
         let software = format!("VHO {} AI ({})", env!("CARGO_PKG_VERSION"), req.components.join(", "));
-        let enc = encode_output(src, rgba, w, h, &req.output, &software)?;
+        let enc = encode_output(src, rgba, w, h, &req.output, &software, None)?;
         let stem = src.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| "photo".into());
         let wanted = dir.join(format!("{stem}{}.{}", clean_suffix(req.output.suffix.as_deref()), enc.ext));
         let final_name = ctx.reserve(idx, &wanted, false)?;
