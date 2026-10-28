@@ -145,11 +145,17 @@ test("ai models: settings list, download, verify/repair, remove, zip, cancel, er
   const compDir = (id) => join(dataDir, "ai", id, "v1");
   const parts = (id) => (existsSync(compDir(id)) ? readdirSync(compDir(id)).filter((f) => f.includes(".part")) : []);
 
-  const app = await launchApp({
-    args: [fixture("photo-a.jpg")],
-    dataDir,
-    env: { VHO_AI_TEST_MANIFEST: manifestPath, VHO_AI_TEST_BACKOFF_MS: "50", VHO_AI_TEST_STALL_MS: "4000" },
-  });
+  let app;
+  try {
+    app = await launchApp({
+      args: [fixture("photo-a.jpg")],
+      dataDir,
+      env: { VHO_AI_TEST_MANIFEST: manifestPath, VHO_AI_TEST_BACKOFF_MS: "50", VHO_AI_TEST_STALL_MS: "4000" },
+    });
+  } catch (e) {
+    await srv.close(); // otherwise the open server keeps the test process alive forever
+    throw e;
+  }
   const row = (id) => `#ai-model-list [data-component="${id}"]`;
   const rowState = (id) => app.eval(`document.querySelector(${JSON.stringify(row(id))})?.dataset.state ?? null`);
   const waitState = (id, state, timeoutMs = 30000) => app.waitFor(
