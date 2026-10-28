@@ -210,7 +210,7 @@ export function createMediaActions(app) {
   }
 
   const call = (cmd, args, okKey) => invoke(cmd, args).then((r) => { if (okKey) app.toast(t(okKey)); return r; })
-    .catch((e) => { app.toast(`⚠️ ${errorText(e)}`); return null; });
+    .catch((e) => { app.toast(`⚠️ ${errorText(e, t)}`); return null; });
   const withPath = (fn) => () => { const { item } = current(); return item?.path ? fn(item) : null; };
 
   const copyFiles = (paths) => call("clipboard_copy_files", { paths }, paths.length > 1 ? "actions.toast.filesCopied" : "actions.toast.fileCopied");
@@ -235,7 +235,7 @@ export function createMediaActions(app) {
       }
       app.toast(t("actions.toast.frameCopied"));
     } catch (e) {
-      app.toast(`⚠️ ${errorText(e)}`);
+      app.toast(`⚠️ ${errorText(e, t)}`);
     }
   }
 
@@ -261,7 +261,7 @@ export function createMediaActions(app) {
         [t("actions.props.modified"), fmtDate(fp.modifiedMs)], [t("actions.props.created"), fmtDate(fp.createdMs)],
       ] });
     } catch (e) {
-      app.toast(`⚠️ ${errorText(e)}`);
+      app.toast(`⚠️ ${errorText(e, t)}`);
       return;
     }
     if (kind === "photo") {
@@ -342,7 +342,7 @@ export function createMediaActions(app) {
       }
     } catch (e) {
       console.warn("mini player", e);
-      app.toast(`⚠️ ${errorText(e)}`);
+      app.toast(`⚠️ ${errorText(e, t)}`);
     }
     render();
   }

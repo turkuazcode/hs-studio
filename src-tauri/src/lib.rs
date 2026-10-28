@@ -1,8 +1,10 @@
 mod actions;
 mod ai;
+mod cache;
 mod capabilities;
 mod cast;
 mod engine;
+mod identity;
 mod jobs;
 mod library;
 mod music;
@@ -234,6 +236,8 @@ pub fn run() {
     let mut context = tauri::generate_context!();
     platform::apply_test_isolation(&mut context);
     updater::apply_test_overrides(&mut context);
+    // Product rename (new bundle identifier): take over the data of the old identity once
+    identity::migrate_legacy_data(&context.config().identifier);
 
     let builder = tauri::Builder::default();
     // Must be the first plugin: a second launch exits here, before any window exists.
@@ -292,6 +296,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            cache::cache_usage,
+            cache::cache_clear,
             updater::updater_check,
             updater::updater_install,
             suspend_system,

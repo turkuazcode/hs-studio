@@ -80,6 +80,19 @@ Dosya argümanı verilirse varsayılan liste yerine o dosyalar çalışır (`npm
 | CI workflow hijyeni (R02), sürüm kapısı (R03) | `ci-workflows`, `release-gate` | — | — | — | — | Workflow'lar uzakta hiç çalışmadı |
 | Lisans envanteri, bildirimler, SBOM (R01) | `legal-inventory` (AI manifest ↔ models.json, yerel DLL listesi ↔ derleme kanıtı, bildirimde her DLL/model, gönderilen varlıklar envanterde, SBOM hash'leri, politika reddi yok) | — | `smoke` (Lisanslar penceresi) | — | — | SBOM üretimi `npm run sbom` (cargo metadata, ağsız) birim testte çalışmaz; commit edilen SBOM denetlenir |
 | İş kuyruğu (A02), kütüphane UI (L02) | paralel dallarda ekleniyor | | | | | Testleri kendi katmanına eklenir; bu harita birleştirmede güncellenir |
+| Erişilebilirlik (Q03): WCAG 2.1 A/AA taraması, klavye, odak, diyaloglar, azaltılmış hareket, %200 ölçek, uzun metin, UI Automation adları | `actions` (kodlu hata metinleri) | — | `a11y` (axe-core, yalnızca test örneğine CDP ile eklenir) | — | — | İnsan kontrolleri bekliyor: aşağıdaki Q03 bölümü |
+| Pano meşgulken yeniden deneme | — | `actions::clipboard::tests` (geri çekilme süresi, başka hataları denememe) | `clipboard-contention` (başka süreç panoyu tutarken bekler / tutan exe adıyla `[clipboard-busy]`) | — | — | Yalnızca Windows |
+| Güvenlik/mahremiyet (Q04): mpv köprüsü izin listesi, sıkıştırma bombası, bozuk EXIF, AppleScript tırnaklama, önbellek temizleme, uzak ana bilgisayar listesi + CSP | `privacy` | `engine::policy::tests`, `photo::decode::tests` (bomba, bozuk EXIF), `actions::system::tests`, `cache::tests` | `security` | — | — | Bağımlılık taraması ağ ister: `npm run audit:deps` (elle). İnceleme: [q04-review.md](../security/q04-review.md) |
+
+## Erişilebilirlik (Q03)
+
+`tests/e2e/a11y.e2e.mjs` otomatik kısmı kapsar: her ana ekran, Ayarlar sekmeleri, diyalog ve panel TR/EN ve koyu/açık/yüksek kontrast temada axe-core ile WCAG 2.1 A/AA taranır (ihlal = başarısız; en iyi uygulama kuralları kapı değildir). Klavye: Tab her durağı görünür odak halkası ve erişilebilir adla gezer; diyaloglar (`src/ui/dialog-a11y.js`, tüm `.modal-overlay` için tek gözlemci) açılınca odağı alır, Tab'ı içeride tutar, Escape ile kapanır, odağı açan denetime geri verir. Azaltılmış hareket geçişleri kapatır; %200 ölçekte ana eylemler pencere içinde kalır; uzun TR/EN metinler Ayarlar'da kırpılmaz; Windows UI Automation ağacında düğmeler adlarıyla görünür.
+
+Otomatik tarama insan kontrolünün yerini tutmaz. **Bekleyenler** (yapılmadı):
+
+- Gerçek ekran okuyucu oturumu (Windows Ayrıntılı Okuyucu / NVDA) ile temel akış: arşiv aç, oynat, fotoğrafı düzenle, karşılaştır, kaydet. macOS VoiceOver / Linux Orca: cihaz yok.
+- Windows yüksek kontrast (sistem teması) ve gerçek %125/%150/%200 sistem ölçeği; testte ölçek CDP ile benzetiliyor.
+- Beş kullanıcıyla görev testi (Plan 14 Q03): **kullanıcı testi bekliyor**.
 
 ## Test yalıtımı
 

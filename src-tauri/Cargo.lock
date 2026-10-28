@@ -5646,6 +5646,7 @@ version = "0.1.0"
 dependencies = [
  "arboard",
  "crc32fast",
+ "dirs",
  "fast_image_resize",
  "flate2",
  "image",

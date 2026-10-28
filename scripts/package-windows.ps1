@@ -8,6 +8,8 @@
   Variants
     release : the real package (identifier com.vho.app, file associations registered).
               The DLL set must match legal/inventory/native-windows-x64.json byte for byte.
+    test-renamed : "HS Studio PackageTest" / com.hsstudio.app.packagetest: rehearses the product
+              rename (its installer removes a "VHO PackageTest" install first).
     test    : "VHO PackageTest" / com.vho.app.packagetest, NO file associations: used by
               scripts/test-installer.ps1 so a test install can never collide with or change a
               real install. Hash differences of the DLL set are only warnings.
@@ -25,7 +27,10 @@
 param(
   [string]$MpvDist,
   [string]$MpvBin,
-  [ValidateSet('release', 'test')][string]$Variant = 'release',
+  [ValidateSet('release', 'test', 'test-renamed')][string]$Variant = 'release',
+  # previous product name whose per-user install the new installer removes first (rename;
+  # src-tauri/packaging/windows/legacy-install.nsh.in). No-op while it equals productName.
+  [string]$LegacyProductName,
   [string]$Version,
   [string]$SourceUrl,
   [switch]$RemapPaths,
@@ -104,6 +109,15 @@ if ($LASTEXITCODE -ne 0) { throw 'SBOM generation / license policy check failed'
 # ---------------------------------------------------------------- 2. build + bundle
 $configs = @('--config', (Join-Path $packDir 'nsis.conf.json'))
 if ($Variant -eq 'test') { $configs += @('--config', (Join-Path $packDir 'nsis.test.conf.json')) }
+if ($Variant -eq 'test-renamed') { $configs += @('--config', (Join-Path $packDir 'nsis.test-renamed.conf.json')) }
+# installer hook: remove a per-user install of the previous product name before installing
+if (-not $LegacyProductName) { $LegacyProductName = if ($Variant -eq 'release') { 'VHO' } else { 'VHO PackageTest' } }
+$hook = Join-Path $stage 'legacy-install.nsh'
+$hookText = (Get-Content (Join-Path $packDir 'legacy-install.nsh.in') -Raw -Encoding UTF8).Replace('@LEGACY@', $LegacyProductName)
+[IO.File]::WriteAllText($hook, $hookText, (New-Object Text.UTF8Encoding $true))
+$hookConf = Join-Path $stage 'hooks.conf.json'
+[IO.File]::WriteAllText($hookConf, (@{ bundle = @{ windows = @{ nsis = @{ installerHooks = $hook } } } } | ConvertTo-Json -Depth 6), (New-Object Text.UTF8Encoding $false))
+$configs += @('--config', $hookConf)
 if ($Updater) {
   if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { throw '-Updater needs TAURI_SIGNING_PRIVATE_KEY (and _PASSWORD) in the environment' }
   $configs += @('--config', (Join-Path $tauriDir 'packaging\updater.conf.json'))
@@ -142,7 +156,7 @@ if (-not $installer) { throw "no new installer in $bundleDir" }
 $hash = (Get-FileHash -Algorithm SHA256 $installer.FullName).Hash.ToLowerInvariant()
 [IO.File]::WriteAllText("$($installer.FullName).sha256", "$hash  $($installer.Name)`n", (New-Object Text.UTF8Encoding $false))
 $exe = Join-Path $tauriDir 'target\release\vho.exe'
-$files = @(Get-ChildItem $stage -Recurse -File | Where-Object { $_.Name -ne 'version.conf.json' } | ForEach-Object {
+$files = @(Get-ChildItem $stage -Recurse -File | Where-Object { $_.Name -notin 'version.conf.json', 'hooks.conf.json', 'legacy-install.nsh' } | ForEach-Object {
   [ordered]@{ path = $_.FullName.Substring($stage.Length + 1).Replace('\', '/'); bytes = $_.Length; sha256 = (Get-FileHash -Algorithm SHA256 $_.FullName).Hash.ToLowerInvariant() }
 })
 $files += [ordered]@{ path = 'vho.exe (main binary, before installation)'; bytes = (Get-Item $exe).Length; sha256 = (Get-FileHash -Algorithm SHA256 $exe).Hash.ToLowerInvariant() }
