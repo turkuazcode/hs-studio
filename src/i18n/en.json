@@ -584,7 +584,7 @@
     "boostCors": "⚠️ The volume booster cannot be used with this source (CORS)",
     "videoRestoreTitle": "Video restoration (AI)",
     "videoRestoreNote": "Not ready yet. The filters above apply only while playing; they do not enhance or save the video.",
-    "photoAiSection": "Enhance photo with AI (neural network)",
+    "photoAiSection": "With AI (experimental)",
     "deepButton": "✨ Enhance photo with AI (4x, E)",
     "deepCancel": "■ Cancel",
     "faces": "Also restore faces (GFPGAN)",
@@ -1518,6 +1518,36 @@
       "network": "Network error: {detail}",
       "file": "The file cannot be opened: {detail}",
       "inactive": "Nothing is being cast."
+    }
+  },
+  "photoEnhance": {
+    "title": "Enhance photo",
+    "note": "The original is kept; the result is saved as a separate file.",
+    "recommended": "Recommended settings",
+    "sharpness": "Sharpness",
+    "shadow": "Shadow lift",
+    "scale": "Upscale",
+    "scaleNone": "None",
+    "grain": "Add film grain",
+    "apply": "Apply",
+    "reset": "Reset to defaults",
+    "save": "Save",
+    "level": {
+      "off": "Off",
+      "low": "Light",
+      "mid": "Medium",
+      "high": "Strong"
+    },
+    "status": {
+      "idle": "No AI: cleans the photo, lifts shadows, upscales and sharpens without halos. It never invents new detail.",
+      "queued": "Queued…",
+      "running": "Enhancing… {pct}%",
+      "done": "Done: {from} → {to}, {seconds} s.",
+      "failed": "Could not enhance: {error}",
+      "cancelled": "Cancelled.",
+      "openPhoto": "Open a photo first.",
+      "desktopOnly": "This works in the desktop app.",
+      "saved": "Saved: {name}"
     }
   }
 }

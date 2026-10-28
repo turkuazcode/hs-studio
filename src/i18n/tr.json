@@ -584,7 +584,7 @@
     "boostCors": "⚠️ Bu kaynakta ses yükseltici kullanılamıyor (CORS)",
     "videoRestoreTitle": "Video restorasyonu (yapay zekâ)",
     "videoRestoreNote": "Henüz hazır değil. Yukarıdaki filtreler yalnızca oynatma sırasında uygulanır; videoyu iyileştirip kaydetmez.",
-    "photoAiSection": "Fotoğrafı AI ile iyileştir (sinir ağı)",
+    "photoAiSection": "Yapay zekâ (AI) ile — deneysel",
     "deepButton": "✨ Fotoğrafı AI ile iyileştir (4x, E)",
     "deepCancel": "■ İptal et",
     "faces": "Yüzleri de iyileştir (GFPGAN)",
@@ -1518,6 +1518,36 @@
       "network": "Ağ hatası: {detail}",
       "file": "Dosya açılamadı: {detail}",
       "inactive": "Etkin yayın yok."
+    }
+  },
+  "photoEnhance": {
+    "title": "Fotoğrafı iyileştir",
+    "note": "Orijinal korunur; sonuç ayrı dosya olarak kaydedilir.",
+    "recommended": "Önerilen ayarlar",
+    "sharpness": "Keskinlik",
+    "shadow": "Gölge açma",
+    "scale": "Büyütme",
+    "scaleNone": "Yok",
+    "grain": "Film greni ekle",
+    "apply": "Uygula",
+    "reset": "Varsayılana dön",
+    "save": "Kaydet",
+    "level": {
+      "off": "Kapalı",
+      "low": "Hafif",
+      "mid": "Orta",
+      "high": "Güçlü"
+    },
+    "status": {
+      "idle": "Yapay zekâ kullanmaz: fotoğrafı temizler, gölgeleri açar, büyütür ve hare oluşturmadan netleştirir. Yeni ayrıntı uydurmaz.",
+      "queued": "Sırada…",
+      "running": "İyileştiriliyor… %{pct}",
+      "done": "Bitti: {from} → {to}, {seconds} sn.",
+      "failed": "İyileştirilemedi: {error}",
+      "cancelled": "İptal edildi.",
+      "openPhoto": "Önce bir fotoğraf açın.",
+      "desktopOnly": "Bu özellik masaüstü uygulamasında çalışır.",
+      "saved": "Kaydedildi: {name}"
     }
   }
 }

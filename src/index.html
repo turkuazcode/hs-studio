@@ -583,14 +583,58 @@
               <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="color: var(--accent-ruby);">
                 <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6.4-4.8-6.4 4.8 2.4-7.2-6-4.8h7.6z"/>
               </svg>
-              <h4 data-i18n="enhance.panelTitle">Görüntü filtreleri</h4>
+              <h4><span class="video-only" data-i18n="enhance.panelTitle">Görüntü filtreleri</span><span class="photo-only" data-i18n="photoEnhance.title">Fotoğrafı iyileştir</span></h4>
             </div>
             <button id="btn-close-ai-restore" class="btn-icon-close" data-i18n-title="common.close" title="Kapat">✕</button>
           </div>
 
           <div class="effects-body">
+            <!-- A05: faithful photo enhance (classical, no model; the original is never changed) -->
+            <section id="photo-enhance" class="photo-only photo-enhance" aria-labelledby="pe-recommended">
+              <div class="pe-head">
+                <p id="pe-note" class="panel-note" data-i18n="photoEnhance.note">Orijinal korunur; sonuç ayrı dosya olarak kaydedilir.</p>
+                <span id="pe-recommended" class="pe-recommended" data-i18n="photoEnhance.recommended">Önerilen ayarlar</span>
+              </div>
+              <div class="filter-group">
+                <div class="filter-label">
+                  <span id="pe-lbl-sharp" data-i18n="photoEnhance.sharpness">Keskinlik</span>
+                  <span id="pe-val-sharp"></span>
+                </div>
+                <input id="pe-sharp" type="range" min="0" max="100" step="1" class="filter-slider" aria-labelledby="pe-lbl-sharp" aria-describedby="pe-val-sharp">
+              </div>
+              <div class="filter-group">
+                <div class="filter-label">
+                  <span id="pe-lbl-shadow" data-i18n="photoEnhance.shadow">Gölge açma</span>
+                  <span id="pe-val-shadow"></span>
+                </div>
+                <input id="pe-shadow" type="range" min="0" max="100" step="1" class="filter-slider" aria-labelledby="pe-lbl-shadow" aria-describedby="pe-val-shadow">
+              </div>
+              <div class="pe-row">
+                <label for="pe-scale" data-i18n="photoEnhance.scale">Büyütme</label>
+                <select id="pe-scale" class="pe-select">
+                  <option value="1" data-i18n="photoEnhance.scaleNone">Yok</option>
+                  <option value="2">2×</option>
+                  <option value="4">4×</option>
+                </select>
+              </div>
+              <label class="restore-check-row pe-grain-row">
+                <input type="checkbox" id="pe-grain" />
+                <span class="check-text"><strong data-i18n="photoEnhance.grain">Film greni ekle</strong></span>
+              </label>
+              <div class="pe-actions">
+                <button id="btn-pe-apply" class="btn-primary btn-sm" data-i18n="photoEnhance.apply">Uygula</button>
+                <button id="btn-pe-reset" class="btn-secondary btn-sm" data-i18n="photoEnhance.reset">Varsayılana dön</button>
+              </div>
+              <div id="pe-progress" class="deep-progress" hidden><div id="pe-progress-bar" class="deep-progress-bar"></div></div>
+              <span id="pe-status" class="deep-status" role="status" aria-live="polite"></span>
+              <div id="pe-result" class="deep-result-actions" hidden>
+                <button id="btn-pe-compare" class="btn-secondary btn-sm" data-i18n="enhance.showOriginal">Orijinali göster</button>
+                <button id="btn-pe-save" class="btn-secondary btn-sm" data-i18n="photoEnhance.save">Kaydet</button>
+              </div>
+            </section>
+
             <!-- Master Toggle Switch -->
-            <div class="restore-master-toggle">
+            <div class="restore-master-toggle video-only">
               <div class="toggle-info">
                 <strong id="lbl-ai-master" data-i18n="enhance.master">Filtreleri uygula</strong>
                 <span id="ai-master-status" class="toggle-desc">Kapalı (orijinal)</span>
@@ -602,8 +646,8 @@
             </div>
 
             <!-- Presets Grid -->
-            <div class="restore-presets-label" data-i18n="enhance.presets">Hazır ayarlar:</div>
-            <div class="restore-presets-grid">
+            <div class="restore-presets-label video-only" data-i18n="enhance.presets">Hazır ayarlar:</div>
+            <div class="restore-presets-grid video-only">
               <button class="btn-restore-preset active" data-preset="144p" data-i18n="enhance.preset.sharp">Keskin (düşük çözünürlük)</button>
               <button class="btn-restore-preset video-only" data-preset="voice" data-i18n="enhance.preset.voice">Konuşma netliği</button>
               <button class="btn-restore-preset" data-preset="cinema" data-i18n="enhance.preset.vivid">Canlı renk</button>
@@ -611,9 +655,9 @@
             </div>
 
             <!-- Picture filter -->
-            <div class="restore-section-title" data-i18n="enhance.pictureSection">Görüntü filtresi (oynatma sırasında; sinir ağı değil)</div>
+            <div class="restore-section-title video-only" data-i18n="enhance.pictureSection">Görüntü filtresi (oynatma sırasında; sinir ağı değil)</div>
 
-            <div class="filter-group">
+            <div class="filter-group video-only">
               <div class="filter-label">
                 <span id="lbl-ai-sharp" data-i18n="enhance.sharp">Keskinlik (FSR büyütme + CAS keskinleştirme)</span>
                 <span id="val-ai-sharp">2. seviye</span>
@@ -622,7 +666,7 @@
               <p class="panel-note mpv-only video-only" data-i18n="enhance.sharpMpvNote">libmpv motorunda keskinleştirme yapılmaz: bu seviye yalnızca kontrastı ve doygunluğu artırır.</p>
             </div>
 
-            <div class="filter-group">
+            <div class="filter-group video-only">
               <div class="filter-label">
                 <span id="lbl-ai-contrast" data-i18n="enhance.contrast">Ek kontrast</span>
                 <span id="val-ai-contrast">+8%</span>
@@ -658,17 +702,17 @@
             </label>
 
             <!-- A/B comparison: only where the WebGL2 filter really draws the picture (capability video.compare) -->
-            <button id="btn-toggle-split-view" class="btn-secondary btn-sm" style="width:100%; margin-top: 6px;">
+            <button id="btn-toggle-split-view" class="btn-secondary btn-sm video-only" style="width:100%; margin-top: 6px;">
               <span><span data-i18n="enhance.compare">A/B karşılaştırma</span>: <strong id="split-view-status">Kapalı</strong></span>
             </button>
-            <p id="split-view-reason" class="panel-note" hidden></p>
+            <p id="split-view-reason" class="panel-note video-only" hidden></p>
 
             <!-- Video restoration: not ready (Plan 12, V06 gate) -->
             <div class="restore-section-title video-only" data-i18n="enhance.videoRestoreTitle">Video restorasyonu (yapay zekâ)</div>
             <p id="video-restore-note" class="panel-note video-only" data-i18n="enhance.videoRestoreNote">Henüz hazır değil. Yukarıdaki filtreler yalnızca oynatma sırasında uygulanır; videoyu iyileştirip kaydetmez.</p>
 
             <!-- Photo: neural network models, downloaded on first use -->
-            <div class="restore-section-title photo-only" data-i18n="enhance.photoAiSection">Fotoğrafı AI ile iyileştir (sinir ağı)</div>
+            <div class="restore-section-title photo-only" data-i18n="enhance.photoAiSection">Yapay zekâ (AI) ile — deneysel</div>
             <div class="deep-enhance-box photo-only">
               <button id="btn-deep-enhance" class="btn-primary btn-sm" style="width:100%;">✨ Fotoğrafı AI ile iyileştir (4x, E)</button>
               <label class="restore-check-row">
