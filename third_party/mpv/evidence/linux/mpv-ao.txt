@@ -1,0 +1,7 @@
+Available audio outputs:
+  pipewire         PipeWire audio output
+  pulse            PulseAudio audio output
+  alsa             ALSA audio output
+  null             Null audio output
+  pcm              RAW PCM/WAVE file writer audio output
+

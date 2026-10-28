@@ -1,17 +1,30 @@
-# LGPL libmpv for Linux (recipe — to be executed in CI, not yet run)
+# LGPL libmpv for Linux
 
-Goal: `libmpv.so.2` + LGPL FFmpeg `.so` files shipped inside the AppImage / Flatpak / .deb
-(`usr/lib/vho/`), loaded at runtime with `dlopen` by the engine facade.
+Goal: `libmpv.so.2` + LGPL FFmpeg `.so` files shipped in `<resources>/mpv/` of the AppImage / .deb,
+loaded at runtime with `dlopen` by the engine facade (ADR 0002).
 
 > Distribution packages (`libmpv2`, `libavcodec60` on Debian/Ubuntu/Fedora) are usually built with
-> `--enable-gpl`. Linking/dlopen-ing them at runtime from the *system* is the user's own
-> combination (no redistribution by us) and is acceptable as a **fallback**, but anything we
-> **ship** must come from this LGPL recipe.
+> `--enable-gpl`. VHO **never** loads them from the system library path; only `VHO_MPV_DLL` can
+> point at one, as the user's own explicit choice. Anything we **ship** comes from this LGPL recipe.
 
-## Runner
+## Executed recipe (2026-10-27): `build-linux.sh`
+
+The script that was actually run is [`build-linux.sh`](build-linux.sh), on **Ubuntu 24.04 (WSL2)**
+with the distribution's libplacebo 6.338.2 (dependencies: `scripts/linux/setup-dev.sh`). It builds
+FFmpeg n8.1.3 and mpv v0.41.0, copies the files under their SONAMEs into `dist/` with
+`RUNPATH=$ORIGIN`, and fails when FFmpeg has `--enable-gpl`/`--enable-nonfree`, when `ffmpeg -L`
+is not LGPL, when meson's `gpl` option is not `false`, or when `libmpv.so.2` resolves a system
+FFmpeg. Evidence: [`evidence/linux/`](evidence/linux/) (configure line, `gpl = False`, VO/AO lists —
+no `x11`/`xv` VO —, `ldd`, `RUNPATH`, SHA-256, source commits); inventory
+`legal/inventory/native-linux-x64.json`.
+
+Not yet done: a release build on an older glibc baseline runner (AppImage portability, R02/P05).
+The section below is the earlier CI draft for such a runner (Ubuntu 22.04 needs libplacebo from
+source); it has not been run.
+
+## CI draft for a glibc 2.35 runner (not run)
+
 `ubuntu-22.04` (glibc 2.35 baseline for AppImage portability).
-
-## Steps
 ```bash
 set -euo pipefail
 sudo apt-get update
@@ -67,7 +80,7 @@ unless VHO provides `MPV_RENDER_PARAM_X11_DISPLAY` (the param is in the LGPL API
 code path `hwdec_vaapi` + `egl` must be checked in CI).
 
 ## Bundling
-* AppImage: `linuxdeploy` copies `libmpv.so.2` + non-system deps into `usr/lib`, set `RUNPATH=$ORIGIN`.
+* AppImage + deb: `scripts/linux/package.sh` stages `dist/` into `<resources>/mpv/` (file set checked against the inventory) and the legal folder; the deb declares the system libraries as dependencies (`src-tauri/packaging/linux/appimage-deb.conf.json`, Ubuntu 24.04 package names).
 * Flatpak: build FFmpeg/mpv as modules in the manifest with the same flags (org.freedesktop.Platform's
   `ffmpeg-full` extension is GPL — do not use it).
 

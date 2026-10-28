@@ -10,8 +10,9 @@
 //! synchronously on WM_WINDOWPOSCHANGED (move, resize, maximize, fullscreen, minimize/restore),
 //! WM_SHOWWINDOW and WM_DPICHANGED, so it never lags a frame behind while dragging.
 //!
-//! Other platforms: no surface yet (render-API path B is a separate work package), so the engine
-//! reports itself unavailable and the frontend uses the HTML5 engine.
+//! Linux: render API into a GtkGLArea under the webview (`engine::linux`, ADR 0002).
+//! macOS: no surface yet (P02), so the engine reports itself unavailable and the frontend uses the
+//! HTML5 engine.
 
 #[cfg(windows)]
 mod imp {
@@ -199,7 +200,16 @@ mod imp {
 #[cfg(windows)]
 pub use imp::*;
 
-#[cfg(not(windows))]
+/// Linux: the render-API surface (GtkGLArea under the webview, `engine::linux`, ADR 0002).
+#[cfg(target_os = "linux")]
+mod imp {
+    pub use crate::engine::linux::{geometry, is_visible, set_visible};
+}
+
+#[cfg(target_os = "linux")]
+pub use imp::*;
+
+#[cfg(not(any(windows, target_os = "linux")))]
 mod imp {
     pub fn create(_top: isize) -> Result<isize, String> {
         Err("libmpv video embedding is not implemented on this platform yet (render API, path B)".into())
@@ -214,5 +224,5 @@ mod imp {
     }
 }
 
-#[cfg(not(windows))]
+#[cfg(not(any(windows, target_os = "linux")))]
 pub use imp::*;
