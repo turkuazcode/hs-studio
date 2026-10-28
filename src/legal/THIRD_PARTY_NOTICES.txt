@@ -2,10 +2,10 @@ HS Studio (formerly VHO) — LİSANSLAR VE TEŞEKKÜRLER / LICENSES AND CREDITS
 ==========================================================================
 
 HS Studio (formerly VHO, "Video H Oynatıcısı")
-Copyright 2026 Halil SARITAŞ (hsrts)
+Copyright 2026 TurkuazCode
 
 This product is licensed under the Apache License, Version 2.0 (see LICENSE).
-Project home: <project URL to be set before the first public release>
+Project home: https://github.com/turkuazcode/hs-studio
 
 This product includes third-party software and assets under their own licenses; see
 THIRD_PARTY_NOTICES.txt (shown in the app under Settings > About / Licenses) and the

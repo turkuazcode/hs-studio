@@ -141,16 +141,16 @@ user confirms, pinned to a commit URL and checked against SHA-256 (A01).
 ## Open items before a public release (owner decisions / inputs)
 
 1. ~~Security contact~~ — **done 2026-10-25**: turkuazcode@gmail.com in SECURITY.md,
-   CODE_OF_CONDUCT.md, TRADEMARKS.md and the issue templates. Add the repository's security-policy
-   link to `.github/ISSUE_TEMPLATE/config.yml` once the URL exists.
-2. ~~CLA~~ — **not needed since 2026-10-26** (Apache-2.0, inbound = outbound + DCO). Still open:
-   the project URL and final copyright holder line in [NOTICE](../NOTICE) (currently
-   "Halil SARITAŞ (hsrts)", as in the commits).
+   CODE_OF_CONDUCT.md, TRADEMARKS.md and the issue templates; the security-policy link is in
+   `.github/ISSUE_TEMPLATE/config.yml`.
+2. ~~CLA~~ — **not needed since 2026-10-26** (Apache-2.0, inbound = outbound + DCO).
+   ~~Copyright holder~~ — **decided 2026-10-28**: "Copyright 2026 TurkuazCode" in NOTICE, the notices
+   header, TRADEMARKS.md and the package metadata; lawyer review still pending.
 3. **Trademark**: lawyer review of [TRADEMARKS.md](../TRADEMARKS.md); decide on registration;
    confirm the logo's authorship/rights (`inventory/assets.json`, `app-icons`) and whether the logo
    files are also offered under Apache-2.0 as copyright while the mark stays protected.
-4. **Repository URL**: README links to `github.com/hsrts/vho` (not verified to exist); the notices
-   promise source "from the project repository" — set the final URL.
+4. ~~Repository URL~~ — **decided 2026-10-28**: https://github.com/turkuazcode/hs-studio (NOTICE,
+   notices header, README, source offer URL, updater endpoint). The repository does not exist yet.
 5. **History cleanup** — **approved 2026-10-25**, runs only right before the first push after all
    branches are merged: [docs/release/history-cleanup.md](../docs/release/history-cleanup.md)
    (`scripts/prepare-public-history.ps1`: build output, logs with the local path, commit e-mail).

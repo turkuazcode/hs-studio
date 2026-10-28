@@ -230,7 +230,7 @@ try {
       if ($u -and (Test-Path $u)) { Start-Process -FilePath $u -ArgumentList '/S' -Wait }
     }
   }
-  $pub = 'HKCU:\Software\Halil SARITA' + [char]0x015E + ' (TurkuazCode)'
+  $pub = 'HKCU:\Software\TurkuazCode'
   foreach ($name in @($Product, $RenamedProduct)) {
     if (Test-Path "$pub\$name") {
       Write-Host "  removing $pub\$name (Tauri keeps it unless 'delete app data' is chosen)"

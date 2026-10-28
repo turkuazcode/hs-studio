@@ -2,7 +2,9 @@
 name = "vho"
 version = "0.1.0"
 description = "HS Studio: video & fotoğraf medya stüdyosu"
-authors = ["Halil SARITAŞ (hsrts)"]
+authors = ["TurkuazCode"]
+repository = "https://github.com/turkuazcode/hs-studio"
+homepage = "https://github.com/turkuazcode/hs-studio"
 license = "Apache-2.0"
 edition = "2024"
 publish = false

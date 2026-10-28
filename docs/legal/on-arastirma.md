@@ -54,8 +54,8 @@ Diğer güncel kararlar:
     incelenmeli. Mac App Store'da libmpv şu an zaten yok (macOS'ta gömülü değil).
 - **Bağımlılıklar:** Hepsi Apache-2.0 ile birlikte dağıtılabilir ([legal/INVENTORY.md](../../legal/INVENTORY.md)).
   Bağımlılık politikası değişmedi: GPL/AGPL kütüphane yok, LGPL yalnızca ayrı dosya olarak.
-- **Telif satırı:** NOTICE'ta "Copyright 2026 Halil SARITAŞ (hsrts)" yazıyor (commit'lerdeki ad).
-  Kullanıcı/avukat onaylamalı.
+- **Telif satırı:** 2026-10-28 kullanıcı kararı: "Copyright 2026 TurkuazCode" (NOTICE, bildirim başlığı, TRADEMARKS.md,
+  paket bilgileri). Avukat onayı bekliyor.
 
 ### 1.1 Avukata sorulacaklar (lisans)
 
