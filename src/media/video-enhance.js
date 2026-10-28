@@ -36,7 +36,9 @@ export function createVideoEnhance(app) {
     let options = { ...DEFAULT_OPTIONS };
     let fieldOrder = null;
     let jobId = null;
+    let cancelRequested = false; // Cancel before the job had an id: cancelled as soon as it has one
     let running = false;
+    let fieldAsked = false;
 
     const levels = () => [
       { value: "off", label: t("videoEnhance.level.off") },
@@ -86,6 +88,7 @@ export function createVideoEnhance(app) {
     ]);
 
     function stop() {
+      cancelRequested = true;
       if (jobId) app.jobs.cancel(jobId).catch(() => {});
       dlg.setStatus(t("actions.job.cancelling"));
     }
@@ -98,6 +101,14 @@ export function createVideoEnhance(app) {
         const resp = await invoke("video_enhance_plan", { path: item.path, options, fieldOrder });
         if (dlg.closed) return;
         const blockers = resp?.assessment?.blockers ?? [];
+        if (blockers.includes("field-order-unconfirmed") && !fieldAsked) {
+          // first question: preselect what the file says, else the probe's suggestion (never
+          // "interlaced" for a file flagged progressive)
+          fieldAsked = true;
+          const fo = resp?.report?.video?.fieldOrder ?? {};
+          const pick = ["progressive", "tff", "bff"].includes(fo.metadata) ? fo.metadata : fo.suggestion;
+          if (["progressive", "tff", "bff"].includes(pick)) fieldSel.value = pick;
+        }
         fieldRow.hidden = !(blockers.includes("field-order-unconfirmed") || fieldOrder);
         const key = blockerKey(blockers);
         const blocked = !!key || (blockers.includes("field-order-unconfirmed") && !fieldOrder);
@@ -119,6 +130,7 @@ export function createVideoEnhance(app) {
       read();
       running = true;
       jobId = null;
+      cancelRequested = false;
       dlg.el.dataset.state = preview ? "previewing" : "running";
       setRunningActions();
       dlg.setBusy(true);
@@ -131,7 +143,7 @@ export function createVideoEnhance(app) {
       };
       try {
         const final = await app.jobs.run("video-enhance", request, {
-          onSubmitted: (snap) => { jobId = snap.id; },
+          onSubmitted: (snap) => { jobId = snap.id; if (cancelRequested) app.jobs.cancel(snap.id).catch(() => {}); },
           onUpdate: (job) => {
             const p = jobProgress(job);
             if (job.state === "running" && p != null) {

@@ -24,7 +24,7 @@ const probe = (p) => JSON.parse(execFileSync(FFPROBE, ["-v", "error", "-show_ent
 test("video enhance: recommended settings, reset, side-by-side preview, full result, cancel", { timeout: 300000, skip }, async (t) => {
   const dir = mkdtempSync(join(tmpdir(), "vho-e2e-venh-"));
   const clip = join(dir, "eski video.mp4");
-  ff(["-f", "lavfi", "-i", "testsrc2=size=640x360:rate=25,noise=alls=20:allf=t+u", "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000",
+  ff(["-f", "lavfi", "-i", "testsrc2=size=640x360:rate=25", "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000",
     "-t", "40", "-map", "0", "-map", "1", "-c:v", "mpeg4", "-q:v", "10", "-c:a", "aac", "-b:a", "96k", clip]);
   const before = sha(clip);
   const app = await launchApp({ args: [clip] });

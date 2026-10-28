@@ -476,7 +476,7 @@ export function createMediaActions(app) {
         group("settings"));
     }
     return sections(
-      group("cutVideo", "saveFrame", "enhanceVideo", "convertMedia", "shareFile"),
+      group("cutVideo", "saveFrame", "convertMedia", "shareFile", "enhanceVideo"),
       group("findSubtitles", "sleepTimer", "castDevice"),
       group("openWith", "showInFolder"),
       group("copyFrame", "copyFile", "copyPath"),
