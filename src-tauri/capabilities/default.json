@@ -19,8 +19,6 @@
     "core:window:allow-set-size",
     "core:window:allow-set-min-size",
     "opener:default",
-    "dialog:allow-open",
-    "dialog:allow-save",
     "store:default"
   ]
 }

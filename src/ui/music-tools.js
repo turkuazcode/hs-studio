@@ -6,12 +6,11 @@
 // ==========================================================================
 
 import { t } from "../core/i18n.js";
-import { dialogOpen, invoke } from "../core/tauri.js";
+import { dialogOpen, dialogSave, invoke } from "../core/tauri.js";
 import { errorText, splitName } from "../media/actions-logic.js";
 import { lineIndexAt, parseLrc } from "../media/lyrics.js";
 import { field, h } from "./action-dialogs.js";
 
-const dialogSave = globalThis.window?.__TAURI__?.dialog?.save ? (o) => globalThis.window.__TAURI__.dialog.save(o) : undefined;
 
 const TEXT_FIELDS = ["title", "artist", "album", "albumArtist", "genre", "year", "track", "trackTotal", "disc", "comment"];
 
@@ -30,7 +29,7 @@ export function createMusicTools(app, current, { withReleased }) {
     try {
       data = await invoke("tags_read", { path: item.path });
     } catch (e) {
-      app.toast(`⚠️ ${errorText(e)}`);
+      app.toast(`⚠️ ${errorText(e, t)}`);
       return;
     }
     const inputs = {};
@@ -72,7 +71,7 @@ export function createMusicTools(app, current, { withReleased }) {
             if (!out) return;
             invoke("tags_save_cover", { path: item.path, output: out })
               .then((p) => app.toast(t("actions.toast.saved", { name: p.split(/[\\/]/).pop() })))
-              .catch((e) => app.toast(`⚠️ ${errorText(e)}`));
+              .catch((e) => app.toast(`⚠️ ${errorText(e, t)}`));
           },
         }) : null));
 
@@ -110,7 +109,7 @@ export function createMusicTools(app, current, { withReleased }) {
               return true;
             } catch (e) {
               dlg.setBusy(false);
-              dlg.setStatus(errorText(e), "error");
+              dlg.setStatus(errorText(e, t), "error");
               return false;
             }
           },

@@ -190,7 +190,7 @@ export function createExportDialogs(app, current) {
     try {
       info = await invoke("media_probe", { path: item.path });
     } catch (e) {
-      app.toast(`⚠️ ${errorText(e)}`);
+      app.toast(`⚠️ ${errorText(e, t)}`);
       return;
     }
     const subs = info.subtitles ?? [];
@@ -238,7 +238,7 @@ export function createExportDialogs(app, current) {
       }), "ok");
       return res;
     } catch (e) {
-      d.setStatus(errorText(e), "error");
+      d.setStatus(errorText(e, t), "error");
       return null;
     } finally {
       d.setBusy(false);
