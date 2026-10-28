@@ -189,6 +189,10 @@ export function registerAiModelSettings(app) {
         { value: "stripGps", labelKey: "studio.batch.stripGps" },
         { value: "strip", labelKey: "studio.batch.stripAll" },
       ] },
+    // A06: background removal is experimental (BiRefNet does not fit ORT Web on every device):
+    // hidden in the photo editor until turned on here
+    { key: "ai.smart.backgroundExperimental", type: "boolean", default: false, control: "toggle",
+      labelKey: "studio.smart.settings.experimental", helpKey: "studio.smart.settings.experimentalHelp" },
     // A06: background removal model of the photo editor; "general" downloads a second model
     { key: "ai.smart.background", type: "enum", values: ["portrait", "general"], default: "portrait", control: "select",
       labelKey: "studio.smart.settings.background", helpKey: "studio.smart.settings.backgroundHelp",

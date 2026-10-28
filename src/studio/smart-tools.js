@@ -21,7 +21,7 @@ const template = () => `
   <h5 ${tx("studio.smart.title")}</h5>
   <div class="ps-tool-row ps-smart-row">
     <button class="ps-btn" data-act="smart-remove" ${tx("studio.smart.remove")}</button>
-    <button class="ps-btn" data-act="smart-bg" ${tx("studio.smart.background")}</button>
+    <button class="ps-btn" data-act="smart-bg" hidden><span ${tx("studio.smart.background")}</span> <span class="ps-smart-tag" ${tx("studio.smart.experimental")}</span></button>
     <button class="ps-btn" data-act="smart-color" hidden ${tx("studio.smart.colorize")}</button>
   </div>
   <p class="ps-smart-hint" hidden></p>
@@ -93,6 +93,10 @@ export function createSmartTools(host, stage, canvas, deps, editor) {
     hint.hidden = ok;
     hint.textContent = ok ? "" : t("studio.smart.saveEditsFirst");
     if (bitmapPixels) $('[data-act="smart-color"]').hidden = !isColorizeCandidate(bitmapPixels);
+    // experimental background removal: only when turned on in Settings > AI models
+    const bgOn = deps.settings?.get?.("ai.smart.backgroundExperimental") === true;
+    $('[data-act="smart-bg"]').hidden = !bgOn;
+    if (!bgOn && panel === "bg") showPanel(null);
     // which AI steps the current image went through (undo removes them again)
     const steps = editor.steps();
     applied.hidden = !steps.length;
@@ -158,6 +162,7 @@ export function createSmartTools(host, stage, canvas, deps, editor) {
   overlay.addEventListener("pointerup", end);
   overlay.addEventListener("pointercancel", end);
   new ResizeObserver(() => { if (panel === "remove") placeOverlay(); }).observe(stage);
+  deps.settings?.subscribe?.("ai.smart.backgroundExperimental", () => refresh());
 
   // ------------------------------------------------------------------ running
   async function run(op, params) {
@@ -212,7 +217,8 @@ export function createSmartTools(host, stage, canvas, deps, editor) {
       } else {
         const code = item?.errorCode ?? final.errorCode ?? "failed";
         const key = `jobs.error.${code}`;
-        editor.setStatus(t("studio.smart.failed", { error: t(key) !== key ? t(key) : final.errorDetail || t("jobs.error.failed") }));
+        if (op === "matting" && code === "memory") editor.setStatus(t("studio.smart.bgMemory"));
+        else editor.setStatus(t("studio.smart.failed", { error: t(key) !== key ? t(key) : final.errorDetail || t("jobs.error.failed") }));
       }
     } catch (e) {
       editor.setStatus(t("studio.smart.failed", { error: String(e?.message ?? e) }));

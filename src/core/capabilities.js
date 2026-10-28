@@ -45,6 +45,14 @@ export function frontendCapabilities({ engineKind = "html5", webgl2 = false, web
     cap("photo.aiEnhance", !!aiBackend && !!platform, aiBackend, {
       verified, reasonCode: !platform ? "no-backend" : aiBackend ? "model-download-on-first-use" : "no-ai-backend", support: "supported-untested",
     }),
+    // Plan 07 smart editing (A06): object removal and colorize like the enhancement; background
+    // removal is experimental (BiRefNet does not fit ORT Web on the 1 GB iGPU test machine)
+    ...["photo.aiInpaint", "photo.aiColorize"].map((id) => cap(id, !!aiBackend && !!platform, aiBackend, {
+      verified, reasonCode: !platform ? "no-backend" : aiBackend ? "model-download-on-first-use" : "no-ai-backend", support: "supported-untested",
+    })),
+    cap("photo.aiBackground", !!aiBackend && !!platform, aiBackend, {
+      verified: false, reasonCode: !platform ? "no-backend" : aiBackend ? "experimental-memory" : "no-ai-backend", support: "supported-untested",
+    }),
     // Booster above 100 % always ends in a limiter (HTML5: DynamicsCompressor, libmpv: lavfi alimiter)
     cap("audio.boostLimiter", true, engineKind === "mpv" ? "lavfi-alimiter" : "webaudio-compressor", { verified }),
   ];

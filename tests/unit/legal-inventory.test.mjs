@@ -129,11 +129,7 @@ test("committed SBOM matches the inventories (regenerate with npm run sbom)", ()
   const rejected = bom.components.filter((c) => c.properties?.some((p) => p.name === "vho:policy" && p.value === "reject"));
   assert.deepEqual(rejected.map((c) => c.name), [], "no component rejected by the license policy");
   // every "review" item carries an owner acknowledgement, except the ones still open by decision
-  // logo authorship/rights: owner + lawyer; A06 models: training-data question, owner decision (legal/INVENTORY.md)
-  const STILL_OPEN = ["ai:birefnet-general:general-fp16-534d3c8:birefnet_general_fp16.onnx",
-    "ai:birefnet-portrait:portrait-fp16-dd7167f:birefnet_portrait_fp16.onnx",
-    "ai:ddcolor:qaihub-0.65.0-float:ddcolor.data", "ai:ddcolor:qaihub-0.65.0-float:ddcolor.onnx",
-    "ai:lama:lama-fp32-c3c0c9e:lama_fp32.onnx", "asset:app-icons"];
+  const STILL_OPEN = ["asset:app-icons"]; // logo authorship/rights: owner + lawyer (legal/INVENTORY.md)
   const openReview = bom.components.filter((c) => c.properties?.some((p) => p.name === "vho:policy" && p.value === "review")
     && !c.properties.some((p) => p.name === "vho:acknowledged")).map((c) => c["bom-ref"]);
   assert.deepEqual(openReview.sort(), STILL_OPEN, "new review item: decide it and record 'acknowledged' in legal/inventory");
