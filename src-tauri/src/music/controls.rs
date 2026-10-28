@@ -40,6 +40,8 @@ pub struct ControlsState {
     pub buttons_received: u64,
 }
 
+/// Emitted as `media-control`; only the Windows SMTC adapter sends it today.
+#[cfg_attr(not(windows), allow(dead_code))]
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ButtonEvent {
