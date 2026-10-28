@@ -10,7 +10,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { defaultExe, fixture, launchApp } from "./lib/app.mjs";
@@ -153,7 +153,9 @@ test("actions: video (toolbar, clipboard, cut, extract audio, convert 720p, rena
       await x.run("copyPath");
       await app.waitFor(`${inv("clipboard_read_text")}.then((s) => s === ${JSON.stringify(video)})`, { timeoutMs: 5000, message: "path on clipboard" });
       await x.run("copyFile");
-      await app.waitFor(`${inv("clipboard_read_files")}.then((f) => f.length === 1 && f[0].toLowerCase() === ${JSON.stringify(video.toLowerCase())})`, { timeoutMs: 5000, message: "file on clipboard" });
+      // CF_HDROP holds the final (long) path: tmpdir() may be an 8.3 short path (RUNNER~1 on CI)
+      const longVideo = realpathSync.native(video).toLowerCase();
+      await app.waitFor(`${inv("clipboard_read_files")}.then((f) => f.length === 1 && f[0].toLowerCase() === ${JSON.stringify(longVideo)})`, { timeoutMs: 5000, message: "file on clipboard" });
     });
 
     await t.test("lossless cut 0.5 s - 2.5 s -> output duration ±1 s", async () => {
