@@ -110,7 +110,8 @@ test("layer: partial runs, wrong suites, other platforms, dirty trees and old co
   assert.match(problemsOf("unit", layerResult("unit", { platform: undefined })), /platform bilgisi yok/);
   assert.match(problemsOf("unit", layerResult("unit", { dirty: true })), /commitlenmemiş/);
   assert.equal(checkLayer("unit", layerResult("unit", { commitFull: "0000000aaaa", commit: "0000000" }), alpha, { head: HEAD, platformKey: "win32-x64" }).result, "stale");
-  assert.match(problemsOf("unit", layerResult("unit", { fail: 1 })), /1 başarısız/);
+  assert.match(problemsOf("unit", layerResult("unit", { fail: 1, failed: [{ name: "x" }], exitCode: 1 })), /başarısız: x/);
+  assert.match(problemsOf("unit", layerResult("unit", { fail: 1 })), /1 başarısız sayıldı, 0 tanesi/);
   assert.match(problemsOf("unit", layerResult("unit", { cancelled: 2 })), /2 iptal/);
   assert.match(problemsOf("unit", layerResult("unit", { skip: 2, skipped: [] })), /2 skip sayıldı, 0 tanesi/);
   assert.equal(checkLayer("unit", null, alpha).result, "missing");
@@ -246,4 +247,21 @@ test("artifact on disk: missing file, changed file and a stale .sha256 are found
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("quality: only the declared out-of-scope legacy failure is excused; anything else still fails", () => {
+  const LEG = "legacy experimental photo AI (vho-x4, vho-x4-faces; out of the Windows alpha) within tolerance of the baseline";
+  const legacy = layerResult("quality", { fail: 1, exitCode: 1, failed: [{ name: LEG, error: "p10-alpha|vho-x4 psnr: 32.8922 vs baseline 36.9519" }] });
+  const c = checkLayer("quality", legacy, alpha, { head: HEAD, platformKey: "win32-x64", exeSha256: EXE });
+  assert.equal(c.result, "ok", c.problems.join());
+  assert.deepEqual(c.excepted, ["legacy-photo-ai-out-of-scope"]);
+  const both = layerResult("quality", { fail: 2, exitCode: 1, failed: [{ name: LEG }, { name: "photo metrics within tolerance of the committed baseline; no new red flag" }] });
+  assert.match(problemsOf("quality", both), /başarısız: photo metrics within tolerance/);
+  assert.match(problemsOf("quality", layerResult("quality", { exitCode: 1 })), /çıkış kodu 1/, "exit 1 without a listed failure");
+  assert.match(problemsOf("e2e", layerResult("e2e", { fail: 1, exitCode: 1, failed: [{ name: LEG }] })), /başarısız/, "the exception is for the quality layer only");
+  const res = goodResults();
+  res["win32-x64"].quality = legacy;
+  const r = gate("windows-alpha", goodPlan, res, opts());
+  assert.equal(r.met, true);
+  assert.ok(r.exceptions.some((e) => e.id === "legacy-photo-ai-out-of-scope"), "the report names it");
 });
