@@ -225,7 +225,7 @@ pub async fn engine_load(st: tauri::State<'_, Engine>, path: String, start: Opti
     if let Some(s) = start.filter(|s| *s > 0.0) {
         options.insert("start".into(), json!(format!("{s:.3}")));
     }
-    // network URL (L04): bounded reconnect / segment retry, only for this file
+    // network URL (L04): bounded reconnect, only for this file
     for (k, v) in crate::net::load_options(&path) {
         options.insert(k.into(), json!(v));
     }

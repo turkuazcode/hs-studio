@@ -43,6 +43,7 @@ veri/önbellek klasörü.
 | Kütüphane | `library_*` (24) | O / D / Y | Klasör ekleme yalnızca kullanıcı seçimiyle; symlink/junction izlenmez; çalma listesi içe aktarmada yalnızca akış şemaları (`javascript:`, `data:` vb. atlanır), 16 MB / 100.000 öğe sınırı |
 | Restorasyon | `restoration_probe`, `restoration_recipe` | O | ffprobe/ffmpeg argv |
 | Önbellek (**Q04 yeni**) | `cache_usage`, `cache_clear` | D | Yalnızca 3 sabit tür; kullanımdaki ve yazılmakta olan dosya atlanır |
+| Cihaza yayın (**L04**) | `cast_discover`, `cast_start`, `cast_control`, `cast_status` | A | Yalnızca kullanıcı “Cihaza yayınla…” diyaloğunu açınca; SSDP yanıtındaki `LOCATION` ve denetim URL'leri yanıtın geldiği IP'de olmalı; XML 256 KB / 5 s, `<!DOCTYPE` reddedilir; dosya sunucusu tek dosya + 128 bit belirteç, durdurunca kapanır; güvenlik duvarı değiştirilmez ([network.md](../network.md)) |
 
 ## 3. Bulgular ve düzeltmeler
 
@@ -102,6 +103,10 @@ modelleri'nde, kullanımdaki model lease ile korunarak kaldırılır. Test: Rust
   listelenir: AI model indirmeleri (Hugging Face, jsDelivr, GitHub raw — yalnızca Ayarlar > AI modelleri / ilk kullanım onayı),
   harita karoları (yalnızca kullanıcı haritayı açınca), altyazı arama sayfası (sistem tarayıcısında). Yeni bir ana bilgisayar
   testi düşürür. Açılışta dış istek olmadığını `i18n-offline.e2e` kanıtlar. Medya hiçbir zaman buluta gönderilmez.
+- **Ağ akışları ve yayın (L04):** yerel ağ adresleri (RFC 1918) testte kapsam dışıdır (kullanıcının seçtiği UPnP cihazı). Akış
+  URL'lerindeki parola/belirteç günlükte `***` olur, son açılanlara yazılmaz, kaldığı yer anahtarında saklanmaz
+  (`network.e2e` veri klasörünü tarar). UPnP keşfi yalnızca kullanıcı isteyince; DIDL-Lite/SOAP namespace URI'leri (`purl.org`,
+  `schemas.xmlsoap.org`) istek yapılmayan sabitlerdir.
 - Güncelleme denetimi varsayılan kapalı, uç nokta boş.
 - **Tanı bilgisi:** Ayarlar > AI modelleri yalnızca arka uç, karo boyutu ve hata sınıfını gösterir (yol/görüntü yok). Pano
   hatası tutan uygulamanın yalnızca exe adını verir (tam yol değil). Dışa aktarılan bir tanı raporu yok; eklenirse
