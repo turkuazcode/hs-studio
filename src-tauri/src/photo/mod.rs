@@ -36,6 +36,7 @@ pub const ERR_UNSUPPORTED: &str = "[unsupported]";
 /// An OS codec (HEIF/HEVC/AV1/RAW extension) is missing.
 pub const ERR_CODEC_MISSING: &str = "[codec-missing]";
 /// The OS codec is installed but could not be initialised or could not decode this file.
+#[cfg_attr(not(windows), allow(dead_code))] // only the Windows WIC decoder reports it so far
 pub const ERR_CODEC_FAILED: &str = "[codec-failed]";
 /// The job was cancelled through `photo_cancel`.
 pub const ERR_CANCELLED: &str = "[cancelled]";

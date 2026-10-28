@@ -392,3 +392,129 @@ impl Mpv {
             .expect("spawn mpv event thread")
     }
 }
+
+// ---------------------------------------------------------------------------
+// Render API (path B, ADR 0002): mpv draws into an OpenGL framebuffer the application owns.
+// Used on Linux (GtkGLArea). All calls must happen on the thread that owns the GL context,
+// except the update callback, which mpv invokes on its own thread.
+// ---------------------------------------------------------------------------
+
+#[cfg(any(target_os = "linux", test))]
+#[cfg_attr(test, allow(dead_code))]
+pub mod render {
+    use super::*;
+
+    pub const RENDER_PARAM_INVALID: c_int = 0;
+    pub const RENDER_PARAM_API_TYPE: c_int = 1;
+    pub const RENDER_PARAM_OPENGL_INIT_PARAMS: c_int = 2;
+    pub const RENDER_PARAM_OPENGL_FBO: c_int = 3;
+    pub const RENDER_PARAM_FLIP_Y: c_int = 4;
+    pub const RENDER_PARAM_BLOCK_FOR_TARGET_TIME: c_int = 12;
+
+    #[repr(C)]
+    pub struct RenderParam {
+        pub kind: c_int,
+        pub data: *mut c_void,
+    }
+
+    pub type GetProcAddress = unsafe extern "C" fn(ctx: *mut c_void, name: *const c_char) -> *mut c_void;
+
+    #[repr(C)]
+    pub struct OpenGlInitParams {
+        pub get_proc_address: Option<GetProcAddress>,
+        pub get_proc_address_ctx: *mut c_void,
+    }
+
+    #[repr(C)]
+    pub struct OpenGlFbo {
+        pub fbo: c_int,
+        pub w: c_int,
+        pub h: c_int,
+        /// 0 = unknown (mpv assumes GL_RGBA8-like)
+        pub internal_format: c_int,
+    }
+
+    type RenderHandle = c_void;
+    pub type UpdateCallback = unsafe extern "C" fn(ctx: *mut c_void);
+
+    struct RenderApi {
+        create: unsafe extern "C" fn(*mut *mut RenderHandle, *mut Handle, *mut RenderParam) -> c_int,
+        set_update_callback: unsafe extern "C" fn(*mut RenderHandle, Option<UpdateCallback>, *mut c_void),
+        render: unsafe extern "C" fn(*mut RenderHandle, *mut RenderParam) -> c_int,
+        report_swap: unsafe extern "C" fn(*mut RenderHandle),
+        free: unsafe extern "C" fn(*mut RenderHandle),
+    }
+
+    /// An mpv render context bound to the GL context that was current when it was created. Keeps the
+    /// core alive (`Arc<Mpv>`): the render context is always freed before `mpv_terminate_destroy`.
+    pub struct RenderContext {
+        api: RenderApi,
+        h: *mut RenderHandle,
+        _mpv: Arc<Mpv>,
+    }
+
+    impl Mpv {
+        /// Creates the OpenGL render context. The GL context must be current on this thread and
+        /// the core must have been created with `vo=libmpv`.
+        pub fn create_render_context(self: &Arc<Self>, gpa: GetProcAddress) -> Result<RenderContext, String> {
+            let api = unsafe {
+                let lib = &self.api._lib;
+                RenderApi {
+                    create: sym!(lib, "mpv_render_context_create"),
+                    set_update_callback: sym!(lib, "mpv_render_context_set_update_callback"),
+                    render: sym!(lib, "mpv_render_context_render"),
+                    report_swap: sym!(lib, "mpv_render_context_report_swap"),
+                    free: sym!(lib, "mpv_render_context_free"),
+                }
+            };
+            let api_type = c"opengl";
+            let mut init = OpenGlInitParams { get_proc_address: Some(gpa), get_proc_address_ctx: std::ptr::null_mut() };
+            let mut params = [
+                RenderParam { kind: RENDER_PARAM_API_TYPE, data: api_type.as_ptr() as *mut c_void },
+                RenderParam { kind: RENDER_PARAM_OPENGL_INIT_PARAMS, data: &mut init as *mut _ as *mut c_void },
+                RenderParam { kind: RENDER_PARAM_INVALID, data: std::ptr::null_mut() },
+            ];
+            let mut h: *mut RenderHandle = std::ptr::null_mut();
+            self.check(unsafe { (api.create)(&mut h, self.h, params.as_mut_ptr()) })?;
+            Ok(RenderContext { api, h, _mpv: Arc::clone(self) })
+        }
+    }
+
+    impl RenderContext {
+        /// `cb(data)` is called from an mpv thread whenever a new frame should be drawn; it must only
+        /// schedule a redraw (no mpv calls inside).
+        pub fn set_update_callback(&self, cb: UpdateCallback, data: *mut c_void) {
+            unsafe { (self.api.set_update_callback)(self.h, Some(cb), data) }
+        }
+
+        /// Renders the current frame into framebuffer `fbo` (w x h device pixels). Never blocks for
+        /// the frame's target time (the caller is the UI thread).
+        pub fn render(&self, fbo: c_int, w: c_int, h: c_int, flip_y: bool) -> Result<(), String> {
+            let mut target = OpenGlFbo { fbo, w, h, internal_format: 0 };
+            let mut flip: c_int = flip_y as c_int;
+            let mut block: c_int = 0;
+            let mut params = [
+                RenderParam { kind: RENDER_PARAM_OPENGL_FBO, data: &mut target as *mut _ as *mut c_void },
+                RenderParam { kind: RENDER_PARAM_FLIP_Y, data: &mut flip as *mut _ as *mut c_void },
+                RenderParam { kind: RENDER_PARAM_BLOCK_FOR_TARGET_TIME, data: &mut block as *mut _ as *mut c_void },
+                RenderParam { kind: RENDER_PARAM_INVALID, data: std::ptr::null_mut() },
+            ];
+            self._mpv.check(unsafe { (self.api.render)(self.h, params.as_mut_ptr()) })
+        }
+
+        /// Called after the frame drawn by `render` was presented (GTK frame clock `after-paint`).
+        pub fn report_swap(&self) {
+            unsafe { (self.api.report_swap)(self.h) }
+        }
+    }
+
+    impl Drop for RenderContext {
+        /// Must run with the same GL context current (GtkGLArea `unrealize`, or engine shutdown).
+        fn drop(&mut self) {
+            unsafe {
+                (self.api.set_update_callback)(self.h, None, std::ptr::null_mut());
+                (self.api.free)(self.h);
+            }
+        }
+    }
+}
