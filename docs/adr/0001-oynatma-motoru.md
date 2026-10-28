@@ -60,7 +60,7 @@ dosya açma · `track-list` (2 ses tur/eng, 2 altyazı tur-ASS/eng-SRT) · `aid`
 `Chrome_RenderWidgetHostHWND → … → WRY_WEBVIEW → Tauri Window`) · API ile duraklatma · yeniden boyutlandırma
 (mpv OSD 1000×625'i izledi) · pencere taşıma (video penceresi = istemci alanı, piksel piksel) · simge durumuna
 küçültme (video penceresi gizlendi) / geri yükleme · tam ekran (1920×1200) ve geri dönüş · HUD'un yarı
-saydam arka planı videonun üstünde alfa ile karıştı (ekran görüntüleri `results/captures/owned-*.png`).
+saydam arka planı videonun üstünde alfa ile karıştı (ekran görüntüleri `results/captures/owned-*.png`; yerel kullanıcı yolunu gösterdikleri için herkese açık yayından önce git geçmişinden çıkarıldı).
 
 ### Gömme varyantları ve siyah ekran / z-sırası bulguları
 | Varyant | Sonuç | Açıklama |
