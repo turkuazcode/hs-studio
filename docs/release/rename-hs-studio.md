@@ -1,6 +1,7 @@
 # Ürün adı değişikliği: VHO → HS Studio
 
-> **English summary:** The rename is prepared but **not applied**. It runs once, at the very end:
+> **English summary:** The rename was **applied on 2026-10-28**: identifier `com.turkuazcode.hsstudio`, installed exe
+> `HS Studio.exe`. Results are in §5. The procedure, run once at the very end:
 > 1. All agent branches are merged into main.
 > 2. Run `scripts/rename-product.mjs --apply --identifier <chosen id>`.
 > 3. Regenerate notices and the SBOM.
@@ -108,4 +109,34 @@ yalnızca veri klasörlerini ve iç adları etkiler.
 
 ## 5. Prova sonuçları
 
-_(2026-10-27 prova çalıştırması bitince doldurulur.)_
+**Uygulandı: 2026-10-28** (`rename/hs-studio` dalı, `main`e birleşti). Komut:
+`node scripts/rename-product.mjs --apply --identifier com.turkuazcode.hsstudio --exe-name "HS Studio"`.
+
+- Kimlik `com.turkuazcode.hsstudio` (kullanıcı kararı 2026-10-27). Kurulan program `HS Studio.exe`; Linux paketinde
+  boşluksuz `hs-studio` (`packaging/linux/appimage-deb.conf.json`).
+- Derleme çıktısı artık `target/release/HS Studio.exe`. Testler, `bench:media`, `package-windows.ps1` ve `release.yml`
+  ikili adını `tauri.conf.json` `mainBinaryName`'den okur (`tests/e2e/lib/app.mjs` `appBinaryName()`).
+- Test kimlikleri: `com.turkuazcode.hsstudio.test<hash>`; `clean-test-artifacts` eski (`com.vho.app.test…`) ve yeni
+  önekleri tanır, gerçek uygulama klasörlerini (`com.turkuazcode.hsstudio`, `com.vho.app`) asla.
+- Kurulum kancası (`legacy-install.nsh.in`): eski kaldırıcı başarısız olursa (eski uygulama hâlâ kapanıyorsa çıkış kodu 2)
+  3 s arayla 3 kez daha dener, sonra kullanıcıdan eski uygulamayı kapatmasını ister (TR/EN, Yeniden Dene / İptal);
+  İptal veya sessiz kurulumda kurulum **iptal edilir**, iki ürün yan yana kurulu kalmaz.
+
+Testler (2026-10-28, `HS Studio.exe` ile):
+- Tam kontrol: birim 225/225, Rust 223/223 (+2 ignored), E2E 256/256 (+2 todo: HLS), test:ai 23 geçti + 3 ortam
+  atlaması (BiRefNet), release uyarısız. (İlk koşuda `test-isolation.e2e` eski test kimliği desenini sabit bekliyordu;
+  düzeltildi, yeniden 1/1.)
+- Kurulum testi (`test-installer.ps1`, yeni kodla `VHO PackageTest` 0.1.0 → 0.1.1): 28/28 (kurulum, kurulan exe ile E2E,
+  yükseltme, kaldırma, ortam değişmedi).
+- Ad değişikliği provası (`-RenamedInstaller`: yeniden adlandırmadan önce üretilmiş `VHO PackageTest` 0.1.0 → yeni
+  `HS Studio PackageTest` 0.2.0): 3 ardışık koşu, her biri 28/28 — eski ürün kanca ile kaldırıldı (çıkış kodu 0), kullanıcı
+  verisi değişmedi, yeni uygulama mevcut veriyle açıldı, göç öncesi yedek eklendi (`backups/library-v2-…-pre-migration.db`),
+  kaldırmada hiçbir kullanıcı dosyası silinmedi.
+- Prova sırasında bulunan: (1) eski uygulama henüz kapanırken eski kaldırıcı iptal ediyordu → kanca düzeltildi;
+  (2) testin "veri korundu" denetimi yalnızca dosya sayısına bakıyordu (yeni sürümün yedeği sayıyı artırıyor) → artık
+  kaldırmadan önceki her dosyanın sonra da var olduğunu denetler; (3) test, uygulamayı kapattıktan hemen sonra
+  kaldırıyordu → uygulamanın çıkmasını bekler, kaldırmayı en fazla 3 kez dener.
+
+Denenmedi (ortam bekliyor): gerçek kimlikle temiz VM'de gerçek veri taşıması (eski VHO kur, kullan, HS Studio kur);
+eski uygulama **açıkken** kurulumun kullanıcıya sorması (kanca kodu var, etkileşimli olarak denenmedi); Linux paketinin
+yeni adla üretilmesi (`hs-studio`, WSL); imzalı paket.
