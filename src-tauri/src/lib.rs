@@ -287,6 +287,10 @@ pub fn run() {
             if is_compat_mode(app.handle()) {
                 args.push_str(COMPAT_BROWSER_ARGS);
             }
+            if let Some(extra) = platform::test_browser_args() {
+                args.push(' ');
+                args.push_str(&extra);
+            }
 
             // libmpv engine: when the DLL set is present the window is transparent and the video
             // is drawn by mpv into an owned popup behind it (ADR 0001). Otherwise the window stays
