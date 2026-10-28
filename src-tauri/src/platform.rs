@@ -19,6 +19,15 @@ pub fn data_dir_override() -> Option<PathBuf> {
     std::env::var_os(DATA_DIR_ENV).filter(|v| !v.is_empty()).map(PathBuf::from)
 }
 
+/// Test instances only (VHO_DATA_DIR): the WebView2 arguments the E2E harness sets in
+/// WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS (--remote-debugging-port). The runtime may ignore that
+/// variable once the app passes its own additional_browser_args (WebView2 155 on the GitHub
+/// Windows runner: no debug port, diag-webview2.yml), so the app appends them itself.
+pub fn test_browser_args() -> Option<String> {
+    data_dir_override()?;
+    std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").ok().filter(|a| !a.trim().is_empty())
+}
+
 /// Cache root (photo thumbnails, frame grabs, transcodes). With the test override it lives in
 /// `<VHO_DATA_DIR>/cache`, so test runs never write into the user's real cache folder.
 pub fn cache_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
