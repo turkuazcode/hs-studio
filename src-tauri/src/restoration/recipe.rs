@@ -11,8 +11,8 @@
 //! Filters (all present in the staged FFmpeg n8.1.3 build, all LGPL-2.1+ in that source tree;
 //! `hqdn3d`, `kerndeint`, `mcdeint`, `pp7`, `spp`, `owdenoise`, `tinterlace` are GPL-only and
 //! absent): deinterlace `bwdif` / `yadif` / `w3fdif` / `estdif`; denoise `atadenoise` /
-//! `nlmeans` / `fftdnoiz`; `transpose`/`hflip`/`vflip`, `scale` (lanczos), `setsar`,
-//! `colorspace`, `format`. Verified against `ffmpeg -filters` at run time (`missing_filters`).
+//! `nlmeans` / `fftdnoiz`; block clean-up `deblock`; sharpening `cas`; `transpose`/`hflip`/
+//! `vflip`, `scale` (lanczos), `setsar`, `colorspace`, `format`. Verified against `ffmpeg -filters` at run time (`missing_filters`).
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -103,6 +103,17 @@ pub enum Strength {
 pub struct Denoise {
     pub filter: DenoiseFilter,
     pub strength: Strength,
+}
+
+/// Light post-processing steps of the faithful (model-free) enhance: JPEG/MPEG block clean-up
+/// (`deblock`) before denoising, contrast-adaptive sharpening (`cas`) after scaling.
+#[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq, Default)]
+#[serde(rename_all = "kebab-case")]
+pub enum Level {
+    #[default]
+    Off,
+    Light,
+    Medium,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -196,10 +207,16 @@ pub struct Recipe {
     pub video_stream: u32,
     pub range: TimeRange,
     pub deinterlace: Deinterlace,
+    /// Block clean-up before denoising (absent in V01 recipes = off)
+    #[serde(default)]
+    pub deblock: Level,
     pub denoise: Denoise,
     /// None until a model passes the V02 gate
     pub model: Option<ModelRef>,
     pub scale: Scale,
+    /// Contrast-adaptive sharpening after scaling (absent in V01 recipes = off)
+    #[serde(default)]
+    pub sharpen: Level,
     pub color: ColorPlan,
     pub output: OutputPlan,
     pub audio: StreamSelection,
@@ -322,9 +339,11 @@ pub fn suggest(report: &SourceReport) -> Option<Recipe> {
         video_stream: v.index,
         range: TimeRange { start: 0.0, end: None },
         deinterlace,
+        deblock: Level::Off,
         denoise: Denoise { filter: DenoiseFilter::Off, strength: Strength::Light },
         model: None,
         scale: Scale { target: target.id, width: target.width, height: target.height, method: "lanczos".into() },
+        sharpen: Level::Off,
         color: ColorPlan { input, assumed, output: output_color() },
         output: OutputPlan {
             container: "mkv".into(),
@@ -577,8 +596,8 @@ fn parity(f: FieldOrder) -> &'static str {
 }
 
 /// ffmpeg `-vf` chain for the recipe. The input must be decoded with `-noautorotate` (fields
-/// are lines of the coded picture: deinterlace BEFORE rotation). Order: deinterlace → denoise →
-/// (model, V03) → rotate → scale (SAR → 1:1) → colour → 8-bit 4:2:0.
+/// are lines of the coded picture: deinterlace BEFORE rotation). Order: deinterlace → deblock →
+/// denoise → (model, V03) → rotate → scale (SAR → 1:1) → sharpen → colour → 8-bit 4:2:0.
 pub fn video_filter(recipe: &Recipe) -> String {
     let mut f: Vec<String> = vec![];
     let d = &recipe.deinterlace;
@@ -592,6 +611,11 @@ pub fn video_filter(recipe: &Recipe) -> String {
             DeinterlaceFilter::Estdif => format!("estdif=mode={}:parity={p}:deint=all", if field { "field" } else { "frame" }),
             DeinterlaceFilter::Off => unreachable!(),
         });
+    }
+    match recipe.deblock {
+        Level::Off => {}
+        Level::Light => f.push("deblock=filter=weak:block=8".into()),
+        Level::Medium => f.push("deblock=filter=strong:block=8".into()),
     }
     let s = recipe.denoise.strength;
     match recipe.denoise.filter {
@@ -620,6 +644,12 @@ pub fn video_filter(recipe: &Recipe) -> String {
         _ => {}
     }
     f.push(format!("scale={}:{}:flags={},setsar=1", recipe.scale.width, recipe.scale.height, recipe.scale.method));
+    // cas: sharpening limited by local contrast (no ringing/halo at strong edges)
+    match recipe.sharpen {
+        Level::Off => {}
+        Level::Light => f.push("cas=strength=0.3".into()),
+        Level::Medium => f.push("cas=strength=0.55".into()),
+    }
     let c = &recipe.color.input;
     let o = &recipe.color.output;
     if !color_is_output(c) {

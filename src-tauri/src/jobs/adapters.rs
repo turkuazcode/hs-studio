@@ -18,7 +18,8 @@ use crate::photo::ERR_CANCELLED;
 use crate::photo::ops::{self, BatchJob, Conflict};
 
 pub fn all() -> Vec<Arc<dyn Adapter>> {
-    let mut v: Vec<Arc<dyn Adapter>> = vec![Arc::new(ExportAdapter), Arc::new(PhotoBatchAdapter), Arc::new(PhotoEnhanceAdapter)];
+    let mut v: Vec<Arc<dyn Adapter>> =
+        vec![Arc::new(ExportAdapter), Arc::new(PhotoBatchAdapter), Arc::new(PhotoEnhanceAdapter), Arc::new(VideoEnhanceAdapter)];
     for kind in super::external::AI_KINDS {
         v.push(Arc::new(super::external::ExternalAdapter::new(kind)));
     }
@@ -309,4 +310,143 @@ fn enhance_item(ctx: &RunCtx<'_>, req: &EnhanceRequest, idx: i64) -> Result<(), 
         "app": env!("CARGO_PKG_VERSION"),
     });
     ctx.complete_item_with(idx, &placed, enc.bytes.len() as u64, extra)
+}
+
+// ---------------------------------------------------------------------------
+// Faithful video enhance (no model; `restoration::enhance`)
+// ---------------------------------------------------------------------------
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct VideoEnhanceRequest {
+    pub input: String,
+    #[serde(default)]
+    pub options: crate::restoration::enhance::EnhanceOptions,
+    /// The user's answer when the field order could not be measured
+    #[serde(default)]
+    pub field_order: Option<crate::restoration::probe::FieldOrder>,
+    /// Side-by-side preview of `PREVIEW_SECONDS` from `start` (into the app's result folder)
+    #[serde(default)]
+    pub preview: bool,
+    #[serde(default)]
+    pub start: f64,
+    /// Folder of the full result; default: next to the source
+    #[serde(default)]
+    pub output_dir: Option<String>,
+}
+
+impl VideoEnhanceRequest {
+    /// Where the result goes (None: preview into the app's result folder)
+    pub fn target_dir(&self) -> Option<PathBuf> {
+        if self.preview {
+            return None;
+        }
+        Some(self.output_dir.as_deref().map(PathBuf::from).unwrap_or_else(|| crate::restoration::enhance::default_dir(Path::new(&self.input))))
+    }
+}
+
+pub struct VideoEnhanceAdapter;
+
+impl Adapter for VideoEnhanceAdapter {
+    fn kind(&self) -> &'static str {
+        "video-enhance"
+    }
+
+    fn schema_version(&self) -> u32 {
+        1
+    }
+
+    fn plan(&self, request: &Value, env: &dyn JobEnv) -> Result<Planned, JobError> {
+        let req: VideoEnhanceRequest = serde_json::from_value(request.clone()).map_err(invalid)?;
+        let input = PathBuf::from(&req.input);
+        if !input.is_file() {
+            return Err(JobError::new(code::SOURCE_MISSING, file_name(&input)));
+        }
+        if !req.start.is_finite() || req.start < 0.0 {
+            return Err(invalid("start"));
+        }
+        let model = env.model_version("ffmpeg").map(|version| ModelPin { id: "ffmpeg".into(), version });
+        Ok(Planned { title: file_name(&input), inputs: vec![input], model })
+    }
+
+    fn run(&self, ctx: &RunCtx<'_>) -> Result<(), JobError> {
+        let req: VideoEnhanceRequest = serde_json::from_value(ctx.request.clone()).map_err(invalid)?;
+        for item in &ctx.pending {
+            if ctx.cancelled() {
+                return Ok(());
+            }
+            ctx.begin_item(item.idx)?;
+            match video_enhance_item(ctx, &req, item.idx) {
+                Ok(()) => {}
+                Err(e) if e.message.starts_with(ERR_CANCELLED) => ctx.release_item(item.idx)?,
+                Err(e) if e.code == code::NO_FFMPEG => {
+                    ctx.fail_item(item.idx, e.code, &e.message)?;
+                    return Err(e);
+                }
+                Err(e) => ctx.fail_item(item.idx, e.code, &e.message)?,
+            }
+        }
+        Ok(())
+    }
+}
+
+fn video_enhance_item(ctx: &RunCtx<'_>, req: &VideoEnhanceRequest, idx: i64) -> Result<(), JobError> {
+    use crate::restoration::{self, enhance, recipe};
+    let input = PathBuf::from(&req.input);
+    let tools = ffmpeg::locate().map_err(|e| JobError::new(code::NO_FFMPEG, e))?;
+    let report = restoration::report_for(&tools, &input).map_err(|e| JobError::new(classify_error(&e), e))?;
+    let range = req.preview.then(|| recipe::TimeRange { start: req.start, end: Some(req.start + enhance::PREVIEW_SECONDS) });
+    let built = enhance::build_recipe(&report, req.options, range, req.field_order);
+    let eval = restoration::evaluate(&tools, report.clone(), built);
+    let Some(recipe) = eval.recipe.filter(|_| eval.assessment.status != recipe::Status::Blocked) else {
+        let codes = if eval.assessment.blockers.is_empty() { "no-video".to_string() } else { eval.assessment.blockers.join(",") };
+        return Err(JobError::new(code::UNSUPPORTED, format!("[video-blocked] {codes}")));
+    };
+    let encoder = ffmpeg::encoder_choice().map_or_else(ffmpeg::default_encoder, |c| c.encoder);
+    let dir = match req.target_dir() {
+        Some(d) => d,
+        None => ctx.env().results_dir().ok_or_else(|| JobError::new(code::FAILED, "no result folder"))?,
+    };
+    std::fs::create_dir_all(&dir).map_err(|e| JobError::new(classify_error(&e.to_string()), e.to_string()))?;
+    let secs = enhance::expected_seconds(&recipe, &report, req.preview);
+    let fps = recipe.output.fps.map(|r| r.value()).unwrap_or(30.0);
+    let est = (enhance::video_kbps(recipe.scale.width, recipe.scale.height, fps) as f64 * 1000.0 / 8.0 * secs * 1.3) as u64;
+    ctx.check_space(&dir, est + (64 << 20))?;
+    let (stem, ext) = enhance::output_name(&input, req.preview);
+    let wanted = unique_path(&dir, &stem, "", ext, |p| p.exists());
+    let final_name = ctx.reserve(idx, &wanted, false)?;
+    let temp = ctx.temp_dir(&parent_dir(&final_name))?;
+    let part = temp.join(format!("{idx}.part.{ext}"));
+
+    let (tx, rx) = std::sync::mpsc::channel::<f64>();
+    let result = std::thread::scope(|s| {
+        let runner = s.spawn(|| {
+            enhance::render(&tools, &input, &recipe, &report, &encoder, &part, req.preview, &|| ctx.cancelled(), move |p| {
+                let _ = tx.send(p);
+            })
+        });
+        for p in rx {
+            ctx.progress(Some(p));
+        }
+        runner.join().unwrap_or_else(|_| Err("ffmpeg runner panicked".into()))
+    });
+    let size = match result {
+        Ok(size) => size,
+        Err(e) => {
+            let _ = std::fs::remove_file(&part);
+            return Err(if e.starts_with(ERR_CANCELLED) { JobError::new(code::FAILED, e) } else { JobError::new(classify_error(&e), e) });
+        }
+    };
+    let placed = place_no_clobber(&part, &final_name).map_err(|e| JobError::new(code::FAILED, e))?;
+    ctx.progress(Some(1.0));
+    let extra = serde_json::json!({
+        "recipe": recipe,
+        "recipeHash": eval.recipe_hash,
+        "filter": eval.filter,
+        "preview": req.preview,
+        "encoder": encoder.name,
+        "output": { "width": recipe.scale.width, "height": recipe.scale.height },
+        "app": env!("CARGO_PKG_VERSION"),
+    });
+    ctx.complete_item_with(idx, &placed, size, extra)
 }
