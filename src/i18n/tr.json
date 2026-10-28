@@ -1402,6 +1402,7 @@
       "modelChanged": "Kullanılan araç/model sürümü değişti; yalnızca baştan başlatılabilir.",
       "recipeChanged": "İş ayarları bu sürümle uyuşmuyor; baştan başlatın.",
       "diskFull": "Diskte yeterli boş alan yok.",
+      "permissionDenied": "Hedef klasöre yazma izni yok; başka bir klasör seçin.",
       "itemsFailed": "{n} dosya işlenemedi.",
       "noFfmpeg": "ffmpeg bulunamadı.",
       "unsupported": "Bu biçim desteklenmiyor.",
@@ -1554,7 +1555,7 @@
   "videoEnhance": {
     "title": "Videoyu iyileştir",
     "recommended": "Önerilen ayarlar seçili. İsterseniz değiştirebilirsiniz.",
-    "note": "Orijinal korunur; sonuç ayrı dosya olarak kaydedilir.",
+    "note": "Orijinal korunur; sonuç ayrı bir MKV dosyası (SDR, 8 bit) olarak kaydedilir. Yarıda kalan işlem dosya bırakmaz; yeniden başlatılırsa baştan işlenir.",
     "denoise": "Gürültü ve blok azaltma",
     "sharpen": "Keskinlik",
     "level": {
@@ -1579,6 +1580,7 @@
     "full": "Tamamını işle",
     "reset": "Varsayılana dön",
     "previewCaption": "Sol: orijinal · Sağ: iyileştirilmiş",
+    "previewStale": "Ayarlar değişti: bu önizleme önceki ayarlarla yapıldı. Güncel hâli için yeniden önizleyin.",
     "status": {
       "planning": "Video inceleniyor…",
       "ready": "Hazır: çıktı {w}×{h}. Önce 10 saniyelik önizlemeye bakabilirsiniz.",

@@ -172,6 +172,9 @@ pub struct OutputPlan {
     pub fps: Option<Rational>,
     /// Rotation baked into the pixels (the output carries no display rotation)
     pub rotation_applied: i32,
+    /// Horizontal mirror baked in before the rotation (mirroring display matrix)
+    #[serde(default)]
+    pub mirror_applied: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
@@ -351,6 +354,7 @@ pub fn suggest(report: &SourceReport) -> Option<Recipe> {
             fps_mode: FpsMode::Cfr,
             fps: None,
             rotation_applied: v.rotation,
+            mirror_applied: v.mirrored,
         },
         audio: StreamSelection { policy: StreamPolicy::CopyAll, streams: vec![] },
         subtitles: StreamSelection { policy: StreamPolicy::CopyAll, streams: vec![] },
@@ -366,6 +370,7 @@ pub fn normalize(recipe: &mut Recipe, report: &SourceReport) {
     recipe.color.output = output_color();
     let Some(v) = report.video.as_ref() else { return };
     recipe.output.rotation_applied = v.rotation;
+    recipe.output.mirror_applied = v.mirrored;
     if recipe.deinterlace.filter == DeinterlaceFilter::Off || recipe.deinterlace.field_order == FieldOrder::Progressive {
         recipe.deinterlace.filter = DeinterlaceFilter::Off;
         recipe.deinterlace.field_order = FieldOrder::Progressive;
@@ -637,7 +642,10 @@ pub fn video_filter(recipe: &Recipe) -> String {
             Strength::Strong => 10,
         })),
     }
-    // display rotation (counter-clockwise degrees, ffprobe convention)
+    // display orientation: mirror first, then rotation (counter-clockwise degrees, ffprobe convention)
+    if recipe.output.mirror_applied {
+        f.push("hflip".into());
+    }
     match recipe.output.rotation_applied.rem_euclid(360) {
         90 => f.push("transpose=cclock".into()),
         180 => f.push("hflip,vflip".into()),

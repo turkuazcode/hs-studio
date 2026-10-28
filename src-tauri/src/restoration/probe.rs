@@ -156,8 +156,13 @@ pub struct VideoInfo {
     pub height: u32,
     pub sar: Option<Rational>,
     pub dar: Option<Rational>,
-    /// Counter-clockwise degrees from the display matrix (0 / 90 / 180 / 270; raw if odd)
+    /// Counter-clockwise degrees from the display matrix (0 / 90 / 180 / 270; raw if odd).
+    /// With `mirrored` this is the rotation applied AFTER the horizontal mirror.
     pub rotation: i32,
+    /// The display matrix mirrors the picture (front cameras, `-display_hflip/vflip`):
+    /// shown as hflip, then `rotation`. ffprobe's own `rotation` ignores the mirror.
+    #[serde(default)]
+    pub mirrored: bool,
     /// Size shown to the viewer: SAR applied (square pixels), rotation applied
     pub display_width: u32,
     pub display_height: u32,
@@ -320,6 +325,30 @@ pub fn display_size(width: u32, height: u32, sar: Option<Rational>, rotation: i3
     if rotation.rem_euclid(180) == 90 { (height, w) } else { (w, height) }
 }
 
+/// The nine 16.16 / 2.30 values of ffprobe's `displaymatrix` text.
+fn display_matrix(text: &str) -> Option<[f64; 9]> {
+    let vals: Vec<f64> = text
+        .lines()
+        .filter_map(|l| l.split_once(':'))
+        .flat_map(|(_, rest)| rest.split_whitespace().filter_map(|v| v.parse::<f64>().ok()).collect::<Vec<_>>())
+        .collect();
+    vals.try_into().ok()
+}
+
+/// (rotation in counter-clockwise degrees, mirrored) of a display matrix. A mirroring matrix
+/// (negative determinant) is split into a horizontal mirror applied first and a rotation:
+/// R = H·M with H = diag(-1, 1, 1) (ffmpeg multiplies row vectors). Same angle formula as
+/// `av_display_rotation_get`. Checked pixel for pixel against ffmpeg's autorotation in tests.
+pub fn orientation(m: &[f64; 9]) -> Option<(f64, bool)> {
+    let mirrored = m[0] * m[4] - m[1] * m[3] < 0.0;
+    let (a, b) = if mirrored { (-m[0], -m[1]) } else { (m[0], m[1]) };
+    let (s0, s1) = (a.hypot(m[3]), b.hypot(m[4]));
+    if s0 == 0.0 || s1 == 0.0 {
+        return None;
+    }
+    Some((-(b / s1).atan2(a / s0).to_degrees(), mirrored))
+}
+
 fn normalize_rotation(r: f64) -> i32 {
     let r = r.round() as i32;
     let n = r.rem_euclid(360);
@@ -349,9 +378,12 @@ pub fn parse_streams(json: &Value, source: SourceFingerprint) -> SourceReport {
             Some("video") if s["disposition"]["attached_pic"].as_i64() == Some(1) => {}
             Some("video") if report.video.is_none() => {
                 let side: Vec<&Value> = s["side_data_list"].as_array().into_iter().flatten().collect();
-                let rotation = side
-                    .iter()
-                    .find_map(|d| d["rotation"].as_f64())
+                // the matrix itself when present: ffprobe's `rotation` reads a mirror as 180° / 0°
+                let matrix = side.iter().find_map(|d| d["displaymatrix"].as_str().and_then(display_matrix)).and_then(|m| orientation(&m));
+                let mirrored = matrix.is_some_and(|(_, m)| m);
+                let rotation = matrix
+                    .map(|(r, _)| r)
+                    .or_else(|| side.iter().find_map(|d| d["rotation"].as_f64()))
                     .or_else(|| tag("rotate").parse::<f64>().ok().map(|r| -r)) // legacy tag is clockwise
                     .map_or(0, normalize_rotation);
                 let hdr_side_data: Vec<String> = side
@@ -380,6 +412,7 @@ pub fn parse_streams(json: &Value, source: SourceFingerprint) -> SourceReport {
                     sar,
                     dar: Rational::parse(&text(&s["display_aspect_ratio"])),
                     rotation,
+                    mirrored,
                     display_width,
                     display_height,
                     time_base: Rational::parse(&text(&s["time_base"])),

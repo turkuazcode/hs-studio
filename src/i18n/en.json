@@ -1402,6 +1402,7 @@
       "modelChanged": "The tool/model version changed; the job can only be restarted.",
       "recipeChanged": "The job settings do not match this version; restart it.",
       "diskFull": "Not enough free disk space.",
+      "permissionDenied": "No permission to write to the target folder; choose another folder.",
       "itemsFailed": "{n} file(s) could not be processed.",
       "noFfmpeg": "ffmpeg was not found.",
       "unsupported": "This format is not supported.",
@@ -1554,7 +1555,7 @@
   "videoEnhance": {
     "title": "Enhance video",
     "recommended": "Recommended settings are selected. You can change them.",
-    "note": "The original is kept; the result is saved as a separate file.",
+    "note": "The original is kept; the result is saved as a separate MKV file (SDR, 8-bit). An interrupted run leaves no file and starts over when run again.",
     "denoise": "Noise and block reduction",
     "sharpen": "Sharpness",
     "level": {
@@ -1579,6 +1580,7 @@
     "full": "Process all",
     "reset": "Reset to defaults",
     "previewCaption": "Left: original · Right: enhanced",
+    "previewStale": "Settings changed: this preview shows the previous settings. Preview again to see the current ones.",
     "status": {
       "planning": "Inspecting the video…",
       "ready": "Ready: output {w}×{h}. You can look at a 10-second preview first.",

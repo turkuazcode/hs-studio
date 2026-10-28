@@ -774,7 +774,7 @@ impl RunCtx<'_> {
             )?;
             Ok(())
         })?;
-        std::fs::create_dir_all(&dir).map_err(|e| JobError::new(code::FAILED, format!("temp dir: {e}")))?;
+        std::fs::create_dir_all(&dir).map_err(|e| JobError::new(super::classify_error(&e.to_string()), format!("temp dir: {e}")))?;
         #[cfg(windows)]
         hide(&dir);
         Ok(dir)

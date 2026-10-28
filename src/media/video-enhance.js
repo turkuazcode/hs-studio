@@ -30,6 +30,27 @@ export function blockerKey(blockers = []) {
   return "videoEnhance.blocker.generic";
 }
 
+/**
+ * Only the latest of several overlapping async calls counts: fast setting changes start a new
+ * plan before the previous answer arrived, and an older answer must not overwrite the newer
+ * state. Returns a wrapper: (promise) -> { fresh, value } | { fresh, error }.
+ */
+export function latestOnly() {
+  let seq = 0;
+  return (promise) => {
+    const mine = ++seq;
+    return Promise.resolve(promise).then(
+      (value) => ({ fresh: mine === seq, value }),
+      (error) => ({ fresh: mine === seq, error }),
+    );
+  };
+}
+
+/** Settings a preview was made with; a different key means the preview is out of date. */
+export function settingsKey(options, fieldOrder) {
+  return JSON.stringify([options.denoise, options.sharpen, !!options.upscale, fieldOrder ?? null]);
+}
+
 export function createVideoEnhance(app) {
   function open(item) {
     if (!invoke || !app.jobs || app.jobs.available === false) { app.toast(t("videoEnhance.status.desktopOnly")); return null; }
@@ -39,6 +60,8 @@ export function createVideoEnhance(app) {
     let cancelRequested = false; // Cancel before the job had an id: cancelled as soon as it has one
     let running = false;
     let fieldAsked = false;
+    let previewKey = null; // settings of the preview on screen
+    const latest = latestOnly();
 
     const levels = () => [
       { value: "off", label: t("videoEnhance.level.off") },
@@ -77,6 +100,14 @@ export function createVideoEnhance(app) {
       options = { denoise: denoise.value, sharpen: sharpen.value, upscale: upscale.value === "x2" };
       fieldOrder = fieldRow.hidden ? null : fieldSel.value;
     };
+    // a preview made with other settings stays visible but is labelled as out of date
+    const markPreview = () => {
+      if (video.hidden || previewKey === null) return;
+      const stale = previewKey !== settingsKey(options, fieldOrder);
+      dlg.el.dataset.preview = stale ? "stale" : "current";
+      caption.textContent = t(stale ? "videoEnhance.previewStale" : "videoEnhance.previewCaption");
+      caption.classList.toggle("is-stale", stale);
+    };
     const setIdleActions = (blocked) => dlg.setActions([
       { id: "preview", label: t("videoEnhance.preview"), primary: true, keepOpen: true, run: () => (blocked ? false : runJob(true)) },
       { id: "full", label: t("videoEnhance.full"), keepOpen: true, run: () => (blocked ? false : runJob(false)) },
@@ -97,9 +128,12 @@ export function createVideoEnhance(app) {
       read();
       dlg.el.dataset.state = "planning";
       dlg.setStatus(t("videoEnhance.status.planning"));
+      markPreview();
+      const res = await latest(invoke("video_enhance_plan", { path: item.path, options, fieldOrder }));
+      if (dlg.closed || !res.fresh) return; // a newer plan was started meanwhile
       try {
-        const resp = await invoke("video_enhance_plan", { path: item.path, options, fieldOrder });
-        if (dlg.closed) return;
+        if (res.error) throw res.error;
+        const resp = res.value;
         const blockers = resp?.assessment?.blockers ?? [];
         if (blockers.includes("field-order-unconfirmed") && !fieldAsked) {
           // first question: preselect what the file says, else the probe's suggestion (never
@@ -159,6 +193,8 @@ export function createVideoEnhance(app) {
             video.src = convertFileSrc(output);
             video.hidden = false;
             caption.hidden = false;
+            previewKey = settingsKey(request.options, request.fieldOrder);
+            markPreview();
             video.play?.().catch(() => {});
             dlg.el.dataset.state = "previewed";
             dlg.setStatus(t("videoEnhance.status.previewDone"), "ok");
@@ -202,6 +238,8 @@ export function createVideoEnhance(app) {
       video.hidden = true;
       caption.hidden = true;
       video.removeAttribute("src");
+      previewKey = null;
+      delete dlg.el.dataset.preview;
       plan();
       return false;
     }

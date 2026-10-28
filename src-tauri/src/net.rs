@@ -72,18 +72,32 @@ pub fn redact(text: &str) -> String {
     out
 }
 
+/// An HLS playlist URL (`.m3u8` / `.m3u` path, query and fragment ignored).
+pub fn is_hls_url(url: &str) -> bool {
+    let path = url.split(['?', '#']).next().unwrap_or("").to_ascii_lowercase();
+    path.ends_with(".m3u8") || path.ends_with(".m3u")
+}
+
 /// Per-file libmpv options for a network URL: reconnect after a dropped connection (bounded),
 /// network timeout. Local files get none. (An HLS segment that fails is skipped by FFmpeg;
 /// `seg_max_retry` through `demuxer-lavf-o` made libmpv re-open every segment and stall.)
+///
+/// HLS gets no `reconnect_streamed` (audit D02): the HLS demuxer passes these options on to every
+/// segment, and FFmpeg's http treats the normal end of a segment sent without Content-Length
+/// (chunked) as a premature disconnect when `reconnect_streamed` is set: it downloaded the
+/// segment again with 1 / 3 / 7 s back-off and playback stalled after the first segment. A
+/// failed segment connection is still retried (`reconnect_on_network_error`). Radio and other
+/// endless streams keep `reconnect_streamed`: there an end of data is a dropped connection.
 pub fn load_options(url: &str) -> Vec<(&'static str, String)> {
     if !is_stream_url(url) {
         return Vec::new();
     }
+    let streamed = if is_hls_url(url) { "" } else { "reconnect_streamed=1," };
     vec![
         ("network-timeout", "20".to_string()),
         (
             "stream-lavf-o",
-            "reconnect=1,reconnect_streamed=1,reconnect_on_network_error=1,reconnect_delay_max=8,reconnect_max_retries=6".to_string(),
+            format!("reconnect=1,{streamed}reconnect_on_network_error=1,reconnect_delay_max=8,reconnect_max_retries=6"),
         ),
     ]
 }
@@ -112,7 +126,17 @@ mod tests {
         }
         assert!(load_options("C:\\film.mkv").is_empty());
         let o = load_options("http://h/live.m3u8?x=1");
-        assert!(o.iter().any(|(k, v)| *k == "stream-lavf-o" && v.contains("reconnect=1")));
+        assert!(o.iter().any(|(k, v)| *k == "stream-lavf-o" && v.contains("reconnect=1") && v.contains("reconnect_on_network_error=1")));
         assert!(!o.iter().any(|(k, _)| *k == "demuxer-lavf-o"));
+        // HLS: a chunked segment's normal end must not count as a dropped connection
+        for hls in ["http://h/live.m3u8?x=1", "https://h/a/B.M3U8#t=3", "http://h/list.m3u"] {
+            assert!(is_hls_url(hls), "{hls}");
+            assert!(load_options(hls).iter().all(|(_, v)| !v.contains("reconnect_streamed")), "{hls}");
+        }
+        // radio / progressive: an end of data is a dropped connection, reconnect
+        for other in ["http://h/radio", "http://h/live.m3u8.mp3", "http://h/x.mp4?f=.m3u8"] {
+            assert!(!is_hls_url(other), "{other}");
+            assert!(load_options(other).iter().any(|(_, v)| v.contains("reconnect_streamed=1")), "{other}");
+        }
     }
 }

@@ -13,9 +13,13 @@
 // - every layer: pass / fail / skip / todo / cancelled counted separately (skips are never
 //   passes), skipped and failed tests listed with reasons, JSON copy in tests/.results/<layer>.json.
 //   VHO_TEST_NO_SKIP=1 turns any skip into a failing exit code (release candidates / CI).
+// - evidence for scripts/release-gate.mjs next to the counts: full commit + whether the tree was
+//   dirty, platform, the test files, whether this was the whole layer (no file list, no name
+//   filter) and the SHA-256 of the binary under test.
 // Extra arguments: paths ending in .mjs replace the layer's default file list; everything
 // else is passed to `node --test` (e.g. --test-name-pattern=...).
 import { spawn, execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -72,7 +76,10 @@ function newestMtime(paths) {
 
 const header = [`VHO tests — layer: ${layerName} (${files.length} file${files.length === 1 ? "" : "s"})`];
 const commit = git("rev-parse", "--short", "HEAD");
-if (commit) header.push(`commit: ${commit}${git("status", "--porcelain") ? " (+ uncommitted changes)" : ""}`);
+const commitFull = git("rev-parse", "HEAD") || null;
+// untracked files outside the sources (logs, reports) do not change what is tested
+const dirty = commit ? git("status", "--porcelain", "--untracked-files=no") !== "" : null;
+if (commit) header.push(`commit: ${commit}${dirty ? " (+ uncommitted changes)" : ""}`);
 header.push(`node: ${process.version} · ${process.platform}-${process.arch}`);
 
 const env = { ...process.env };
@@ -84,7 +91,8 @@ if (layer.exe) {
   if (existsSync(exe)) {
     const st = statSync(exe);
     const src = newestMtime(["src", "src-tauri/src", "src-tauri/Cargo.toml", "src-tauri/tauri.conf.json"]);
-    exeInfo = { path: exe, bytes: st.size, built: st.mtime.toISOString(), stale: src.t > st.mtimeMs ? rel(src.path) : null };
+    const sha256 = createHash("sha256").update(readFileSync(exe)).digest("hex");
+    exeInfo = { path: exe, bytes: st.size, sha256, built: st.mtime.toISOString(), stale: src.t > st.mtimeMs ? rel(src.path) : null };
     header.push(`binary: ${exe}`);
     header.push(`        ${(st.size / 1048576).toFixed(1)} MB, built ${st.mtime.toISOString()}, libmpv ${mpvStaged(exe) ? "staged" : "NOT staged (HTML5 engine only)"}`);
     if (exeInfo.stale) header.push(`WARNING: binary is older than ${exeInfo.stale} — rebuild (npm run build:release) to test the current sources`);
@@ -158,7 +166,13 @@ line("=".repeat(78));
 if (s) {
   // keep the binary information next to the counts for CI artifacts
   const { writeFileSync } = await import("node:fs");
-  writeFileSync(summaryFile, JSON.stringify({ layer: layerName, commit, exe: exeInfo, exitCode: code, ...s }, null, 2));
+  // a file list or a name filter runs part of the layer: the gate never takes that for the whole layer
+  const filtered = flagArgs.some((a) => /^--test-(name-pattern|skip-pattern|only|shard)/.test(a));
+  writeFileSync(summaryFile, JSON.stringify({
+    layer: layerName, commit, commitFull, dirty, platform: `${process.platform}-${process.arch}`,
+    full: !fileArgs.length && !filtered, files: files.map((f) => rel(f).replace(/\\/g, "/")),
+    finished: new Date().toISOString(), exe: exeInfo, exitCode: code, ...s,
+  }, null, 2));
 }
 let exit = code;
 if (exit === 0 && s && process.env.VHO_TEST_NO_SKIP === "1" && s.skip + s.todo > 0) {

@@ -5,6 +5,7 @@
    "ffmpeg": "ffmpeg version n8.1.3 Copyright (c) 2000-2026 the FFmpeg developers",
    "profiles": [
     "lanczos",
+    "classic-x4",
     "vho-x4",
     "vho-x4-faces"
    ],
@@ -28,7 +29,8 @@
      "ms": 0,
      "version": "yunet2023mar-gfpgan14w16"
     }
-   }
+   },
+   "note": "2026-10-28 (D08): classic-x4 / faithful-* added; values of the earlier profiles kept from the previous baseline (not rewritten)"
   },
   "metrics": {
    "p01-face-jpeg|lanczos": {
@@ -405,6 +407,147 @@
     "roi0.noise": 4.5029,
     "roi0.colorfulness": 11.0851,
     "flags": "color-cast-on-greyscale"
+   },
+   "p01-face-jpeg|classic-x4": {
+    "psnr": 27.4437,
+    "ssim": 0.821,
+    "gmsd": 0.1369,
+    "sharpnessRatio": 0.0195,
+    "roi0.psnr": 25.7359,
+    "roi0.ssim": 0.7112,
+    "roi0.gmsd": 0.1637,
+    "roi0.sharpnessRatio": 0.0202,
+    "flags": ""
+   },
+   "p02-face-lowlight|classic-x4": {
+    "psnr": 11.2416,
+    "ssim": 0.4279,
+    "gmsd": 0.2238,
+    "sharpnessRatio": 0.0038,
+    "roi0.psnr": 9.7005,
+    "roi0.ssim": 0.3203,
+    "roi0.gmsd": 0.2439,
+    "roi0.sharpnessRatio": 0.0038,
+    "flags": ""
+   },
+   "p03-face-blur|classic-x4": {
+    "psnr": 24.841,
+    "ssim": 0.7093,
+    "gmsd": 0.1928,
+    "sharpnessRatio": 0.0067,
+    "roi0.psnr": 23.185,
+    "roi0.ssim": 0.6271,
+    "roi0.gmsd": 0.2067,
+    "roi0.sharpnessRatio": 0.0074,
+    "flags": ""
+   },
+   "p04-small-face|classic-x4": {
+    "psnr": 21.8222,
+    "ssim": 0.7699,
+    "gmsd": 0.1914,
+    "sharpnessRatio": 0.0204,
+    "roi0.psnr": 23.9263,
+    "roi0.ssim": 0.8126,
+    "roi0.gmsd": 0.1559,
+    "roi0.sharpnessRatio": 0.03,
+    "flags": ""
+   },
+   "p05-scan-scratch|classic-x4": {
+    "psnr": 17.5677,
+    "ssim": 0.7436,
+    "gmsd": 0.1646,
+    "sharpnessRatio": 0.0507,
+    "roi0.psnr": 17.2016,
+    "roi0.ssim": 0.685,
+    "roi0.gmsd": 0.1786,
+    "roi0.sharpnessRatio": 0.0561,
+    "flags": ""
+   },
+   "p06-lowlight-space|classic-x4": {
+    "psnr": 17.759,
+    "ssim": 0.8418,
+    "gmsd": 0.159,
+    "sharpnessRatio": 0.0082,
+    "flags": ""
+   },
+   "p07-texture-noise|classic-x4": {
+    "psnr": 23.0562,
+    "ssim": 0.6865,
+    "gmsd": 0.2178,
+    "sharpnessRatio": 0.0243,
+    "flags": ""
+   },
+   "p08-text-jpeg|classic-x4": {
+    "psnr": 17.0301,
+    "ssim": 0.8165,
+    "gmsd": 0.2411,
+    "sharpnessRatio": 0.0145,
+    "roi0.psnr": 14.4864,
+    "roi0.ssim": 0.3508,
+    "roi0.gmsd": 0.2946,
+    "roi0.sharpnessRatio": 0.0023,
+    "flags": ""
+   },
+   "p09-zoneplate|classic-x4": {
+    "psnr": 9.2181,
+    "ssim": 0.0689,
+    "gmsd": 0.3152,
+    "sharpnessRatio": 0.0006,
+    "flags": ""
+   },
+   "p10-alpha|classic-x4": {
+    "psnr": 28.3028,
+    "ssim": 0.9915,
+    "gmsd": 0.026,
+    "sharpnessRatio": 227.3672,
+    "flags": ""
+   },
+   "p11-highres-face|classic-x4": {
+    "psnr": 28.688,
+    "ssim": 0.8373,
+    "gmsd": 0.1382,
+    "sharpnessRatio": 0.02,
+    "roi0.psnr": 30.1996,
+    "roi0.ssim": 0.8009,
+    "roi0.gmsd": 0.1513,
+    "roi0.sharpnessRatio": 0.0078,
+    "flags": ""
+   },
+   "r01-lincoln-1863|classic-x4": {
+    "sharpness": 8.6898,
+    "noise": 0.2627,
+    "colorfulness": 0,
+    "roi0.sharpness": 10.1882,
+    "roi0.noise": 0.2887,
+    "roi0.colorfulness": 0,
+    "flags": ""
+   },
+   "r02-douglass-1879|classic-x4": {
+    "sharpness": 11.0627,
+    "noise": 0.2803,
+    "colorfulness": 0,
+    "roi0.sharpness": 15.7648,
+    "roi0.noise": 0.3151,
+    "roi0.colorfulness": 0,
+    "flags": ""
+   },
+   "r03-migrant-1936|classic-x4": {
+    "sharpness": 10.5495,
+    "noise": 0.2751,
+    "colorfulness": 0,
+    "roi0.sharpness": 8.8933,
+    "roi0.noise": 0.2692,
+    "roi0.colorfulness": 0,
+    "flags": ""
+   },
+   "r04-newspaper-1918|classic-x4": {
+    "sharpness": 181.7885,
+    "noise": 0.4497,
+    "colorfulness": 0,
+    "roi0.sharpness": 221.851,
+    "roi0.noise": 0.4832,
+    "roi0.colorfulness": 0,
+    "flags": ""
    }
   }
  },
@@ -414,8 +557,11 @@
    "ffmpeg": "ffmpeg version n8.1.3 Copyright (c) 2000-2026 the FFmpeg developers",
    "profiles": [
     "lanczos",
-    "nlmeans-lanczos"
-   ]
+    "nlmeans-lanczos",
+    "faithful-light",
+    "faithful-medium"
+   ],
+   "note": "2026-10-28 (D08): classic-x4 / faithful-* added; values of the earlier profiles kept from the previous baseline (not rewritten)"
   },
   "metrics": {
    "c01-pan-texture|lanczos": {
@@ -525,6 +671,114 @@
     "ssimMin": 0.5502,
     "temporalError": 9.2185,
     "temporalChange": 11.4862
+   },
+   "c01-pan-texture|faithful-light": {
+    "frames": 75,
+    "psnr": 25.452,
+    "psnrMin": 22.8988,
+    "ssim": 0.7473,
+    "ssimMin": 0.6485,
+    "temporalError": 10.1212,
+    "temporalChange": 8.397
+   },
+   "c01-pan-texture|faithful-medium": {
+    "frames": 75,
+    "psnr": 25.4685,
+    "psnrMin": 22.891,
+    "ssim": 0.7584,
+    "ssimMin": 0.6601,
+    "temporalError": 9.9255,
+    "temporalChange": 8.1374
+   },
+   "c02-face-zoom|faithful-light": {
+    "frames": 75,
+    "psnr": 26.1131,
+    "psnrMin": 24.9651,
+    "ssim": 0.8482,
+    "ssimMin": 0.8206,
+    "temporalError": 3.0058,
+    "temporalChange": 1.834
+   },
+   "c02-face-zoom|faithful-medium": {
+    "frames": 75,
+    "psnr": 26.1643,
+    "psnrMin": 25.0265,
+    "ssim": 0.8529,
+    "ssimMin": 0.8252,
+    "temporalError": 2.7942,
+    "temporalChange": 1.4916
+   },
+   "c03-text-motion|faithful-light": {
+    "frames": 75,
+    "psnr": 17.7223,
+    "psnrMin": 17.2876,
+    "ssim": 0.8277,
+    "ssimMin": 0.8159,
+    "temporalError": 4.0689,
+    "temporalChange": 3.5418
+   },
+   "c03-text-motion|faithful-medium": {
+    "frames": 75,
+    "psnr": 17.7396,
+    "psnrMin": 17.3248,
+    "ssim": 0.8303,
+    "ssimMin": 0.8201,
+    "temporalError": 3.7794,
+    "temporalChange": 3.2264
+   },
+   "c04-scene-cut|faithful-light": {
+    "frames": 75,
+    "psnr": 26.8831,
+    "psnrMin": 26.1736,
+    "ssim": 0.78,
+    "ssimMin": 0.6711,
+    "temporalError": 6.0234,
+    "temporalChange": 4.8346
+   },
+   "c04-scene-cut|faithful-medium": {
+    "frames": 75,
+    "psnr": 26.8965,
+    "psnrMin": 26.2131,
+    "ssim": 0.7827,
+    "ssimMin": 0.6716,
+    "temporalError": 5.8862,
+    "temporalChange": 4.5101
+   },
+   "c05-lowlight-noise|faithful-light": {
+    "frames": 75,
+    "psnr": 11.5825,
+    "psnrMin": 11.555,
+    "ssim": 0.7449,
+    "ssimMin": 0.7377,
+    "temporalError": 5.6556,
+    "temporalChange": 1.3929
+   },
+   "c05-lowlight-noise|faithful-medium": {
+    "frames": 75,
+    "psnr": 11.5655,
+    "psnrMin": 11.5418,
+    "ssim": 0.7479,
+    "ssimMin": 0.7429,
+    "temporalError": 5.6041,
+    "temporalChange": 1.1877
+   },
+   "c06-fast-motion|faithful-light": {
+    "frames": 75,
+    "psnr": 29.7351,
+    "psnrMin": 26.3632,
+    "ssim": 0.647,
+    "ssimMin": 0.5588,
+    "temporalError": 9.2143,
+    "temporalChange": 12.4251
+   },
+   "c06-fast-motion|faithful-medium": {
+    "frames": 75,
+    "psnr": 29.5465,
+    "psnrMin": 26.225,
+    "ssim": 0.6428,
+    "ssimMin": 0.5558,
+    "temporalError": 9.411,
+    "temporalChange": 11.7675
    }
   }
  }

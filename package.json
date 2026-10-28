@@ -10,7 +10,7 @@
     "build:release": "tauri build --no-bundle",
     "package:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-windows.ps1",
     "test": "node scripts/run-tests.mjs unit",
-    "test:rust": "cargo test --release --lib --manifest-path src-tauri/Cargo.toml",
+    "test:rust": "node scripts/run-rust-tests.mjs",
     "e2e": "node scripts/run-tests.mjs e2e",
     "test:ai": "node scripts/run-tests.mjs ai",
     "test:quality": "node scripts/run-tests.mjs quality",
