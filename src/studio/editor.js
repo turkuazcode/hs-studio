@@ -455,8 +455,13 @@ export function createEditor(root, { invoke, convertFileSrc, dialogSave, toast, 
         invoke("photo_thumb", { path, size: PREVIEW_SIZE }),
       ]);
       if (item !== next || loadedBase !== path) return;
-      bitmap?.close?.();
-      bitmap = await loadBitmap(convertFileSrc(thumb.path));
+      // keep drawing the old bitmap until the new one is decoded: a render scheduled meanwhile
+      // must never see a closed (detached) ImageBitmap
+      const fresh = await loadBitmap(convertFileSrc(thumb.path));
+      if (item !== next || loadedBase !== path) { fresh.close?.(); return; }
+      const old = bitmap;
+      bitmap = fresh;
+      old?.close?.();
       full = info?.width && info?.height ? { w: info.width, h: info.height } : { w: thumb.width, h: thumb.height };
       geomKey = "";
       busy.hidden = true;
