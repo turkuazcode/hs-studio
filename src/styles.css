@@ -148,16 +148,6 @@ html, body {
   color: #fff;
 }
 
-.app-edition-tag {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: var(--accent-ruby-dim);
-  color: #fb7185; /* 5.2:1 on the tag background (accent-ruby-bright was 3.8:1) */
-  border: 1px solid rgba(225, 29, 72, 0.3);
-}
 
 .titlebar-divider {
   width: 1px;
@@ -480,29 +470,7 @@ body.is-dragging .drop-zone .drop-card {
   border-color: var(--border-specular);
 }
 
-.quick-shortcuts-hint {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 18px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 11px;
-  color: var(--text-muted);
-}
 
-.quick-shortcuts-hint kbd {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-family: inherit;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
 
 /* ==========================================================================
    Center Play/Pause Ripple
@@ -2062,7 +2030,7 @@ html:not([data-media="image"]) .photo-only { display: none !important; }
 /* Small window / 200 % scale: title bar buttons keep only their icons; the label stays for
    screen readers (visually hidden, not display:none) and as the tooltip (Q03) */
 @media (max-width: 760px) {
-  .current-filename, .titlebar-divider, .app-edition-tag, .app-title { display: none; }
+  .current-filename, .titlebar-divider, .app-title { display: none; }
   .titlebar-actions { gap: 2px; }
   .titlebar-action-btn { padding-left: 6px; padding-right: 6px; }
   .titlebar-action-btn > span {

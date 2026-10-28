@@ -42,11 +42,15 @@ const ICONS = {
 };
 const icon = (name) => `<svg viewBox="0 0 20 20" width="15" height="15" fill="currentColor" aria-hidden="true">${ICONS[name]}</svg>`;
 
-/** Toolbar buttons per media type (3-5 frequent actions, then "⋯"). */
+/**
+ * Titlebar buttons per media type, then "⋯" (approved layout 2026-10-28: at most two buttons
+ * in the titlebar; the playlist / queue button is the other one, ui/mode-layout.js). The former
+ * toolbar actions open the "⋯" menu (moreItems).
+ */
 export const TOOLBAR = Object.freeze({
-  photo: [["editPhoto", "edit"], ["deleteFile", "delete"], ["printPhoto", "print"], ["shareFile", "share"]],
-  video: [["cutVideo", "cut"], ["saveFrame", "frame"], ["convertMedia", "convert"], ["shareFile", "share"]],
-  music: [["tagEditor", "tags"], ["lyrics", "lyrics"], ["shareFile", "share"]],
+  photo: [["editPhoto", "edit"]],
+  video: [],
+  music: [],
 });
 
 /**
@@ -410,6 +414,11 @@ export function createMediaActions(app) {
     replayGain: { label: "actions.menu.replayGain", kinds: ["music"], run: needFfmpeg(() => withReleased(() => exports.replayGain())) },
     ringtone: { label: "actions.menu.ringtone", kinds: ["music"], run: needFfmpeg(() => exports.openRange("segment")) },
     settings: { label: "actions.menu.settings", any: true, run: () => app.settingsModal?.open() },
+    // controls that left the titlebar / photo HUD (their buttons stay, hidden, with their logic)
+    findSubtitles: { label: "actions.menu.findSubtitles", kinds: ["video"], any: true, run: () => document.getElementById("btn-search-subtitles")?.click() },
+    sleepTimer: { label: "actions.menu.sleepTimer", kinds: ["video", "music"], any: true, run: () => document.getElementById("btn-sleep-timer")?.click() },
+    photoInfo: { label: "actions.menu.photoInfo", kinds: ["photo"], any: true, run: () => document.getElementById("btn-photo-info")?.click() },
+    playlist: { label: "actions.menu.playlist", kinds: ["photo", "music"], any: true, run: () => app.playlist.toggleDrawer() },
   };
 
   /** Offered for the current media? (kind filter, local file, platform support) */
@@ -446,26 +455,31 @@ export function createMediaActions(app) {
     const { kind } = current();
     if (kind === "photo") {
       return sections(
+        group("deleteFile", "printPhoto", "shareFile"),
+        group("photoInfo", "setWallpaper", "setLockScreen", "ocr", "castDevice"),
         group("openWith", "showInFolder"),
         group("copyImage", "copyFile", "copyPath"),
-        group("ocr", "setWallpaper", "setLockScreen", "castDevice"),
-        group("renameFile", "favorite", "addToPlaylist", "properties"),
+        group("renameFile", "favorite", "addToPlaylist", "playlist", "properties"),
         group("settings"));
     }
     if (kind === "music") {
       return sections(
+        group("tagEditor", "lyrics", "shareFile"),
+        group("castDevice", "sleepTimer", "playlist"),
         group("openWith", "showInFolder"),
         group("copyFile", "copyPath"),
         group("convertMedia", "ringtone", "replayGain"),
-        group("castDevice", "miniPlayer", "alwaysOnTop"),
+        group("miniPlayer", "alwaysOnTop"),
         group("renameFile", "deleteFile", "favorite", "addToPlaylist", "properties"),
         group("settings"));
     }
     return sections(
+      group("cutVideo", "saveFrame", "convertMedia", "shareFile"),
+      group("findSubtitles", "sleepTimer", "castDevice"),
       group("openWith", "showInFolder"),
       group("copyFrame", "copyFile", "copyPath"),
       [...(available("gif") ? [{ heading: "actions.menu.exportHeading" }] : []), ...group("gif", "clip", "extractAudio", "rotateVideo", "embedSubtitle", "extractSubtitle", "contactSheet")],
-      group("castDevice", "miniPlayer", "alwaysOnTop"),
+      group("miniPlayer", "alwaysOnTop"),
       group("renameFile", "deleteFile", "favorite", "addToPlaylist", "properties"),
       group("settings"));
   }
@@ -482,7 +496,8 @@ export function createMediaActions(app) {
   // Toolbar
   // ------------------------------------------------------------------------
   const bar = h("div", { id: "media-actions", class: "media-actions", role: "toolbar", "data-tauri-drag-region": "false", hidden: true });
-  const moreBtn = h("button", { id: "ma-more", type: "button", class: "ma-btn ma-more", "aria-haspopup": "menu", "aria-expanded": "false" }, "⋯");
+  // aria-controls: a dialog opened from this menu gives focus back to this button (ui/dialog-a11y.js)
+  const moreBtn = h("button", { id: "ma-more", type: "button", class: "ma-btn ma-more", "aria-haspopup": "menu", "aria-expanded": "false", "aria-controls": "media-actions-menu" }, "⋯");
   const miniExit = h("button", { id: "ma-mini-exit", type: "button", class: "ma-btn ma-mini-exit", onclick: () => toggleMini() }, "⤢");
   dom.titlebar?.querySelector(".titlebar-brand")?.after(bar);
   dom.titlebar?.querySelector(".titlebar-controls")?.before(miniExit);
@@ -504,6 +519,9 @@ export function createMediaActions(app) {
   let signature = "";
   function render() {
     const { item, kind } = current();
+    // per-media layout switch for CSS and ui/mode-layout.js: none | video | photo | music
+    const mode = kind === "none" || (!item?.path && !item?.url) ? "none" : kind;
+    if (document.documentElement.dataset.mediaMode !== mode) document.documentElement.dataset.mediaMode = mode;
     const ids = (TOOLBAR[kind] ?? []).filter(([id]) => available(id)).map(([id]) => `${id}${ACTIONS[id].check?.() ? "+" : ""}`);
     const sig = [kind, item?.path ?? "", i18n.language, ids.join(","), JSON.stringify(caps), !!mini].join("|");
     if (sig === signature) return;
@@ -517,8 +535,9 @@ export function createMediaActions(app) {
     if (bar.hidden) return;
     const buttons = (TOOLBAR[kind] ?? []).filter(([id]) => available(id)).map(([id, ic]) => {
       const keys = app.shortcuts?.keysOf?.(id) ?? [];
-      const b = h("button", { id: `ma-${id}`, type: "button", class: "ma-btn", "aria-label": labelOf(id) });
+      const b = h("button", { id: `ma-${id}`, type: "button", class: "ma-btn ma-labeled" });
       b.innerHTML = icon(ic);
+      b.append(h("span", { text: labelOf(id) }));
       b.title = keys.length ? `${labelOf(id)} (${keys[0].replace(/Key|Digit/g, "")})` : labelOf(id);
       if (ACTIONS[id].check?.()) b.classList.add("active");
       b.addEventListener("click", () => run(id));

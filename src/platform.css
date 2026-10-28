@@ -284,6 +284,8 @@ kbd {
 .vho-menu-item:disabled { color: var(--text-muted); cursor: default; }
 .vho-menu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .vho-menu-key { font-size: 11px; color: var(--text-muted); flex: none; }
+/* on the highlighted item the muted grey drops under 4.5:1 (Q03): full text colour there */
+.vho-menu-item:hover:not(:disabled) .vho-menu-key, .vho-menu-item:focus-visible .vho-menu-key { color: var(--text-pure); }
 .vho-menu-sep { height: 1px; background: var(--border-subtle); margin: 5px 4px; }
 .vho-menu-heading { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); padding: 6px 10px 2px; }
 

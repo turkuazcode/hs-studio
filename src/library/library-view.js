@@ -423,11 +423,12 @@ export function createLibraryView(app) {
     if (app.state.get("currentMediaType") === "none") app.dom?.dropZone?.classList.add("visible");
   }
 
-  // entry points: start screen, shortcut, settings
-  const startBtn = h("button", { id: "btn-open-library", type: "button", class: "btn-secondary" });
-  startBtn.innerHTML = `${LIBRARY_ICON} <span data-i18n="library.entry">${t("library.entry")}</span>`;
+  // entry points: titlebar of the empty screen (ui/mode-layout.js shows it only there), app menu,
+  // shortcut, settings
+  const startBtn = h("button", { id: "btn-open-library", type: "button", class: "titlebar-action-btn", "data-tauri-drag-region": "false" });
+  startBtn.innerHTML = `${LIBRARY_ICON}<span data-i18n="library.entry">${t("library.entry")}</span>`;
   startBtn.addEventListener("click", () => show());
-  app.dom?.dropZone?.querySelector(".drop-actions")?.append(startBtn);
+  document.querySelector(".titlebar-actions")?.append(startBtn);
   app.shortcuts?.register?.({
     id: "library", scope: "global", keys: ["Ctrl+Shift+KeyL"], labelKey: "shortcuts.actions.library",
     run: () => (root.hidden ? show() : hide()),
