@@ -104,5 +104,5 @@ Otomatik tarama insan kontrolünün yerini tutmaz. **Bekleyenler** (yapılmadı)
 
 - E2E ve AI smoke yalnızca Windows/WebView2 (CDP) üzerinde çalışır. macOS/Linux için sürücü seçilmedi; bu platformlar burada **test edilmedi** sayılır.
 - WebGPU sonucu cihaz/sürücüye bağlıdır; WASM referansı CPU'ya bağlı küçük farklar gösterebilir (tolerans belgeli). Başka bir ORT sürümüne geçişte referans yeniden üretilip incelenmelidir.
-- Gerçek AI smoke tek modeli (photo-x4) kapsar. GFPGAN/YuNet ve Plan 07 modelleri (A06) aynı düzenle eklenecek.
+- Gerçek AI smoke photo-x4'ü (`photo-x4.ai.mjs`, `ai-runtime.ai.mjs`) ve Plan 07 modellerini (`smart-edit.ai.mjs`: LaMa, BiRefNet portre/genel, DDColor; A06) kapsar. GFPGAN/YuNet aynı düzenle eklenecek.
 - CI taslağı: `.github/workflows/ci.yml` — itilmedi/çalıştırılmadı. Model önbelleği hash'e bağlı `actions/cache` anahtarıyla tasarlandı; gerçek AI işi yalnızca elle/etiketle tetiklenir.

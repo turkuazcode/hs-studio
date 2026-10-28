@@ -100,7 +100,7 @@ modelleri'nde, kullanımdaki model lease ile korunarak kaldırılır. Test: Rust
 ## 5. Mahremiyet
 
 - **Telemetri yok.** Uygulama kaynağındaki her uzak ana bilgisayar `tests/unit/privacy.test.mjs` içinde gerekçesiyle
-  listelenir: AI model indirmeleri (Hugging Face, jsDelivr, GitHub raw — yalnızca Ayarlar > AI modelleri / ilk kullanım onayı),
+  listelenir: AI model indirmeleri (Hugging Face, jsDelivr, GitHub raw, Qualcomm AI Hub S3 — A06 DDColor zipi — yalnızca Ayarlar > AI modelleri / ilk kullanım onayı),
   harita karoları (yalnızca kullanıcı haritayı açınca), altyazı arama sayfası (sistem tarayıcısında). Yeni bir ana bilgisayar
   testi düşürür. Açılışta dış istek olmadığını `i18n-offline.e2e` kanıtlar. Medya hiçbir zaman buluta gönderilmez.
 - **Ağ akışları ve yayın (L04):** yerel ağ adresleri (RFC 1918) testte kapsam dışıdır (kullanıcının seçtiği UPnP cihazı). Akış

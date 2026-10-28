@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:b19e0098-ee08-5837-a2d0-f47ec72f1528",
+ "serialNumber": "urn:uuid:be279e6b-02f4-5490-b879-b825880d85f1",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-28T08:11:03Z",
+  "timestamp": "2026-10-28T07:50:33Z",
   "tools": {
    "components": [
     {
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "ecc189e5a5df365cdb7257556b152241b11c5d81"
+    "value": "e8594691fe84b5e857ddb2a7fc528e19978887e2"
    },
    {
     "name": "vho:native-binaries",
@@ -21221,6 +21221,306 @@
    ]
   },
   {
+   "type": "machine-learning-model",
+   "bom-ref": "ai:lama:lama-fp32-c3c0c9e:lama_fp32.onnx",
+   "name": "lama_fp32.onnx",
+   "version": "lama-fp32-c3c0c9e",
+   "group": "LaMa (big-lama)",
+   "author": "Samsung AI Center Moscow (Suvorov et al.)",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "1faef5301d78db7dda502fe59966957ec4b79dd64e16f03ed96913c7a4eb68d6"
+    }
+   ],
+   "licenses": [
+    {
+     "expression": "Apache-2.0"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "distribution",
+     "url": "https://huggingface.co/Carve/LaMa-ONNX/resolve/c3c0c9e468934d62e79c329e35d82dd09ff8c444/lama_fp32.onnx"
+    },
+    {
+     "type": "website",
+     "url": "https://huggingface.co/Carve/LaMa-ONNX/tree/c3c0c9e468934d62e79c329e35d82dd09ff8c444"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "ai-manifest"
+    },
+    {
+     "name": "vho:delivery",
+     "value": "downloaded on first use after user confirmation; never bundled"
+    },
+    {
+     "name": "vho:kind",
+     "value": "model-weights"
+    },
+    {
+     "name": "vho:bytes",
+     "value": "208044816"
+    },
+    {
+     "name": "vho:policy",
+     "value": "review"
+    },
+    {
+     "name": "vho:acknowledged",
+     "value": "2026-10-28 owner decision: LaMa, BiRefNet (portrait/general) and DDColor stay in the app. The research-only training-data question (Places365 / P3M-10k, TR-humans / DIS5K / ImageNet) is an accepted, owner-decided risk, like YuNet/GFPGAN; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
+    },
+    {
+     "name": "vho:training-data",
+     "value": "big-lama is reported upstream as trained on Places365-Challenge (Places dataset terms: non-commercial research/education). Accepted risk (owner decision 2026-10-28), same as YuNet/GFPGAN. To be re-verified from the official repository before release."
+    }
+   ]
+  },
+  {
+   "type": "machine-learning-model",
+   "bom-ref": "ai:birefnet-portrait:portrait-fp16-dd7167f:birefnet_portrait_fp16.onnx",
+   "name": "birefnet_portrait_fp16.onnx",
+   "version": "portrait-fp16-dd7167f",
+   "group": "BiRefNet portrait",
+   "author": "Peng Zheng et al. (BiRefNet)",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "4c05930c0b6f1418d02eb1de81c46fe37638ba54f5a93adeb5c674521db10110"
+    }
+   ],
+   "licenses": [
+    {
+     "expression": "MIT"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "distribution",
+     "url": "https://huggingface.co/onnx-community/BiRefNet-portrait-ONNX/resolve/dd7167f6a8b54ff7efc29a4c988938d79866464f/onnx/model_fp16.onnx"
+    },
+    {
+     "type": "website",
+     "url": "https://huggingface.co/onnx-community/BiRefNet-portrait-ONNX/tree/dd7167f6a8b54ff7efc29a4c988938d79866464f"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "ai-manifest"
+    },
+    {
+     "name": "vho:delivery",
+     "value": "downloaded on first use after user confirmation; never bundled"
+    },
+    {
+     "name": "vho:kind",
+     "value": "model-weights"
+    },
+    {
+     "name": "vho:bytes",
+     "value": "489666272"
+    },
+    {
+     "name": "vho:policy",
+     "value": "review"
+    },
+    {
+     "name": "vho:acknowledged",
+     "value": "2026-10-28 owner decision: LaMa, BiRefNet (portrait/general) and DDColor stay in the app. The research-only training-data question (Places365 / P3M-10k, TR-humans / DIS5K / ImageNet) is an accepted, owner-decided risk, like YuNet/GFPGAN; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
+    },
+    {
+     "name": "vho:training-data",
+     "value": "Model card: P3M-10k (except TE-P3M-500-P), TR-humans (schirrmacher/humans), TE-P3M-500-P. Accepted risk (owner decision 2026-10-28), same as YuNet/GFPGAN. To be re-verified from the official repository before release."
+    }
+   ]
+  },
+  {
+   "type": "machine-learning-model",
+   "bom-ref": "ai:birefnet-general:general-fp16-534d3c8:birefnet_general_fp16.onnx",
+   "name": "birefnet_general_fp16.onnx",
+   "version": "general-fp16-534d3c8",
+   "group": "BiRefNet (general)",
+   "author": "Peng Zheng et al. (BiRefNet)",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "3654c741eb80bd926ada8fed1713b506ccf8d30eb1f6487e87eb9f234f33df09"
+    }
+   ],
+   "licenses": [
+    {
+     "expression": "MIT"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "distribution",
+     "url": "https://huggingface.co/onnx-community/BiRefNet-ONNX/resolve/534d3c82d3bb8b2f0867db6dfbc3a525b8e42f67/onnx/model_fp16.onnx"
+    },
+    {
+     "type": "website",
+     "url": "https://huggingface.co/onnx-community/BiRefNet-ONNX/tree/534d3c82d3bb8b2f0867db6dfbc3a525b8e42f67"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "ai-manifest"
+    },
+    {
+     "name": "vho:delivery",
+     "value": "downloaded on first use after user confirmation; never bundled"
+    },
+    {
+     "name": "vho:kind",
+     "value": "model-weights"
+    },
+    {
+     "name": "vho:bytes",
+     "value": "489666272"
+    },
+    {
+     "name": "vho:policy",
+     "value": "review"
+    },
+    {
+     "name": "vho:acknowledged",
+     "value": "2026-10-28 owner decision: LaMa, BiRefNet (portrait/general) and DDColor stay in the app. The research-only training-data question (Places365 / P3M-10k, TR-humans / DIS5K / ImageNet) is an accepted, owner-decided risk, like YuNet/GFPGAN; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
+    },
+    {
+     "name": "vho:training-data",
+     "value": "Model card: DIS-TR (DIS5K), validated on DIS-TEs/DIS-VD. Accepted risk (owner decision 2026-10-28), same as YuNet/GFPGAN. To be re-verified from the official repository before release."
+    }
+   ]
+  },
+  {
+   "type": "machine-learning-model",
+   "bom-ref": "ai:ddcolor:qaihub-0.65.0-float:ddcolor.onnx",
+   "name": "ddcolor.onnx",
+   "version": "qaihub-0.65.0-float",
+   "group": "DDColor paper_tiny",
+   "author": "Xiaoyang Kang et al. (DDColor, DAMO Academy)",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "310d0c66a38cd8cfd7d9d93fdb5500fef79d584fe59e25a417aea5915a6b3733"
+    }
+   ],
+   "licenses": [
+    {
+     "expression": "Apache-2.0"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "distribution",
+     "url": "https://qaihub-public-assets.s3.us-west-2.amazonaws.com/qai-hub-models/models/ddcolor/releases/v0.65.0/ddcolor-onnx-float.zip"
+    },
+    {
+     "type": "website",
+     "url": "https://huggingface.co/qualcomm/DDColor (qai-hub-models v0.65.0)"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "ai-manifest"
+    },
+    {
+     "name": "vho:delivery",
+     "value": "downloaded on first use after user confirmation; never bundled"
+    },
+    {
+     "name": "vho:kind",
+     "value": "model-weights"
+    },
+    {
+     "name": "vho:bytes",
+     "value": "2750675"
+    },
+    {
+     "name": "vho:policy",
+     "value": "review"
+    },
+    {
+     "name": "vho:acknowledged",
+     "value": "2026-10-28 owner decision: LaMa, BiRefNet (portrait/general) and DDColor stay in the app. The research-only training-data question (Places365 / P3M-10k, TR-humans / DIS5K / ImageNet) is an accepted, owner-decided risk, like YuNet/GFPGAN; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
+    },
+    {
+     "name": "vho:training-data",
+     "value": "DDColor is reported upstream as trained on ImageNet (ImageNet terms: non-commercial research/education). Accepted risk (owner decision 2026-10-28), same as YuNet/GFPGAN. To be re-verified from the official repository before release."
+    }
+   ]
+  },
+  {
+   "type": "file",
+   "bom-ref": "ai:ddcolor:qaihub-0.65.0-float:ddcolor.data",
+   "name": "ddcolor.data",
+   "version": "qaihub-0.65.0-float",
+   "group": "DDColor paper_tiny weights",
+   "author": "Xiaoyang Kang et al. (DDColor, DAMO Academy)",
+   "scope": "optional",
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "5b65cb3eab9fa4ae9ecacd539b148fa51157655732022913b1cf47346f93940c"
+    }
+   ],
+   "licenses": [
+    {
+     "expression": "Apache-2.0"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "distribution",
+     "url": "https://qaihub-public-assets.s3.us-west-2.amazonaws.com/qai-hub-models/models/ddcolor/releases/v0.65.0/ddcolor-onnx-float.zip"
+    },
+    {
+     "type": "website",
+     "url": "https://huggingface.co/qualcomm/DDColor (qai-hub-models v0.65.0)"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "ai-manifest"
+    },
+    {
+     "name": "vho:delivery",
+     "value": "downloaded on first use after user confirmation; never bundled"
+    },
+    {
+     "name": "vho:kind",
+     "value": "model-weights"
+    },
+    {
+     "name": "vho:bytes",
+     "value": "225312128"
+    },
+    {
+     "name": "vho:policy",
+     "value": "review"
+    },
+    {
+     "name": "vho:acknowledged",
+     "value": "2026-10-28 owner decision: LaMa, BiRefNet (portrait/general) and DDColor stay in the app. The research-only training-data question (Places365 / P3M-10k, TR-humans / DIS5K / ImageNet) is an accepted, owner-decided risk, like YuNet/GFPGAN; to be reviewed with a lawyer. Re-verify the training data from the official repositories before each release."
+    },
+    {
+     "name": "vho:training-data",
+     "value": "DDColor is reported upstream as trained on ImageNet (ImageNet terms: non-commercial research/education). Accepted risk (owner decision 2026-10-28), same as YuNet/GFPGAN. To be re-verified from the official repository before release."
+    }
+   ]
+  },
+  {
    "type": "file",
    "bom-ref": "asset:font-outfit",
    "name": "Outfit (variable, wght 100-900)",
@@ -24791,6 +25091,11 @@
     "ai:photo-x4:rwp4-95e9cd5:4xRealWebPhoto_v4_fp32_opset17.onnx",
     "ai:face-restore:yunet2023mar-gfpgan14w16:face_detection_yunet_2023mar.onnx",
     "ai:face-restore:yunet2023mar-gfpgan14w16:GFPGANv1.4-w16.onnx",
+    "ai:lama:lama-fp32-c3c0c9e:lama_fp32.onnx",
+    "ai:birefnet-portrait:portrait-fp16-dd7167f:birefnet_portrait_fp16.onnx",
+    "ai:birefnet-general:general-fp16-534d3c8:birefnet_general_fp16.onnx",
+    "ai:ddcolor:qaihub-0.65.0-float:ddcolor.onnx",
+    "ai:ddcolor:qaihub-0.65.0-float:ddcolor.data",
     "asset:font-outfit",
     "asset:leaflet",
     "asset:material-icons-paths",

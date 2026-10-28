@@ -8,7 +8,7 @@ import {
   nextAttempt, planInput,
 } from "../../src/media/ai-policy.js";
 import { PROBE_SHAPE, probeData, probeModel } from "../../src/media/onnx-tiny.js";
-import { enhanceFraction, photoEnhanceRequest, playbackAction } from "../../src/media/ai-jobs.js";
+import { AI_JOB_KINDS, SMART_KINDS, enhanceFraction, photoEnhanceRequest, playbackAction, smartEditRequest, smartKindOf } from "../../src/media/ai-jobs.js";
 
 test("ai policy: error classes", () => {
   const c = (m) => classifyAiError(new Error(m));
@@ -156,6 +156,25 @@ test("AI photo job request and progress mapping", () => {
   assert.equal(enhanceFraction("run", 0.5, false), 0.5);
   assert.equal(enhanceFraction("run", 1, true), 0.8);
   assert.ok(Math.abs(enhanceFraction("faces", 0.5, true) - 0.9) < 1e-9);
+});
+
+test("smart-edit job requests (A06): model per op, PNG output, suffix, kinds", () => {
+  const r = smartEditRequest({ op: "inpaint", path: "C:\a.jpg", params: { strokes: [] }, inputWidth: 10, inputHeight: 8 });
+  assert.deepEqual(r, {
+    input: "C:\a.jpg", components: ["ort-web", "lama"], op: "inpaint", model: "inpaint", params: { strokes: [] },
+    inputWidth: 10, inputHeight: 8, output: { suffix: "_removed", format: "png", metadata: "keep" },
+  });
+  const cut = smartEditRequest({ op: "matting", path: "a.png", params: { mode: "transparent" }, inputWidth: 1, inputHeight: 1 });
+  assert.deepEqual([cut.components, cut.model, cut.output.suffix], [["ort-web", "birefnet-portrait"], "matting", "_cutout"]);
+  const gen = smartEditRequest({ op: "matting", path: "a.png", params: { mode: "blur" }, inputWidth: 1, inputHeight: 1, background: "general" });
+  assert.deepEqual([gen.components, gen.model, gen.output.suffix], [["ort-web", "birefnet-general"], "matting-general", "_background"]);
+  const col = smartEditRequest({ op: "colorize", path: "a.png", inputWidth: 1, inputHeight: 1, metadata: "strip", background: "general" });
+  assert.deepEqual([col.components, col.output], [["ort-web", "ddcolor"], { suffix: "_colorized", format: "png", metadata: "strip" }]);
+  assert.throws(() => smartEditRequest({ op: "upscale", path: "a.png" }));
+  for (const k of Object.keys(SMART_KINDS)) {
+    assert.ok(AI_JOB_KINDS.includes(k));
+    assert.equal(smartKindOf(SMART_KINDS[k]), k);
+  }
 });
 
 test("AI jobs pause while video/music plays and continue afterwards", () => {

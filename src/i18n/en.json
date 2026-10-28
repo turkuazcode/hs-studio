@@ -1128,6 +1128,47 @@
       "show": "Show the location on a map",
       "noLocation": "No location data",
       "leafletFailed": "Could not load Leaflet"
+    },
+    "smart": {
+      "title": "✨ Smart",
+      "remove": "Remove object",
+      "background": "Background",
+      "colorize": "Colorize",
+      "brush": "Brush size",
+      "eraser": "Eraser",
+      "clear": "Clear",
+      "removeApply": "Remove",
+      "apply": "Apply",
+      "blurAmount": "Blur",
+      "bg": {
+        "transparent": "Transparent",
+        "white": "White",
+        "black": "Black",
+        "color": "Color",
+        "blur": "Blurred"
+      },
+      "saveEditsFirst": "Save or reset rotate / crop / adjust changes before using the smart tools.",
+      "tooLarge": "The photo is large ({w} × {h}). To fit in memory it will be processed at {ow} × {oh}. Continue?",
+      "working": "AI is working…",
+      "done": "Done. Ctrl+Z undoes it; Save copy keeps it.",
+      "cancelled": "Cancelled.",
+      "failed": "Smart edit failed: {error}",
+      "applied": "Applied: {list}",
+      "op": {
+        "inpaint": "object removal",
+        "matting": "background",
+        "colorize": "colorize"
+      },
+      "settings": {
+        "background": "Background removal model",
+        "backgroundHelp": "Used when the experimental background removal is on. “Objects and products” downloads a second model (about 490 MB).",
+        "portrait": "People (portrait)",
+        "general": "Objects and products",
+        "experimental": "Experimental: background removal",
+        "experimentalHelp": "Shows the “Background” tool in the photo editor. It may not work on some devices because of insufficient memory."
+      },
+      "experimental": "Experimental",
+      "bgMemory": "Background removal did not run on this device: not enough memory. This feature is experimental; the photo was not changed."
     }
   },
   "storage": {
