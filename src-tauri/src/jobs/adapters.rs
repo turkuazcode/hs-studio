@@ -18,7 +18,7 @@ use crate::photo::ERR_CANCELLED;
 use crate::photo::ops::{self, BatchJob, Conflict};
 
 pub fn all() -> Vec<Arc<dyn Adapter>> {
-    let mut v: Vec<Arc<dyn Adapter>> = vec![Arc::new(ExportAdapter), Arc::new(PhotoBatchAdapter)];
+    let mut v: Vec<Arc<dyn Adapter>> = vec![Arc::new(ExportAdapter), Arc::new(PhotoBatchAdapter), Arc::new(PhotoEnhanceAdapter)];
     for kind in super::external::AI_KINDS {
         v.push(Arc::new(super::external::ExternalAdapter::new(kind)));
     }
@@ -213,4 +213,100 @@ fn photo_item(ctx: &RunCtx<'_>, job: &BatchJob, idx: i64, src: &Path, reserved: 
             Err(JobError::new(classify_error(&e), e))
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Faithful photo enhance (A05; `photo::enhance`, no model)
+// ---------------------------------------------------------------------------
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct EnhanceRequest {
+    pub input: String,
+    #[serde(default)]
+    pub params: crate::photo::enhance::EnhanceParams,
+    #[serde(default)]
+    pub output: super::external::AiOutput,
+}
+
+pub struct PhotoEnhanceAdapter;
+
+impl Adapter for PhotoEnhanceAdapter {
+    fn kind(&self) -> &'static str {
+        "photo-enhance"
+    }
+
+    fn schema_version(&self) -> u32 {
+        1
+    }
+
+    fn plan(&self, request: &Value, _env: &dyn JobEnv) -> Result<Planned, JobError> {
+        let req: EnhanceRequest = serde_json::from_value(request.clone()).map_err(invalid)?;
+        req.params.validated().map_err(invalid)?;
+        let input = PathBuf::from(&req.input);
+        if !input.is_file() {
+            return Err(JobError::new(code::SOURCE_MISSING, file_name(&input)));
+        }
+        Ok(Planned { title: file_name(&input), inputs: vec![input], model: None })
+    }
+
+    fn run(&self, ctx: &RunCtx<'_>) -> Result<(), JobError> {
+        let req: EnhanceRequest = serde_json::from_value(ctx.request.clone()).map_err(invalid)?;
+        for item in &ctx.pending {
+            if ctx.cancelled() {
+                return Ok(());
+            }
+            ctx.begin_item(item.idx)?;
+            match enhance_item(ctx, &req, item.idx) {
+                Ok(()) => {}
+                Err(e) if e.message.starts_with(ERR_CANCELLED) => ctx.release_item(item.idx)?,
+                Err(e) => ctx.fail_item(item.idx, e.code, &e.message)?,
+            }
+        }
+        Ok(())
+    }
+}
+
+/// decode (upright, source colour space) -> enhance -> A04 encoding (EXIF policy, alpha,
+/// orientation 1, source ICC kept since the pixels are still in its space) -> reserved name in
+/// the result folder (or the given folder), never overwriting.
+fn enhance_item(ctx: &RunCtx<'_>, req: &EnhanceRequest, idx: i64) -> Result<(), JobError> {
+    use super::external::{clean_suffix, encode_output};
+    let src = Path::new(&req.input);
+    let decoded = crate::photo::decode::decode(src, None).map_err(|e| JobError::new(classify_error(&e), e))?;
+    let input = decoded.image.to_rgba32f();
+    let out = crate::photo::enhance::enhance(&input, req.params, &|| ctx.cancelled(), &|p| ctx.progress(Some(p * 0.9)))
+        .map_err(|e| if e.starts_with(ERR_CANCELLED) { JobError::new(code::FAILED, e) } else { JobError::new(classify_error(&e), e) })?;
+    drop(input);
+    let (w, h) = (out.width(), out.height());
+    let rgba: Vec<u8> = out.as_raw().iter().map(|v| (v.clamp(0.0, 1.0) * 255.0 + 0.5) as u8).collect();
+    drop(out);
+    let dir = match &req.output.dir {
+        Some(d) => PathBuf::from(d),
+        None => ctx.env().results_dir().ok_or_else(|| JobError::new(code::FAILED, "no result folder"))?,
+    };
+    std::fs::create_dir_all(&dir).map_err(|e| JobError::new(classify_error(&e.to_string()), e.to_string()))?;
+    ctx.check_space(&dir, rgba.len() as u64 + (16 << 20))?;
+    let software = format!("HS Studio {} faithful enhance", env!("CARGO_PKG_VERSION"));
+    let enc = encode_output(src, rgba, w, h, &req.output, &software, decoded.icc.as_deref())?;
+    let stem = src.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| "photo".into());
+    let suffix = clean_suffix(Some(req.output.suffix.as_deref().unwrap_or("_enhanced")));
+    let wanted = dir.join(format!("{stem}{suffix}.{}", enc.ext));
+    let final_name = ctx.reserve(idx, &wanted, false)?;
+    let temp = ctx.temp_dir(&parent_dir(&final_name))?;
+    let part = temp.join(format!("{idx}.part"));
+    write_synced(&part, &enc.bytes).map_err(|e| JobError::new(classify_error(&e), e))?;
+    let placed = place_no_clobber(&part, &final_name).map_err(|e| JobError::new(code::FAILED, e))?;
+    ctx.progress(Some(1.0));
+    let source = ctx.pending.iter().find(|p| p.idx == idx);
+    let extra = serde_json::json!({
+        "recipe": ctx.request,
+        "source": { "size": source.and_then(|p| p.size), "fingerprint": source.and_then(|p| p.fp.clone()) },
+        "output": {
+            "width": w, "height": h, "format": enc.format, "bitDepth": 8,
+            "iccCopied": decoded.icc.is_some(), "alpha": enc.alpha, "orientation": 1, "metadata": req.output.metadata,
+        },
+        "app": env!("CARGO_PKG_VERSION"),
+    });
+    ctx.complete_item_with(idx, &placed, enc.bytes.len() as u64, extra)
 }

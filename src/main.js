@@ -25,6 +25,7 @@ import { createMpvEngine } from "./media/engine/mpv-engine.js";
 import { createLoader } from "./media/loader.js";
 import { createAiJobRunner } from "./media/ai-jobs.js";
 import { createPhotoAi } from "./media/photo-ai.js";
+import { createPhotoEnhance } from "./media/photo-enhance.js";
 import { createPhotoViewer } from "./media/photo-viewer.js";
 import { createSnapshot } from "./media/snapshot.js";
 import { createSubtitles } from "./media/subtitles.js";
@@ -131,6 +132,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   app.timeline = createTimeline(app);
   app.snapshot = createSnapshot(app);
   app.photoAi = createPhotoAi(app);
+  app.photoEnhance = createPhotoEnhance(app);
   app.audioFx = createAudioFx(app);
 
   // UI
