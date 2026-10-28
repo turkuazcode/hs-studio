@@ -47,6 +47,12 @@ export const BASE_FIELDS = {
   "ai.sharpLevel": { type: "number", min: 0, max: 3, integer: true, default: 2 },
   "ai.contrastBoost": { type: "number", min: 0, max: 40, integer: true, default: 8 },
 
+  // A05 faithful photo enhance: last used panel values (slider 0..100; defaults = recommended)
+  "photoEnhance.sharpness": { type: "number", min: 0, max: 100, integer: true, default: 40 },
+  "photoEnhance.shadow": { type: "number", min: 0, max: 100, integer: true, default: 33 },
+  "photoEnhance.scale": { type: "enum", values: [1, 2, 4], default: 2 },
+  "photoEnhance.grain": { type: "boolean", default: false },
+
   // Görünüm
   "appearance.theme": { type: "enum", values: ["dark", "light", "contrast"], default: "dark" },
   "appearance.accent": { type: "color", default: "#e11d48" },
