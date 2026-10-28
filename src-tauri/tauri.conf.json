@@ -1,8 +1,9 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "VHO",
+  "productName": "HS Studio",
+  "mainBinaryName": "HS Studio",
   "version": "0.1.0",
-  "identifier": "com.vho.app",
+  "identifier": "com.turkuazcode.hsstudio",
   "build": {
     "frontendDist": "../src"
   },
@@ -10,7 +11,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "VHO - Video H Oynatıcısı",
+        "title": "HS Studio",
         "width": 1100,
         "height": 680,
         "minWidth": 640,
@@ -40,10 +41,10 @@
     "active": true,
     "targets": "all",
     "fileAssociations": [
-      {"ext": ["mp4", "m4v", "mkv", "avi", "mov", "wmv", "webm", "flv", "ts", "m2ts", "mts", "3gp", "3g2", "mpg", "mpeg", "vob", "ogv", "asf", "divx", "f4v"], "name": "VHO Video", "description": "Video dosyası", "role": "Viewer"},
-      {"ext": ["mp3", "flac", "wav", "m4a", "aac", "ogg", "oga", "opus", "wma"], "name": "VHO Audio", "description": "Ses dosyası", "role": "Viewer"},
-      {"ext": ["jpg", "jpeg", "jpe", "jfif", "png", "webp", "gif", "bmp", "avif", "heic", "heif", "tif", "tiff", "dng", "cr2", "cr3", "nef", "arw", "orf", "rw2", "raf"], "name": "VHO Image", "description": "Görsel dosyası", "role": "Viewer"},
-      {"ext": ["srt", "vtt", "ass", "ssa"], "name": "VHO Subtitle", "description": "Altyazı dosyası", "role": "Viewer"}
+      {"ext": ["mp4", "m4v", "mkv", "avi", "mov", "wmv", "webm", "flv", "ts", "m2ts", "mts", "3gp", "3g2", "mpg", "mpeg", "vob", "ogv", "asf", "divx", "f4v"], "name": "HS Studio Video", "description": "Video dosyası", "role": "Viewer"},
+      {"ext": ["mp3", "flac", "wav", "m4a", "aac", "ogg", "oga", "opus", "wma"], "name": "HS Studio Audio", "description": "Ses dosyası", "role": "Viewer"},
+      {"ext": ["jpg", "jpeg", "jpe", "jfif", "png", "webp", "gif", "bmp", "avif", "heic", "heif", "tif", "tiff", "dng", "cr2", "cr3", "nef", "arw", "orf", "rw2", "raf"], "name": "HS Studio Image", "description": "Görsel dosyası", "role": "Viewer"},
+      {"ext": ["srt", "vtt", "ass", "ssa"], "name": "HS Studio Subtitle", "description": "Altyazı dosyası", "role": "Viewer"}
     ],
     "icon": [
       "icons/32x32.png",

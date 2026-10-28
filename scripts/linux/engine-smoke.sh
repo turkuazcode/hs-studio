@@ -7,7 +7,7 @@
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 BIN=${VHO_EXE:-$ROOT/src-tauri/target/release/vho}
-# Staged dev build: ffmpeg next to the binary. Installed deb: <resources>/mpv/ (/usr/lib/VHO/mpv)
+# Staged dev build: ffmpeg next to the binary. Installed deb: <resources>/mpv/ (under /usr/lib/<product name>/)
 FF=${VHO_FFMPEG:-$(dirname "$BIN")/ffmpeg}
 MODE=${1:-both}
 TMP=$(mktemp -d /tmp/vho-smoke-XXXXXX)

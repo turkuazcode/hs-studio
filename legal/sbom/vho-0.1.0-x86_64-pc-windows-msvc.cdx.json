@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:ba5be71a-efed-5d16-94fa-ec8be3005469",
+ "serialNumber": "urn:uuid:77c63cb1-790e-5587-baff-3d2c6e07bf8a",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-28T09:01:38Z",
+  "timestamp": "2026-10-28T09:28:25Z",
   "tools": {
    "components": [
     {
@@ -17,9 +17,9 @@
   "component": {
    "type": "application",
    "bom-ref": "vho",
-   "name": "VHO",
+   "name": "HS Studio",
    "version": "0.1.0",
-   "description": "VHO (Video H Oynaticisi) - video, photo and music desktop app (Tauri 2)",
+   "description": "HS Studio (formerly VHO) - video, photo and music desktop app (Tauri 2)",
    "licenses": [
     {
      "expression": "Apache-2.0"
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "5b83244c7b70262388736bfdb15e2441a7416264"
+    "value": "c4aa68592f569a469099ad4caca4cad5558d53e3"
    },
    {
     "name": "vho:native-binaries",

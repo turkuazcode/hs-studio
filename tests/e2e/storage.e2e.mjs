@@ -163,7 +163,7 @@ test("storage: a library.db from a newer VHO is not opened or changed", { timeou
     try {
       await platformReady(app);
       await t.test("notice; the app keeps working on the JSON store", async () => {
-        await waitToast(app, /daha yeni bir VHO sürümüne ait/);
+        await waitToast(app, /daha yeni bir HS Studio sürümüne ait/);
         await app.waitFor(`document.querySelectorAll("#recent-files .vho-recent-item").length === 2`, { timeoutMs: 8000 });
         await app.eval(`window.__vhoEngine.openPaths([${JSON.stringify(PHOTO)}]), true`);
         await app.waitFor(`document.getElementById("current-filename").textContent === "photo-a.jpg"`, { timeoutMs: 10000 });

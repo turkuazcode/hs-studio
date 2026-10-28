@@ -42,7 +42,7 @@ npm run tauri dev          # run the app with a dev window
 
 ### Optional: the libmpv engine (Windows)
 
-VHO plays video through an **LGPL build of libmpv + FFmpeg** that lives next to `vho.exe` as
+HS Studio plays video through an **LGPL build of libmpv + FFmpeg** that lives next to `vho.exe` as
 separate DLLs. It is not in the repository. Without it the app falls back to the HTML5 engine
 (and the libmpv E2E tests fail, they are not skipped).
 
@@ -140,7 +140,7 @@ HS Studio under Apache-2.0.
 
 ## 6. Pull requests and issues
 
-- Use the issue templates (bug report needs steps, expected/actual, OS, VHO version/commit and
+- Use the issue templates (bug report needs steps, expected/actual, OS, HS Studio version/commit and
   which engine was active: libmpv or HTML5).
 - **Security problems are not reported in public issues**: see [SECURITY.md](SECURITY.md).
 - The PR template has a checklist (tests run, TR/EN strings, license inventory, platforms tested).

@@ -32,7 +32,7 @@ const DYNAMIC_IDS = new Set([
   "licenses-text", "drop-title", "val-sub-delay", "val-audio-delay", "btn-sub-minus", "btn-sub-plus",
   "btn-audio-minus", "btn-audio-plus",
 ]);
-const NEUTRAL_TEXT = /^(VHO.*|STUDIO|[\d.,:x%+\-−×]+\s*(ms|x)?|[A-Z]|CC|RAW|JPEG \/ PNG \/ WebP…|HEIC \/ HEIF|Histogram|Format:|Türkçe 🇹🇷|English 🇬🇧|Deutsch 🇩🇪|Français 🇫🇷|← \/ →)$/;
+const NEUTRAL_TEXT = /^(VHO.*|HS Studio.*|STUDIO|[\d.,:x%+\-−×]+\s*(ms|x)?|[A-Z]|CC|RAW|JPEG \/ PNG \/ WebP…|HEIC \/ HEIF|Histogram|Format:|Türkçe 🇹🇷|English 🇬🇧|Deutsch 🇩🇪|Français 🇫🇷|← \/ →)$/;
 
 test("i18n coverage: index.html texts and attributes carry keys", () => {
   const html = read("index.html").replace(/<!--[\s\S]*?-->/g, "");

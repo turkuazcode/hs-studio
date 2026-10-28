@@ -39,7 +39,7 @@ npx tauri build --bundles appimage,deb --config src-tauri/packaging/linux/appima
 OUT=$ROOT/src-tauri/target/release/bundle
 MAN=$OUT/package-manifest-linux.txt
 {
-  echo "# VHO Linux package manifest ($(date -u +%FT%TZ))"
+  echo "# HS Studio Linux package manifest ($(date -u +%FT%TZ))"
   (cd "$STAGE" && find mpv legal -type f -print0 | sort -z | xargs -0 sha256sum)
   find "$OUT" -maxdepth 2 -type f \( -name '*.AppImage' -o -name '*.deb' \) -print0 | xargs -0 sha256sum
 } > "$MAN"

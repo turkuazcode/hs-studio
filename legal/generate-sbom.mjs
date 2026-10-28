@@ -402,8 +402,8 @@ function main() {
       timestamp: new Date(timestamp).toISOString().replace(/\.\d{3}Z$/, "Z"),
       tools: { components: [{ type: "application", name: "vho legal/generate-sbom.mjs", description: "cargo metadata + package-lock.json + legal/inventory/*.json + AI manifest" }] },
       component: {
-        type: "application", "bom-ref": "vho", name: "VHO", version: appVersion,
-        description: "VHO (Video H Oynaticisi) - video, photo and music desktop app (Tauri 2)",
+        type: "application", "bom-ref": "vho", name: "HS Studio", version: appVersion,
+        description: "HS Studio (formerly VHO) - video, photo and music desktop app (Tauri 2)",
         licenses: [{ expression: projectLicense }],
         authors: (rust.rootPkg.authors || []).map((a) => ({ name: a })),
       },

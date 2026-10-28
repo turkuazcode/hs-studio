@@ -6,7 +6,7 @@
 
 ## Supported versions
 
-VHO has not had a public release yet. Until it does, only the latest commit of the default branch
+HS Studio has not had a public release yet. Until it does, only the latest commit of the default branch
 receives fixes. This table will list supported release lines once releases exist.
 
 | Version | Supported |
@@ -35,19 +35,19 @@ What to expect (targets, not guarantees, for a small volunteer project): acknowl
 
 ## Scope
 
-In scope: the VHO application and its source in this repository, including
+In scope: the HS Studio application and its source in this repository, including
 
 - Tauri IPC commands and capabilities (file read/write/delete/rename outside what the user chose,
   process execution, path traversal, symlink/UNC tricks);
 - parsing of untrusted media, subtitles, playlists, EXIF/metadata, ZIP archives and URLs;
 - the AI model manager (download URL pinning, SHA-256 verification, extraction);
-- the way VHO launches ffmpeg/ffprobe and loads libmpv;
-- privacy: VHO has no telemetry, and media is never uploaded; anything that sends user data
+- the way HS Studio launches ffmpeg/ffprobe and loads libmpv;
+- privacy: HS Studio has no telemetry, and media is never uploaded; anything that sends user data
   off the machine is a security bug.
 
-Out of scope here (report upstream, but tell us if VHO ships an affected version): vulnerabilities
+Out of scope here (report upstream, but tell us if HS Studio ships an affected version): vulnerabilities
 in libmpv, FFmpeg, the MSYS2 DLLs, WebView2, ONNX Runtime Web or the AI models themselves. The
-exact versions VHO ships are in [legal/inventory/](legal/inventory/) and the SBOM in
+exact versions HS Studio ships are in [legal/inventory/](legal/inventory/) and the SBOM in
 [legal/sbom/](legal/sbom/).
 
 ## For maintainers

@@ -330,7 +330,7 @@ export function createPhotoAi(app) {
   btnDeepCompare?.addEventListener("click", () => showDeepVariant(!deepResult?.showingEnhanced));
   btnDeepSave?.addEventListener("click", async () => {
     if (!deepResult) return;
-    const base = safeFileName((currentFilename.textContent || "VHO").replace(/\.[^.]+$/, ""));
+    const base = safeFileName((currentFilename.textContent || "HS Studio").replace(/\.[^.]+$/, ""));
     // queued job: a copy of the result file (EXIF/alpha kept) next to the photo, never
     // overwriting; the file comes from the queue's own record
     if (deepResult.jobId) {

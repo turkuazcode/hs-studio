@@ -1,7 +1,7 @@
 SOURCE CODE OFFER FOR THE LGPL COMPONENTS / LGPL BİLEŞENLER İÇİN KAYNAK KOD TEKLİFİ
 ===================================================================================
 
-Product: VHO (to be renamed HS Studio), version {{VERSION}}
+Product: HS Studio (formerly VHO), version {{VERSION}}
 Installed by: {{INSTALLER}}
 
 The application itself is licensed under the Apache License 2.0 (LICENSE.txt, NOTICE.txt); its
