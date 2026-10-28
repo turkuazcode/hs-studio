@@ -298,6 +298,7 @@ struct BatchProgressEvent<'a> {
 pub async fn photo_batch(app: AppHandle, job: ops::BatchJob) -> Result<ops::BatchSummary, String> {
     let job_id = job.job_id.clone().unwrap_or_else(|| new_job_id("batch"));
     blocking(move || {
+        require_batch_targets(&app, &job)?;
         let guard = JobGuard::register(&job_id);
         let summary = ops::run_batch(&job, &job_id, &|| guard.cancelled(), &|item, done, total| {
             let _ = app.emit("photo-batch-progress", BatchProgressEvent { job_id: &job_id, item, done, total });
@@ -309,6 +310,26 @@ pub async fn photo_batch(app: AppHandle, job: ops::BatchJob) -> Result<ops::Batc
         Ok(summary)
     })
     .await
+}
+
+/// Q04: a batch writes into the output folder (default: each source's folder) and, for a move,
+/// removes the sources: all of them must be the user's.
+pub(crate) fn require_batch_targets(app: &AppHandle, job: &ops::BatchJob) -> Result<(), String> {
+    use crate::grants::{require, Access};
+    let mut dirs: Vec<PathBuf> = Vec::new();
+    for f in &job.files {
+        let dir = match job.output.dir.as_deref() {
+            Some(d) => PathBuf::from(d),
+            None => Path::new(f).parent().map(Path::to_path_buf).unwrap_or_default(),
+        };
+        if !dirs.contains(&dir) {
+            dirs.push(dir);
+        }
+        if job.output.remove_source {
+            require(app, Path::new(f), Access::Entry)?;
+        }
+    }
+    dirs.iter().try_for_each(|d| require(app, d, Access::IntoFolder))
 }
 
 /// Folder tree for the photo browser: sub-folders of `dir`, or (no `dir`) the

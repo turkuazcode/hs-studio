@@ -203,6 +203,10 @@ export function appEnv({ port, userData, dataDir }) {
     VHO_DISABLE_SYSTEM_CHANGES: "1",
     // libmpv screenshots go to the throw-away profile, never to the user's Pictures folder
     VHO_SCREENSHOT_DIR: join(userData, "screenshots"),
+    // Q04 path grants: tests open their temp copies through test hooks (not a real dialog / OS
+    // drop), so the native "allow changes in this folder?" question is answered yes; the
+    // security test runs with "deny"
+    VHO_GRANT_PROMPT: "allow",
   };
 }
 

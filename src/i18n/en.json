@@ -520,7 +520,8 @@
       "fallbackEncoder": "{name} (no H.264, fallback encoder)"
     },
     "error": {
-      "clipboardBusy": "The clipboard is in use by another app ({detail}). Try again in a moment."
+      "clipboardBusy": "The clipboard is in use by another app ({detail}). Try again in a moment.",
+      "pathNotGranted": "Not allowed to change this location ({detail}). Pick the file or folder in an open or save dialog."
     }
   },
   "effects": {
@@ -1388,6 +1389,7 @@
     "error": {
       "sourceChanged": "The source file changed; the job can only be restarted.",
       "sourceMissing": "The source file was not found.",
+      "pathNotGranted": "The output folder or source is not a location you chose; nothing was done.",
       "modelChanged": "The tool/model version changed; the job can only be restarted.",
       "recipeChanged": "The job settings do not match this version; restart it.",
       "diskFull": "Not enough free disk space.",

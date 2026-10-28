@@ -127,6 +127,8 @@ pub mod code {
     pub const MEMORY: &str = "memory";
     /// AI inference: the model could not be loaded or run (not retried on the CPU)
     pub const MODEL_FAILED: &str = "modelFailed";
+    /// Q04: the output folder / source is not one the user chose
+    pub const PATH_NOT_GRANTED: &str = "pathNotGranted";
 }
 
 impl JobError {
@@ -487,7 +489,30 @@ pub async fn jobs_get(app: AppHandle, id: String) -> Result<JobDetail, JobError>
 
 #[tauri::command]
 pub async fn jobs_submit(app: AppHandle, job: SubmitRequest) -> Result<JobSnapshot, JobError> {
-    blocking(app, move |s| s.submit(&job.kind, job.request, job.title)).await
+    let app2 = app.clone();
+    blocking(app, move |s| {
+        require_job_targets(&app2, &job.kind, &job.request)?;
+        s.submit(&job.kind, job.request, job.title)
+    })
+    .await
+}
+
+/// Q04: where a queued job writes (the same rules as the direct commands). AI jobs write into
+/// the app's own result folder; their copy is checked by `jobs_output_copy`.
+fn require_job_targets(app: &AppHandle, kind: &str, request: &Value) -> Result<(), JobError> {
+    let denied = |e: String| JobError::new(code::PATH_NOT_GRANTED, e);
+    let invalid = |e: serde_json::Error| JobError::new(code::INVALID_REQUEST, e.to_string());
+    match kind {
+        "export" => {
+            let req: crate::actions::ffmpeg::JobRequest = serde_json::from_value(request.clone()).map_err(invalid)?;
+            crate::actions::require_export_target(app, &req).map_err(denied)
+        }
+        "photo-batch" => {
+            let job: crate::photo::ops::BatchJob = serde_json::from_value(request.clone()).map_err(invalid)?;
+            crate::photo::require_batch_targets(app, &job).map_err(denied)
+        }
+        _ => Ok(()),
+    }
 }
 
 #[tauri::command]
@@ -519,7 +544,17 @@ pub async fn jobs_remove(app: AppHandle, id: String) -> Result<bool, JobError> {
 /// A04: copy of a completed item's output next to its source (no overwrite); returns the path.
 #[tauri::command]
 pub async fn jobs_output_copy(app: AppHandle, id: String, idx: i64, dir: Option<String>) -> Result<String, JobError> {
-    blocking(app, move |s| s.copy_output(&id, idx, dir.map(PathBuf::from))).await
+    let app2 = app.clone();
+    blocking(app, move |s| {
+        // Q04: the copy goes into the given folder or next to the source: the user's folder
+        let target = match &dir {
+            Some(d) => PathBuf::from(d),
+            None => s.output_source_dir(&id, idx)?,
+        };
+        crate::grants::require(&app2, &target, crate::grants::Access::IntoFolder).map_err(|e| JobError::new(code::PATH_NOT_GRANTED, e))?;
+        s.copy_output(&id, idx, dir.map(PathBuf::from))
+    })
+    .await
 }
 
 #[tauri::command]

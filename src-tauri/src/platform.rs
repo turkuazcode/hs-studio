@@ -104,6 +104,8 @@ pub fn deliver_files<R: Runtime>(app: &AppHandle<R>, files: Vec<String>) {
     if files.is_empty() {
         return;
     }
+    // handed over by the OS ("Open with", second instance, Finder): the user chose them
+    crate::grants::grant_opened(app, &files);
     let pending = app.state::<PendingOpen>();
     if pending.frontend_ready.load(Ordering::SeqCst) {
         let _ = app.emit(OPEN_FILES_EVENT, files);

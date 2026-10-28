@@ -141,7 +141,7 @@ export function createMediaActions(app) {
         app.library?.recent?.remove?.(p);
         app.bus.emit("file:deleted", { path: p });
       } catch (e) {
-        failed.push(`${basename(p)}: ${errorText(e)}`);
+        failed.push(`${basename(p)}: ${errorText(e, t)}`);
       }
     }
     const deleted = paths.filter((p) => !failed.some((f) => f.startsWith(`${basename(p)}:`)));
@@ -205,7 +205,7 @@ export function createMediaActions(app) {
         app.toast(t("actions.toast.renamed", { name: next.name }));
       });
     } catch (e) {
-      app.toast(errorCode(e) === "exists" ? `⚠️ ${t("actions.rename.exists", { name })}` : `⚠️ ${errorText(e)}`);
+      app.toast(errorCode(e) === "exists" ? `⚠️ ${t("actions.rename.exists", { name })}` : `⚠️ ${errorText(e, t)}`);
     }
   }
 
