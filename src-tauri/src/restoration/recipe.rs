@@ -621,7 +621,8 @@ pub fn video_filter(recipe: &Recipe) -> String {
     match recipe.denoise.filter {
         DenoiseFilter::Off => {}
         DenoiseFilter::Atadenoise => f.push(match s {
-            Strength::Light => "atadenoise".into(),
+            // 5 frames: less ghosting on fast motion than the default 9
+            Strength::Light => "atadenoise=s=5".into(),
             Strength::Medium => "atadenoise=0a=0.04:0b=0.08:1a=0.04:1b=0.08:2a=0.04:2b=0.08".into(),
             Strength::Strong => "atadenoise=0a=0.08:0b=0.16:1a=0.08:1b=0.16:2a=0.08:2b=0.16:s=15".into(),
         }),

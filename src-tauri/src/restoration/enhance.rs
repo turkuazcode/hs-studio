@@ -87,7 +87,24 @@ pub fn reference_filter(recipe: &Recipe) -> String {
 /// Video bit rate for the output size (generous: the point is to keep detail).
 pub fn video_kbps(w: u32, h: u32, fps: f64) -> u32 {
     let fps = if fps.is_finite() && fps > 0.0 { fps.min(60.0) } else { 30.0 };
-    ((w as f64 * h as f64 * fps * 0.12 / 1000.0) as u32).clamp(1500, 24000)
+    ((w as f64 * h as f64 * fps * 0.25 / 1000.0) as u32).clamp(2000, 40000)
+}
+
+/// Bit rate of the run: never below 1.6x the source's average rate (scaled by the area change).
+/// Measured on 2011 phone clips: at half the source rate h264_mf smeared foliage into blocks;
+/// at ~1.6x the result matched the source.
+pub fn target_kbps(recipe: &Recipe, report: &SourceReport) -> u32 {
+    let (w, h) = (recipe.scale.width, recipe.scale.height);
+    let base = video_kbps(w, h, out_fps(recipe, report));
+    let src = match (report.duration, report.video.as_ref()) {
+        (Some(d), Some(v)) if d > 0.5 && v.width > 0 && v.height > 0 => {
+            let avg = report.source.size as f64 * 8.0 / d / 1000.0;
+            let area = (w as f64 * h as f64) / (v.display_width.max(1) as f64 * v.display_height.max(1) as f64);
+            (avg * 1.6 * area.max(1.0)) as u32
+        }
+        _ => 0,
+    };
+    base.max(src).min(40000)
 }
 
 fn secs(t: f64) -> String {
@@ -132,6 +149,23 @@ fn out_fps(recipe: &Recipe, report: &SourceReport) -> f64 {
     recipe.output.fps.map(|r| r.value()).or_else(|| report.video.as_ref().and_then(|v| v.frame_rate.measured_fps)).unwrap_or(30.0)
 }
 
+/// Media Foundation H.264 in quality mode for this job: measured on 2011 phone clips (VFR, fast
+/// pans), its bit-rate modes (VBR and CBR, also at 1.6x the source rate) starved some frames into
+/// blurred blocks while `-rate_control quality -quality 65` matched the source (about 2.3x its
+/// size). Other encoders take the generous `target_kbps`.
+pub const MF_QUALITY: u32 = 65;
+
+pub fn codec_args(encoder: &VideoEncoder, kbps: u32) -> Vec<String> {
+    if encoder.name == "h264_mf" {
+        return ["-c:v", "h264_mf", "-pix_fmt", encoder.pix_fmt, "-rate_control", "quality", "-quality"]
+            .into_iter()
+            .map(String::from)
+            .chain([MF_QUALITY.to_string()])
+            .collect();
+    }
+    ffmpeg::video_codec_args(encoder, kbps, false)
+}
+
 /// ffmpeg arguments (after the global options of `run_ffmpeg`).
 pub fn ffmpeg_args(input: &Path, recipe: &Recipe, report: &SourceReport, encoder: &VideoEncoder, output: &Path, preview: bool) -> Vec<String> {
     let mut a: Vec<String> = vec!["-noautorotate".into()];
@@ -161,7 +195,7 @@ pub fn ffmpeg_args(input: &Path, recipe: &Recipe, report: &SourceReport, encoder
         a.extend(["-map_metadata".into(), "0".into(), "-map_chapters".into(), "0".into()]);
     }
     a.extend(fps_args(recipe));
-    a.extend(ffmpeg::video_codec_args(encoder, video_kbps(w, h, out_fps(recipe, report)), false));
+    a.extend(codec_args(encoder, target_kbps(recipe, report)));
     a.extend(color_tags(recipe));
     if preview {
         a.extend(["-movflags".into(), "+faststart".into()]);

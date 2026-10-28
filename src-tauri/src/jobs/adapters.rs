@@ -409,8 +409,7 @@ fn video_enhance_item(ctx: &RunCtx<'_>, req: &VideoEnhanceRequest, idx: i64) -> 
     };
     std::fs::create_dir_all(&dir).map_err(|e| JobError::new(classify_error(&e.to_string()), e.to_string()))?;
     let secs = enhance::expected_seconds(&recipe, &report, req.preview);
-    let fps = recipe.output.fps.map(|r| r.value()).unwrap_or(30.0);
-    let est = (enhance::video_kbps(recipe.scale.width, recipe.scale.height, fps) as f64 * 1000.0 / 8.0 * secs * 1.3) as u64;
+    let est = (enhance::target_kbps(&recipe, &report) as f64 * 1000.0 / 8.0 * secs * 1.3) as u64;
     ctx.check_space(&dir, est + (64 << 20))?;
     let (stem, ext) = enhance::output_name(&input, req.preview);
     let wanted = unique_path(&dir, &stem, "", ext, |p| p.exists());

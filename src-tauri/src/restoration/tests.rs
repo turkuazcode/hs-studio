@@ -674,7 +674,8 @@ fn enhance_recipe_follows_the_dialog_choices() {
     // defaults: light block clean-up + temporal denoise + light cas, source size
     let r = enhance::build_recipe(&rep, EnhanceOptions::default(), None, None).unwrap();
     let c = chain(&r);
-    assert!(c.starts_with("deblock=filter=weak:block=8,atadenoise,scale=320:240:flags=lanczos,setsar=1,cas=strength=0.3"), "{c}");
+    assert!(c.starts_with("deblock=filter=weak:block=8,atadenoise=s=5,scale=320:240:flags=lanczos,setsar=1,cas=strength=0.3"), "{c}");
+    assert!(enhance::target_kbps(&r, &rep) >= 2000, "bit rate floor");
     assert_ne!(assess(&r, &rep).status, Status::Blocked, "only notices (untagged colour is assumed)");
     assert!(enhance::reference_filter(&r).starts_with("scale=320:240:flags=lanczos,setsar=1"), "reference has no clean-up");
 
@@ -783,4 +784,34 @@ fn enhance_speed_one_minute_480p() {
     let t0 = std::time::Instant::now();
     enhance::render(&t, &clip, &r2, &rep, &enc, &d.0.join("min2.mkv"), false, &|| false, |_| {}).unwrap();
     println!("enhance 60 s 854x480 -> {}x{} ({}): {:.1} s", r2.scale.width, r2.scale.height, enc.name, t0.elapsed().as_secs_f64());
+}
+
+/// Manual quality check on a user's own clip (never in the repository):
+/// `VHO_ENHANCE_TRIAL_IN=<file> VHO_ENHANCE_TRIAL_OUT=<folder> cargo test --release --lib enhance_trial -- --ignored --nocapture`
+/// Renders the default choices and ×2 with the production code path. An undecided field order is
+/// answered "progressive" (phone recordings).
+#[test]
+#[ignore]
+fn enhance_trial_on_a_given_clip() {
+    let (Ok(input), Ok(out_dir)) = (std::env::var("VHO_ENHANCE_TRIAL_IN"), std::env::var("VHO_ENHANCE_TRIAL_OUT")) else {
+        println!("set VHO_ENHANCE_TRIAL_IN / VHO_ENHANCE_TRIAL_OUT");
+        return;
+    };
+    let t = tools();
+    let input = PathBuf::from(input);
+    let rep = probe(&t, &input);
+    let v = rep.video.as_ref().unwrap();
+    println!("field order {:?} (needs choice {}), fps {:?}, rate mode {:?}", v.field_order.value, v.field_order.needs_choice, v.frame_rate.measured_fps, v.frame_rate.mode);
+    let fo = v.field_order.needs_choice.then_some(FieldOrder::Progressive);
+    let enc = crate::actions::ffmpeg::default_encoder();
+    let stem = input.file_stem().unwrap().to_string_lossy().into_owned();
+    for (tag, opts) in [("default", EnhanceOptions::default()), ("x2", EnhanceOptions { upscale: true, ..Default::default() })] {
+        let r = enhance::build_recipe(&rep, opts, None, fo).unwrap();
+        let a = assess(&r, &rep);
+        assert_ne!(a.status, Status::Blocked, "{a:?}");
+        let out = PathBuf::from(&out_dir).join(format!("{stem}_{tag}.mkv"));
+        let t0 = std::time::Instant::now();
+        enhance::render(&t, &input, &r, &rep, &enc, &out, false, &|| false, |_| {}).unwrap();
+        println!("{tag}: {} in {:.1} s; notices {:?}; chain {}", out.display(), t0.elapsed().as_secs_f64(), a.notices, video_filter(&r));
+    }
 }
