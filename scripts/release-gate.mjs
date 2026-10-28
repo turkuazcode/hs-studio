@@ -65,11 +65,20 @@ export const TARGETS = {
         reason: "Arka plan kaldırma (BiRefNet) deneysel ve varsayılan olarak gizli; referans cihazda WASM bellek sınırı (A06). Alfa notlarında desteklenmiyor yazılır.",
         scope: "Yalnızca arka plan kaldırma testleri; nesne silme ve renklendirme testleri zorunlu.",
       },
+      {
+        id: "legacy-photo-ai-out-of-scope",
+        layer: "quality",
+        kind: "fail",
+        test: /^legacy experimental photo AI \(vho-x4, vho-x4-faces; out of the Windows alpha\)/,
+        reason: "Eski nöral fotoğraf iyileştirme bu sürümde kapalı (giriş noktası yok). Başarısız sonucu kayıtta kalır: p10-alpha PSNR 32,89 dB, taban 36,95 dB. Özellik yeniden açılmadan önce çözülmeli.",
+        scope: "Yalnızca eski vho-x4 / vho-x4-faces profillerinin taban karşılaştırması; Lanczos ve klasik (A05) profilleri zorunlu.",
+      },
     ],
     // visible in the product but not part of what this target promises; listed in the report
     outOfScope: [
       { id: "L04", reason: "Ağ akışı ve DLNA: gerçek TV/hoparlör ile doğrulanmadı; alfa notlarında “test edilmedi” yazılır. Chromecast yok." },
       { id: "V02, V04–V06", reason: "Model tabanlı video iyileştirme ertelendi (kullanıcı kararı). V03 modelsiz yol kapsamda." },
+      { id: "Eski nöral fotoğraf AI", reason: "DAT-2 ×4 + GFPGAN yolu kapatıldı (src/core/scope.js, kullanıcı kararı 2026-10-28): panel bölümü, E kısayolu ve denetleyici yok. Varsayılan iyileştirme modelsiz A05." },
     ],
     manual: ["win-clean-install", "win-uninstall", "win-upgrade", "win-file-associations", "win-os-actions", "win-screen-reader"],
   },
@@ -185,14 +194,23 @@ export function checkLayer(layer, r, target, ctx = {}) {
   if (!r.platform) problems.push("platform bilgisi yok");
   else if (ctx.platformKey && r.platform !== ctx.platformKey) problems.push(`platform ${r.platform}, beklenen ${ctx.platformKey}`);
   if (r.full !== true) problems.push("katmanın tamamı değil (dosya listesi / ad filtresi ya da kayıt yok)");
-  if (r.exitCode !== 0) problems.push(`çıkış kodu ${r.exitCode ?? "kayıtlı değil"}`);
   const n = (k) => Number(r[k] ?? 0);
   if (!(n("pass") > 0)) problems.push("hiç test geçmedi (0 test)");
-  if (n("fail") > 0) problems.push(`${n("fail")} başarısız`);
   if (n("cancelled") > 0) problems.push(`${n("cancelled")} iptal`);
+  const excepted = new Set();
+  // a failure passes only when a declared out-of-scope exception names that very test
+  const failed = r.failed ?? [];
+  if (n("fail") + n("cancelled") !== failed.length) problems.push(`${n("fail")} başarısız sayıldı, ${failed.length} tanesi adıyla listelenmiş`);
+  let failuresExcused = n("fail") > 0 && n("cancelled") === 0;
+  for (const t of failed) {
+    const ex = (target.exceptions ?? []).find((e) => e.layer === layer && e.kind === "fail" && e.test.test(t.name));
+    if (ex) excepted.add(ex.id);
+    else { failuresExcused = false; problems.push(`başarısız: ${t.name}${t.error ? ` — ${t.error}` : ""}`); }
+  }
+  // the runner exits 1 on any failure: accepted only when every failure is an excepted one
+  if (r.exitCode !== 0 && !(failuresExcused && r.exitCode === 1)) problems.push(`çıkış kodu ${r.exitCode ?? "kayıtlı değil"}`);
 
   // every skip / todo must be listed and covered by a declared exception of this target
-  const excepted = new Set();
   for (const [kind, count, list] of [["skip", n("skip"), r.skipped ?? []], ["todo", n("todo"), r.todos ?? []]]) {
     if (count !== list.length) problems.push(`${count} ${kind} sayıldı, ${list.length} tanesi adıyla listelenmiş`);
     for (const t of list) {

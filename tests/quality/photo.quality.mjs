@@ -199,9 +199,29 @@ test("photo profiles: every sample, equal output size, finite output", { timeout
   t.diagnostic(`${results.length} sample/profile results; red flags: ${results.filter((r) => r.flags.length).map((r) => `${r.id}/${r.profile}: ${r.flags.join("+")}`).join("; ") || "none"}`);
 });
 
+// Profiles of the legacy neural photo enhancer: out of the Windows alpha scope (src/core/scope.js),
+// compared in a test of their own so their result stays on record without hiding the others'.
+const LEGACY = new Set(["vho-x4", "vho-x4-faces"]);
+let section = null;
+
+/** Baseline problems of the section keys whose profile passes `keep`. */
+function baselineProblems(keep) {
+  const pick = (o) => Object.fromEntries(Object.entries(o ?? {}).filter(([k]) => keep(k.split("|")[1])));
+  const current = pick(section);
+  const stored = loadBaseline().photo?.metrics;
+  // ROI metrics share the tolerance of their base metric
+  const flat = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Object.fromEntries(Object.entries(v).map(([m, x]) => [m.replace(/^roi\d+\./, ""), x]))]));
+  const problems = stored ? compareSection(flat(pick(stored)), flat(current)) : compareSection(null, current);
+  for (const [k, v] of Object.entries(current)) {
+    const old = stored?.[k]?.flags ?? "";
+    for (const f of v.flags.split(",").filter(Boolean)) if (!old.split(",").includes(f)) problems.push(`${k}: new red flag ${f}`);
+  }
+  return problems;
+}
+
 test("photo metrics within tolerance of the committed baseline; no new red flag", (t) => {
   if (!complete) return t.skip("the profile run did not finish: the baseline is neither compared nor rewritten");
-  const section = {};
+  section = {};
   for (const r of results) {
     section[`${r.id}|${r.profile}`] = { ...roundAll(r.metrics), ...Object.fromEntries(r.rois.flatMap((x, i) =>
       Object.entries(x).filter(([k]) => k !== "kind").map(([k, v]) => [`roi${i}.${k}`, Number(v.toFixed(4))]))), flags: r.flags.join(",") };
@@ -216,14 +236,14 @@ test("photo metrics within tolerance of the committed baseline; no new red flag"
     t.diagnostic("baseline section 'photo' rewritten");
     return;
   }
-  const stored = loadBaseline().photo?.metrics;
-  // ROI metrics share the tolerance of their base metric
-  const flat = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Object.fromEntries(Object.entries(v).map(([m, x]) => [m.replace(/^roi\d+\./, ""), x]))]));
-  const problems = stored ? compareSection(flat(stored), flat(section)) : compareSection(null, section);
-  for (const [k, v] of Object.entries(section)) {
-    const old = stored?.[k]?.flags ?? "";
-    for (const f of v.flags.split(",").filter(Boolean)) if (!old.split(",").includes(f)) problems.push(`${k}: new red flag ${f}`);
-  }
+  const problems = baselineProblems((profile) => !LEGACY.has(profile));
+  assert.deepEqual(problems, [], problems.join("\n"));
+});
+
+test("legacy experimental photo AI (vho-x4, vho-x4-faces; out of the Windows alpha) within tolerance of the baseline", (t) => {
+  if (!complete || UPDATE) return t.skip(UPDATE ? "baseline update run" : "the profile run did not finish");
+  if (![...LEGACY].some((p) => PROFILES.includes(p))) return t.skip("legacy profiles not selected (VHO_QUALITY_PROFILES)");
+  const problems = baselineProblems((profile) => LEGACY.has(profile));
   assert.deepEqual(problems, [], problems.join("\n"));
 });
 
