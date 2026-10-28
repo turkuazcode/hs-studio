@@ -108,7 +108,7 @@ Arka uç satırlarının tek kaynağı `src-tauri/src/capabilities.rs` → `SUPP
 | A/B karşılaştırma (`video.compare`) | destekli/testli (HTML5 motoru) | destekli/test bekliyor | destekli/test bekliyor | libmpv'de devre dışı + neden; ön yüz girdisi |
 | Renk filtresi (`video.colorFilter`) | destekli/testli | destekli/test bekliyor | destekli/test bekliyor | libmpv özellikleri veya CSS |
 | %200 ses + sınırlayıcı (`audio.boostLimiter`) | destekli/testli | destekli/test bekliyor | destekli/test bekliyor | `tests/e2e/audio-limiter.e2e.mjs` |
-| Fotoğraf AI (`photo.aiEnhance`) | destekli/test bekliyor | destekli/test bekliyor | destekli/test bekliyor | ONNX Runtime Web; gerçek model kalite testi yok (Q02) |
+| Eski nöral fotoğraf AI (`photo.aiEnhance`) | kapsam dışı | kapsam dışı | kapsam dışı | 2026-10-28 kullanıcı kararı: Windows alfada kapalı (`src/core/scope.js`), giriş noktası yok. Varsayılan iyileştirme modelsiz A05 |
 | Nesne silme (`photo.aiInpaint`) | destekli/test bekliyor | destekli/test bekliyor | destekli/test bekliyor | LaMa, ONNX Runtime Web; Windows'ta gerçek model testi var (`smart-edit.ai`), renk/kalite insan incelemesi yok |
 | Renklendirme (`photo.aiColorize`) | destekli/test bekliyor | destekli/test bekliyor | destekli/test bekliyor | DDColor (harici ağırlık); Windows'ta gerçek model testi var; renk doğruluğu Q02 incelemesi bekliyor |
 | Arka plan kaldırma (`photo.aiBackground`) | **deneysel** (`experimental-memory`; test makinesinde bellek yetersiz) | deneysel | deneysel | BiRefNet 1024²; varsayılan gizli, Ayarlar > AI modelleri > "Deneysel: arka plan kaldırma" ile açılır ([smart-edit.md](smart-edit.md)) |
