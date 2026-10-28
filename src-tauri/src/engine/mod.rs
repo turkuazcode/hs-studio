@@ -28,6 +28,8 @@ pub const OBSERVED: &[&str] = &[
     "demuxer-cache-time", "seeking", "idle-active", "path",
     // music mode (L03): headphones unplugged / output device changed
     "audio-device-list",
+    // network streams (L04): ICY radio title ("Artist - Song")
+    "metadata/by-key/icy-title",
 ];
 
 #[derive(Default)]
@@ -159,7 +161,8 @@ fn start<R: Runtime>(app: &AppHandle<R>, win: &WebviewWindow<R>, dll: &Path, gpu
     let mut throttle = events::Throttle::default();
     m.spawn_event_loop(move |ev| {
         if ev.get("event").and_then(Value::as_str) == Some("log-message") {
-            eprintln!("[mpv] {}", ev.get("text").and_then(Value::as_str).unwrap_or("").trim_end());
+            // URLs in mpv messages may carry passwords / tokens (L04)
+            eprintln!("[mpv] {}", crate::net::redact(ev.get("text").and_then(Value::as_str).unwrap_or("").trim_end()));
         }
         for out in throttle.process(&ev, Instant::now()) {
             let _ = match out {
@@ -218,8 +221,16 @@ pub async fn engine_load(st: tauri::State<'_, Engine>, path: String, start: Opti
     policy::check_load(&path)?;
     let m = mpv_of(&st)?;
     let mut cmd = json!({"name": "loadfile", "url": path, "flags": "replace"});
+    let mut options = serde_json::Map::new();
     if let Some(s) = start.filter(|s| *s > 0.0) {
-        cmd["options"] = json!({ "start": format!("{s:.3}") });
+        options.insert("start".into(), json!(format!("{s:.3}")));
+    }
+    // network URL (L04): bounded reconnect, only for this file
+    for (k, v) in crate::net::load_options(&path) {
+        options.insert(k.into(), json!(v));
+    }
+    if !options.is_empty() {
+        cmd["options"] = Value::Object(options);
     }
     m.command(&cmd).map(|_| ())
 }

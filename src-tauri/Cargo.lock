@@ -5656,6 +5656,7 @@ dependencies = [
  "libloading 0.8.9",
  "lofty",
  "notify",
+ "quick-xml",
  "rayon",
  "reqwest",
  "rusqlite",

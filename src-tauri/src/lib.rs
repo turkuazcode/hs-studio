@@ -2,11 +2,13 @@ mod actions;
 mod ai;
 mod cache;
 mod capabilities;
+mod cast;
 mod engine;
 mod identity;
 mod jobs;
 mod library;
 mod music;
+mod net;
 mod photo;
 mod platform;
 mod restoration;
@@ -410,7 +412,11 @@ pub fn run() {
             music::replaygain_album,
             music::controls::media_controls_update,
             music::controls::media_controls_state,
-            music::controls::media_controls_simulate
+            music::controls::media_controls_simulate,
+            cast::cast_discover,
+            cast::cast_start,
+            cast::cast_control,
+            cast::cast_status
         ])
         .build(context)
         .expect("error while building tauri application");
@@ -423,6 +429,7 @@ pub fn run() {
         }
         if let tauri::RunEvent::Exit = _event {
             engine::shutdown(_app);
+            cast::shutdown();
         }
     });
 }
