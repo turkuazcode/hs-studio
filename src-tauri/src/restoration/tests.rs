@@ -609,3 +609,178 @@ fn fixtures_bad_input_is_an_error_not_a_guess() {
     let resp = super::evaluate(&t, r.clone(), suggest(&r));
     assert_eq!(resp.assessment.blockers, ["no-video"]);
 }
+
+// ---------------------------------------------------------------------------
+// Faithful video enhance (model-free; `restoration::enhance`)
+// ---------------------------------------------------------------------------
+
+use super::enhance::{self, EnhanceOptions};
+
+/// Noisy, blocky progressive clip with audio (generated; nothing personal).
+fn noisy_clip(t: &Tools, dir: &Path, name: &str, secs: &str, size: &str) -> PathBuf {
+    let src = format!("testsrc2=size={size}:rate=25,noise=alls=24:allf=t+u");
+    make(t, dir, name, &[
+        "-f", "lavfi", "-i", &src, "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000", "-t", secs,
+        "-map", "0", "-map", "1", "-c:v", "mpeg4", "-q:v", "12", "-c:a", "aac", "-b:a", "96k",
+    ])
+}
+
+/// ffprobe: (duration, frames, width, height, audio streams)
+fn out_info(t: &Tools, p: &Path) -> (f64, u64, u32, u32, usize) {
+    let out = Command::new(&t.ffprobe)
+        .args(["-v", "error", "-count_frames", "-show_entries", "stream=codec_type,width,height,nb_read_frames:format=duration", "-of", "json"])
+        .arg(p)
+        .output()
+        .unwrap();
+    let j: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap();
+    let streams = j["streams"].as_array().unwrap();
+    let v = streams.iter().find(|s| s["codec_type"] == "video").unwrap();
+    let audio = streams.iter().filter(|s| s["codec_type"] == "audio").count();
+    let dur = j["format"]["duration"].as_str().and_then(|d| d.parse().ok()).unwrap_or(0.0);
+    let frames = v["nb_read_frames"].as_str().and_then(|f| f.parse().ok()).unwrap_or(0);
+    (dur, frames, v["width"].as_u64().unwrap() as u32, v["height"].as_u64().unwrap() as u32, audio)
+}
+
+/// Mean absolute difference of consecutive frames (grey, 64x48): flicker / temporal noise.
+fn temporal_diff(t: &Tools, p: &Path) -> f64 {
+    let out = Command::new(&t.ffmpeg)
+        .args(["-v", "error", "-i"])
+        .arg(p)
+        .args(["-map", "0:v:0", "-vf", "scale=64:48:flags=area,format=gray", "-f", "rawvideo", "-"])
+        .output()
+        .unwrap();
+    let px = 64 * 48;
+    let frames: Vec<&[u8]> = out.stdout.chunks_exact(px).collect();
+    assert!(frames.len() > 2, "decoded frames");
+    let mut sum = 0.0;
+    for w in frames.windows(2) {
+        sum += w[0].iter().zip(w[1]).map(|(a, b)| (*a as f64 - *b as f64).abs()).sum::<f64>() / px as f64;
+    }
+    sum / (frames.len() - 1) as f64
+}
+
+fn chain(r: &Recipe) -> String {
+    video_filter(r)
+}
+
+#[test]
+fn enhance_recipe_follows_the_dialog_choices() {
+    let t = tools();
+    let d = temp_dir();
+    // clean progressive source (a 1 s clip with temporal noise can read as interlaced to idet)
+    let clip = make(&t, &d.0, "p.mp4", &["-f", "lavfi", "-i", PROG_SRC, "-t", "2", "-c:v", "mpeg4", "-q:v", "3"]);
+    let rep = probe(&t, &clip);
+
+    // defaults: light block clean-up + temporal denoise + light cas, source size
+    let r = enhance::build_recipe(&rep, EnhanceOptions::default(), None, None).unwrap();
+    let c = chain(&r);
+    assert!(c.starts_with("deblock=filter=weak:block=8,atadenoise,scale=320:240:flags=lanczos,setsar=1,cas=strength=0.3"), "{c}");
+    assert_ne!(assess(&r, &rep).status, Status::Blocked, "only notices (untagged colour is assumed)");
+    assert!(enhance::reference_filter(&r).starts_with("scale=320:240:flags=lanczos,setsar=1"), "reference has no clean-up");
+
+    // everything off: only the geometry/colour steps remain
+    let off = EnhanceOptions { denoise: Level::Off, sharpen: Level::Off, upscale: false };
+    let c = chain(&enhance::build_recipe(&rep, off, None, None).unwrap());
+    assert!(!c.contains("deblock") && !c.contains("atadenoise") && !c.contains("cas="), "{c}");
+
+    // medium + x2
+    let med = EnhanceOptions { denoise: Level::Medium, sharpen: Level::Medium, upscale: true };
+    let r = enhance::build_recipe(&rep, med, None, None).unwrap();
+    let c = chain(&r);
+    assert!(c.contains("deblock=filter=strong") && c.contains("atadenoise=0a=0.04") && c.contains("cas=strength=0.55"), "{c}");
+    assert_eq!((r.scale.width, r.scale.height), (640, 480));
+    assert_ne!(assess(&r, &rep).status, Status::Blocked, "only notices (untagged colour is assumed)");
+
+    // a preview range is carried into the recipe
+    let r = enhance::build_recipe(&rep, EnhanceOptions::default(), Some(TimeRange { start: 0.2, end: Some(0.8) }), None).unwrap();
+    assert_eq!(r.range, TimeRange { start: 0.2, end: Some(0.8) });
+
+    // V01 recipes (no deblock / sharpen fields) still deserialize: both off
+    let mut v = serde_json::to_value(&r).unwrap();
+    v.as_object_mut().unwrap().remove("deblock");
+    v.as_object_mut().unwrap().remove("sharpen");
+    let old: Recipe = serde_json::from_value(v).unwrap();
+    assert_eq!((old.deblock, old.sharpen), (Level::Off, Level::Off));
+}
+
+#[test]
+fn enhance_blocks_hdr_and_asks_for_an_undecided_field_order() {
+    let t = tools();
+    let d = temp_dir();
+    let hdr = make(&t, &d.0, "hdr.mkv", &["-f", "lavfi", "-i", PROG_SRC, "-t", "1", "-vf",
+        "format=yuv420p10le,setparams=color_primaries=bt2020:color_trc=smpte2084:colorspace=bt2020nc:range=tv", "-c:v", "ffv1"]);
+    let rep = probe(&t, &hdr);
+    let r = enhance::build_recipe(&rep, EnhanceOptions::default(), None, None).unwrap();
+    assert!(assess(&r, &rep).blockers.contains(&"hdr-unsupported".to_string()));
+
+    // flag says progressive, content is interlaced: the user has to choose
+    let lying = make(&t, &d.0, "lying.mkv", &["-f", "lavfi", "-i", &format!("{TFF_SRC},setfield=prog"), "-t", "2", "-c:v", "mpeg4", "-q:v", "3"]);
+    let rep = probe(&t, &lying);
+    let v = rep.video.as_ref().unwrap();
+    if v.field_order.needs_choice {
+        let r = enhance::build_recipe(&rep, EnhanceOptions::default(), None, None).unwrap();
+        assert!(assess(&r, &rep).blockers.contains(&"field-order-unconfirmed".to_string()));
+    }
+    let r = enhance::build_recipe(&rep, EnhanceOptions::default(), None, Some(FieldOrder::Tff)).unwrap();
+    assert!(r.deinterlace.user_confirmed);
+    assert_eq!(assess(&r, &rep).status != Status::Blocked, true, "{:?}", assess(&r, &rep));
+    assert!(chain(&r).starts_with("bwdif=mode=send_field:parity=tff:deint=all,deblock"), "{}", chain(&r));
+}
+
+#[test]
+fn enhance_renders_full_and_preview_without_flicker() {
+    let t = tools();
+    let d = temp_dir();
+    let clip = noisy_clip(&t, &d.0, "clip.mp4", "12", "320x240");
+    let rep = probe(&t, &clip);
+    let enc = crate::actions::ffmpeg::FALLBACK_ENCODER; // always in the LGPL build: deterministic
+
+    // full: same duration / frames / size, audio kept, less temporal noise than the source
+    let r = enhance::build_recipe(&rep, EnhanceOptions::default(), None, None).unwrap();
+    let out = d.0.join("full.mkv");
+    let size = enhance::render(&t, &clip, &r, &rep, &enc, &out, false, &|| false, |_| {}).unwrap();
+    assert!(size > 0);
+    let (dur, frames, w, h, audio) = out_info(&t, &out);
+    assert!((dur - 12.0).abs() < 0.3, "duration {dur}");
+    assert!((299..=301).contains(&frames), "frames {frames}");
+    assert_eq!((w, h, audio), (320, 240, 1));
+    let (src_d, out_d) = (temporal_diff(&t, &clip), temporal_diff(&t, &out));
+    assert!(out_d <= src_d * 1.02 + 0.2, "no added flicker: source {src_d:.2}, output {out_d:.2}");
+
+    // preview: 10 s from 1 s, side by side, no audio, x2 width stays the output width
+    let r = enhance::build_recipe(&rep, EnhanceOptions::default(), Some(TimeRange { start: 1.0, end: Some(11.0) }), None).unwrap();
+    let pv = d.0.join("pv.mp4");
+    enhance::render(&t, &clip, &r, &rep, &enc, &pv, true, &|| false, |_| {}).unwrap();
+    let (dur, frames, w, h, audio) = out_info(&t, &pv);
+    assert!((dur - 10.0).abs() < 0.3, "preview duration {dur}");
+    assert!((249..=251).contains(&frames), "preview frames {frames}");
+    assert_eq!((w, h, audio), (320, 240, 0));
+
+    // cancel: an error, no file left
+    let cut = d.0.join("cut.mkv");
+    let start = std::time::Instant::now();
+    let e = enhance::render(&t, &clip, &r, &rep, &enc, &cut, false, &|| start.elapsed().as_millis() > 150, |_| {}).unwrap_err();
+    assert!(e.starts_with(crate::photo::ERR_CANCELLED), "{e}");
+    assert!(!cut.exists());
+}
+
+/// Speed reference (manual: `cargo test --release --lib enhance_speed -- --ignored --nocapture`):
+/// one minute of 480p with the default choices and the machine's H.264 encoder.
+#[test]
+#[ignore]
+fn enhance_speed_one_minute_480p() {
+    let t = tools();
+    let d = temp_dir();
+    let clip = noisy_clip(&t, &d.0, "min.mp4", "60", "854x480");
+    let rep = probe(&t, &clip);
+    let r = enhance::build_recipe(&rep, EnhanceOptions::default(), None, None).unwrap();
+    let enc = crate::actions::ffmpeg::default_encoder();
+    let out = d.0.join("min.mkv");
+    let t0 = std::time::Instant::now();
+    enhance::render(&t, &clip, &r, &rep, &enc, &out, false, &|| false, |_| {}).unwrap();
+    println!("enhance 60 s 854x480 ({}): {:.1} s", enc.name, t0.elapsed().as_secs_f64());
+    let r2 = enhance::build_recipe(&rep, EnhanceOptions { upscale: true, ..Default::default() }, None, None).unwrap();
+    let t0 = std::time::Instant::now();
+    enhance::render(&t, &clip, &r2, &rep, &enc, &d.0.join("min2.mkv"), false, &|| false, |_| {}).unwrap();
+    println!("enhance 60 s 854x480 -> {}x{} ({}): {:.1} s", r2.scale.width, r2.scale.height, enc.name, t0.elapsed().as_secs_f64());
+}
