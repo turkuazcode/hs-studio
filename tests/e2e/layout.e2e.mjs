@@ -13,18 +13,19 @@ const TITLEBAR_BUTTONS = `[...document.querySelectorAll(".titlebar button")]
   .filter((b) => b.getClientRects().length && getComputedStyle(b).visibility !== "hidden")
   .map((b) => b.id)`;
 
-/** Buttons (in the given containers) whose label text runs over more than one line. */
+/** Buttons (in the given containers) with a label that runs over more than one line (a badge next
+ *  to the label sits at its own height and is not a wrap: each text node is measured on its own). */
 const wrapped = (selector) => `[...document.querySelectorAll(${J(selector)})].flatMap((root) => [...root.querySelectorAll("button")])
   .filter((b) => b.getClientRects().length)
   .filter((b) => {
-    const tops = new Set();
     const walk = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
     for (let n; (n = walk.nextNode());) {
       if (!n.textContent.trim()) continue;
       const r = document.createRange(); r.selectNodeContents(n);
-      for (const rect of r.getClientRects()) if (rect.width > 0) tops.add(Math.round(rect.top / 4));
+      const tops = new Set([...r.getClientRects()].filter((rect) => rect.width > 0).map((rect) => Math.round(rect.top)));
+      if (tops.size > 1) return true;
     }
-    return tops.size > 1;
+    return false;
   })
   .map((b) => b.id || b.className)`;
 
