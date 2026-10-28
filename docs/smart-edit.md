@@ -49,6 +49,16 @@ Plan 07'deki "Python betiğiyle referans eşdeğerlik" testi yapılamadı: önce
 
 ## Sınırlamalar
 
+- **Arka plan kaldırma (BiRefNet) test makinesinde çalışmıyor (2026-10-27 ölçümü, AMD 1 GB iGPU, WebView2, ORT Web 1.30.0).**
+  Model girişi 1024×1024'te sabit (768/640/512 reddedilir).
+  - WASM: `std::bad_alloc`, 32 bit WASM belleği yetmiyor. Bellek arenası ve bellek deseni kapalıyken ve `basic` optimizasyonla da aynı sonuç. Bu ORT sürümünde wasm64 yapısı yok.
+  - WebGPU: 16 çıkışlı `Split` ve 16–1024 girişli `Concat` düğümleri gölgelendirici başına 17 depolama tamponu istiyor; cihaz sınırı 16. Bu düğümleri matematiği değiştirmeden bölen deneysel bir grafik yeniden yazımı bu sınırı aştı, ama ardından fp16 model `bad_alloc` verdi, fp32 model çöktü.
+  - Sonuç: iş yaklaşık 2 dakika sonra temiz biçimde `memory` hata koduyla biter. Çıktı yazılmaz, kaynak değişmez, kullanıcı hata metnini görür.
+  - Çözüm seçenekleri **kullanıcı kararı**:
+    1. Yerel ONNX Runtime (Rust tarafında; Plan 07 ölçümü 30 s CPU bu yolla yapılmıştı).
+    2. Daha hafif bir arka plan modeli (Plan 07'de onaylanan sonuç değil).
+    3. Aracın bu cihazlarda gizlenmesi veya deneysel kalması.
+- Nesne silme (LaMa) ve renklendirme (DDColor) aynı makinede WASM'de ve WebGPU'da çalışıyor; WebGPU sonucu WASM ile aynı.
 - Yalnızca Windows (WebView2, AMD 1 GB iGPU + WASM) denendi; macOS/Linux denenmedi.
 - Çok büyük maskelerde parçalara bölme yok; maske kırpması 512'den büyükse tek geçişte küçültülür.
 - Arka plan bulanıklığı kişi/nesne maskesinin kalitesine bağlıdır; saç gibi ince kenarlar sentetik testlerle ölçülmedi.
