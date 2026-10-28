@@ -92,7 +92,10 @@ export class CdpSession {
     }, timeoutMs);
     if (r.exceptionDetails) {
       const d = r.exceptionDetails;
-      throw new Error(`page exception: ${d.exception?.description ?? d.text}`);
+      // A rejected Tauri invoke carries a plain string (no description): show it, not just
+      // "Uncaught (in promise)", so a failing backend call names its error in the test log
+      const reason = d.exception?.description ?? (d.exception && "value" in d.exception ? JSON.stringify(d.exception.value) : null);
+      throw new Error(`page exception: ${reason ? `${d.text} ${reason}` : d.text}`);
     }
     return r.result.value;
   }

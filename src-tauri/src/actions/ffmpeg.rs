@@ -215,6 +215,12 @@ fn candidates() -> Vec<PathBuf> {
         dirs.push(d.clone());
         dirs.push(d.join("mpv"));
         dirs.push(d.join("resources").join("mpv"));
+        // `cargo test` binaries live in target/<profile>/deps; the tools are staged one level up
+        if d.file_name().is_some_and(|n| n == "deps") {
+            if let Some(up) = d.parent() {
+                dirs.push(up.to_path_buf());
+            }
+        }
     }
     dirs
 }
@@ -1135,14 +1141,22 @@ pub fn run_job(req: &JobRequest, cancelled: &dyn Fn() -> bool, progress: impl Fn
 // Loudness (ReplayGain 2.0: reference -18 LUFS)
 // ---------------------------------------------------------------------------
 
+/// EBU R128 measurement and the ReplayGain values derived from it.
+///
+/// * `integrated_lufs` is the measurement (LUFS); it is NOT written as a ReplayGain tag.
+/// * `track_gain_db` = -18 LUFS (ReplayGain 2.0 reference) - integrated loudness.
+/// * `track_peak` is the linear SAMPLE peak (what REPLAYGAIN_TRACK_PEAK holds);
+///   `true_peak_dbfs` (4x oversampled, dBTP) is reported separately and never stored in the
+///   peak tag. Players that prevent clipping use the sample peak, as the tag defines.
 #[derive(Serialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Loudness {
     pub integrated_lufs: f64,
     pub true_peak_dbfs: f64,
+    pub sample_peak_dbfs: f64,
     /// ReplayGain track gain in dB (-18 LUFS reference)
     pub track_gain_db: f64,
-    /// Linear peak (1.0 = full scale)
+    /// Linear sample peak (1.0 = full scale)
     pub track_peak: f64,
 }
 
@@ -1151,40 +1165,125 @@ pub const REPLAYGAIN_REFERENCE_LUFS: f64 = -18.0;
 /// Parses the ebur128 summary ffmpeg prints at the end.
 pub fn parse_ebur128(log: &str) -> Option<Loudness> {
     let mut integrated = None;
-    let mut peak = None;
+    let mut true_peak = None;
+    let mut sample_peak = None;
     let mut section = "";
     for line in log.lines() {
         let l = line.trim();
-        if l.ends_with(':') && !l.contains(' ') || l == "Integrated loudness:" || l == "True peak:" || l == "Loudness range:" {
-            section = if l.starts_with("Integrated") { "i" } else if l.starts_with("True peak") { "p" } else { "" };
+        if l.ends_with(':') && !l.contains(' ')
+            || ["Integrated loudness:", "True peak:", "Sample peak:", "Loudness range:"].contains(&l)
+        {
+            section = if l.starts_with("Integrated") {
+                "i"
+            } else if l.starts_with("True peak") {
+                "t"
+            } else if l.starts_with("Sample peak") {
+                "s"
+            } else {
+                ""
+            };
             continue;
         }
         let value = |prefix: &str| l.strip_prefix(prefix).and_then(|r| r.split_whitespace().next()).and_then(|v| v.parse::<f64>().ok());
-        if section == "i" {
-            if let Some(v) = value("I:") {
-                integrated = Some(v);
-            }
-        } else if section == "p" {
-            if let Some(v) = value("Peak:") {
-                peak = Some(v);
-            }
+        match section {
+            "i" => integrated = value("I:").or(integrated),
+            "t" => true_peak = value("Peak:").or(true_peak),
+            "s" => sample_peak = value("Peak:").or(sample_peak),
+            _ => {}
         }
     }
     let i = integrated?;
-    let p = peak.unwrap_or(0.0);
+    let tp = true_peak.unwrap_or(0.0);
+    // older measurements without a sample peak section: the true peak is an upper bound
+    let sp = sample_peak.unwrap_or(tp);
     Some(Loudness {
         integrated_lufs: i,
-        true_peak_dbfs: p,
-        track_gain_db: ((REPLAYGAIN_REFERENCE_LUFS - i) * 100.0).round() / 100.0,
-        track_peak: (10f64.powf(p / 20.0) * 1e6).round() / 1e6,
+        true_peak_dbfs: tp,
+        sample_peak_dbfs: sp,
+        track_gain_db: replaygain_db(i),
+        track_peak: db_to_linear(sp),
     })
+}
+
+/// ReplayGain 2.0 gain for an integrated loudness (dB, 2 decimals).
+pub fn replaygain_db(integrated_lufs: f64) -> f64 {
+    ((REPLAYGAIN_REFERENCE_LUFS - integrated_lufs) * 100.0).round() / 100.0
+}
+
+fn db_to_linear(db: f64) -> f64 {
+    (10f64.powf(db / 20.0) * 1e6).round() / 1e6
+}
+
+/// Album ReplayGain: one measurement over the whole album (the tracks decoded one after the
+/// other into one EBU R128 meter), not an average of track gains. Album peak = the highest
+/// track sample peak.
+#[derive(Serialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct AlbumLoudness {
+    pub tracks: Vec<Loudness>,
+    pub integrated_lufs: f64,
+    pub album_gain_db: f64,
+    pub album_peak: f64,
+    /// "joint" (one meter over all tracks) or "energy" (tracks with different channel
+    /// layouts: duration-weighted energy mean of the track loudness)
+    pub method: String,
+}
+
+/// Duration-weighted energy mean of loudness values (fallback album measurement).
+pub fn energy_mean_lufs(items: &[(f64, f64)]) -> Option<f64> {
+    let total: f64 = items.iter().map(|(_, d)| d).sum();
+    if total <= 0.0 {
+        return None;
+    }
+    let e: f64 = items.iter().map(|(l, d)| d * 10f64.powf(l / 10.0)).sum::<f64>() / total;
+    Some(10.0 * e.log10())
 }
 
 pub fn loudness(path: &Path) -> Result<Loudness, String> {
     let tools = locate()?;
-    let args = s(["-i", &path.to_string_lossy(), "-map", "0:a:0", "-af", "ebur128=peak=true", "-f", "null", "-"]);
+    let args = s(["-i", &path.to_string_lossy(), "-map", "0:a:0", "-af", "ebur128=peak=sample+true", "-f", "null", "-"]);
     let log = run_ffmpeg(&tools.ffmpeg, &args, 0.0, &|| false, |_| {})?;
     parse_ebur128(&log).ok_or_else(|| "Ses yüksekliği ölçülemedi".to_string())
+}
+
+/// Album measurement (see [`AlbumLoudness`]). `channels[i]` = channel count of track i.
+pub fn album_loudness(paths: &[&Path], channels: &[u32], durations: &[f64]) -> Result<AlbumLoudness, String> {
+    if paths.is_empty() {
+        return Err("Albüm boş".into());
+    }
+    let tracks: Vec<Loudness> = paths.iter().map(|p| loudness(p)).collect::<Result<_, _>>()?;
+    let album_peak = tracks.iter().map(|t| t.track_peak).fold(0.0, f64::max);
+    let same_layout = channels.windows(2).all(|w| w[0] == w[1]);
+    let (integrated, method) = if same_layout && paths.len() > 1 {
+        let tools = locate()?;
+        let mut args = Vec::new();
+        let mut graph = String::new();
+        for (i, p) in paths.iter().enumerate() {
+            args.extend(s(["-i", &p.to_string_lossy()]));
+            // one sample rate for the concatenation; channels are untouched (same layout)
+            graph.push_str(&format!("[{i}:a:0]aresample=48000[a{i}];"));
+        }
+        for i in 0..paths.len() {
+            graph.push_str(&format!("[a{i}]"));
+        }
+        graph.push_str(&format!("concat=n={}:v=0:a=1,ebur128=peak=sample+true[out]", paths.len()));
+        args.extend(s(["-filter_complex", &graph, "-map", "[out]", "-f", "null", "-"]));
+        let log = run_ffmpeg(&tools.ffmpeg, &args, 0.0, &|| false, |_| {})?;
+        let joint = parse_ebur128(&log).ok_or_else(|| "Albüm ses yüksekliği ölçülemedi".to_string())?;
+        (joint.integrated_lufs, "joint")
+    } else if paths.len() == 1 {
+        (tracks[0].integrated_lufs, "joint")
+    } else {
+        let items: Vec<(f64, f64)> = tracks.iter().zip(durations).map(|(t, d)| (t.integrated_lufs, *d)).collect();
+        (energy_mean_lufs(&items).ok_or("Albüm süresi bilinmiyor")?, "energy")
+    };
+    Ok(AlbumLoudness {
+        tracks,
+        integrated_lufs: (integrated * 10.0).round() / 10.0,
+        album_gain_db: replaygain_db(integrated),
+        album_peak,
+        method: method.into(),
+    })
 }
 
 #[cfg(test)]
@@ -1468,6 +1567,19 @@ mod tests {
         assert_eq!(l.track_gain_db, -5.3);
         assert!((l.track_peak - 0.266073).abs() < 1e-5, "{}", l.track_peak);
         assert!(parse_ebur128("nothing").is_none());
+        // peak=sample+true: the tag peak is the SAMPLE peak, the true peak stays separate
+        let both = format!("{log}\n  Sample peak:\n    Peak:      -12.0 dBFS\n");
+        let l = parse_ebur128(&both).unwrap();
+        assert_eq!((l.true_peak_dbfs, l.sample_peak_dbfs), (-11.5, -12.0));
+        assert!((l.track_peak - 0.251189).abs() < 1e-5, "{}", l.track_peak);
+        // the LUFS measurement is not the gain
+        assert_ne!(l.track_gain_db, l.integrated_lufs);
+        assert_eq!(replaygain_db(-23.0), 5.0);
+        // energy mean: equal loudness stays; a louder long track dominates
+        assert!((energy_mean_lufs(&[(-10.0, 1.0), (-10.0, 3.0)]).unwrap() + 10.0).abs() < 1e-9);
+        let m = energy_mean_lufs(&[(-10.0, 3.0), (-20.0, 1.0)]).unwrap();
+        assert!(m > -11.5 && m < -10.0, "{m}");
+        assert!(energy_mean_lufs(&[]).is_none());
     }
 
     #[test]

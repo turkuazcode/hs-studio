@@ -110,6 +110,21 @@ export function createVideoPlayer(app) {
     });
   }
 
+  /** The engine already plays `item` (gapless switch, Plan 13/L03): UI and resume key only. */
+  function adoptSource(item) {
+    state.update("loadGen", (g) => g + 1);
+    state.set("currentFileKey", resumeKey(item));
+    resumePendingTime = 0;
+    resumeChecked = false;
+    clearTimeout(resumeToastTimer);
+    resumeToast.classList.remove("show");
+    delete currentFilename.dataset.i18n;
+    currentFilename.textContent = item.name || t("ui.video.onlineName");
+    app.subtitles.resetForNewMedia();
+    app.timeline.reset();
+    app.photo.updateCounter();
+  }
+
   engine.on("loaded", () => {
     app.filters.refreshAfterLoad();
     app.bus.emit("media:loaded", { kind: "video" });
@@ -308,6 +323,7 @@ export function createVideoPlayer(app) {
 
   return {
     load: loadVideoSource,
+    adopt: adoptSource,
     unloadElements: unloadVideoElements,
     cancelTranscode: () => app.engines.html5.cancelTranscode(),
     startPlayback: () => engine.play(),

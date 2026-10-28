@@ -22,7 +22,7 @@ only); LGPL only as a separate DLL/process; no GPL/AGPL/non-commercial dependenc
 |---|---|---|
 | [`sbom/vho-<version>-<target>.cdx.json`](sbom/) | Everything below in one CycloneDX 1.6 SBOM, with SHA-256, licenses, policy status per component, Rust dependency graph | generated: `npm run sbom` |
 | `../src-tauri/Cargo.lock` | Rust crates (compiled into the exe) | cargo |
-| `../package-lock.json` | npm packages: **dev/build tools only** (Tauri CLI, Vite); nothing from npm is shipped | npm |
+| `../package-lock.json` | npm packages: **dev/build/test tools only** (Tauri CLI, Vite, axe-core for the accessibility E2E tests); nothing from npm is shipped | npm |
 | [`inventory/native-windows-x64.json`](inventory/native-windows-x64.json) | 38 DLLs + `ffmpeg.exe`/`ffprobe.exe` next to the exe: version, origin (source build or MSYS2 package), license, policy, sha256, bytes, source commit, build flags, corresponding-source location | by hand; hashes via `--update-native` |
 | [`inventory/models.json`](inventory/models.json) | AI downloads (ONNX Runtime Web + weights): weight license vs. code license, author, architecture, training data, attribution, modifications | by hand; URLs/sizes/SHA-256 come from `src-tauri/src/ai/manifest.rs` |
 | [`inventory/assets.json`](inventory/assets.json) | Font, icons (incl. Material Icons path data), Leaflet, AMD FSR port, C libraries inside crates (libwebp, SQLite), test fixtures, spike evidence | by hand; files hashed by the SBOM script |
@@ -52,7 +52,7 @@ in, OFL outside fonts).
 
 ## Current result (Windows x64, 2026-10-25)
 
-394 Rust crates (372 compiled into the exe, 22 build-time only), 52 npm dev packages, 40 native
+394 Rust crates (372 compiled into the exe, 22 build-time only), 53 npm dev packages, 40 native
 files, 8 AI files, 10 asset groups. **0 rejected.** 12 `review` items; **11 acknowledged by the owner on
 2026-10-25** (recorded as `acknowledged` in the inventories and as `vho:acknowledged` in the SBOM),
 **1 still open** (logo). `legal-inventory.test.mjs` fails if a new review item appears without a decision.
@@ -88,7 +88,7 @@ redistributed together with an Apache-2.0 application and what each one requires
 | Model weights (download) | CC-BY-4.0 (photo-x4), Apache-2.0 (GFPGAN, LaMa, DDColor), MIT (YuNet, BiRefNet) | **yes** | Attribution (notices + Settings > AI models); training-data question accepted by the owner |
 | Outfit font | OFL-1.1 | **yes** | Ship unmodified with OFL.txt, never sell the font alone |
 | Leaflet, Material Icons path data, AMD FSR port | BSD-2-Clause, Apache-2.0, MIT | **yes** | Notices |
-| npm dev tools | MIT, Apache-2.0, ISC, BSD-3, MPL-2.0 (lightningcss) | not shipped | — |
+| npm dev tools | MIT, Apache-2.0, ISC, BSD-3, MPL-2.0 (lightningcss; axe-core 4.14.0, injected only into the test instance by `tests/e2e/lib/a11y.mjs`) | not shipped | — |
 | WebView2, Media Foundation, WIC codecs, Windows OCR/share | OS components | **yes** | — |
 | OpenStreetMap tiles | ODbL (data, service) | not distributed | Attribution shown in the map |
 

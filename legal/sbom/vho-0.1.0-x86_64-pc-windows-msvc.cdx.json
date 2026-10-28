@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:3eb9dd56-5a0e-55da-a739-929a12ef4548",
+ "serialNumber": "urn:uuid:960b9dd6-6de1-5694-9e84-d78ebbcc5095",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-27T17:45:55Z",
+  "timestamp": "2026-10-28T06:54:30Z",
   "tools": {
    "components": [
     {
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "96c007e9d30069a97d55b487bc75cc25fcdb88f4"
+    "value": "17c08a4c27253e40953cf290a88570eb422857d5"
    },
    {
     "name": "vho:native-binaries",
@@ -130,6 +130,46 @@
     }
    ],
    "description": "Fast, SIMD-accelerated CRC32 (IEEE) checksum computation"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/dirs@7.0.0",
+   "name": "dirs",
+   "version": "7.0.0",
+   "purl": "pkg:cargo/dirs@7.0.0",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "8d57d423b3c82e89b9a24ca3091fee61f456a26edbd28d26c65906f4bc1dcd8f"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://codeberg.org/dirs/dirs-rs"
+    }
+   ],
+   "description": "A tiny low-level library that provides platform-specific standard locations of directories for config, cache and other data on Linux, Windows, macOS and Redox by leveraging the mechanisms defined by the XDG base/user directory specifications on Linux, the Known Folder API on Windows, and the Standard Directory guidelines on macOS."
   },
   {
    "type": "library",
@@ -1450,6 +1490,46 @@
     }
    ],
    "description": "A macro to ergonomically define an item depending on a large number of #[cfg] parameters. Structured like an if-else chain, the first matching branch is the item that gets emitted."
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/dirs-sys@0.5.0",
+   "name": "dirs-sys",
+   "version": "0.5.0",
+   "purl": "pkg:cargo/dirs-sys@0.5.0",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MIT OR Apache-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "e01a3366d27ee9890022452ee61b2b63a67e6f13f58900b651ff5665f0bb1fab"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/dirs-dev/dirs-sys-rs"
+    }
+   ],
+   "description": "System-level helper functions for the dirs and directories crates."
   },
   {
    "type": "library",
@@ -4333,46 +4413,6 @@
   },
   {
    "type": "library",
-   "bom-ref": "pkg:cargo/dirs@7.0.0",
-   "name": "dirs",
-   "version": "7.0.0",
-   "purl": "pkg:cargo/dirs@7.0.0",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "8d57d423b3c82e89b9a24ca3091fee61f456a26edbd28d26c65906f4bc1dcd8f"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://codeberg.org/dirs/dirs-rs"
-    }
-   ],
-   "description": "A tiny low-level library that provides platform-specific standard locations of directories for config, cache and other data on Linux, Windows, macOS and Redox by leveraging the mechanisms defined by the XDG base/user directory specifications on Linux, the Known Folder API on Windows, and the Standard Directory guidelines on macOS."
-  },
-  {
-   "type": "library",
    "bom-ref": "pkg:cargo/dunce@1.0.5",
    "name": "dunce",
    "version": "1.0.5",
@@ -6210,6 +6250,46 @@
     }
    ],
    "description": "Import libs for Windows"
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:cargo/option-ext@0.2.0",
+   "name": "option-ext",
+   "version": "0.2.0",
+   "purl": "pkg:cargo/option-ext@0.2.0",
+   "scope": "required",
+   "licenses": [
+    {
+     "expression": "MPL-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "cargo"
+    },
+    {
+     "name": "vho:linking",
+     "value": "static (compiled into VHO.exe)"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-256",
+     "content": "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "vcs",
+     "url": "https://github.com/soc/option-ext.git"
+    }
+   ],
+   "description": "Extends `Option` with additional operations"
   },
   {
    "type": "library",
@@ -8524,46 +8604,6 @@
     }
    ],
    "description": "Tiny crate to check the version of the installed/running rustc."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/dirs-sys@0.5.0",
-   "name": "dirs-sys",
-   "version": "0.5.0",
-   "purl": "pkg:cargo/dirs-sys@0.5.0",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MIT OR Apache-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "e01a3366d27ee9890022452ee61b2b63a67e6f13f58900b651ff5665f0bb1fab"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/dirs-dev/dirs-sys-rs"
-    }
-   ],
-   "description": "System-level helper functions for the dirs and directories crates."
   },
   {
    "type": "library",
@@ -11644,46 +11684,6 @@
     }
    ],
    "description": "Typenum is a Rust library for type-level numbers evaluated at compile time. It currently supports bits, unsigned integers, and signed integers. It also provides a type-level array of type-level numbers, but its implementation is incomplete."
-  },
-  {
-   "type": "library",
-   "bom-ref": "pkg:cargo/option-ext@0.2.0",
-   "name": "option-ext",
-   "version": "0.2.0",
-   "purl": "pkg:cargo/option-ext@0.2.0",
-   "scope": "required",
-   "licenses": [
-    {
-     "expression": "MPL-2.0"
-    }
-   ],
-   "properties": [
-    {
-     "name": "vho:origin",
-     "value": "cargo"
-    },
-    {
-     "name": "vho:linking",
-     "value": "static (compiled into VHO.exe)"
-    },
-    {
-     "name": "vho:policy",
-     "value": "ok"
-    }
-   ],
-   "hashes": [
-    {
-     "alg": "SHA-256",
-     "content": "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
-    }
-   ],
-   "externalReferences": [
-    {
-     "type": "vcs",
-     "url": "https://github.com/soc/option-ext.git"
-    }
-   ],
-   "description": "Extends `Option` with additional operations"
   },
   {
    "type": "library",
@@ -17357,6 +17357,45 @@
     {
      "type": "distribution",
      "url": "https://registry.npmjs.org/@tauri-apps/cli-win32-x64-msvc/-/cli-win32-x64-msvc-2.12.4.tgz"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pkg:npm/axe-core@4.14.0",
+   "name": "axe-core",
+   "version": "4.14.0",
+   "purl": "pkg:npm/axe-core@4.14.0",
+   "scope": "excluded",
+   "licenses": [
+    {
+     "expression": "MPL-2.0"
+    }
+   ],
+   "properties": [
+    {
+     "name": "vho:origin",
+     "value": "npm"
+    },
+    {
+     "name": "vho:linking",
+     "value": "dev/build tool, not shipped"
+    },
+    {
+     "name": "vho:policy",
+     "value": "ok"
+    }
+   ],
+   "hashes": [
+    {
+     "alg": "SHA-512",
+     "content": "f564d9c448ec67b6f5dd31fc24f99b576cfc0876e5f34ff6866dd73c41b826035d40b2bcd480515e64b11df3003a44aa41e4714ffd1dc0d0f3d863a6df3ce971"
+    }
+   ],
+   "externalReferences": [
+    {
+     "type": "distribution",
+     "url": "https://registry.npmjs.org/axe-core/-/axe-core-4.14.0.tgz"
     }
    ]
   },
@@ -24953,6 +24992,7 @@
    "dependsOn": [
     "pkg:cargo/arboard@3.6.1",
     "pkg:cargo/crc32fast@1.5.3",
+    "pkg:cargo/dirs@7.0.0",
     "pkg:cargo/fast_image_resize@6.1.0",
     "pkg:cargo/flate2@1.1.10",
     "pkg:cargo/image@0.25.10",

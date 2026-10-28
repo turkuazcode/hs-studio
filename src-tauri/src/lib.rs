@@ -1,9 +1,12 @@
 mod actions;
 mod ai;
+mod cache;
 mod capabilities;
 mod engine;
+mod identity;
 mod jobs;
 mod library;
+mod music;
 mod photo;
 mod platform;
 mod restoration;
@@ -231,6 +234,8 @@ pub fn run() {
     let mut context = tauri::generate_context!();
     platform::apply_test_isolation(&mut context);
     updater::apply_test_overrides(&mut context);
+    // Product rename (new bundle identifier): take over the data of the old identity once
+    identity::migrate_legacy_data(&context.config().identifier);
 
     let builder = tauri::Builder::default();
     // Must be the first plugin: a second launch exits here, before any window exists.
@@ -289,6 +294,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            cache::cache_usage,
+            cache::cache_clear,
             updater::updater_check,
             updater::updater_install,
             suspend_system,
@@ -399,7 +406,11 @@ pub fn run() {
             library::library_playlist_delete,
             library::library_playlist_import,
             library::library_playlist_read,
-            library::library_playlist_export
+            library::library_playlist_export,
+            music::replaygain_album,
+            music::controls::media_controls_update,
+            music::controls::media_controls_state,
+            music::controls::media_controls_simulate
         ])
         .build(context)
         .expect("error while building tauri application");

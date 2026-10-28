@@ -103,7 +103,8 @@
       "eqPreset": "Ekolayzır hazır ayarı",
       "hwdec": "Donanım ile video çözme",
       "fastProfile": "Hızlı görüntü profili (profile=fast)",
-      "checkUpdates": "Güncellemeleri otomatik denetle"
+      "checkUpdates": "Güncellemeleri otomatik denetle",
+      "cache": "Önbellek"
     },
     "help": {
       "defaultApps": "Windows, uygulamaların kendini varsayılan yapmasına izin vermez; açılan pencerede VHO'yu seçin.",
@@ -114,7 +115,8 @@
       "fastProfile": "Dahili ekran kartlarında GPU yükünü azaltır.",
       "fastProfileGpu": "Dahili ekran kartlarında GPU yükünü azaltır. Bu bilgisayar: {gpu}.",
       "fastProfileGpuIntegrated": "Dahili ekran kartlarında GPU yükünü azaltır. Bu bilgisayar: {gpu} (dahili).",
-      "checkUpdates": "Açılışta bir kez. Güncellemeler imzalıdır ve yalnızca Kur'a tıkladığınızda kurulur; medyanızla ilgili hiçbir şey gönderilmez."
+      "checkUpdates": "Açılışta bir kez. Güncellemeler imzalıdır ve yalnızca Kur'a tıkladığınızda kurulur; medyanızla ilgili hiçbir şey gönderilmez.",
+      "cache": "Küçük resimler ve dönüştürülmüş videolar gerektiğinde yeniden oluşturulur. Kullanımdaki dosyalar silinmez."
     },
     "options": {
       "languageSystem": "Sistem dili",
@@ -150,6 +152,15 @@
     "about": {
       "description": "Video, fotoğraf ve müzik için açık kaynak medya stüdyosu.",
       "license": "Apache-2.0 lisansı · Geliştirici: Halil SARITAŞ · TurkuazCode"
+    },
+    "cache": {
+      "row": "{what}: {size}",
+      "photo": "Fotoğraf küçük resimleri ve önizlemeleri",
+      "video": "Video küçük resimleri",
+      "transcode": "Dönüştürülmüş videolar",
+      "clear": "Temizle",
+      "cleared": "{size} boşaltıldı",
+      "clearedSkipped": "{size} boşaltıldı; kullanımdaki {skipped} dosya korundu"
     }
   },
   "shortcuts": {
@@ -482,7 +493,7 @@
     "music": {
       "replayGainTitle": "ReplayGain",
       "measuring": "Ses yüksekliği ölçülüyor (EBU R128)…",
-      "replayGainResult": "Yükseklik {lufs} LUFS · kazanç {gain} dB · tepe {peak} dBFS. Etikete yazıldı."
+      "replayGainResult": "Yükseklik {lufs} LUFS · kazanç {gain} dB · gerçek tepe {peak} dBTP. Etikete yazıldı (kazanç + örnek tepe)."
     },
     "settings": {
       "heading": "Dosya eylemleri",
@@ -506,6 +517,9 @@
       "toolsInfo": "{version} · H.264 kodlayıcı: {encoder}",
       "none": "yok",
       "fallbackEncoder": "{name} (H.264 yok, yedek kodlayıcı)"
+    },
+    "error": {
+      "clipboardBusy": "Pano başka bir uygulama tarafından kullanılıyor ({detail}). Biraz sonra yeniden deneyin."
     }
   },
   "effects": {
@@ -1239,7 +1253,10 @@
       "recentlyAdded": "Son eklenenler",
       "favorites": "Favoriler",
       "missing": "Bulunamayanlar",
-      "mostPlayed": "En çok oynatılanlar"
+      "mostPlayed": "En çok oynatılanlar",
+      "artists": "Sanatçılar",
+      "albums": "Albümler",
+      "genres": "Türler"
     },
     "status": {
       "offline": "çevrimdışı",
@@ -1415,6 +1432,43 @@
       "verified": "Güncelleme indirildi ve doğrulandı.",
       "installing": "Kurulum başlatılıyor…",
       "error": "Güncelleme denetimi başarısız oldu."
+    }
+  },
+  "music": {
+    "title": "Müzik",
+    "upNext": "Sıradakiler",
+    "shuffle": "Karışık",
+    "repeat": {
+      "off": "Tekrar: kapalı",
+      "all": "Tekrar: tümü",
+      "one": "Tekrar: bu parça"
+    },
+    "deviceRemoved": "Ses cihazı çıkarıldı; çalma duraklatıldı",
+    "settings": {
+      "heading": "Müzik",
+      "replayGain": "ReplayGain (ses seviyesi eşitleme)",
+      "rg": {
+        "off": "Kapalı",
+        "track": "Parça",
+        "album": "Albüm (yoksa parça)"
+      },
+      "preamp": "ReplayGain ön kazancı",
+      "preventClip": "Kırpılmayı önle (tepe değerine göre kıs)",
+      "gapless": "Parçalar arasında boşluksuz geçiş",
+      "systemControls": "Windows medya tuşları ve şimdi çalan kartı",
+      "pauseOnDeviceRemoval": "Kulaklık/ses cihazı çıkarılınca duraklat"
+    },
+    "groups": {
+      "artists": "Sanatçılar",
+      "albums": "Albümler",
+      "genres": "Türler",
+      "unknown": "(bilinmiyor)",
+      "back": "Geri",
+      "tracks": "{n} parça"
+    },
+    "album": {
+      "replayGain": "Albüm ReplayGain hesapla…",
+      "replayGainDone": "Albüm ReplayGain: {gain} dB ({n} parça)"
     }
   }
 }

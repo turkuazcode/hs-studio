@@ -29,7 +29,7 @@
   transition: var(--transition-smooth);
 }
 .ma-btn:hover, .ma-btn:focus-visible { background: var(--bg-pill-hover); color: var(--text-pure); border-color: var(--border-subtle); }
-.ma-btn.active { color: var(--accent-ruby-bright); }
+.ma-btn.active { color: var(--accent-ruby-text); }
 .ma-more { font-weight: 700; letter-spacing: 1px; }
 .ma-mini-exit { display: none; }
 :root.mini-player .ma-mini-exit { display: inline-flex; }

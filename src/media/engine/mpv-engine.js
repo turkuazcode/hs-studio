@@ -27,6 +27,10 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
   let loading = false; // between loadfile and file-loaded: ignore stale props of the old file
   let loadedFile = false;
   let view = {};
+  // Gapless (Plan 13/L03): the next item sits in mpv's own playlist; mpv switches to it
+  // without reopening the audio output and the UI adopts it on "advanced".
+  let queued = null;
+  let advancing = false;
 
   // Tauri runs async commands concurrently: queue property writes and commands so mpv applies
   // them in the order the UI issued them (e.g. three slider changes, setLoop then seek).
@@ -99,10 +103,23 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
 
   function onEvent(ev) {
     switch (ev.event) {
+      case "start-file":
+        if (!loading && queued) {
+          advancing = true;
+          time = 0;
+          duration = NaN;
+        }
+        break;
       case "file-loaded":
         loading = false;
         loadedFile = true;
         ended = false;
+        if (advancing) {
+          advancing = false;
+          const item = queued;
+          queued = null;
+          emit("advanced", item);
+        }
         // re-read the values that changed while stale events were ignored
         // "loaded" after the duration is known (resume offer, recent files)
         get("duration")
@@ -158,6 +175,8 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
     get active() { return active; },
 
     async load(item, { start } = {}) {
+      queued = null;
+      advancing = false;
       loading = true;
       loadedFile = false;
       ended = false;
@@ -180,6 +199,15 @@ export function createMpvEngine({ invoke, listen, convertFileSrc, status }) {
         throw e;
       }
     },
+    /** Gapless: puts `item` (local file) after the current one in mpv's playlist; null clears it. */
+    queueNext(item) {
+      if (!loadedFile && !loading) return Promise.resolve(false);
+      const path = item?.path ?? null;
+      if ((queued?.path ?? null) === path) return Promise.resolve(!!path);
+      queued = path ? item : null;
+      return quiet(cmd(["playlist-clear"]).then(() => (path ? cmd(["loadfile", path, "append"]) : null)).then(() => !!path));
+    },
+    get queued() { return queued; },
     play() {
       if (ended) return quiet(cmd(["seek", 0, "absolute"]).then(() => set("pause", false)));
       return quiet(set("pause", false));
