@@ -62,7 +62,8 @@ test("engine: libmpv plays the multitrack MKV", { timeout: 240000, skip }, async
       assert.equal(r.platform.verifiedPlatform, true);
       assert.deepEqual(c["engine.libmpv"], { id: "engine.libmpv", available: true, implementation: "libmpv-lgpl", verified: true, reasonCode: null, support: "supported-tested" });
       assert.equal(c["video.surface"].implementation, "win32-owned-popup");
-      assert.equal(c["system.mediaControls"].reasonCode, "not-implemented");
+      // L03: Windows SMTC (macOS / Linux stay not-implemented, Rust capabilities::tests)
+      assert.deepEqual([c["system.mediaControls"].available, c["system.mediaControls"].implementation, c["system.mediaControls"].reasonCode], [true, "windows-smtc", null]);
       assert.equal(c["actions.share"].reasonCode, "system-changes-disabled"); // E2E guard active
       // P04: every entry carries the per-OS support claim; the H.264 encoder is the runtime-probed one
       for (const e of r.entries) assert.ok(["supported-tested", "supported-untested", "unsupported"].includes(e.support), e.id);

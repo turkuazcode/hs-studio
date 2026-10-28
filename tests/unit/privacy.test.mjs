@@ -23,9 +23,13 @@ const REVIEWED_HOSTS = {
   "www.opensubtitles.org": "subtitle search page opened in the system browser by the user",
   "ns.adobe.com": "XMP namespace URI (not fetched)",
   "ornek.com": "URL dialog placeholder text",
+  "purl.org": "Dublin Core XML namespace in the UPnP DIDL-Lite metadata (L04, not fetched)",
+  "schemas.xmlsoap.org": "SOAP envelope XML namespace for UPnP control (L04, not fetched)",
 };
 /** Hosts that only appear in test data. */
-const TEST_HOSTS = new Set(["example.invalid", "radyo.example", "x", "example.org", "example.com", "www.w3.org"]);
+const TEST_HOSTS = new Set(["example.invalid", "radyo.example", "x", "example.org", "example.com", "www.w3.org", "a", "h", "host", "user"]);
+/** Local network addresses (RFC 1918): UPnP devices the user picks, never remote servers (L04). */
+const LAN = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/;
 
 function* files(dir, exts) {
   for (const name of readdirSync(dir)) {
@@ -41,7 +45,7 @@ test("privacy: every remote host in the app source is reviewed (no telemetry / a
   for (const f of [...files(join(ROOT, "src"), [".js", ".html", ".css"]), ...files(join(ROOT, "src-tauri/src"), [".rs"])]) {
     for (const m of readFileSync(f, "utf8").matchAll(/\bhttps?:\/\/([a-z0-9.-]+)/gi)) {
       const host = m[1].toLowerCase();
-      if (host === "localhost" || host.endsWith(".localhost") || /^127\./.test(host) || TEST_HOSTS.has(host)) continue;
+      if (host === "localhost" || host.endsWith(".localhost") || /^127\./.test(host) || LAN.test(host) || TEST_HOSTS.has(host)) continue;
       if (!found.has(host)) found.set(host, relative(ROOT, f));
     }
   }

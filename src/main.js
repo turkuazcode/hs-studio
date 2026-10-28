@@ -32,6 +32,7 @@ import { createVideoPlayer } from "./media/video-player.js";
 import { createVisualFilters } from "./media/visual-filters.js";
 import { createLibraryView } from "./library/library-view.js";
 import { createMusicMode } from "./music/music-mode.js";
+import { createCast } from "./ui/cast-dialog.js";
 import { createPhotoStudio } from "./studio/studio.js";
 import { createFullscreen } from "./ui/fullscreen.js";
 import { createHud } from "./ui/hud.js";
@@ -158,6 +159,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     get capabilities() { return app.capabilities.all(); },
     /** Same path as the native file drop / open dialog (tests cannot synthesize an OS drop). */
     openPaths: (paths) => app.loader.openPaths(paths),
+    /** Same as the HUD controls (seek bar / play button) without pixel clicks. */
+    seek: (t) => app.engine.seek(t),
+    pause: () => app.engine.pause(),
   };
   app.studio = createPhotoStudio(app);
   window.__vhoStudio = app.studio;
@@ -171,6 +175,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Music mode (Plan 13/L03): own layout, queue policy, gapless, ReplayGain, system media controls
   app.music = createMusicMode(app);
   window.__vhoMusic = app.music;
+  // Cast to a UPnP/DLNA device (Plan 13/L04), opened from the "⋯" menu
+  app.cast = createCast(app);
+  window.__vhoCast = app.cast;
 
   // Settings window, recent files, menus, themes, language... then the files passed on
   // the command line ("Open with VHO"), so they open with the restored settings.

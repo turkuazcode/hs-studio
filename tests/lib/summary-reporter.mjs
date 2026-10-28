@@ -9,7 +9,11 @@ export default async function* summaryReporter(source) {
     const d = ev.data;
     if (d.details?.type === "suite") continue;
     const entry = { name: d.name, file: where(d) };
-    if (ev.type === "test:fail") {
+    // a failing todo test is reported as test:fail by node:test but does not fail the run
+    if (ev.type === "test:fail" && d.todo !== undefined && d.todo !== false) {
+      s.todo++;
+      s.todos.push({ ...entry, reason: `${d.todo === true ? "" : String(d.todo)} (failing)` });
+    } else if (ev.type === "test:fail") {
       const err = d.details?.error;
       const cause = err?.cause ?? err;
       if (err?.failureType === "cancelledByParent") s.cancelled++;
