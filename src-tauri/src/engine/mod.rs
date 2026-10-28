@@ -1,7 +1,8 @@
 //! libmpv playback engine (Plan 02 §2, ADR 0001).
 //!
-//! `libmpv-2.dll` (LGPL build, 38 DLLs) is loaded at runtime from next to the executable (or the
-//! bundle's `mpv/` resource folder). When it is missing, fails to load, `VHO_DISABLE_MPV` is set or
+//! `libmpv-2.dll` (Windows, LGPL build, 38 DLLs) / `libmpv.so.2` (Linux, LGPL build with its own
+//! FFmpeg `.so` files, RUNPATH=$ORIGIN; ADR 0002) is loaded at runtime from next to the executable
+//! (or the bundle's `mpv/` resource folder). When it is missing, fails to load, `VHO_DISABLE_MPV` is set or
 //! the platform has no video surface yet, the engine is `unavailable` and the frontend falls back to
 //! the HTML5 `<video>` engine (incl. the Media Foundation transcode path).
 //!
@@ -10,8 +11,12 @@
 //! `engine_command` / `engine_set` / `engine_load` only accept what [`policy`] allows (Q04).
 
 pub mod events;
+#[cfg(target_os = "linux")]
+pub mod linux;
 pub mod mpv;
 pub mod policy;
+#[cfg(target_os = "linux")]
+pub mod smoke;
 pub mod window;
 
 use std::path::{Path, PathBuf};
@@ -46,15 +51,20 @@ fn exe_dir() -> Option<PathBuf> {
     std::env::current_exe().ok().and_then(|p| p.parent().map(Path::to_path_buf))
 }
 
-/// Finds libmpv-2.dll. Order: `VHO_MPV_DLL`, next to the exe, `<exe>/mpv/`, `<resources>/mpv/`.
+/// libmpv file name of this platform (Linux: the SONAME of the LGPL build, ADR 0002).
+pub const LIBMPV: &str = if cfg!(windows) { "libmpv-2.dll" } else { "libmpv.so.2" };
+
+/// Finds libmpv. Order: `VHO_MPV_DLL`, next to the exe, `<exe>/mpv/`, `<resources>/mpv/`.
+/// Never the system library search path: a distribution `libmpv.so.2` is usually a GPL build
+/// (only `VHO_MPV_DLL` can point at one, as the user's own explicit choice).
 pub fn locate<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
     if std::env::var_os("VHO_DISABLE_MPV").is_some_and(|v| !v.is_empty() && v != "0") {
         return Err("libmpv disabled by VHO_DISABLE_MPV".into());
     }
-    if !cfg!(windows) {
+    if !cfg!(any(windows, target_os = "linux")) {
         return Err("libmpv embedding is not available on this platform yet (path B)".into());
     }
-    let name = "libmpv-2.dll";
+    let name = LIBMPV;
     let mut candidates = vec![];
     if let Some(p) = std::env::var_os("VHO_MPV_DLL") {
         candidates.push(PathBuf::from(p));
@@ -69,7 +79,13 @@ pub fn locate<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
     candidates
         .into_iter()
         .find(|p| p.is_file())
-        .ok_or_else(|| format!("{name} not found (run `npm run stage:mpv`)"))
+        .ok_or_else(|| {
+            if cfg!(windows) {
+                format!("{name} not found (run `npm run stage:mpv`)")
+            } else {
+                format!("{name} not found (run `bash scripts/linux/stage-mpv.sh`)")
+            }
+        })
 }
 
 /// Primary GPU description; integrated GPUs (little dedicated VRAM) default to `profile=fast`.
@@ -111,18 +127,10 @@ pub fn setup<R: Runtime>(app: &AppHandle<R>, win: &WebviewWindow<R>, dll: Result
 }
 
 fn start<R: Runtime>(app: &AppHandle<R>, win: &WebviewWindow<R>, dll: &Path, gpu: &Value) -> Result<Arc<mpv::Mpv>, String> {
-    #[cfg(windows)]
-    let top = win.hwnd().map_err(|e| e.to_string())?.0 as isize;
-    #[cfg(not(windows))]
-    let top = {
-        let _ = win;
-        0isize
-    };
-    let wid = window::create(top)?;
     let fast = gpu.get("integrated").and_then(Value::as_bool).unwrap_or(false);
     let shots = screenshot_dir(app);
-    let mut opts: Vec<(&str, String)> = vec![
-        ("wid", wid.to_string()),
+    let mut opts: Vec<(&str, String)> = surface_options(win)?;
+    opts.extend([
         ("config", "no".into()),
         ("terminal", "no".into()),
         ("input-default-bindings", "no".into()),
@@ -131,10 +139,7 @@ fn start<R: Runtime>(app: &AppHandle<R>, win: &WebviewWindow<R>, dll: &Path, gpu
         ("cursor-autohide", "no".into()),
         ("load-scripts", "no".into()), // VHO draws its own UI; the LGPL build has no Lua anyway
         ("idle", "yes".into()),
-        ("force-window", "yes".into()),
         ("keep-open", "yes".into()),
-        ("vo", "gpu-next".into()),
-        ("hwdec", "auto-safe".into()),
         ("volume-max", "200".into()),
         ("deinterlace", "auto".into()),
         ("tone-mapping", "auto".into()),
@@ -144,19 +149,29 @@ fn start<R: Runtime>(app: &AppHandle<R>, win: &WebviewWindow<R>, dll: &Path, gpu
         ("alang", "tur,tr,eng,en".into()),
         ("slang", "tur,tr,eng,en".into()),
         ("background-color", "#000000".into()),
-    ];
+    ]);
     if let Some(d) = &shots {
         opts.push(("screenshot-directory", d.to_string_lossy().into_owned()));
     }
     if fast {
         opts.push(("profile", "fast".into()));
     }
+    // Diagnostics only: extra mpv options, `name=value;name=value` (e.g. `gpu-debug=yes`)
+    let extra = std::env::var("VHO_MPV_OPTIONS").unwrap_or_default();
+    for kv in extra.split(';').filter(|s| !s.is_empty()) {
+        if let Some((k, v)) = kv.split_once('=') {
+            opts.push((k.trim(), v.trim().to_string()));
+        }
+    }
     let refs: Vec<(&str, &str)> = opts.iter().map(|(k, v)| (*k, v.as_str())).collect();
     let m = mpv::Mpv::new(dll, &refs)?;
-    m.request_log_messages("warn");
+    // mpv messages go to stderr; VHO_MPV_LOG_LEVEL (e.g. "v", "debug") for diagnostics
+    m.request_log_messages(&std::env::var("VHO_MPV_LOG_LEVEL").unwrap_or_else(|_| "warn".into()));
     for (i, p) in OBSERVED.iter().enumerate() {
         let _ = m.observe(i as u64 + 1, p);
     }
+    #[cfg(target_os = "linux")]
+    linux::attach(win, Arc::clone(&m))?;
     let h = app.clone();
     let mut throttle = events::Throttle::default();
     m.spawn_event_loop(move |ev| {
@@ -174,6 +189,32 @@ fn start<R: Runtime>(app: &AppHandle<R>, win: &WebviewWindow<R>, dll: &Path, gpu
     Ok(m)
 }
 
+/// Video output options of this platform's surface.
+/// Windows: mpv's own `gpu-next` VO in the owned popup (`wid`). Linux: `vo=libmpv` (render API,
+/// the GL context is VHO's GtkGLArea); hardware decoding only as copy-back, so a missing or
+/// broken VAAPI (WSLg, VMs, some drivers) falls back to software decoding instead of a black frame.
+#[cfg(windows)]
+fn surface_options<R: Runtime>(win: &WebviewWindow<R>) -> Result<Vec<(&'static str, String)>, String> {
+    let top = win.hwnd().map_err(|e| e.to_string())?.0 as isize;
+    let wid = window::create(top)?;
+    Ok(vec![
+        ("wid", wid.to_string()),
+        ("force-window", "yes".into()),
+        ("vo", "gpu-next".into()),
+        ("hwdec", "auto-safe".into()),
+    ])
+}
+
+#[cfg(target_os = "linux")]
+fn surface_options<R: Runtime>(_win: &WebviewWindow<R>) -> Result<Vec<(&'static str, String)>, String> {
+    Ok(vec![("vo", "libmpv".into()), ("hwdec", "auto-copy-safe".into())])
+}
+
+#[cfg(not(any(windows, target_os = "linux")))]
+fn surface_options<R: Runtime>(_win: &WebviewWindow<R>) -> Result<Vec<(&'static str, String)>, String> {
+    window::create(0).map(|_| vec![])
+}
+
 fn screenshot_dir<R: Runtime>(app: &AppHandle<R>) -> Option<PathBuf> {
     if let Some(d) = std::env::var_os("VHO_SCREENSHOT_DIR") {
         return Some(PathBuf::from(d));
@@ -183,6 +224,9 @@ fn screenshot_dir<R: Runtime>(app: &AppHandle<R>) -> Option<PathBuf> {
 
 /// Stops mpv on exit (the event thread ends with the shutdown event).
 pub fn shutdown<R: Runtime>(app: &AppHandle<R>) {
+    // Linux: the render context goes first (GL context current), then the core
+    #[cfg(target_os = "linux")]
+    linux::shutdown();
     if let Some(st) = app.try_state::<Engine>() {
         if let Some(m) = st.lock().unwrap().mpv.take() {
             let _ = m.command(&json!(["quit"]));
@@ -212,7 +256,23 @@ pub fn engine_status(st: tauri::State<'_, Engine>) -> Value {
         "visible": visible,
         "clientRect": client,
         "videoRect": video,
+        "surface": surface_info(),
     })
+}
+
+#[cfg(target_os = "linux")]
+fn surface_info() -> Value {
+    linux::info()
+}
+
+#[cfg(windows)]
+fn surface_info() -> Value {
+    json!({"surface": "win32-owned-popup"})
+}
+
+#[cfg(not(any(windows, target_os = "linux")))]
+fn surface_info() -> Value {
+    json!({"surface": null})
 }
 
 /// `loadfile <path> replace`, optionally starting at `start` seconds.
@@ -244,7 +304,16 @@ pub async fn engine_command(st: tauri::State<'_, Engine>, args: Value) -> Result
 #[tauri::command]
 pub async fn engine_set(st: tauri::State<'_, Engine>, name: String, value: Value) -> Result<(), String> {
     policy::check_set(&name, &value)?;
-    mpv_of(&st)?.set_property(&name, &value)
+    mpv_of(&st)?.set_property(&name, &platform_value(cfg!(target_os = "linux"), &name, value))
+}
+
+/// The "hardware decoding: automatic" setting is stored as `auto-safe`. On Linux the render API
+/// only uses copy-back decoding (ADR 0002), so it becomes `auto-copy-safe` there.
+fn platform_value(linux: bool, name: &str, value: Value) -> Value {
+    match (linux, name, value.as_str()) {
+        (true, "hwdec", Some("auto-safe")) => Value::from("auto-copy-safe"),
+        _ => value,
+    }
 }
 
 #[tauri::command]
@@ -308,6 +377,15 @@ mod tests {
         for (i, o) in [("", ""), ("f", "Zg=="), ("fo", "Zm8="), ("foo", "Zm9v"), ("foob", "Zm9vYg=="), ("foobar", "Zm9vYmFy")] {
             assert_eq!(super::base64(i.as_bytes()), o);
         }
+    }
+
+    #[test]
+    fn engine_hwdec_setting_is_copy_back_on_linux() {
+        use serde_json::json;
+        assert_eq!(super::platform_value(true, "hwdec", json!("auto-safe")), json!("auto-copy-safe"));
+        assert_eq!(super::platform_value(true, "hwdec", json!("no")), json!("no"));
+        assert_eq!(super::platform_value(false, "hwdec", json!("auto-safe")), json!("auto-safe"));
+        assert_eq!(super::platform_value(true, "volume", json!(50)), json!(50));
     }
 }
 

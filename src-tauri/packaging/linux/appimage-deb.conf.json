@@ -2,19 +2,46 @@
   "$schema": "https://schema.tauri.app/config/2",
   "bundle": {
     "active": true,
-    "targets": ["appimage", "deb"],
+    "targets": [
+      "appimage",
+      "deb"
+    ],
     "publisher": "Halil SARITAŞ (TurkuazCode)",
     "copyright": "Copyright 2026 Halil SARITAŞ. Apache-2.0.",
     "category": "Video",
     "shortDescription": "Video, photo and music player and studio",
     "licenseFile": "../LICENSE",
     "resources": {
+      "target/package-staging/mpv/": "mpv/",
       "target/package-staging/legal/": "legal/"
     },
     "linux": {
       "deb": {
         "section": "video",
-        "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0"]
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libgtk-3-0t64",
+          "libass9",
+          "libplacebo338",
+          "liblcms2-2",
+          "libuchardet0",
+          "libdav1d7",
+          "libva2",
+          "libva-drm2",
+          "libva-wayland2",
+          "libva-x11-2",
+          "libpipewire-0.3-0t64",
+          "libpulse0",
+          "libasound2t64",
+          "libwayland-client0",
+          "libwayland-egl1",
+          "libwayland-cursor0",
+          "libxkbcommon0",
+          "libegl1",
+          "libvulkan1",
+          "libjpeg8",
+          "libunibreak5"
+        ]
       }
     }
   }
