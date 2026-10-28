@@ -23,7 +23,7 @@ modified versions — not to restrict what you do with the code.
 - the HS Studio / VHO logo and application icon (the files in `src-tauri/icons/`,
   `src/assets/favicon.png`, `src/assets/icon-192.png`, and their later replacements).
 
-Owner: Halil SARITAŞ (hsrts).
+Owner: TurkuazCode.
 
 ## Allowed without asking
 

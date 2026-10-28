@@ -3,8 +3,8 @@
   "bundle": {
     "active": true,
     "targets": ["app", "dmg"],
-    "publisher": "Halil SARITAŞ (TurkuazCode)",
-    "copyright": "Copyright 2026 Halil SARITAŞ. Apache-2.0.",
+    "publisher": "TurkuazCode",
+    "copyright": "Copyright 2026 TurkuazCode. Apache-2.0.",
     "category": "Video",
     "shortDescription": "Video, photo and music player and studio",
     "licenseFile": "../LICENSE",

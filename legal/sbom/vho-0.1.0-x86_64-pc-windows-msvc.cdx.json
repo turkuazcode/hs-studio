@@ -1,10 +1,10 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:80e16cdb-11a3-5261-8e46-9546aa09a157",
+ "serialNumber": "urn:uuid:f656ca82-18ee-50ec-b6e9-468a11d957ad",
  "version": 1,
  "metadata": {
-  "timestamp": "2026-10-28T12:38:39Z",
+  "timestamp": "2026-10-28T20:07:38Z",
   "tools": {
    "components": [
     {
@@ -27,7 +27,7 @@
    ],
    "authors": [
     {
-     "name": "Halil SARITAŞ (hsrts)"
+     "name": "TurkuazCode"
     }
    ]
   },
@@ -38,7 +38,7 @@
    },
    {
     "name": "vho:source-commit",
-    "value": "734f608089881f90ed56de783a44ec65c7b907ac"
+    "value": "95390aeca730bf841f5fa2292b3c98c0aabd9f8a"
    },
    {
     "name": "vho:native-binaries",

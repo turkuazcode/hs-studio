@@ -11,7 +11,7 @@
 
     # 2) apply to a throwaway mirror (needs git-filter-repo, see below)
     powershell -NoProfile -ExecutionPolicy Bypass -File scripts\prepare-public-history.ps1 -Apply `
-      -NewEmail "<id>+<user>@users.noreply.github.com" -NewName "Halil SARITAŞ" `
+      -NewEmail "<id>+<user>@users.noreply.github.com" -NewName "TurkuazCode" `
       -FilterRepo C:\build\tools\filter-repo\Scripts\git-filter-repo.exe
 
   What the rewrite does (in the mirror only):

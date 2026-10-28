@@ -59,7 +59,7 @@ $conf = Get-Content (Join-Path $tauriDir 'tauri.conf.json') -Raw -Encoding UTF8 
 if (-not $Version) { $Version = $conf.version }
 # main binary: tauri.conf.json mainBinaryName ("HS Studio"), else the crate name
 $exeName = "$(if ($conf.mainBinaryName) { $conf.mainBinaryName } else { 'vho' }).exe"
-if (-not $SourceUrl) { $SourceUrl = "<repository URL to be set before the first public release>/tree/v$Version" }
+if (-not $SourceUrl) { $SourceUrl = "https://github.com/turkuazcode/hs-studio/tree/v$Version" }
 $native = Get-Content (Join-Path $root 'legal\inventory\native-windows-x64.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 
 # ---------------------------------------------------------------- 1. stage payload
