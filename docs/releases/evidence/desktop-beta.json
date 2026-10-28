@@ -1,0 +1,138 @@
+{
+  "$comment": "Elle (cihaz / insan) doğrulama kayıtları — scripts/release-gate.mjs okur. Yalnızca gerçekten yapılmış bir oturumdan sonra result=pass yazın; os, date, tester ve test edilen kurulum dosyasının SHA-256'sı (artifactSha256) zorunlu. Otomatik test sonuçları buraya yazılmaz.",
+  "target": "desktop-beta",
+  "checks": [
+    {
+      "id": "win-clean-install",
+      "title": "Temiz Windows 10/11 VM'de gerçek kimlikle (com.turkuazcode.hsstudio) kurulum, ilk açılış, standart (yönetici olmayan) kullanıcı; imza / SmartScreen davranışı not edilir",
+      "how": "docs/releases/windows-alpha-manual.md §1",
+      "result": "not-run",
+      "os": null,
+      "date": null,
+      "tester": null,
+      "artifactSha256": null,
+      "notes": ""
+    },
+    {
+      "id": "win-uninstall",
+      "title": "Kaldırma: program dosyaları ve kayıt anahtarları gider, kullanıcı verisi seçime göre kalır/silinir",
+      "how": "docs/releases/windows-alpha-manual.md §2",
+      "result": "not-run",
+      "os": null,
+      "date": null,
+      "tester": null,
+      "artifactSha256": null,
+      "notes": ""
+    },
+    {
+      "id": "win-upgrade",
+      "title": "Aynı kimliğin önceki bir derlemesinden yükseltme: kütüphane, ayarlar, iş kuyruğu korunur",
+      "how": "docs/releases/windows-alpha-manual.md §3",
+      "result": "not-run",
+      "os": null,
+      "date": null,
+      "tester": null,
+      "artifactSha256": null,
+      "notes": ""
+    },
+    {
+      "id": "win-file-associations",
+      "title": "Dosya ilişkilendirme: Birlikte aç listesinde görünür; varsayılan seçilince video/ses/görsel/altyazı doğru ekranda açılır",
+      "how": "docs/releases/windows-alpha-manual.md §4",
+      "result": "not-run",
+      "os": null,
+      "date": null,
+      "tester": null,
+      "artifactSha256": null,
+      "notes": ""
+    },
+    {
+      "id": "win-os-actions",
+      "title": "Gerçek OS eylemleri (paylaş, birlikte aç, klasörde göster, PDF'ye yazdır, arka plan, kilit ekranı, HEIC renk)",
+      "how": "docs/manual-os-checklist.md",
+      "result": "not-run",
+      "os": null,
+      "date": null,
+      "tester": null,
+      "artifactSha256": null,
+      "notes": ""
+    },
+    {
+      "id": "win-screen-reader",
+      "title": "Ekran okuyucu (Narrator ve/veya NVDA), yalnız klavye, yüksek kontrast, %150/%200 sistem ölçeği",
+      "how": "docs/releases/windows-alpha-manual.md §5",
+      "result": "not-run",
+      "os": null,
+      "date": null,
+      "tester": null,
+      "artifactSha256": null,
+      "notes": ""
+    },
+    {
+      "id": "mac-install",
+      "title": "macOS (Apple Silicon + Intel) imzalı/notarize paket kurulumu, Gatekeeper, ilk açılış, video/ses/altyazı",
+      "how": "docs/status/platform-plan-macos-linux.md",
+      "result": "not-run",
+      "os": null,
+      "date": null,
+      "tester": null,
+      "artifactSha256": null,
+      "notes": ""
+    },
+    {
+      "id": "mac-os-actions",
+      "title": "macOS gerçek OS eylemleri",
+      "how": "docs/manual-os-checklist.md",
+      "result": "not-run",
+      "os": null,
+      "date": null,
+      "tester": null,
+      "artifactSha256": null,
+      "notes": ""
+    },
+    {
+      "id": "mac-screen-reader",
+      "title": "VoiceOver, klavye, kontrast, ölçek",
+      "how": "docs/status/platform-plan-macos-linux.md",
+      "result": "not-run",
+      "os": null,
+      "date": null,
+      "tester": null,
+      "artifactSha256": null,
+      "notes": ""
+    },
+    {
+      "id": "linux-x11",
+      "title": "Gerçek GPU'lu X11 masaüstü: görüntü, VAAPI, ses, altyazı, ölçek/çoklu monitör",
+      "how": "docs/status/platform-plan-macos-linux.md",
+      "result": "not-run",
+      "os": null,
+      "date": null,
+      "tester": null,
+      "artifactSha256": null,
+      "notes": ""
+    },
+    {
+      "id": "linux-wayland",
+      "title": "Gerçek GPU'lu Wayland masaüstü (GNOME + KDE)",
+      "how": "docs/status/platform-plan-macos-linux.md",
+      "result": "not-run",
+      "os": null,
+      "date": null,
+      "tester": null,
+      "artifactSha256": null,
+      "notes": ""
+    },
+    {
+      "id": "linux-packages",
+      "title": "deb ve AppImage kurulum/kaldırma, hedef glibc tabanı",
+      "how": "docs/status/platform-plan-macos-linux.md",
+      "result": "not-run",
+      "os": null,
+      "date": null,
+      "tester": null,
+      "artifactSha256": null,
+      "notes": ""
+    }
+  ]
+}

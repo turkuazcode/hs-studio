@@ -1,13 +1,19 @@
 // Blind A/B rating sheet for the Q02 photo set (Plan 14 Q02: product names hidden, random
 // order and side, equal resolution and zoom, at least three raters).
 //
-//   node scripts/quality-ab.mjs sheet [--pairs=lanczos:vho-x4,vho-x4:vho-x4-faces] [--seed=N]
+//   node scripts/quality-ab.mjs sheet [--pairs=lanczos:classic-x4,lanczos:vho-x4] [--seed=N]
 //       -> tests/.results/quality/blind-ab/index.html (+ images, key.json kept OUT of the page)
+//   node scripts/quality-ab.mjs sheet --kind=video [--pairs=lanczos:faithful-light,faithful-light:faithful-medium]
+//       -> the same for the Q02 clips (outputs re-encoded to H.264 MP4 so a browser plays them)
+//   Default pairs compare the shipping model-free chains (A05 photo, V03 video) with plain
+//   Lanczos scaling of the same input at the same size (audit D08).
 //   node scripts/quality-ab.mjs score <ratings-1.json> [ratings-2.json ...]
 //       -> preference per profile pair, rubric means, red-flag rate, number of raters
 //
-// Needs a finished `npm run test:quality` run (tests/.results/quality/photo.json and the
-// output images in tests/.cache/quality/out/photo). This is a rater tool, not app UI.
+// Needs a finished `npm run test:quality` run (tests/.results/quality/{photo,video}.json and the
+// outputs in tests/.cache/quality/out/{photo,video}). This is a rater tool, not app UI. The
+// samples are the public-domain / generated Q02 set; never put private media in a sheet.
+import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,6 +21,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const RESULTS = join(ROOT, "tests", ".results", "quality");
 const IMAGES = join(ROOT, "tests", ".cache", "quality", "out", "photo");
+const CLIPS = join(ROOT, "tests", ".cache", "quality", "out", "video");
 const SET = join(ROOT, "tests", ".cache", "quality", "set");
 const SHEET = join(RESULTS, "blind-ab");
 const [cmd, ...rest] = process.argv.slice(2);
@@ -29,9 +36,23 @@ function rng(seed) {
   };
 }
 
-function sheet() {
-  const run = JSON.parse(readFileSync(join(RESULTS, "photo.json"), "utf8"));
-  const pairs = String(opt.pairs ?? "lanczos:vho-x4,vho-x4:vho-x4-faces").split(",").map((p) => p.split(":"));
+/** FFV1 clip -> H.264 MP4 a browser plays (high quality; the input clip scaled up without smoothing). */
+async function toMp4(src, dst, scale) {
+  const { FFMPEG } = await import("../tests/quality/lib/ffmpeg.mjs");
+  const vf = [scale ? `scale=${scale}:flags=neighbor` : null, "format=yuv420p"].filter(Boolean).join(",");
+  for (const enc of [["-c:v", "h264_mf", "-rate_control", "quality", "-quality", "95"], ["-c:v", "libopenh264", "-b:v", "8M"]]) {
+    try {
+      execFileSync(FFMPEG, ["-hide_banner", "-v", "error", "-nostdin", "-y", "-i", src, "-vf", vf, ...enc, "-an", "-movflags", "+faststart", dst], { stdio: "pipe" });
+      return;
+    } catch {}
+  }
+  throw new Error(`no H.264 encoder for ${src}`);
+}
+
+async function sheet() {
+  const video = opt.kind === "video";
+  const run = JSON.parse(readFileSync(join(RESULTS, video ? "video.json" : "photo.json"), "utf8"));
+  const pairs = String(opt.pairs ?? (video ? "lanczos:faithful-light,faithful-light:faithful-medium" : "lanczos:classic-x4")).split(",").map((p) => p.split(":"));
   const seed = Number(opt.seed ?? Date.now() % 1e9);
   const rand = rng(seed);
   const items = [];
@@ -40,28 +61,39 @@ function sheet() {
       const ra = run.results.find((r) => r.id === id && r.profile === a), rb = run.results.find((r) => r.id === id && r.profile === b);
       if (!ra || !rb) continue;
       const swap = rand() < 0.5;
-      items.push({ id, left: swap ? b : a, right: swap ? a : b, hasRef: existsSync(join(SET, id, "ref.png")) });
+      items.push({ id, left: swap ? b : a, right: swap ? a : b });
     }
   }
   for (let i = items.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [items[i], items[j]] = [items[j], items[i]]; }
   rmSync(SHEET, { recursive: true, force: true });
   mkdirSync(SHEET, { recursive: true });
-  const key = items.map((it, n) => {
+  const ext = video ? "mp4" : "png";
+  const key = [];
+  for (const [n, it] of items.entries()) {
     const q = `q${String(n + 1).padStart(2, "0")}`;
-    copyFileSync(join(IMAGES, `${it.left}--${it.id}.png`), join(SHEET, `${q}-a.png`));
-    copyFileSync(join(IMAGES, `${it.right}--${it.id}.png`), join(SHEET, `${q}-b.png`));
-    copyFileSync(join(SET, it.id, "input.png"), join(SHEET, `${q}-input.png`));
-    return { q, sample: it.id, a: it.left, b: it.right };
-  });
-  writeFileSync(join(SHEET, "key.json"), JSON.stringify({ seed, run: run.meta, key }, null, 2));
+    if (video) {
+      await toMp4(join(CLIPS, `${it.left}--${it.id}.mkv`), join(SHEET, `${q}-a.mp4`));
+      await toMp4(join(CLIPS, `${it.right}--${it.id}.mkv`), join(SHEET, `${q}-b.mp4`));
+      await toMp4(join(SET, it.id, "input.mkv"), join(SHEET, `${q}-input.mp4`), "320:176");
+    } else {
+      copyFileSync(join(IMAGES, `${it.left}--${it.id}.png`), join(SHEET, `${q}-a.png`));
+      copyFileSync(join(IMAGES, `${it.right}--${it.id}.png`), join(SHEET, `${q}-b.png`));
+      copyFileSync(join(SET, it.id, "input.png"), join(SHEET, `${q}-input.png`));
+    }
+    key.push({ q, sample: it.id, a: it.left, b: it.right });
+  }
+  writeFileSync(join(SHEET, "key.json"), JSON.stringify({ seed, kind: video ? "video" : "photo", run: run.meta, key }, null, 2));
+  const media = (src, cls = "") => (video
+    ? `<video src="${src}" class="${cls}" autoplay loop muted playsinline controls></video>`
+    : `<img src="${src}" class="${cls}" alt="">`);
   const rubric = ["naturalness / doğallık", "detail / ayrıntı", "fidelity (person, text) / kişi-yazı sadakati", "artifacts (5 = none) / bozulma (5 = yok)"];
   const card = ({ q }) => `
   <section class="q" data-q="${q}">
     <h2>${q}</h2>
     <div class="row">
-      <figure><img src="${q}-input.png" class="in" alt=""><figcaption>input / girdi</figcaption></figure>
-      <figure><img src="${q}-a.png" alt=""><figcaption>A</figcaption></figure>
-      <figure><img src="${q}-b.png" alt=""><figcaption>B</figcaption></figure>
+      <figure>${media(`${q}-input.${ext}`, "in")}<figcaption>input / girdi</figcaption></figure>
+      <figure>${media(`${q}-a.${ext}`)}<figcaption>A</figcaption></figure>
+      <figure>${media(`${q}-b.${ext}`)}<figcaption>B</figcaption></figure>
     </div>
     <fieldset><legend>Preference / Tercih</legend>
       ${["A", "B", "equal"].map((v) => `<label><input type="radio" name="${q}-pref" value="${v}"> ${v === "equal" ? "equal / eşit" : v}</label>`).join(" ")}
@@ -76,8 +108,9 @@ function sheet() {
 @media (prefers-color-scheme: dark) { :root { --bg: #161616; --fg: #eee; --line: #444; } }
 body { font: 15px/1.4 system-ui, sans-serif; background: var(--bg); color: var(--fg); margin: 0 auto; padding: 16px; max-width: 1100px; }
 .row { display: flex; gap: 12px; flex-wrap: wrap; } figure { margin: 0; text-align: center; }
-img { width: 320px; height: 320px; object-fit: contain; image-rendering: auto; background: repeating-conic-gradient(#888 0 25%, #bbb 0 50%) 0 0 / 16px 16px; }
+img, video { width: 320px; height: 320px; object-fit: contain; image-rendering: auto; background: repeating-conic-gradient(#888 0 25%, #bbb 0 50%) 0 0 / 16px 16px; }
 img.in { image-rendering: pixelated; }
+@media (max-width: 700px) { img, video { width: 100%; height: auto; aspect-ratio: 1; } }
 section { border-top: 1px solid var(--line); padding: 12px 0; } fieldset { border: 1px solid var(--line); margin: 8px 0; }
 label { display: inline-block; margin: 4px 12px 4px 0; } button { font: inherit; padding: 8px 16px; }
 </style></head><body>
@@ -144,6 +177,6 @@ function score(files) {
   }
 }
 
-if (cmd === "sheet") sheet();
+if (cmd === "sheet") await sheet();
 else if (cmd === "score") score(rest.filter((a) => !a.startsWith("--")));
 else { console.error("usage: node scripts/quality-ab.mjs sheet|score ..."); process.exit(2); }

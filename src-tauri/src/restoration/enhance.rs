@@ -191,6 +191,13 @@ pub fn ffmpeg_args(input: &Path, recipe: &Recipe, report: &SourceReport, encoder
         }
         if recipe.subtitles.policy != recipe::StreamPolicy::None {
             a.extend(["-map".into(), "0:s?".into(), "-c:s".into(), "copy".into()]);
+            // MP4 text subtitles (mov_text / tx3g) cannot be stored in Matroska: converted to SRT
+            // (same text and timing) instead of failing the whole run
+            for (n, s) in report.subtitles.iter().enumerate() {
+                if s.codec == "mov_text" {
+                    a.extend([format!("-c:s:{n}"), "srt".into()]);
+                }
+            }
         }
         a.extend(["-map_metadata".into(), "0".into(), "-map_chapters".into(), "0".into()]);
     }
@@ -235,7 +242,73 @@ pub fn render(
         let _ = std::fs::remove_file(output);
         return Err("ffmpeg boş bir dosya üretti".into());
     }
+    if let Err(e) = verify_output(tools, input, output, recipe, report, preview) {
+        let _ = std::fs::remove_file(output);
+        return Err(e);
+    }
     Ok(size)
+}
+
+/// End of the last video packet (seconds) of `path`, read from `from` seconds on (a seek near
+/// the end, so it is fast also for long files). None when no packet can be read from there.
+pub fn last_video_time(tools: &Tools, path: &Path, from: f64) -> Option<f64> {
+    let out = ffmpeg::command(&tools.ffprobe)
+        .args(["-v", "error", "-select_streams", "v:0", "-read_intervals", &format!("{}%", secs(from.max(0.0)))])
+        .args(["-show_entries", "packet=pts_time,duration_time", "-of", "csv=p=0"])
+        .arg(path)
+        .output()
+        .ok()?;
+    String::from_utf8_lossy(&out.stdout)
+        .lines()
+        .filter_map(|l| {
+            let mut it = l.split(',').map(|v| v.trim().parse::<f64>().ok());
+            let pts = it.next().flatten()?;
+            Some(pts + it.next().flatten().unwrap_or(0.0))
+        })
+        .reduce(f64::max)
+}
+
+/// A finished render before it gets its final name: one video stream of the planned size, every
+/// copied audio / subtitle stream, and video up to the end of the planned range (compared with
+/// the source's own last video packet, not the container duration). A cut-off or partial file
+/// is an error, never a result.
+pub fn verify_output(tools: &Tools, input: &Path, output: &Path, recipe: &Recipe, report: &SourceReport, preview: bool) -> Result<(), String> {
+    let out = ffmpeg::command(&tools.ffprobe)
+        .args(["-v", "error", "-show_entries", "stream=codec_type,width,height", "-of", "json"])
+        .arg(output)
+        .output()
+        .map_err(|e| format!("ffprobe: {e}"))?;
+    let j: serde_json::Value = serde_json::from_slice(&out.stdout).unwrap_or_default();
+    let streams = j["streams"].as_array().cloned().unwrap_or_default();
+    let count = |t: &str| streams.iter().filter(|s| s["codec_type"] == t).count();
+    let bad = |what: String| Err(format!("çıktı doğrulanamadı: {what}"));
+    let Some(v) = streams.iter().find(|s| s["codec_type"] == "video") else { return bad("görüntü akışı yok".into()) };
+    let size = (v["width"].as_u64().unwrap_or(0) as u32, v["height"].as_u64().unwrap_or(0) as u32);
+    if size != (recipe.scale.width, recipe.scale.height) {
+        return bad(format!("boyut {}x{}, beklenen {}x{}", size.0, size.1, recipe.scale.width, recipe.scale.height));
+    }
+    if !preview {
+        let want = |policy: recipe::StreamPolicy, all: usize, selected: usize| match policy {
+            recipe::StreamPolicy::None => 0,
+            recipe::StreamPolicy::Selected => selected,
+            _ => all,
+        };
+        let audio = want(recipe.audio.policy, report.audio.len(), recipe.audio.streams.len());
+        let subs = want(recipe.subtitles.policy, report.subtitles.len(), report.subtitles.len());
+        if (count("audio"), count("subtitle")) != (audio, subs) {
+            return bad(format!("{} ses / {} altyazı, beklenen {audio} / {subs}", count("audio"), count("subtitle")));
+        }
+    }
+    // planned end in source time → length the output must have
+    let total = report.duration.unwrap_or(0.0);
+    let src_end = last_video_time(tools, input, total - 5.0).or(report.duration).unwrap_or(0.0);
+    let end = if preview { (recipe.range.start + PREVIEW_SECONDS).min(src_end) } else { recipe.range.end.unwrap_or(src_end).min(src_end) };
+    let expected = (end - recipe.range.start).max(0.0);
+    let tol = (expected * 0.02).max(0.5);
+    match last_video_time(tools, output, expected - 5.0) {
+        Some(got) if got + tol >= expected => Ok(()),
+        got => bad(format!("görüntü {:.1} sn, beklenen {expected:.1} sn", got.unwrap_or(0.0))),
+    }
 }
 
 /// File name of the result: `<stem>_enhanced.mkv` (full) / `<stem>_preview.mp4` (preview).

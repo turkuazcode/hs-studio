@@ -6,7 +6,11 @@
 //   lanczos        standard scaling of the original (baseline, ffmpeg)
 //   vho-x4         the app's current photo AI (photo-x4 DAT-2 via upscaleImage, WebGPU -> WASM)
 //   vho-x4-faces   vho-x4 + GFPGAN face restoration ("creative"; face samples only)
-// VHO_QUALITY_PROFILES=lanczos,vho-x4 limits the profiles (e.g. to skip the 170 MB face model).
+//   classic-x4     the default photo enhance since A05 (model-free classical chain, src-tauri/src/photo/
+//                  enhance.rs) with the product's default settings at scale 4, run as the app's own
+//                  "photo-enhance" queue job; also records job time, output file size and the app
+//                  process' peak working set (audit D08). The product offers 1x / 2x / 4x.
+// VHO_QUALITY_PROFILES=lanczos,classic-x4 limits the profiles (e.g. to skip the neural models).
 //
 // Metrics: controlled/synthetic -> full reference (PSNR, SSIM, GMSD, sharpness ratio) for the
 // whole image and every face/text region; real-old -> no reference (sharpness, noise σ,
@@ -26,18 +30,36 @@ import { ffmpeg } from "./lib/ffmpeg.mjs";
 import { fullReference, noReference } from "./lib/metrics.mjs";
 import { compareSection, loadBaseline, roundAll, saveSection, UPDATE, writeResult, RESULTS_DIR } from "./lib/baseline.mjs";
 import { launchAiApp } from "./lib/ai-app.mjs";
+import { launchApp } from "../e2e/lib/app.mjs";
+import { sleep } from "../e2e/lib/cdp.mjs";
+import { execFileSync } from "node:child_process";
+import { statSync } from "node:fs";
 
-const ALL_PROFILES = ["lanczos", "vho-x4", "vho-x4-faces"];
+const ALL_PROFILES = ["lanczos", "classic-x4", "vho-x4", "vho-x4-faces"];
 const PROFILES = (process.env.VHO_QUALITY_PROFILES?.split(",").map((s) => s.trim()).filter(Boolean)) ?? ALL_PROFILES;
 const OUT = join(CACHE, "out", "photo");
 const log = (...a) => console.log("[quality-photo]", ...a);
 
-let set, ai = null, aiReport = null;
+let set, ai = null, aiReport = null, classicApp = null;
+const classicRuns = new Map(); // photo id -> { out, ms, bytes, peakMiB }
 const results = []; // { id, profile, origin, metrics, rois, flags, ms, backend }
+let complete = false; // every sample/profile ran: only then is the baseline compared or rewritten
 
 before(async () => {
   set = await prepareSet();
   mkdirSync(OUT, { recursive: true });
+  // the classical chain first, in its own app instance that is closed before the neural models
+  // run (two WebView2 instances with WebGPU busy in one stalled the other's page)
+  if (PROFILES.includes("classic-x4")) {
+    classicApp = await launchApp();
+    try {
+      await classicApp.waitFor(`document.documentElement.dataset.platformReady === "1"`, { timeoutMs: 15000 });
+      for (const p of set.manifest.photos) classicRuns.set(p.id, await classic(join(set.dir(p.id), "input.png")));
+    } finally {
+      await classicApp.close();
+      classicApp = null;
+    }
+  }
   if (PROFILES.some((p) => p.startsWith("vho"))) {
     ai = await launchAiApp();
     const ids = ["ort-web", "photo-x4", ...(PROFILES.includes("vho-x4-faces") ? ["face-restore"] : [])];
@@ -49,6 +71,35 @@ before(async () => {
 after(async () => {
   await ai?.app.close();
 });
+
+/** Peak working set (MiB) of the app's main process so far (where the Rust job runs). */
+function peakWorkingSetMiB(pid) {
+  try {
+    const v = execFileSync("powershell", ["-NoProfile", "-Command", `(Get-Process -Id ${pid}).PeakWorkingSet64`], { encoding: "utf8" });
+    return Math.round(Number(v.trim()) / 1048576);
+  } catch {
+    return null;
+  }
+}
+
+/** The A05 chain through the app's queue: default settings at scale 4 (= the lanczos size). */
+async function classic(inputPath) {
+  const J = JSON.stringify;
+  const inv = (cmd, args, timeoutMs = 60000) => classicApp.eval(`__TAURI__.core.invoke(${J(cmd)}, ${J(args)})`, { timeoutMs });
+  const t0 = Date.now();
+  const { id } = await inv("jobs_submit", { job: { kind: "photo-enhance", request: { input: inputPath, params: { scale: 4 }, output: { format: "png", suffix: "_classic" } } } });
+  let d;
+  for (;;) {
+    d = await inv("jobs_get", { id });
+    if (["completed", "failed", "cancelled", "interrupted"].includes(d.job.state)) break;
+    await sleep(50);
+  }
+  const ms = Date.now() - t0;
+  const item = d.items[0];
+  if (d.job.state !== "completed") throw new Error(`photo-enhance ${d.job.state}: ${item?.errorCode ?? ""} ${item?.errorDetail ?? ""}`);
+  const output = item.outputPath ?? item.output_path;
+  return { out: readPng(output), ms, bytes: statSync(output).size, peakMiB: peakWorkingSetMiB(classicApp.proc.pid) };
+}
 
 const readPng = (p) => decodePng(readFileSync(p));
 
@@ -97,6 +148,12 @@ test("photo profiles: every sample, equal output size, finite output", { timeout
       if (profile === "lanczos") {
         out = await lanczos(input, 4);
         ms = Date.now() - t0;
+      } else if (profile === "classic-x4") {
+        const r = classicRuns.get(p.id);
+        out = r.out;
+        ms = r.ms;
+        backend = "cpu-rust";
+        extra = { bytes: r.bytes, peakWorkingSetMiB: r.peakMiB };
       } else {
         const r = await ai.upscale(input, { faces: profile === "vho-x4-faces" });
         out = { width: r.width, height: r.height, data: r.data };
@@ -138,11 +195,12 @@ test("photo profiles: every sample, equal output size, finite output", { timeout
       if (r.ssim < b.ssim - 0.05 || r.gmsd > b.gmsd + 0.05) e.flags.push(`${r.kind}-fidelity-drop`);
     });
   }
+  complete = true;
   t.diagnostic(`${results.length} sample/profile results; red flags: ${results.filter((r) => r.flags.length).map((r) => `${r.id}/${r.profile}: ${r.flags.join("+")}`).join("; ") || "none"}`);
 });
 
 test("photo metrics within tolerance of the committed baseline; no new red flag", (t) => {
-  if (!results.length) return t.skip("no results (previous test failed)");
+  if (!complete) return t.skip("the profile run did not finish: the baseline is neither compared nor rewritten");
   const section = {};
   for (const r of results) {
     section[`${r.id}|${r.profile}`] = { ...roundAll(r.metrics), ...Object.fromEntries(r.rois.flatMap((x, i) =>
@@ -171,10 +229,10 @@ test("photo metrics within tolerance of the committed baseline; no new red flag"
 
 function markdown({ meta, results: rs }) {
   const lines = [`# Photo quality run ${meta.date}`, "", `ffmpeg: ${meta.ffmpeg} · backends: ${meta.backends.join(", ")} · profiles: ${meta.profiles.join(", ")}`, "",
-    "| sample | origin | profile | backend | ms | PSNR | SSIM | GMSD | ROI SSIM | flags |", "|---|---|---|---|---|---|---|---|---|---|"];
+    "| sample | origin | profile | backend | ms | bytes | peak MiB | PSNR | SSIM | GMSD | sharpness | ROI SSIM | flags |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|"];
   for (const r of rs) {
     const m = r.metrics;
-    lines.push(`| ${r.id} | ${r.origin} | ${r.profile} | ${r.backend} | ${r.ms} | ${m.psnr ?? "—"} | ${m.ssim ?? "—"} | ${m.gmsd ?? "—"} | ${r.rois.map((x) => x.ssim ?? "—").join(" / ") || "—"} | ${r.flags.join(", ")} |`);
+    lines.push(`| ${r.id} | ${r.origin} | ${r.profile} | ${r.backend} | ${r.ms} | ${r.bytes ?? "—"} | ${r.peakWorkingSetMiB ?? "—"} | ${m.psnr ?? "—"} | ${m.ssim ?? "—"} | ${m.gmsd ?? "—"} | ${m.sharpnessRatio ?? m.sharpness ?? "—"} | ${r.rois.map((x) => x.ssim ?? "—").join(" / ") || "—"} | ${r.flags.join(", ")} |`);
   }
   return lines.join("\n") + "\n";
 }

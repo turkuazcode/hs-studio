@@ -254,5 +254,24 @@ try {
 $failed = @($results | Where-Object { -not $_.ok })
 Write-Host "`n== RESULT: $($results.Count - $failed.Count)/$($results.Count) checks ok"
 New-Item -ItemType Directory -Force (Join-Path $root 'tests\.results') | Out-Null
-$results | ConvertTo-Json | Set-Content -Encoding UTF8 (Join-Path $root 'tests\.results\installer.json')
+# same shape as the other layers (scripts/release-gate.mjs): the commit is the one the installer
+# was built from (its package manifest), the artifact is the tested installer itself
+$built = if ($manifestPath) { Get-Content $manifestPath.FullName -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
+$summary = [ordered]@{
+  layer = 'installer'
+  commitFull = if ($built) { $built.sourceCommit } else { $null }
+  commit = if ($built) { ([string]$built.sourceCommit).Substring(0, 7) } else { $null }
+  dirty = $null
+  platform = 'win32-x64'
+  full = $true
+  identity = 'test'  # always the test identity (see the header); never evidence for the real product id
+  installer = [ordered]@{ name = (Split-Path $Installer -Leaf); sha256 = (Get-FileHash -Algorithm SHA256 $Installer).Hash.ToLowerInvariant() }
+  upgrade = [bool]$UpgradeInstaller
+  finished = (Get-Date).ToString('o')
+  exitCode = if ($failed) { 1 } else { 0 }
+  pass = $results.Count - $failed.Count; fail = $failed.Count; skip = 0; todo = 0; cancelled = 0
+  checks = @($results)
+}
+New-Item -ItemType Directory -Force (Join-Path $root 'tests\.results') | Out-Null
+[IO.File]::WriteAllText((Join-Path $root 'tests\.results\installer.json'), ($summary | ConvertTo-Json -Depth 5), (New-Object Text.UTF8Encoding $false))
 if ($failed) { exit 1 }

@@ -224,6 +224,10 @@ fn error_codes_from_runner_messages() {
     assert_eq!(classify_error("ffmpeg hatası: No space left on device"), code::DISK_FULL);
     assert_eq!(classify_error("[unsupported] x"), code::UNSUPPORTED);
     assert_eq!(classify_error("something"), code::FAILED);
+    assert_eq!(classify_error("temp dir: Access is denied. (os error 5)"), code::PERMISSION);
+    assert_eq!(classify_error("temp dir: Erişim engellendi. (os error 5)"), code::PERMISSION);
+    assert_eq!(classify_error("Permission denied (os error 13)"), code::PERMISSION);
+    assert_eq!(classify_error("os error 50)"), code::FAILED, "not a prefix match on the error number");
 }
 
 // ---------------------------------------------------------------------------
@@ -960,4 +964,77 @@ fn smart_edit_job_kinds_write_a_png_with_alpha_and_keep_the_source() {
     let img = image::open(&out).unwrap().to_rgba8();
     assert_eq!((img.get_pixel(0, 0)[3], img.get_pixel(3, 1)[3]), (0, 255), "alpha kept");
     assert_eq!(sha(&src), before, "source unchanged");
+}
+
+// ---------------------------------------------------------------------------
+// Faithful video enhance job (audit D07): disk full and an unwritable target folder fail the
+// item with a clear code and leave no file; the source is never touched
+// ---------------------------------------------------------------------------
+
+/// Removes a test ACL again even when the test fails.
+#[cfg(windows)]
+struct DenyWrite(PathBuf);
+#[cfg(windows)]
+impl DenyWrite {
+    fn on(dir: &Path) -> DenyWrite {
+        let st = std::process::Command::new("icacls").arg(dir).args(["/deny", "*S-1-1-0:(W)"]).output().unwrap();
+        assert!(st.status.success(), "icacls: {}", String::from_utf8_lossy(&st.stdout));
+        DenyWrite(dir.to_path_buf())
+    }
+}
+#[cfg(windows)]
+impl Drop for DenyWrite {
+    fn drop(&mut self) {
+        let _ = std::process::Command::new("icacls").arg(&self.0).args(["/remove:d", "*S-1-1-0"]).output();
+    }
+}
+
+#[test]
+fn video_enhance_job_disk_full_and_denied_folder_leave_no_file() {
+    let fx = Fx::new("venh");
+    let t = crate::actions::ffmpeg::test_tools();
+    let clip = fx.src.join("clip.mp4");
+    let st = std::process::Command::new(&t.ffmpeg)
+        .args(["-hide_banner", "-loglevel", "error", "-nostdin", "-y", "-f", "lavfi", "-i", "testsrc2=size=640x480:rate=25,scale=320:240"])
+        .args(["-f", "lavfi", "-i", "sine=frequency=440", "-t", "2", "-c:v", "mpeg4", "-c:a", "aac"])
+        .arg(&clip)
+        .status()
+        .unwrap();
+    assert!(st.success());
+    let before = std::fs::read(&clip).unwrap();
+    let s = Scheduler::open(fx.storage(), fx.env.clone(), vec![Arc::new(adapters::VideoEnhanceAdapter)]).unwrap();
+    let run = |dir: &Path| {
+        let id = s.submit("video-enhance", json!({ "input": clip, "outputDir": dir }), None).unwrap().id;
+        s.run_next().unwrap();
+        (s.snapshot(&id).unwrap(), s.items(&id).unwrap().remove(0))
+    };
+    let files = |dir: &Path| -> Vec<String> { std::fs::read_dir(dir).unwrap().flatten().map(|e| e.file_name().to_string_lossy().into_owned()).collect() };
+
+    // 1) not enough space for the estimated output: refused before ffmpeg runs
+    *fx.env.free.lock().unwrap() = Some(1 << 20);
+    let (snap, item) = run(&fx.out);
+    assert_eq!(snap.state, "failed");
+    assert_eq!(item.error_code.as_deref(), Some(code::DISK_FULL), "{item:?}");
+    assert!(fx.outputs().is_empty(), "{:?}", fx.outputs());
+    *fx.env.free.lock().unwrap() = None;
+
+    // 2) a folder the OS does not let us write to (Windows ACL: deny write for Everyone)
+    #[cfg(windows)]
+    {
+        let locked = fx.dir.join("locked");
+        std::fs::create_dir_all(&locked).unwrap();
+        let guard = DenyWrite::on(&locked);
+        let (snap, item) = run(&locked);
+        drop(guard);
+        assert_eq!(snap.state, "failed");
+        assert_eq!(item.error_code.as_deref(), Some(code::PERMISSION), "{item:?}");
+        assert!(files(&locked).is_empty(), "{:?}", files(&locked));
+    }
+
+    // 3) the same job with space and a writable folder: exactly one result, source unchanged
+    let (snap, item) = run(&fx.out);
+    assert_eq!(snap.state, "completed", "{item:?}");
+    assert_eq!(fx.outputs(), ["clip_enhanced.mkv"]);
+    assert_eq!(std::fs::read(&clip).unwrap(), before, "the original is never touched");
+    assert_eq!(files(&fx.src), ["clip.mp4"]);
 }

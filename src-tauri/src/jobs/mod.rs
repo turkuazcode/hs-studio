@@ -117,6 +117,8 @@ pub mod code {
     pub const MODEL_CHANGED: &str = "modelChanged";
     pub const RECIPE_CHANGED: &str = "recipeChanged";
     pub const DISK_FULL: &str = "diskFull";
+    /// The output folder cannot be written (access denied by the OS)
+    pub const PERMISSION: &str = "permissionDenied";
     pub const ITEMS_FAILED: &str = "itemsFailed";
     pub const NO_FFMPEG: &str = "noFfmpeg";
     pub const UNSUPPORTED: &str = "unsupported";
@@ -176,6 +178,10 @@ pub fn classify_error(e: &str) -> &'static str {
         || lower.contains("os error 112") || lower.contains("yeterli alan yok")
     {
         code::DISK_FULL
+    } else if lower.contains("access is denied") || lower.contains("permission denied") || lower.contains("erişim engellendi")
+        || lower.contains("os error 5)") || lower.contains("os error 13)")
+    {
+        code::PERMISSION
     } else {
         code::FAILED
     }

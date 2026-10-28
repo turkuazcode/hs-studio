@@ -12,7 +12,7 @@
 |---|---|---|
 | `ci.yml` | push `main`, PR, elle | `unit` (`npm test`, skip yok), `rust` (`cargo test --locked`), `native` (aşağıdaki), `e2e` (release exe + LGPL DLL seti, `npm run e2e`), istenirse gerçek AI smoke (model önbelleği manifest hash'iyle) |
 | `native-windows.yml` | çağrılır / elle | `third_party/mpv/build-windows.sh` MSYS2 UCRT64'te çalışır. Önbellek anahtarı: betik + paket listesi hash'i. LGPL koruması: `--enable-gpl/version3/nonfree` ya da mpv `gpl=true` varsa adım başarısız olur. Çıktı artifact'ı `mpv-windows-x64` |
-| `release.yml` | elle (sürüm girdisi) / `v*` etiketi | Sürüm kontrolü, `npm test`, `cargo test` ve `scripts/package-windows.ps1` çalışır. Çıktılar: kurulum paketi, `.sha256`, paket manifesti, SBOM, bildirimler, kaynak teklifi, LICENSE, `SHA256SUMS.txt`. **Yayımlama yapmaz**; yalnızca artifact üretir. İmzasız çıktının dosya adında `-UNSIGNED` bulunur |
+| `release.yml` | elle (sürüm girdisi) / `v*` etiketi | 2026-10-28 (denetim D03/D04): **tek binary** — exe bir kez derlenir (`-Phase build`), imza açıksa imzalanır, birim + Rust + E2E + gerçek AI + kalite katmanları bu exe ile koşar, sonra aynı exe paketlenir (`-Phase bundle`). Ayrı `installer` işi aynı commit'in test kimliğiyle kurulum testini yapar. `gate` işi `release-gate.mjs --stage candidate --manifest …` çalıştırır; aday artifact'ı (`release-windows-x64-<sürüm>`) **yalnızca kapı karşılanırsa** yüklenir. Çıktılar: kurulum paketi, `.sha256`, (updater açıksa) `.sig`, paket manifesti, SBOM, bildirimler, kaynak teklifi, LICENSE, `SHA256SUMS.txt`, kapı raporu. **Yayımlama yapmaz**; uzakta hiç çalıştırılmadı. |
 
 Güvenlik kuralları:
 
@@ -119,6 +119,13 @@ kullanılmadı; imzalama yalnızca CI'da SignPath üzerinden yapılır.
     uca **denenmedi**; imzalı updater artifact'ı gerektirir.
 - **Yayın:** `src-tauri/packaging/updater.conf.json` + `package-windows.ps1 -Updater`
   (`bundle.createUpdaterArtifacts`, `.sig` üretimi), workflow'da `vars.UPDATER_ENABLED == 'true'`.
+  2026-10-28 (D04): `-Updater` **her iki aşamaya** verilir (açık anahtar ve uç nokta exe'ye derlenir; önceki imzalı yolda
+  verilmiyordu, gönderilen uygulamada updater yapılandırması olmazdı). Betik şablondaki yer tutucu anahtar/uç noktayla
+  `-Updater`'ı reddeder. SignPath kurulum dosyasını imzalayınca baytlar değişir ve paketleme anındaki `.sig` geçersiz olur:
+  workflow son dosyayı `tauri signer sign --app-version` ile yeniden imzalar ve `scripts/verify-updater-sig.mjs` ile
+  **yayımlanacak dosyanın kendisini** doğrular (anahtar kimliği, Ed25519/BLAKE2b imzası, güvenilir yorumdaki sürüm).
+  Doğrulayıcının testi gerçek `tauri signer` çıktısıyla: `tests/unit/updater-signature.test.mjs`. Gerçek anahtarla
+  uçtan uca güncelleme (önceki sürümden yükseltme) **yapılmadı**: anahtar ve sunucu yok.
   `latest.json` yayımlama adımı R03/yayın kararıyla birlikte yazılacak.
 - Henüz yok: kanal seçimi (stable/preview), etkin iş varken kurulumu erteleme (şimdilik yalnızca onay
   penceresi), kurulum öncesi L01 veri yedeği.

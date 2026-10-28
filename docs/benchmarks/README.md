@@ -1,6 +1,6 @@
 # Kalite ve performans ölçümleri (Q02)
 
-Kart: [14/Q02](../plans/14-kalite-ve-acik-kaynak-yayin.md) · Katman haritası: [test-map.md](../status/test-map.md) · Son sonuçlar: [2026-10-25-baslangic.md](2026-10-25-baslangic.md)
+Kart: [14/Q02](../plans/14-kalite-ve-acik-kaynak-yayin.md) · Katman haritası: [test-map.md](../status/test-map.md) · Son sonuçlar: [2026-10-28-klasik-zincir.md](2026-10-28-klasik-zincir.md) (modelsiz A05/V03 zinciri), [2026-10-25-baslangic.md](2026-10-25-baslangic.md) (eski neural yol)
 
 ## Veri kümesi (`tests/quality/manifest.json`)
 
@@ -19,11 +19,11 @@ Kart: [14/Q02](../plans/14-kalite-ve-acik-kaynak-yayin.md) · Katman haritası: 
 ## Protokol
 
 - Eşit çözünürlük: her girdi referansın 1/4'ü; her profil ×4 çıktıyı aynı boyutta verir.
-- Fotoğraf profilleri: `lanczos` (orijinalin standart ölçeklenmesi, taban), `vho-x4` (mevcut fotoğraf AI'ı, `upscaleImage`, WebGPU → WASM), `vho-x4-faces` (+GFPGAN, yalnızca yüzlü örnekler; A05'teki “Yaratıcı” profile karşılık). Ticari ürün karşılaştırması **yapılmadı** (hesap/ürün yok).
-- Video profilleri: `lanczos`, `nlmeans-lanczos` (geleneksel temizlik). V02 model adayları `tests/.cache/quality/candidates/<ad>/<klip>.mkv` olarak bırakılır; aynı ölçütlerle otomatik değerlendirilir.
+- Fotoğraf profilleri: `lanczos` (orijinalin standart ölçeklenmesi, taban), `classic-x4` (2026-10-28: varsayılan modelsiz A05 zinciri, uygulamanın `photo-enhance` işiyle ×4; süre, PNG boyutu, süreç tepe belleği), `vho-x4` (mevcut fotoğraf AI'ı, `upscaleImage`, WebGPU → WASM), `vho-x4-faces` (+GFPGAN, yalnızca yüzlü örnekler; A05'teki “Yaratıcı” profile karşılık). Ticari ürün karşılaştırması **yapılmadı** (hesap/ürün yok).
+- Video profilleri: `lanczos`, `nlmeans-lanczos` (geleneksel temizlik), `faithful-light` / `faithful-medium` (2026-10-28: V03 zinciri uygulamanın planından, hedef 320×176, renk dönüşümü ölçüm dışı; ffmpeg tepe belleği ve ürün boyutunda çıktı/girdi bayt oranı). V02 model adayları `tests/.cache/quality/candidates/<ad>/<klip>.mkv` olarak bırakılır; aynı ölçütlerle otomatik değerlendirilir.
 - Ölçütler (bağımlılıksız, yayınlanmış tanımlardan yazıldı, `tests/quality/lib/metrics.mjs`): PSNR, SSIM, GMSD, keskinlik oranı; referanssızda keskinlik, gürültü σ (Immerkær), renklilik (Hasler–Süsstrunk); videoda kare başı PSNR/SSIM ortalama+min, zamansal hata |Δçıktı − Δreferans|, çıktı zamansal değişimi. Yüz/yazı bölgeleri ayrıca ölçülür. LPIPS gibi öğrenilmiş ölçütler kullanılmadı (ağırlık/lisans/bağımlılık); PSNR/SSIM yalnızca **yardımcıdır**.
 - Kırmızı bayraklar (ortalamaya karışmaz, raporda tek tek): yüz/yazı bölgesinde lanczos'a göre SSIM −0,05'ten fazla düşüş veya GMSD +0,05'ten fazla artış (kimlik/yazı değişimi riski), kaybolan alpha, gri fotoğrafa eklenen renk.
-- Kör A/B: `npm run quality:ab -- sheet` → `tests/.results/quality/blind-ab/index.html` (rastgele sıra ve taraf, ürün adı yok, aynı boyut; anahtar ayrı dosyada). Değerlendiriciler JSON indirir; `npm run quality:ab -- score <json...>` tercih oranı, rubrik (doğallık/ayrıntı/sadakat/bozulma 1–5) ve bayrak oranını değerlendirici sayısıyla verir. Üçten az değerlendirici varsa sonuç “ön/geliştirici değerlendirmesi” olarak etiketlenir. **Henüz değerlendirme yapılmadı.**
+- Kör A/B (varsayılan çiftler lanczos ↔ classic-x4; video için `-- sheet --kind=video`): `npm run quality:ab -- sheet` → `tests/.results/quality/blind-ab/index.html` (rastgele sıra ve taraf, ürün adı yok, aynı boyut; anahtar ayrı dosyada). Değerlendiriciler JSON indirir; `npm run quality:ab -- score <json...>` tercih oranı, rubrik (doğallık/ayrıntı/sadakat/bozulma 1–5) ve bayrak oranını değerlendirici sayısıyla verir. Üçten az değerlendirici varsa sonuç “ön/geliştirici değerlendirmesi” olarak etiketlenir. **Henüz değerlendirme yapılmadı.**
 - Kapı (`npm run test:quality`): küme kilidi, doğru boyut/sonlu çıktı, her ölçüt `docs/benchmarks/quality-baseline.json`'a göre toleransta (PSNR ±0,3 dB, SSIM/GMSD ±0,005, referanssız ölçütler %5), yeni kırmızı bayrak yok. Taban `VHO_QUALITY_UPDATE_BASELINE=1` ile yeniden yazılır (diff incelenmeli).
 
 ## Performans (`npm run bench:media`)

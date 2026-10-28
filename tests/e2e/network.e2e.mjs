@@ -71,7 +71,9 @@ function mediaServer({ mp4, hls, aac }) {
       }
       const p = join(hls, name);
       if (!existsSync(p)) { res.writeHead(404).end(); return; }
-      res.writeHead(200, { "Content-Type": name.endsWith(".m3u8") ? "application/vnd.apple.mpegurl" : "video/mp2t" });
+      // chunked, no Content-Length (as many live packagers and proxies send it): with
+      // reconnect_streamed FFmpeg took every segment end for a dropped connection (audit D02)
+      res.writeHead(200, { "Content-Type": name.endsWith(".m3u8") ? "application/vnd.apple.mpegurl" : "video/mp2t", "Transfer-Encoding": "chunked" });
       res.end(readFileSync(p));
       return;
     }
@@ -217,10 +219,11 @@ test("network streams: HLS + dropped connections recover, ICY title, secrets not
       "cast.chromecast": [false, "unsupported"],
     });
 
-    // KNOWN ISSUE (docs/network.md): in libmpv the local HLS fixture stalls after the first
-    // segment and segments are re-opened several times (ffmpeg CLI plays it cleanly). Kept running as todo.
-    const HLS_TODO = "libmpv HLS stalls after the first segment (docs/network.md, open issue)";
-    await t.test("HLS from the URL dialog plays", { todo: HLS_TODO }, async () => {
+    // Regression (audit D02): HLS used to stall after the first segment — each chunked segment was
+    // downloaded again with back-off because of reconnect_streamed (src-tauri/src/net.rs). Every
+    // segment must be requested once and playback must cross segment boundaries.
+    await t.test("HLS from the URL dialog plays across segments, each segment requested once", async () => {
+      srv.log.length = 0;
       await openUrl(app, `${base}/hls/live.m3u8`);
       await app.waitFor(`window.__vhoEngine.kind === "mpv" && window.__vhoEngine.duration > 10`, { timeoutMs: 20000, message: "HLS loaded" });
       await app.waitFor("window.__vhoEngine.time > 5", { timeoutMs: 20000, message: "HLS plays across segments" })
@@ -228,9 +231,12 @@ test("network streams: HLS + dropped connections recover, ICY title, secrets not
           const st = await app.eval(`({ t: window.__vhoEngine.time, paused: window.__vhoEngine.paused })`);
           throw new Error(`${e.message}; engine ${J(st)}; requests ${J(srv.log.map((l) => l.path))}`);
         });
+      const segs = srv.log.map((l) => l.path).filter((p) => p.endsWith(".ts"));
+      assert.ok(segs.length >= 3, J(segs));
+      assert.equal(new Set(segs).size, segs.length, `no segment downloaded twice: ${J(segs)}`);
     });
 
-    await t.test("HLS: a dropped segment connection does not stop playback", { todo: HLS_TODO }, async () => {
+    await t.test("HLS: a dropped segment connection does not stop playback", async () => {
       srv.state.failSegment = "seg2.ts";
       srv.log.length = 0;
       await openUrl(app, `${base}/hls/live.m3u8?again=1`);

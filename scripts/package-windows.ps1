@@ -121,8 +121,15 @@ $hookConf = Join-Path $stage 'hooks.conf.json'
 [IO.File]::WriteAllText($hookConf, (@{ bundle = @{ windows = @{ nsis = @{ installerHooks = $hook } } } } | ConvertTo-Json -Depth 6), (New-Object Text.UTF8Encoding $false))
 $configs += @('--config', $hookConf)
 if ($Updater) {
-  if (-not $env:TAURI_SIGNING_PRIVATE_KEY) { throw '-Updater needs TAURI_SIGNING_PRIVATE_KEY (and _PASSWORD) in the environment' }
-  $configs += @('--config', (Join-Path $tauriDir 'packaging\updater.conf.json'))
+  # the public key and endpoint are compiled into the exe: -Updater belongs on the 'build' phase
+  # too, or the shipped app has no updater configuration (audit D04)
+  $updConf = Join-Path $tauriDir 'packaging\updater.conf.json'
+  $upd = (Get-Content $updConf -Raw -Encoding UTF8 | ConvertFrom-Json).plugins.updater
+  if (-not $upd.pubkey -or $upd.pubkey -match 'REPLACE_WITH' -or @($upd.endpoints | Where-Object { $_ -match '<owner>|<repo>' }).Count) {
+    throw "-Updater: set the real public key and endpoint in $updConf first (docs/release/signing-and-updates.md)"
+  }
+  if ($Phase -ne 'build' -and -not $env:TAURI_SIGNING_PRIVATE_KEY) { throw '-Updater needs TAURI_SIGNING_PRIVATE_KEY (and _PASSWORD) in the environment' }
+  $configs += @('--config', $updConf)
 }
 if ($Version -ne $conf.version) {
   $vfile = Join-Path $stage 'version.conf.json'
@@ -153,6 +160,11 @@ if ($Phase -eq 'build') {
 
 $installer = Get-ChildItem $bundleDir -Filter *-setup.exe | Where-Object { $_.LastWriteTime -ge $started } | Sort-Object LastWriteTime | Select-Object -Last 1
 if (-not $installer) { throw "no new installer in $bundleDir" }
+if ($Updater) {
+  # the updater signature must belong to exactly this file (re-signed after code signing: release.yml)
+  & node (Join-Path $root 'scripts\verify-updater-sig.mjs') $installer.FullName --version $Version | Out-Host
+  if ($LASTEXITCODE -ne 0) { throw "updater signature of $($installer.Name) does not verify" }
+}
 
 # ---------------------------------------------------------------- 3. checksums + manifest
 $hash = (Get-FileHash -Algorithm SHA256 $installer.FullName).Hash.ToLowerInvariant()
@@ -166,6 +178,7 @@ $commit = (& git -C $root rev-parse HEAD).Trim()
 $manifest = [ordered]@{
   installer = $installer.Name; sha256 = $hash; bytes = $installer.Length; variant = $Variant; version = $Version
   sourceCommit = $commit; built = (Get-Date).ToString('o'); remappedPaths = [bool]$remap; nativeHashesMatchInventory = (-not $mismatch)
+  updater = [bool]$Updater
   files = $files
 }
 $manifestPath = Join-Path $bundleDir ("package-manifest-$Variant-$Version.json")

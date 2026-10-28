@@ -815,3 +815,192 @@ fn enhance_trial_on_a_given_clip() {
         println!("{tag}: {} in {:.1} s; notices {:?}; chain {}", out.display(), t0.elapsed().as_secs_f64(), a.notices, video_filter(&r));
     }
 }
+
+// ---------------------------------------------------------------------------
+// Robustness of the full run (audit D07): orientation metadata, every track kept, A/V sync on
+// a VFR source, a cut-off output never accepted
+// ---------------------------------------------------------------------------
+
+/// Decoded md5 of the first 3 frames (`-f md5`).
+fn md5_frames(t: &Tools, pre: &[&str], input: &Path, vf: &str) -> String {
+    let out = Command::new(&t.ffmpeg)
+        .current_dir(t.ffmpeg.parent().unwrap())
+        .args(["-hide_banner", "-loglevel", "error", "-nostdin"])
+        .args(pre)
+        .arg("-i")
+        .arg(input)
+        .args(["-vf", vf, "-frames:v", "3", "-f", "md5", "-"])
+        .output()
+        .unwrap();
+    let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    assert!(s.starts_with("MD5="), "{s} {}", String::from_utf8_lossy(&out.stderr));
+    s
+}
+
+#[test]
+fn display_matrix_mirror_and_rotation() {
+    // ffprobe text of real files (`-display_hflip`, `-display_vflip`, `-display_rotation 90 -display_hflip`)
+    let m = |s: &str| {
+        let v: Vec<f64> = s.split_whitespace().map(|x| x.parse().unwrap()).collect();
+        <[f64; 9]>::try_from(v).unwrap()
+    };
+    let o = |s: &str| orientation(&m(s)).map(|(r, mi)| ((r.round() as i32).rem_euclid(360), mi));
+    assert_eq!(o("65536 0 0 0 65536 0 0 0 1073741824"), Some((0, false)));
+    assert_eq!(o("-65536 0 0 0 65536 0 0 0 1073741824"), Some((0, true)), "hflip: ffprobe says rotation -180");
+    assert_eq!(o("65536 0 0 0 -65536 0 0 0 1073741824"), Some((180, true)), "vflip: ffprobe says rotation 0");
+    assert_eq!(o("0 -65536 0 -65536 0 0 0 0 1073741824"), Some((270, true)), "90° + hflip: ffprobe says 90");
+    assert_eq!(o("0 0 0 0 0 0 0 0 0"), None);
+    let rep = report(json!({ "side_data_list": [{
+        "side_data_type": "Display Matrix",
+        "displaymatrix": "\n00000000:       -65536           0           0\n00000001:            0       65536           0\n00000002:            0           0  1073741824\n",
+        "rotation": -180
+    }] }));
+    let v = rep.video.as_ref().unwrap();
+    assert_eq!((v.rotation, v.mirrored), (0, true));
+    let r = suggest(&rep).unwrap();
+    assert!(r.output.mirror_applied);
+    assert!(video_filter(&r).contains("hflip,scale="), "{}", video_filter(&r));
+}
+
+#[test]
+fn enhance_orientation_matches_what_players_show() {
+    let t = tools();
+    let d = temp_dir();
+    let base = make(&t, &d.0, "base.mp4", &["-f", "lavfi", "-i", PROG_SRC, "-t", "1", "-c:v", "mpeg4", "-q:v", "2"]);
+    let b = base.to_string_lossy().into_owned();
+    let cases: [(&str, &[&str], (u32, u32)); 4] = [
+        ("rot90.mp4", &["-display_rotation", "90"], (240, 320)),
+        ("hflip.mp4", &["-display_hflip"], (320, 240)),
+        ("vflip.mp4", &["-display_vflip"], (320, 240)),
+        ("rotflip.mp4", &["-display_rotation", "90", "-display_hflip"], (240, 320)),
+    ];
+    let off = EnhanceOptions { denoise: Level::Off, sharpen: Level::Off, upscale: false };
+    for (name, flags, size) in cases {
+        let mut args: Vec<&str> = flags.to_vec();
+        args.extend(["-i", &b, "-c", "copy"]);
+        let src = make(&t, &d.0, name, &args);
+        let rep = probe(&t, &src);
+        let r = enhance::build_recipe(&rep, off, None, None).unwrap();
+        assert_eq!((r.scale.width, r.scale.height), size, "{name}");
+        // our chain without autorotation == ffmpeg's autorotation followed by the same scale/colour steps
+        let chain = video_filter(&r);
+        let rest = &chain[chain.find("scale=").unwrap()..];
+        assert_eq!(md5_frames(&t, &["-noautorotate"], &src, &chain), md5_frames(&t, &[], &src, rest), "{name}: {chain}");
+    }
+    // the full run bakes the orientation in: no display matrix left, size as shown
+    let src = d.0.join("rotflip.mp4");
+    let rep = probe(&t, &src);
+    let r = enhance::build_recipe(&rep, EnhanceOptions::default(), None, None).unwrap();
+    let out = d.0.join("rotflip_enhanced.mkv");
+    enhance::render(&t, &src, &r, &rep, &crate::actions::ffmpeg::FALLBACK_ENCODER, &out, false, &|| false, |_| {}).unwrap();
+    let o = probe(&t, &out);
+    let v = o.video.as_ref().unwrap();
+    assert_eq!((v.width, v.height, v.rotation, v.mirrored), (240, 320, 0, false));
+}
+
+/// Time of the first frame whose mean luma passes 128 (`showinfo`), and the first non-silent
+/// audio after 0.5 s (`silencedetect`).
+fn flash_and_beep(t: &Tools, p: &Path) -> (f64, f64) {
+    let run = |args: &[&str]| {
+        let out = Command::new(&t.ffmpeg).args(["-hide_banner", "-nostdin", "-i"]).arg(p).args(args).args(["-f", "null", "-"]).output().unwrap();
+        String::from_utf8_lossy(&out.stderr).into_owned()
+    };
+    let v = run(&["-map", "0:v:0", "-vf", "scale=32:24,showinfo"]);
+    let flash = v
+        .lines()
+        .filter(|l| l.contains("pts_time:"))
+        .find_map(|l| {
+            let pts: f64 = l.split("pts_time:").nth(1)?.split_whitespace().next()?.parse().ok()?;
+            let mean: f64 = l.split("mean:[").nth(1)?.split_whitespace().next()?.parse().ok()?;
+            (mean > 128.0).then_some(pts)
+        })
+        .expect("flash frame");
+    let a = run(&["-map", "0:a:0", "-af", "silencedetect=n=-30dB:d=0.05"]);
+    let beep = a
+        .lines()
+        .filter_map(|l| l.split("silence_end: ").nth(1)?.split_whitespace().next()?.parse::<f64>().ok())
+        .find(|s| *s > 0.5)
+        .expect("beep");
+    (flash, beep)
+}
+
+#[test]
+fn enhance_keeps_every_track_and_av_sync() {
+    let t = tools();
+    let d = temp_dir();
+    let enc = crate::actions::ffmpeg::FALLBACK_ENCODER;
+    let full = |src: &Path, name: &str| {
+        let rep = probe(&t, src);
+        let r = enhance::build_recipe(&rep, EnhanceOptions::default(), None, Some(FieldOrder::Progressive)).unwrap();
+        assert_ne!(assess(&r, &rep).status, Status::Blocked, "{:?}", assess(&r, &rep));
+        let out = d.0.join(name);
+        enhance::render(&t, src, &r, &rep, &enc, &out, false, &|| false, |_| {}).unwrap();
+        (rep, probe(&t, &out), out)
+    };
+
+    // two audio tracks (languages, channel counts) + a text subtitle: all kept, in order
+    let srt = d.0.join("s.srt");
+    std::fs::write(&srt, "1\n00:00:00,000 --> 00:00:01,500\nhello\n").unwrap();
+    let srt_s = srt.to_string_lossy().into_owned();
+    let multi = make(&t, &d.0, "multi.mkv", &[
+        "-f", "lavfi", "-i", PROG_SRC, "-f", "lavfi", "-i", "sine=frequency=440", "-f", "lavfi", "-i", "sine=frequency=880:sample_rate=44100",
+        "-i", &srt_s, "-t", "2", "-map", "0", "-map", "1", "-map", "2", "-map", "3", "-c:v", "mpeg4", "-c:a", "aac", "-c:s", "srt",
+        "-metadata:s:a:0", "language=tur", "-metadata:s:a:1", "language=eng", "-ac:a:1", "2",
+    ]);
+    let (src, o, _) = full(&multi, "multi_enhanced.mkv");
+    let tracks = |r: &SourceReport| r.audio.iter().map(|a| (a.language.clone(), a.channels, a.sample_rate)).collect::<Vec<_>>();
+    assert_eq!(tracks(&o), tracks(&src));
+    assert_eq!(tracks(&o).iter().map(|t| t.0.as_str()).collect::<Vec<_>>(), ["tur", "eng"]);
+    assert_eq!(o.subtitles.len(), 1);
+
+    // MP4 text subtitle (mov_text): Matroska cannot store it; converted to SRT, the run does not fail
+    let mp4 = make(&t, &d.0, "movtext.mp4", &[
+        "-f", "lavfi", "-i", PROG_SRC, "-f", "lavfi", "-i", "sine=frequency=440", "-i", &srt_s, "-t", "2",
+        "-map", "0", "-map", "1", "-map", "2", "-c:v", "mpeg4", "-c:a", "aac", "-c:s", "mov_text",
+    ]);
+    let (src, o, _) = full(&mp4, "movtext_enhanced.mkv");
+    assert_eq!(src.subtitles[0].codec, "mov_text");
+    assert_eq!((o.audio.len(), o.subtitles.len(), o.subtitles[0].codec.as_str()), (1, 1, "subrip"));
+
+    // VFR (25 fps for 1 s, then 10 fps) with a white flash and a beep at exactly 2.0 s
+    let vfr = make(&t, &d.0, "vfr.mkv", &[
+        "-f", "lavfi", "-i", "color=black:size=320x240:rate=25",
+        "-f", "lavfi", "-i", "sine=frequency=1000:sample_rate=48000",
+        "-t", "4",
+        "-vf", "setpts='if(lt(N\\,25)\\,N/25\\,1+(N-25)/10)/TB',drawbox=c=white:t=fill:enable='between(t\\,2\\,2.05)'",
+        "-af", "volume='if(between(t\\,2\\,2.3)\\,1\\,0)':eval=frame",
+        "-fps_mode", "vfr", "-c:v", "mpeg4", "-q:v", "2", "-c:a", "aac",
+    ]);
+    let (rep, o, out) = full(&vfr, "vfr_enhanced.mkv");
+    assert_eq!(rep.video.as_ref().unwrap().frame_rate.mode, RateMode::Vfr);
+    let (sf, sb) = flash_and_beep(&t, &vfr);
+    let (of, ob) = flash_and_beep(&t, &out);
+    assert!((sf - 2.0).abs() < 0.06 && (sb - 2.0).abs() < 0.06, "fixture: flash {sf}, beep {sb}");
+    // at most one output frame (0.1 s at 10 fps) between picture and sound; the flash is not moved
+    assert!((of - ob).abs() <= 0.1 + 1e-3, "A/V offset {:.3} s (flash {of}, beep {ob})", of - ob);
+    assert!((of - sf).abs() <= 0.1 + 1e-3, "flash moved: {sf} -> {of}");
+    let (sd, od) = (rep.duration.unwrap(), o.duration.unwrap());
+    assert!((sd - od).abs() < 0.15, "duration {sd} -> {od}");
+}
+
+#[test]
+fn enhance_cut_off_output_is_rejected() {
+    let t = tools();
+    let d = temp_dir();
+    let clip = noisy_clip(&t, &d.0, "clip.mkv", "8", "320x240");
+    let rep = probe(&t, &clip);
+    let r = enhance::build_recipe(&rep, EnhanceOptions::default(), None, None).unwrap();
+    let out = d.0.join("full.mkv");
+    enhance::render(&t, &clip, &r, &rep, &crate::actions::ffmpeg::FALLBACK_ENCODER, &out, false, &|| false, |_| {}).unwrap();
+    enhance::verify_output(&t, &clip, &out, &r, &rep, false).unwrap();
+    // the first half of the file (a write that stopped: disk full, crash): decodable, but short
+    let bytes = std::fs::read(&out).unwrap();
+    let cut = d.0.join("cut.mkv");
+    std::fs::write(&cut, &bytes[..bytes.len() / 2]).unwrap();
+    let e = enhance::verify_output(&t, &clip, &cut, &r, &rep, false).unwrap_err();
+    assert!(e.contains("beklenen"), "{e}");
+    // a result without the audio track is not accepted either
+    let noaudio = d.0.join("noaudio.mkv");
+    ff(&t, &["-i", &out.to_string_lossy(), "-map", "0:v", "-c", "copy", &noaudio.to_string_lossy()]);
+    assert!(enhance::verify_output(&t, &clip, &noaudio, &r, &rep, false).unwrap_err().contains("ses"));
+}

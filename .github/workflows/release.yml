@@ -1,7 +1,18 @@
-# Release build (plan 14/R02). Not pushed and never run remotely yet.
+# Release build (plan 14/R02, audit D03/D04). Not pushed and never run remotely yet.
 # Produces artifacts only — it does NOT publish a GitHub release (that is a separate, manual step):
-#   installer (NSIS, per-user) + .sha256, package manifest, SBOM, notices, source offer, SHA256SUMS.txt
+#   installer (NSIS, per-user) + .sha256 (+ .sig with the updater), package manifest, SBOM, notices,
+#   source offer, SHA256SUMS.txt, the test results and the release-gate report.
 # Built on a GitHub runner, i.e. from a neutral path (docs/release/build-path.md).
+#
+# One binary from build to package (D03): the exe is built once (-Phase build), signed when
+# signing is on, then EVERY test layer that launches the app (e2e, ai, quality) runs against
+# exactly that file, and only then is it bundled (-Phase bundle). The package manifest records
+# the exe's SHA-256; scripts/release-gate.mjs refuses results that name another binary, another
+# commit, a partial run, a failing exit code or an undeclared skip/todo. The installer layer runs
+# on a test-identity package of the same commit in a separate job. The candidate artifact
+# `release-windows-x64-<version>` is uploaded ONLY by the gate job, and only when the gate
+# (stage "candidate") is met. Manual checks (clean VM, screen reader, ...) are done afterwards on
+# that candidate and recorded in docs/releases/evidence/windows-alpha.json (stage "release").
 #
 # Code signing: SignPath Foundation (free OSS program, user decision 2026-10-26). The signing
 # steps run only when the repository variable SIGNPATH_ENABLED is 'true' (set it after SignPath
@@ -9,8 +20,11 @@
 # UNSIGNED and named so.
 #   secrets.SIGNPATH_API_TOKEN, vars.SIGNPATH_ORGANIZATION_ID, vars.SIGNPATH_PROJECT_SLUG,
 #   vars.SIGNPATH_POLICY_SLUG (e.g. release-signing), vars.SIGNPATH_EXE_CONFIG, vars.SIGNPATH_INSTALLER_CONFIG
-# Updater artifacts: only when vars.UPDATER_ENABLED is 'true' and secrets.TAURI_SIGNING_PRIVATE_KEY
-# (+ _PASSWORD) exist; requires the updater plugin in the app (docs/release/signing-and-updates.md).
+# Updater (D04): only when vars.UPDATER_ENABLED is 'true', secrets.TAURI_SIGNING_PRIVATE_KEY
+# (+ _PASSWORD) exist and src-tauri/packaging/updater.conf.json holds the real public key and
+# endpoint (package-windows.ps1 refuses the template). -Updater is passed to BOTH phases (the
+# public key is compiled into the exe). After SignPath changed the installer bytes, the updater
+# signature is made again on the final file and verified (scripts/verify-updater-sig.mjs).
 name: release
 
 on:
@@ -33,6 +47,7 @@ concurrency:
 env:
   RUST_TOOLCHAIN: "1.99.1"
   NODE_VERSION: "24"
+  VERSION_INPUT: ${{ inputs.version || github.ref_name }}
 
 jobs:
   native:
@@ -41,10 +56,12 @@ jobs:
   windows:
     runs-on: windows-latest
     needs: native
-    timeout-minutes: 120
+    timeout-minutes: 240
     env:
-      VERSION: ${{ inputs.version || github.ref_name }}
       SIGNED: ${{ vars.SIGNPATH_ENABLED == 'true' }}
+      UPDATER: ${{ vars.UPDATER_ENABLED == 'true' && '-Updater' || '' }}
+      VHO_E2E_PORT_MIN: "10700"
+      VHO_E2E_PORT_MAX: "10799"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -63,35 +80,24 @@ jobs:
       - name: Version check
         shell: pwsh
         run: |
-          $v = $env:VERSION -replace '^v', ''
+          $v = $env:VERSION_INPUT -replace '^v', ''
           $conf = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
           if ($v -ne $conf) { throw "requested $v but tauri.conf.json has $conf" }
           "VERSION=$v" >> $env:GITHUB_ENV
       - run: npm ci
+
+      # ---------------- layers without the app binary (results in tests/.results/*.json)
       - run: npm test
         env:
           VHO_TEST_NO_SKIP: "1"
-      - run: cargo test --release --lib --locked --manifest-path src-tauri/Cargo.toml
+      - run: npm run test:rust
 
-      # ---------------- unsigned path (default)
-      - name: Package (unsigned)
-        if: env.SIGNED != 'true'
-        shell: pwsh
-        run: >
-          ./scripts/package-windows.ps1 -MpvDist mpv-build/dist -MpvBin mpv-build/prefix/bin
-          -SourceUrl "${{ github.server_url }}/${{ github.repository }}/tree/${{ github.sha }}"
-          ${{ vars.UPDATER_ENABLED == 'true' && '-Updater' || '' }}
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-
-      # ---------------- signed path (SignPath; disabled until the project is accepted)
-      - name: Build exe (to be signed)
-        if: env.SIGNED == 'true'
+      # ---------------- the one exe that is tested and shipped
+      - name: Build exe
         shell: pwsh
         run: >
           ./scripts/package-windows.ps1 -Phase build -MpvDist mpv-build/dist -MpvBin mpv-build/prefix/bin
-          -SourceUrl "${{ github.server_url }}/${{ github.repository }}/tree/${{ github.sha }}"
+          -SourceUrl "${{ github.server_url }}/${{ github.repository }}/tree/${{ github.sha }}" ${{ env.UPDATER }}
       - id: upload-exe
         if: env.SIGNED == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -110,13 +116,37 @@ jobs:
           github-artifact-id: ${{ steps.upload-exe.outputs.artifact-id }}
           wait-for-completion: true
           output-artifact-directory: signed-exe
-      - name: Bundle signed exe
+      - name: Use the signed exe
         if: env.SIGNED == 'true'
         shell: pwsh
-        run: |
-          Copy-Item 'signed-exe/HS Studio.exe' 'src-tauri/target/release/HS Studio.exe' -Force
-          ./scripts/package-windows.ps1 -Phase bundle -MpvDist mpv-build/dist -MpvBin mpv-build/prefix/bin `
-            -SourceUrl "${{ github.server_url }}/${{ github.repository }}/tree/${{ github.sha }}"
+        run: Copy-Item 'signed-exe/HS Studio.exe' 'src-tauri/target/release/HS Studio.exe' -Force
+
+      # ---------------- layers that launch the app: against the exe above
+      - run: npm run stage:mpv -- -Source mpv-build\dist
+      - name: E2E
+        run: npm run e2e
+        env:
+          VHO_TEST_NO_SKIP: "1"
+      - name: Restore real-AI model cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: tests/.cache/ai-smoke/vho-data/ai
+          key: vho-ai-${{ hashFiles('src-tauri/src/ai/manifest.rs') }}
+      # skips here are judged by the gate: only its declared exceptions (hidden BiRefNet) pass
+      - name: Real-AI layer
+        run: npm run test:ai
+      - name: Quality layer
+        run: npm run test:quality
+
+      # ---------------- bundle the tested exe
+      - name: Bundle
+        shell: pwsh
+        run: >
+          ./scripts/package-windows.ps1 -Phase bundle -MpvDist mpv-build/dist -MpvBin mpv-build/prefix/bin
+          -SourceUrl "${{ github.server_url }}/${{ github.repository }}/tree/${{ github.sha }}" ${{ env.UPDATER }}
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       - id: upload-installer
         if: env.SIGNED == 'true'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -135,26 +165,51 @@ jobs:
           github-artifact-id: ${{ steps.upload-installer.outputs.artifact-id }}
           wait-for-completion: true
           output-artifact-directory: signed-installer
-      - name: Replace installer with the signed one
+      - name: Replace installer with the signed one (+ checksum, manifest, updater signature)
         if: env.SIGNED == 'true'
         shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
           $i = Get-ChildItem src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
           Copy-Item (Join-Path signed-installer $i.Name) $i.FullName -Force
           $h = (Get-FileHash -Algorithm SHA256 $i.FullName).Hash.ToLowerInvariant()
           Set-Content -NoNewline -Encoding ascii "$($i.FullName).sha256" "$h  $($i.Name)`n"
+          $mp = Get-ChildItem src-tauri/target/release/bundle/nsis/package-manifest-release-*.json | Select-Object -First 1
+          $m = Get-Content $mp.FullName -Raw | ConvertFrom-Json
+          $m.sha256 = $h; $m.bytes = (Get-Item $i.FullName).Length
+          $m | Add-Member -NotePropertyName codeSigned -NotePropertyValue $true -Force
+          [IO.File]::WriteAllText($mp.FullName, ($m | ConvertTo-Json -Depth 5))
+          if ($env:UPDATER) {
+            # Authenticode changed the bytes: the bundle-time .sig is void; sign the final file again
+            Remove-Item "$($i.FullName).sig" -ErrorAction SilentlyContinue
+            $keyFile = Join-Path $env:RUNNER_TEMP 'updater.key'
+            [IO.File]::WriteAllText($keyFile, $env:TAURI_SIGNING_PRIVATE_KEY)
+            try {
+              npx tauri signer sign -f $keyFile -p $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD --app-version $env:VERSION $i.FullName
+              if ($LASTEXITCODE -ne 0) { throw 'updater re-signing failed' }
+            } finally { Remove-Item $keyFile -Force }
+          }
+      - name: Verify the updater signature of the final installer
+        if: env.UPDATER != ''
+        shell: pwsh
+        run: |
+          $i = Get-ChildItem src-tauri/target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
+          node scripts/verify-updater-sig.mjs $i.FullName --version $env:VERSION
+          if ($LASTEXITCODE -ne 0) { throw 'updater signature does not match the file that is published' }
 
-      # ---------------- checksums + artifacts
+      # ---------------- checksums + candidate files (published only by the gate job)
       - name: Collect release files
         shell: pwsh
         run: |
           $out = New-Item -ItemType Directory -Force release-out
           $tag = if ($env:SIGNED -eq 'true') { '' } else { '-UNSIGNED' }
           Get-ChildItem src-tauri/target/release/bundle/nsis -File | ForEach-Object {
-            $name = $_.Name -replace '-setup\.exe$', "$tag-setup.exe"
+            $name = $_.Name -replace '-setup\.exe', "$tag-setup.exe"
             Copy-Item $_.FullName (Join-Path $out $name)
           }
-          Copy-Item src-tauri/target/package-staging/legal/sbom.cdx.json (Join-Path $out "vho-$env:VERSION.cdx.json")
+          Copy-Item src-tauri/target/package-staging/legal/sbom.cdx.json (Join-Path $out "hs-studio-$env:VERSION.cdx.json")
           Copy-Item src-tauri/target/package-staging/legal/THIRD_PARTY_NOTICES.txt $out
           Copy-Item src-tauri/target/package-staging/legal/SOURCE-OFFER.txt $out
           Copy-Item LICENSE (Join-Path $out 'LICENSE.txt')
@@ -165,7 +220,83 @@ jobs:
           Get-Content (Join-Path $out 'SHA256SUMS.txt')
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: release-windows-x64-${{ env.VERSION }}
+          name: candidate-unverified
+          path: release-out/
+          retention-days: 7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: results-windows
+          path: tests/.results/*.json
+
+  # Installer layer: a test-identity package ("VHO PackageTest", no file associations) of the
+  # same commit, installed / upgraded / uninstalled on this runner (scripts/test-installer.ps1).
+  # The real identity is checked by hand on the candidate (manual check win-clean-install).
+  installer:
+    runs-on: windows-latest
+    needs: native
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master 2026-10
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: mpv-windows-x64
+          path: mpv-build
+      - run: npm ci
+      - name: Package (test identity) and run the installer test
+        shell: pwsh
+        run: |
+          ./scripts/package-windows.ps1 -Variant test -MpvDist mpv-build/dist -MpvBin mpv-build/prefix/bin
+          $i = Get-ChildItem 'src-tauri/target/release/bundle/nsis/VHO PackageTest_*-setup.exe' | Select-Object -First 1
+          ./scripts/test-installer.ps1 -Installer $i.FullName
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: results-installer
+          path: tests/.results/installer.json
+
+  gate:
+    runs-on: windows-latest
+    needs: [windows, installer]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: results-windows
+          path: gate/results
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: results-installer
+          path: gate/results
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: candidate-unverified
+          path: release-out
+      - name: Release gate (candidate)
+        shell: pwsh
+        run: |
+          $m = Get-ChildItem release-out/package-manifest-release-*.json | Select-Object -First 1
+          node scripts/release-gate.mjs --target windows-alpha --stage candidate --manifest $m.FullName `
+            --results "win32-x64=gate/results" --markdown release-out/release-gate.md --json release-out/release-gate.json
+          $code = $LASTEXITCODE
+          Get-Content release-out/release-gate.md >> $env:GITHUB_STEP_SUMMARY
+          if ($code -ne 0) { throw 'release gate not met: no candidate is published' }
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-windows-x64-${{ env.VERSION_INPUT }}
           path: release-out/
           retention-days: 90
 
