@@ -7,6 +7,7 @@
 //! - `restoration_recipe(path, recipe)` → normalised recipe + assessment + filter chain + hash
 //!   (the report is re-measured when the file changed; cached by fingerprint otherwise)
 
+pub mod enhance;
 pub mod probe;
 pub mod recipe;
 
@@ -39,7 +40,7 @@ fn cache() -> &'static Mutex<HashMap<String, SourceReport>> {
 }
 
 /// Report for `path`; re-measured when size / modification time changed.
-fn report_for(tools: &ffmpeg::Tools, path: &Path) -> Result<SourceReport, String> {
+pub(crate) fn report_for(tools: &ffmpeg::Tools, path: &Path) -> Result<SourceReport, String> {
     let fp = probe::fingerprint(path)?;
     if let Some(r) = cache().lock().unwrap().get(&fp.path).filter(|r| r.source == fp) {
         return Ok(r.clone());
@@ -89,6 +90,23 @@ pub async fn restoration_recipe(path: String, recipe: Recipe) -> Result<RecipeRe
         let tools = ffmpeg::locate()?;
         let report = report_for(&tools, Path::new(&path))?;
         Ok(evaluate(&tools, report, Some(recipe)))
+    })
+    .await
+}
+
+/// Faithful video enhance: the recipe for the dialog's choices, assessed against this ffmpeg
+/// build (blockers such as `hdr-unsupported` / `field-order-unconfirmed` reach the UI as codes).
+#[tauri::command]
+pub async fn video_enhance_plan(
+    path: String,
+    options: Option<enhance::EnhanceOptions>,
+    field_order: Option<probe::FieldOrder>,
+) -> Result<RecipeResponse, String> {
+    crate::actions::blocking(move || {
+        let tools = ffmpeg::locate()?;
+        let report = report_for(&tools, Path::new(&path))?;
+        let recipe = enhance::build_recipe(&report, options.unwrap_or_default(), None, field_order);
+        Ok(evaluate(&tools, report, recipe))
     })
     .await
 }

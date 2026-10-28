@@ -392,6 +392,7 @@ pub fn run() {
             jobs::jobs_ext_output,
             restoration::restoration_probe,
             restoration::restoration_recipe,
+            restoration::video_enhance_plan,
             library::library_folders,
             library::library_add_folder,
             library::library_remove_folder,

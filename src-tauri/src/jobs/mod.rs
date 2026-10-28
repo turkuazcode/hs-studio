@@ -519,6 +519,14 @@ fn require_job_targets(app: &AppHandle, kind: &str, request: &Value) -> Result<(
                 None => Ok(()),
             }
         }
+        // full result next to the source (or the chosen folder); the preview goes to the app's folder
+        "video-enhance" => {
+            let req: adapters::VideoEnhanceRequest = serde_json::from_value(request.clone()).map_err(invalid)?;
+            match req.target_dir() {
+                Some(d) => crate::grants::require(app, &d, crate::grants::Access::IntoFolder).map_err(denied),
+                None => Ok(()),
+            }
+        }
         _ => Ok(()),
     }
 }
