@@ -13,6 +13,8 @@
 // ==========================================================================
 
 /** Builds one entry (missing fields get safe defaults). */
+import { LEGACY_PHOTO_AI } from "./scope.js";
+
 export function cap(id, available, implementation = null, { verified = false, reasonCode = null, support = null } = {}) {
   return {
     id, available: !!available, implementation, verified: !!verified, reasonCode: available ? reasonCode : (reasonCode ?? "unavailable"),
@@ -42,9 +44,12 @@ export function frontendCapabilities({ engineKind = "html5", webgl2 = false, web
     // Neural video restoration: not ready until Plan 12's V06 gate passes
     cap("video.aiRestore", false, null, { reasonCode: "not-ready", support: "unsupported" }),
     // Neural photo enhancement (ONNX Runtime Web); model download needed on first use
-    cap("photo.aiEnhance", !!aiBackend && !!platform, aiBackend, {
-      verified, reasonCode: !platform ? "no-backend" : aiBackend ? "model-download-on-first-use" : "no-ai-backend", support: "supported-untested",
-    }),
+    // (out of scope in this build: LEGACY_PHOTO_AI, core/scope.js)
+    LEGACY_PHOTO_AI
+      ? cap("photo.aiEnhance", !!aiBackend && !!platform, aiBackend, {
+        verified, reasonCode: !platform ? "no-backend" : aiBackend ? "model-download-on-first-use" : "no-ai-backend", support: "supported-untested",
+      })
+      : cap("photo.aiEnhance", false, null, { reasonCode: "out-of-scope", support: "unsupported" }),
     // Plan 07 smart editing (A06): object removal and colorize like the enhancement; background
     // removal is experimental (BiRefNet does not fit ORT Web on the 1 GB iGPU test machine)
     ...["photo.aiInpaint", "photo.aiColorize"].map((id) => cap(id, !!aiBackend && !!platform, aiBackend, {

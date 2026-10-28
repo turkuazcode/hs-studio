@@ -175,7 +175,7 @@ test("video: H.264 clip + SRT opened from the command line", { timeout: 180000 }
       const shown = (sel) => app.eval(`(() => { let el = document.querySelector(${JSON.stringify(sel)}); for (; el; el = el.parentElement) if (getComputedStyle(el).display === "none") return false; return true; })()`);
       await app.click("#btn-toggle-ai-restore");
       assert.equal(await app.eval(`document.documentElement.dataset.media`), "video");
-      assert.equal(await shown("#btn-deep-enhance"), false, "photo AI hidden for video");
+      assert.equal(await shown("#photo-enhance"), false, "photo enhance hidden for video");
       assert.equal(await shown("#video-restore-note"), true, "video restoration status shown");
       assert.match(await app.text("#video-restore-note"), /hazır değil|Not ready/);
       assert.doesNotMatch(await app.text("#ai-restore-panel h4"), /AI|Restor/i);

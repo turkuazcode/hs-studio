@@ -174,15 +174,17 @@ test("ai models: settings list, download, verify/repair, remove, zip, cancel, er
   try {
     await app.waitFor(`document.documentElement.dataset.platformReady === "1"`, { timeoutMs: 15000, message: "platform ready" });
 
-    await t.test("first use of photo AI asks with size, author and license (no download on 'no')", async () => {
+    await t.test("legacy neural photo AI is out of scope: no button, E does nothing, nothing downloaded", async () => {
       await app.waitFor(`document.getElementById("image-element").naturalWidth === 640`, { timeoutMs: 10000, message: "photo shown" });
-      await app.click("#btn-deep-enhance");
-      const msg = await app.waitFor(`window.__confirms.length && window.__confirms.at(-1)`, { timeoutMs: 8000, message: "consent dialog" });
-      for (const s of ["ONNX Runtime Web", "Microsoft, MIT", "Philip Hofmann, CC-BY-4.0", "Tencent ARC", "MB", "Ayarlar > AI modelleri"]) {
-        assert.ok(msg.includes(s), `consent mentions ${s}: ${msg}`);
-      }
-      assert.equal(await backendState("photo-x4"), "missing", "declined: nothing downloaded");
+      assert.equal(await app.eval(`document.getElementById("btn-deep-enhance")`), null);
+      const before = await app.eval(`window.__confirms.length`);
+      await app.key("KeyE", { key: "e" });
+      await new Promise((r) => setTimeout(r, 800));
+      assert.equal(await app.eval(`window.__confirms.length`), before, "no consent dialog (no download path)");
+      assert.equal(await backendState("photo-x4"), "missing", "nothing downloaded");
       assert.ok(!existsSync(join(dataDir, "ai", "photo-x4", "rwp4-95e9cd5", "4xRealWebPhoto_v4_fp32_opset17.onnx")));
+      const cap = await app.eval(`window.__vhoEngine.capabilities.find((c) => c.id === "photo.aiEnhance")`);
+      assert.deepEqual([cap.available, cap.reasonCode], [false, "out-of-scope"]);
     });
 
     await t.test("settings tab lists every component with license, author and size before download", async () => {

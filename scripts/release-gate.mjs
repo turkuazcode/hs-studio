@@ -25,6 +25,7 @@
 //   name the tested installer's SHA-256. Automated results never fill them.
 // It never decides on its own that something is "verified". Exit code 1 when the target is not met.
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -216,8 +217,22 @@ export function checkLayer(layer, r, target, ctx = {}) {
   return { layer, result, problems, excepted: [...excepted] };
 }
 
-/** The release package manifest written by scripts/package-windows.ps1. */
-export function checkArtifact(manifest, head) {
+/**
+ * The installer the manifest names, read from disk next to the manifest: { exists, sha256,
+ * checksumFile } (checksumFile: the hash written in `<installer>.sha256`, if that file exists).
+ */
+export function readArtifactFile(manifestPath, manifest) {
+  if (!manifestPath || !manifest?.installer) return null;
+  const file = join(dirname(resolve(manifestPath)), manifest.installer);
+  if (!existsSync(file)) return { file, exists: false };
+  const sha256 = createHash("sha256").update(readFileSync(file)).digest("hex");
+  const sumPath = `${file}.sha256`;
+  const checksumFile = existsSync(sumPath) ? readFileSync(sumPath, "utf8").trim().split(/\s+/)[0].toLowerCase() : null;
+  return { file, exists: true, sha256, checksumFile };
+}
+
+/** The release package manifest written by scripts/package-windows.ps1, and the file it names. */
+export function checkArtifact(manifest, head, file = undefined) {
   if (!manifest) return { result: "missing", problems: ["yayın paketi verilmedi (--manifest)"], installerSha256: null, exeSha256: null };
   const problems = [];
   if (manifest.variant !== "release") problems.push(`paket türü "${manifest.variant}", beklenen release`);
@@ -226,6 +241,13 @@ export function checkArtifact(manifest, head) {
   const exe = (manifest.files ?? []).find((f) => /main binary/.test(f.path));
   if (!exe?.sha256) problems.push("paket manifestinde ana binary yok");
   if (!manifest.sha256) problems.push("paket manifestinde kurulum SHA-256 yok");
+  // the manifest alone proves nothing: the file it names must exist and hash to the same value
+  if (!file) problems.push("kurulum dosyası okunmadı (manifestin yanında aranır)");
+  else if (!file.exists) problems.push(`kurulum dosyası yok: ${manifest.installer}`);
+  else {
+    if (file.sha256 !== manifest.sha256) problems.push("kurulum dosyasının gerçek SHA-256'sı manifestle uyuşmuyor (sonradan değişmiş)");
+    if (file.checksumFile && file.checksumFile !== file.sha256) problems.push(".sha256 dosyası kurulum dosyasıyla uyuşmuyor");
+  }
   return { result: problems.length ? "fail" : "ok", problems, installerSha256: manifest.sha256 ?? null, exeSha256: exe?.sha256 ?? null, name: manifest.installer };
 }
 
@@ -261,7 +283,7 @@ export function gate(targetName, planText, results, opts = {}) {
     const row = status.get(id);
     return { id, result: classify(id, row, target), status: row?.status ?? "(no row)" };
   });
-  const artifact = checkArtifact(opts.manifest, head);
+  const artifact = checkArtifact(opts.manifest, head, opts.artifactFile);
   const layers = [];
   for (const platform of target.platforms) {
     const keys = Object.keys(results).filter((k) => PLATFORM_OF[k] === platform);
@@ -349,7 +371,8 @@ function main() {
   const manifest = manifestPath ? readJson(resolve(manifestPath)) : null;
   if (manifestPath && !manifest) throw new Error(`cannot read the package manifest ${manifestPath}`);
   const evidence = readJson(resolve(opt("--evidence", join(ROOT, "docs", "releases", "evidence", `${targetName}.json`))));
-  const report = gate(targetName, plan, results, { head, manifest, evidence, stage: opt("--stage", "release") });
+  const artifactFile = manifest ? readArtifactFile(manifestPath, manifest) : undefined;
+  const report = gate(targetName, plan, results, { head, manifest, artifactFile, evidence, stage: opt("--stage", "release") });
   const md = toMarkdown(report);
   console.log(md);
   const out = opt("--markdown", null);

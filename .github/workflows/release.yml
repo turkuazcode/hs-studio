@@ -209,6 +209,16 @@ jobs:
             $name = $_.Name -replace '-setup\.exe', "$tag-setup.exe"
             Copy-Item $_.FullName (Join-Path $out $name)
           }
+          # the new name everywhere it is written: manifest and .sha256 (the gate re-hashes the file
+          # the manifest names, next to it)
+          $mp = Get-ChildItem $out -Filter 'package-manifest-release-*.json' | Select-Object -First 1
+          $m = Get-Content $mp.FullName -Raw | ConvertFrom-Json
+          $m.installer = $m.installer -replace '-setup\.exe$', "$tag-setup.exe"
+          [IO.File]::WriteAllText($mp.FullName, ($m | ConvertTo-Json -Depth 5))
+          $inst = Join-Path $out $m.installer
+          $h = (Get-FileHash -Algorithm SHA256 $inst).Hash.ToLowerInvariant()
+          if ($h -ne $m.sha256) { throw "installer hash $h differs from the manifest ($($m.sha256))" }
+          Set-Content -NoNewline -Encoding ascii "$inst.sha256" "$h  $($m.installer)`n"
           Copy-Item src-tauri/target/package-staging/legal/sbom.cdx.json (Join-Path $out "hs-studio-$env:VERSION.cdx.json")
           Copy-Item src-tauri/target/package-staging/legal/THIRD_PARTY_NOTICES.txt $out
           Copy-Item src-tauri/target/package-staging/legal/SOURCE-OFFER.txt $out

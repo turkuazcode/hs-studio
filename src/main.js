@@ -24,7 +24,8 @@ import { createHtml5Engine } from "./media/engine/html5-engine.js";
 import { createMpvEngine } from "./media/engine/mpv-engine.js";
 import { createLoader } from "./media/loader.js";
 import { createAiJobRunner } from "./media/ai-jobs.js";
-import { createPhotoAi } from "./media/photo-ai.js";
+import { createPhotoAi, removeLegacyPhotoAi } from "./media/photo-ai.js";
+import { LEGACY_PHOTO_AI } from "./core/scope.js";
 import { createPhotoEnhance } from "./media/photo-enhance.js";
 import { createVideoEnhance } from "./media/video-enhance.js";
 import { createPhotoViewer } from "./media/photo-viewer.js";
@@ -132,7 +133,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   app.video = createVideoPlayer(app);
   app.timeline = createTimeline(app);
   app.snapshot = createSnapshot(app);
-  app.photoAi = createPhotoAi(app);
+  // out of the Windows alpha scope: no controller and no UI (core/scope.js)
+  app.photoAi = LEGACY_PHOTO_AI ? createPhotoAi(app) : (removeLegacyPhotoAi(document), null);
   app.photoEnhance = createPhotoEnhance(app);
   app.videoEnhance = createVideoEnhance(app);
   app.audioFx = createAudioFx(app);

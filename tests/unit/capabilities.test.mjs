@@ -37,13 +37,16 @@ test("video restoration is never offered as ready; photo AI needs the desktop ba
     assert.equal(c["video.aiRestore"].reasonCode, "not-ready");
     assert.equal(c["video.aiRestore"].support, "unsupported");
   }
-  const browser = byId(frontendCapabilities({ webgpu: true }));
-  assert.equal(browser["photo.aiEnhance"].available, false);
-  assert.equal(browser["photo.aiEnhance"].reasonCode, "no-backend");
+  // the legacy neural photo enhancer is out of the Windows alpha scope (core/scope.js): never
+  // offered, whatever the backend; the A06 tools keep their own capabilities
+  for (const opts of [{ webgpu: true }, { webgpu: false, platform: { verifiedPlatform: false } }, { webgpu: true, platform: { verifiedPlatform: true } }]) {
+    const c = byId(frontendCapabilities(opts));
+    assert.deepEqual([c["photo.aiEnhance"].available, c["photo.aiEnhance"].reasonCode, c["photo.aiEnhance"].support], [false, "out-of-scope", "unsupported"]);
+  }
   const desk = byId(frontendCapabilities({ webgpu: false, platform: { verifiedPlatform: false } }));
-  assert.equal(desk["photo.aiEnhance"].implementation, "onnx-wasm");
-  assert.equal(desk["photo.aiEnhance"].verified, false);
-  assert.equal(desk["photo.aiEnhance"].reasonCode, "model-download-on-first-use");
+  assert.equal(desk["photo.aiInpaint"].implementation, "onnx-wasm");
+  assert.equal(desk["photo.aiColorize"].available, true);
+  assert.equal(desk["photo.aiInpaint"].reasonCode, "model-download-on-first-use");
 });
 
 test("verified is set only on a platform with real-device evidence", () => {
