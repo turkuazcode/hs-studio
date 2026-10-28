@@ -294,7 +294,8 @@
       "findSubtitles": "Altyazı bul…",
       "sleepTimer": "Uyku zamanlayıcı…",
       "photoInfo": "Bilgi",
-      "playlist": "Oynatma listesi"
+      "playlist": "Oynatma listesi",
+      "enhanceVideo": "Videoyu iyileştir…"
     },
     "delete": {
       "title": "Geri Dönüşüm Kutusu'na taşınsın mı?",
@@ -1548,6 +1549,51 @@
       "openPhoto": "Önce bir fotoğraf açın.",
       "desktopOnly": "Bu özellik masaüstü uygulamasında çalışır.",
       "saved": "Kaydedildi: {name}"
+    }
+  },
+  "videoEnhance": {
+    "title": "Videoyu iyileştir",
+    "recommended": "Önerilen ayarlar seçili. İsterseniz değiştirebilirsiniz.",
+    "note": "Orijinal korunur; sonuç ayrı dosya olarak kaydedilir.",
+    "denoise": "Gürültü ve blok azaltma",
+    "sharpen": "Keskinlik",
+    "level": {
+      "off": "Kapalı",
+      "light": "Hafif",
+      "medium": "Orta"
+    },
+    "upscale": {
+      "label": "Büyütme",
+      "none": "Yok (aynı boyut)",
+      "x2": "2× (en fazla 1080p)"
+    },
+    "fieldOrder": {
+      "label": "Alan sırası (geçmeli video)",
+      "hint": "Videonun geçmeli olup olmadığı kesin ölçülemedi.",
+      "ask": "Video geçmeli olabilir: alan sırasını seçin, sonra önizleyin.",
+      "tff": "Üst alan önce",
+      "bff": "Alt alan önce",
+      "progressive": "Geçmeli değil"
+    },
+    "preview": "10 sn önizle",
+    "full": "Tamamını işle",
+    "reset": "Varsayılana dön",
+    "previewCaption": "Sol: orijinal · Sağ: iyileştirilmiş",
+    "status": {
+      "planning": "Video inceleniyor…",
+      "ready": "Hazır: çıktı {w}×{h}. Önce 10 saniyelik önizlemeye bakabilirsiniz.",
+      "previewRunning": "Önizleme hazırlanıyor… %{pct}",
+      "running": "Video işleniyor… %{pct}",
+      "previewDone": "Önizleme hazır: solda orijinal, sağda iyileştirilmiş.",
+      "done": "Tamamlandı: {name} (orijinalin yanına kaydedildi).",
+      "cancelled": "İptal edildi.",
+      "failed": "İyileştirme yapılamadı: {error}",
+      "desktopOnly": "Video iyileştirme yalnızca masaüstü uygulamasında kullanılabilir."
+    },
+    "blocker": {
+      "hdr": "Bu video HDR (veya dinamik aralığı bilinmiyor). Doğru ton eşleme olmadığı için iyileştirilmez; aksi hâlde renkler bozulurdu.",
+      "filters": "Bu ffmpeg derlemesinde gereken filtreler yok ({codes}).",
+      "generic": "Bu video iyileştirilemiyor ({codes})."
     }
   }
 }
