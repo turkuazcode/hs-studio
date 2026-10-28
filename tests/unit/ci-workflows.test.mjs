@@ -32,7 +32,8 @@ test("least privilege: read-only default permissions, no pull_request_target, no
     else {
       assert.equal(writes.length, 1, "release.yml: exactly one write permission");
       const job = text.slice(text.lastIndexOf("\n  publish:\n", writes[0].index) + 1, writes[0].index);
-      assert.match(job, /^  publish:\n\s+if: github\.event_name == 'workflow_dispatch' && inputs\.publish\n/, "only the manually started publish job writes");
+      assert.match(job, /^  publish:\n(?:\s*#.*\n)*\s+if: \$\{\{ !cancelled\(\) && github\.event_name == 'workflow_dispatch' && inputs\.publish && needs\.gate\.result == 'success' \}\}\n/,
+        "only the manually started publish job writes, and only after the release gate passed");
       assert.match(job, /needs: \[gate, linux\]/, "publishing waits for the release gate");
       assert.match(text.slice(writes[0].index), /gh release create "v\$v" --draft --prerelease/, "it only creates a draft pre-release");
     }
