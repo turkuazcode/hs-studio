@@ -97,7 +97,9 @@ Arka uç satırlarının tek kaynağı `src-tauri/src/capabilities.rs` → `SUPP
 | Yazdır (`actions.print`) | destekli/test bekliyor | desteklenmiyor | destekli/test bekliyor | WebView `window.print()`; WKWebView'de sessizce hiçbir şey yapmıyor (bilinen Tauri sorunu) → macOS'ta gizli |
 | Arka plan (`actions.wallpaper`) | destekli/test bekliyor | destekli/test bekliyor | destekli/test bekliyor | Linux yalnızca GNOME (`gsettings`), başka masaüstünde açık hata; testte uygulanmaz |
 | Kilit ekranı (`actions.lockScreen`) | destekli/test bekliyor | desteklenmiyor | desteklenmiyor | Paketlenmemiş uygulamada Windows reddedebilir |
-| Sistem medya kontrolleri (`system.mediaControls`) | desteklenmiyor | desteklenmiyor | desteklenmiyor | SMTC/MPRIS yok |
+| Sistem medya kontrolleri (`system.mediaControls`) | destekli/testli | desteklenmiyor | desteklenmiyor | Windows SMTC (medya tuşları, ses kaplaması/kilit ekranı kartı: başlık, sanatçı, albüm, kapak); E2E işletim sistemi nesnesinden geri okur. macOS Now Playing / Linux MPRIS uygulanmadı (`not-implemented`) |
+| Boşluksuz geçiş (`audio.gapless`) | destekli/testli | desteklenmiyor | desteklenmiyor | libmpv iç listesi + `gapless-audio`; sınırdaki kesinti Rust testinde PCM çıktısında ölçülür (docs/music.md). HTML5 motorunda her parça yeniden açılır |
+| ReplayGain uygulama (`audio.replayGain`) | destekli/testli | destekli/test bekliyor | destekli/test bekliyor | libmpv `replaygain`/`replaygain-preamp`/`replaygain-clip`; HTML5 yalnızca kısabilir (`attenuation-only`) |
 | Görüntü filtresi, WebGL2 (`video.gpuFilter`) | destekli/testli (HTML5 motoru) | destekli/test bekliyor | destekli/test bekliyor | libmpv'de yok (`engine-mpv`); ön yüz girdisi |
 | A/B karşılaştırma (`video.compare`) | destekli/testli (HTML5 motoru) | destekli/test bekliyor | destekli/test bekliyor | libmpv'de devre dışı + neden; ön yüz girdisi |
 | Renk filtresi (`video.colorFilter`) | destekli/testli | destekli/test bekliyor | destekli/test bekliyor | libmpv özellikleri veya CSS |

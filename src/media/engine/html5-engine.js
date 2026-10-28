@@ -32,6 +32,7 @@ export function createHtml5Engine({ app, invoke, listen }) {
   let loopB = null;
   let loopGen = 0;
   let volume = 100;
+  let replayGain = 1; // ReplayGain factor (<= 1: the element can only attenuate)
   const loadGen = () => state.get("loadGen");
 
   // ------------------------------------------------------------------------
@@ -288,9 +289,15 @@ export function createHtml5Engine({ app, invoke, listen }) {
     /** 0..200: element volume up to 100 %, the Web Audio booster above. */
     setVolume(v) {
       volume = Math.max(0, Math.min(200, v));
-      video.volume = Math.min(volume, 100) / 100;
+      video.volume = (Math.min(volume, 100) / 100) * replayGain;
       app.audio.applyGain(volume);
     },
+    /** ReplayGain factor for the element volume (capped at 1: the element cannot amplify). */
+    setReplayGain(f) {
+      replayGain = Number.isFinite(f) && f > 0 ? Math.min(1, f) : 1;
+      video.volume = (Math.min(volume, 100) / 100) * replayGain;
+    },
+    get replayGain() { return replayGain; },
     setRate(r) { video.playbackRate = r; },
     setLoop(a, b) {
       loopA = a ?? null;

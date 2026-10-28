@@ -165,8 +165,16 @@ export function ocrLayer(result) {
 /** Error tag of a backend error string: "[exists] ..." -> "exists". */
 export const errorCode = (e) => String(e?.message ?? e ?? "").match(/^\[([a-z-]+)\]/)?.[1] ?? null;
 
-/** Backend error without its tag. */
-export const errorText = (e) => String(e?.message ?? e ?? "").replace(/^\[[a-z-]+\]\s*/, "");
+/** Tagged backend errors that have their own TR/EN text; the last "(...)" is passed as {detail}. */
+const ERROR_KEYS = { "clipboard-busy": "actions.error.clipboardBusy" };
+
+/** Backend error without its tag; translated through `t` when the tag has its own text. */
+export const errorText = (e, t) => {
+  const s = String(e?.message ?? e ?? "");
+  const key = t && ERROR_KEYS[errorCode(s)];
+  if (key) return t(key, { detail: s.match(/\(([^()]*)\)\s*$/)?.[1] ?? "?" });
+  return s.replace(/^\[[a-z-]+\]\s*/, "");
+};
 
 let jobSeq = 0;
 /** Unique id for a media job (progress events / cancel). */
