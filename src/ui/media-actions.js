@@ -496,7 +496,8 @@ export function createMediaActions(app) {
   // Toolbar
   // ------------------------------------------------------------------------
   const bar = h("div", { id: "media-actions", class: "media-actions", role: "toolbar", "data-tauri-drag-region": "false", hidden: true });
-  const moreBtn = h("button", { id: "ma-more", type: "button", class: "ma-btn ma-more", "aria-haspopup": "menu", "aria-expanded": "false" }, "⋯");
+  // aria-controls: a dialog opened from this menu gives focus back to this button (ui/dialog-a11y.js)
+  const moreBtn = h("button", { id: "ma-more", type: "button", class: "ma-btn ma-more", "aria-haspopup": "menu", "aria-expanded": "false", "aria-controls": "media-actions-menu" }, "⋯");
   const miniExit = h("button", { id: "ma-mini-exit", type: "button", class: "ma-btn ma-mini-exit", onclick: () => toggleMini() }, "⤢");
   dom.titlebar?.querySelector(".titlebar-brand")?.after(bar);
   dom.titlebar?.querySelector(".titlebar-controls")?.before(miniExit);

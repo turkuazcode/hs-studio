@@ -72,7 +72,7 @@ test("layout: video — Liste + ⋯, HUD on one line, CC▾ one control, Filtrel
       return [...b.querySelectorAll("span")].filter((s) => s.getClientRects().length).map((s) => s.textContent.trim()).join(" "); })()`), "Filtreler");
     // CC: the text only (no second CC icon), the caret is part of the same control
     assert.equal(await app.eval(`document.querySelectorAll("#btn-toggle-subtitles svg").length`), 0);
-    assert.equal(await app.text("#btn-toggle-subtitles"), "CC");
+    assert.equal((await app.text("#btn-toggle-subtitles")).trim(), "CC");
     assert.equal(await app.eval(`document.getElementById("btn-sub-menu").parentElement === document.getElementById("btn-toggle-subtitles").parentElement`), true);
     await app.eval(`window.__vhoHud?.poke?.(), document.getElementById("controls-hud").classList.remove("hidden"), true`);
     const c = await app.eval(centres(["#btn-play-pause", "#btn-skip-backward", "#btn-skip-forward", ".volume-container", ".time-display",
