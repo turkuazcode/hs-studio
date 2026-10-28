@@ -51,6 +51,7 @@ import { registerCacheSettings } from "./ui/cache-settings.js";
 import { initWindowControls } from "./ui/window-controls.js";
 import { initDialogA11y } from "./ui/dialog-a11y.js";
 import { createJobsPanel } from "./ui/jobs-panel.js";
+import { createModeLayout } from "./ui/mode-layout.js";
 
 /** libmpv status from the backend; { available: false } in a browser or without the DLLs. */
 async function engineStatus() {
@@ -179,6 +180,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Cast to a UPnP/DLNA device (Plan 13/L04), opened from the "⋯" menu
   app.cast = createCast(app);
   window.__vhoCast = app.cast;
+  // Per-media layout (empty / video / photo / music): places the few mode-dependent buttons
+  app.modeLayout = createModeLayout(app);
 
   // Settings window, recent files, menus, themes, language... then the files passed on
   // the command line ("Open with VHO"), so they open with the restored settings.

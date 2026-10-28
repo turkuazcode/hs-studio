@@ -21,7 +21,9 @@
     "filters": "Picture settings",
     "settings": "Settings…",
     "shortcuts": "Keyboard shortcuts",
-    "licenses": "Licenses & Credits"
+    "licenses": "Licenses & Credits",
+    "library": "Library",
+    "photoStudio": "Photo studio"
   },
   "recent": {
     "title": "Recent files",
@@ -288,7 +290,11 @@
       "replayGain": "Measure loudness (ReplayGain)",
       "ringtone": "Ringtone / excerpt…",
       "settings": "Settings…",
-      "cast": "Cast to device…"
+      "cast": "Cast to device…",
+      "findSubtitles": "Find subtitles…",
+      "sleepTimer": "Sleep timer…",
+      "photoInfo": "Info",
+      "playlist": "Playlist"
     },
     "delete": {
       "title": "Move to the Recycle Bin?",
@@ -613,7 +619,8 @@
     "deepQueued": "Queued: starts when the previous long job finishes…",
     "deepRunningEta": "Enhancing… {pct}% — {hw}, about {eta} s left",
     "deepPaused": "Paused (during playback or when the app closed). It continues from the Jobs panel in the title bar.",
-    "deepSavedTo": "Copy saved: {name} (in the photo's folder; EXIF and transparency kept)"
+    "deepSavedTo": "Copy saved: {name} (in the photo's folder; EXIF and transparency kept)",
+    "filtersButton": "Filters"
   },
   "ui": {
     "docTitle": "HS Studio - Video Player",
@@ -659,14 +666,15 @@
       "openFailed": "⚠️ Could not open \"{name}\": {error}"
     },
     "drop": {
-      "subtitle": "Drag a video, photo or subtitle file here",
+      "subtitle": "Video, photo or music — or drop it here",
       "hintPlay": "Play / Slideshow",
       "hintFullscreen": "Fullscreen",
       "hintNext": "Next",
       "wheel": "Wheel",
       "zoom": "Zoom",
-      "chooseFile": "Choose file",
-      "openUrl": "Open URL"
+      "chooseFile": "Open file",
+      "openUrl": "Open URL",
+      "title": "Open a file"
     },
     "resume": {
       "title": "Continue where you left off",
@@ -1477,7 +1485,9 @@
     "album": {
       "replayGain": "Calculate album ReplayGain…",
       "replayGainDone": "Album ReplayGain: {gain} dB ({n} tracks)"
-    }
+    },
+    "prevTrack": "Previous track",
+    "nextTrack": "Next track"
   },
   "cast": {
     "title": "Cast to device",

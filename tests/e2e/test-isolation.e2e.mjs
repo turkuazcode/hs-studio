@@ -17,7 +17,8 @@ test("test isolation: identity folders removed after close, caches inside VHO_DA
   const app = await launchApp({ dataDir, args: [fixture("photo-a.jpg")] });
   try {
     // open the photo studio on the fixtures folder: thumbnails are written to the cache root
-    await app.click("#btn-photo-studio");
+    await app.click("#btn-app-menu");
+    await app.click(`#app-menu [data-menu-id="photo-studio"]`);
     await app.waitFor(`document.querySelectorAll("#ps-tree .ps-tree-node").length > 0`, { message: "folder tree" });
     await app.eval(`(() => { document.getElementById("ps-path-edit").click();
       const i = document.getElementById("ps-path"); i.value = ${JSON.stringify(join(fixture("photo-a.jpg"), ".."))}; i.form.requestSubmit(); return true; })()`);

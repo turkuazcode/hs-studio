@@ -174,20 +174,24 @@ export function initMenus(app) {
   });
 
   // ------------------------------------------------------------------------
-  // Titlebar menu
+  // Titlebar menu: the app logo is the menu button (approved layout 2026-10-28: the titlebar
+  // keeps at most two buttons besides "⋯")
   // ------------------------------------------------------------------------
-  const actionsBar = document.querySelector(".titlebar-actions");
+  const brand = document.querySelector(".titlebar-brand");
   const btnMenu = document.createElement("button");
   btnMenu.id = "btn-app-menu";
   btnMenu.type = "button";
-  btnMenu.className = "titlebar-action-btn";
+  btnMenu.className = "brand-menu-btn";
   btnMenu.setAttribute("aria-haspopup", "menu");
   btnMenu.setAttribute("aria-expanded", "false");
   btnMenu.setAttribute("aria-controls", "app-menu");
   btnMenu.dataset.i18nTitle = "menu.title";
   btnMenu.dataset.i18nAriaLabel = "menu.title";
-  btnMenu.innerHTML = `<svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M3 5h14v2H3V5zm0 4h14v2H3V9zm0 4h14v2H3v-2z"/></svg><span data-i18n="menu.title"></span>`;
-  actionsBar?.prepend(btnMenu);
+  btnMenu.dataset.tauriDragRegion = "false";
+  const logo = brand?.querySelector(".brand-logo-img");
+  if (logo) { logo.alt = ""; logo.removeAttribute("data-i18n-alt"); btnMenu.append(logo); }
+  btnMenu.insertAdjacentHTML("beforeend", `<span class="sr-only" data-i18n="menu.title"></span>`);
+  brand?.prepend(btnMenu);
   i18n.applyTranslations(btnMenu);
   i18n.onChange(() => i18n.applyTranslations(btnMenu));
 
@@ -208,6 +212,9 @@ export function initMenus(app) {
     }
     if (recent.length) items.push({ id: "recent-clear", labelKey: "recent.clear", run: () => app.recentFiles.clear() });
     items.push(
+      { separator: true },
+      { id: "library", labelKey: "menu.library", run: () => app.libraryView?.show() },
+      { id: "photo-studio", labelKey: "menu.photoStudio", run: () => app.studio?.show() },
       { separator: true },
       { id: "settings", labelKey: "menu.settings", shortcut: "settings", run: () => app.settingsModal.open() },
       { id: "shortcuts", labelKey: "menu.shortcuts", keyHint: "?", run: () => app.shortcutHelp.open() },

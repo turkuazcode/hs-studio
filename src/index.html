@@ -16,6 +16,8 @@
     <link rel="stylesheet" href="styles/smart-edit.css" />
     <link rel="stylesheet" href="styles/library.css" />
     <link rel="stylesheet" href="styles/music.css" />
+    <!-- per-media layout (empty / video / photo / music), loaded last -->
+    <link rel="stylesheet" href="styles/layout-modes.css" />
   </head>
   <body>
     <!-- Main Application Container -->
@@ -34,7 +36,6 @@
           <img src="assets/icon-192.png" data-i18n-alt="ui.logoAlt" alt="HS Studio Logo" class="brand-logo-img" />
           <div class="brand-text-group">
             <span class="app-title">HS Studio</span>
-            <span class="app-edition-tag">STUDIO</span>
           </div>
           <span class="titlebar-divider"></span>
           <span id="current-filename" class="current-filename" data-i18n="ui.waiting">Video Bekleniyor</span>
@@ -88,7 +89,8 @@
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="color: var(--accent-ruby);">
               <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6.4-4.8-6.4 4.8 2.4-7.2-6-4.8h7.6z"/>
             </svg>
-            <span data-i18n="enhance.button">İyileştir</span>
+            <span class="label-photo" data-i18n="enhance.button">İyileştir</span>
+            <span class="label-video" data-i18n="enhance.filtersButton">Filtreler</span>
             <span id="ai-restore-badge" class="badge-count" style="display:none;" data-i18n="enhance.badgeOn">AÇIK</span>
           </button>
         </div>
@@ -170,25 +172,19 @@
             <div class="drop-brand-glow">
               <img src="assets/icon-192.png" data-i18n-alt="ui.logoAlt" alt="HS Studio Brand" class="drop-brand-logo" />
             </div>
-            <h2 class="drop-title">HS Studio Media Player</h2>
-            <p class="drop-subtitle" data-i18n="ui.drop.subtitle">Video, fotoğraf veya altyazı dosyasını buraya sürükleyin</p>
+            <h2 class="drop-title" data-i18n="ui.drop.title">Bir dosya açın</h2>
+            <p class="drop-subtitle" data-i18n="ui.drop.subtitle">Video, fotoğraf veya müzik — ya da buraya sürükleyin</p>
+            <!-- one main action; the other ways in are links (ui/mode-layout.js, docs: plan 00 "Arayüz ilkeleri") -->
             <div class="drop-actions">
-              <button id="btn-browse-file" class="btn-primary">
-                <svg viewBox="0 0 20 20" width="15" height="15" fill="currentColor"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
-                <span data-i18n="ui.drop.chooseFile">Dosya Seç</span>
-              </button>
-              <button id="btn-open-url" class="btn-secondary">
-                <svg viewBox="0 0 20 20" width="15" height="15" fill="currentColor"><path fill-rule="evenodd" d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z" clip-rule="evenodd"/></svg>
-                <span data-i18n="ui.drop.openUrl">URL Aç</span>
+              <button id="btn-browse-file" type="button" class="btn-primary drop-open">
+                <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+                <span data-i18n="ui.drop.chooseFile">Dosya aç</span>
               </button>
             </div>
-            
-            <div class="quick-shortcuts-hint">
-              <span><kbd data-i18n="keys.space">Boşluk</kbd> <span data-i18n="ui.drop.hintPlay">Oynat / Slayt</span></span>
-              <span><kbd>F</kbd> <span data-i18n="ui.drop.hintFullscreen">Tam Ekran</span></span>
-              <span><kbd>← / →</kbd> <span data-i18n="ui.drop.hintNext">Sonraki</span></span>
-              <span><kbd data-i18n="ui.drop.wheel">Tekerlek</kbd> <span data-i18n="ui.drop.zoom">Zoom</span></span>
-              <span><kbd>A</kbd> <span data-i18n="enhance.hintFilters">Filtreler</span></span>
+            <div class="drop-links">
+              <button id="btn-open-url" type="button" class="btn-link">
+                <span data-i18n="ui.drop.openUrl">URL'den aç</span>
+              </button>
             </div>
           </div>
         </div>
@@ -305,14 +301,13 @@
             <div class="controls-group right">
               
               <!-- Subtitles (CC) Toggle & Menu -->
-              <div class="dropdown-container">
+              <div class="dropdown-container cc-split">
                 <button id="btn-toggle-subtitles" class="hud-badge-btn" data-i18n-title="ui.hud.subsTitle" title="Altyazı Aç / Kapat (C veya V tuşu)">
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="vertical-align: -2px; margin-right: 3px;">
-                    <path d="M19 4H5c-1.11 0-2 .9-2 2v12c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 7H9.5v-.5h-2v3h2V13H11v1c0 .55-.45 1-1 1H7c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1zm7 0h-1.5v-.5h-2v3h2V13H18v1c0 .55-.45 1-1 1h-3c-.55 0-1-.45-1-1v-4c0-.55.45-1 1-1h3c.55 0 1 .45 1 1v1z"/>
-                  </svg>
                   <span id="sub-status-label">CC</span>
                 </button>
-                <button id="btn-sub-menu" class="hud-badge-btn hud-caret" data-i18n-title="ui.hud.subMenuTitle" title="Altyazı kanalları ve seçenekleri" aria-haspopup="menu">▾</button>
+                <button id="btn-sub-menu" class="hud-badge-btn hud-caret" data-i18n-title="ui.hud.subMenuTitle" title="Altyazı kanalları ve seçenekleri" data-i18n-aria-label="ui.hud.subMenuTitle" aria-label="Altyazı kanalları ve seçenekleri" aria-haspopup="menu">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
                 <div id="subtitles-menu" class="dropdown-menu">
                   <div id="sub-menu-toggle" class="dropdown-item active">
                     <span id="sub-menu-toggle-text">● Altyazı: Açık</span>
