@@ -100,6 +100,9 @@ function LaunchOnce([string]$exe, [string]$data, [int]$seconds = 10) {
   Start-Sleep -Seconds $seconds
   $alive = -not $p.HasExited
   if ($alive) { $p.CloseMainWindow() | Out-Null; if (-not $p.WaitForExit(8000)) { $p.Kill(); $p.WaitForExit() } }
+  # the uninstaller refuses while a process of this exe still runs: wait until none is left (max 20 s)
+  $deadline = (Get-Date).AddSeconds(20)
+  while ((Get-Process -Name ([IO.Path]::GetFileNameWithoutExtension($exe)) -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe }) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 500 }
   return $alive
 }
 
@@ -198,17 +201,26 @@ try {
 
   # ------------------------------------------------------------ uninstall
   Write-Host "`n== uninstall"
+  # every user file present right before uninstalling (later launches may have added backups etc.)
+  $beforeUninstall = @(Get-ChildItem $dataDir -Recurse -File | ForEach-Object { $_.FullName.Substring($dataDir.Length + 1) })
   $un = Join-Path $installDir 'uninstall.exe'
-  Start-Process -FilePath $un -ArgumentList '/S' -Wait
-  $deadline = (Get-Date).AddSeconds(90)
-  while ((Test-Path $uninstKey) -or (Test-Path (Join-Path $installDir 'uninstall.exe'))) {
-    if ((Get-Date) -gt $deadline) { break }
-    Start-Sleep -Milliseconds 500
+  # a silent uninstall aborts while the app is still closing: like a user, try again (max 3 times)
+  for ($attempt = 1; $attempt -le 3; $attempt++) {
+    Start-Process -FilePath $un -ArgumentList '/S' -Wait
+    $deadline = (Get-Date).AddSeconds(30)
+    while ((Test-Path $uninstKey) -or (Test-Path (Join-Path $installDir 'uninstall.exe'))) {
+      if ((Get-Date) -gt $deadline) { break }
+      Start-Sleep -Milliseconds 500
+    }
+    if (-not (Test-Path $uninstKey) -or -not (Test-Path $un)) { break }
+    Start-Sleep -Seconds 3
   }
+  if ($attempt -gt 1) { Write-Host "  uninstall needed $([Math]::Min($attempt, 3)) attempts" }
   Check 'uninstall registry key removed' (-not (Test-Path $uninstKey))
   $left = @(if (Test-Path $installDir) { Get-ChildItem $installDir -Recurse -Force | ForEach-Object { $_.FullName } })
   Check 'install folder removed' ($left.Count -eq 0) ($left -join ', ')
-  Check 'user data kept after uninstall (default)' (@(Get-ChildItem $dataDir -Recurse -File).Count -eq $dataFiles.Count)
+  $lost = @($beforeUninstall | Where-Object { -not (Test-Path -LiteralPath (Join-Path $dataDir $_)) })
+  Check 'user data kept after uninstall (default)' ($beforeUninstall.Count -ge $dataFiles.Count -and $lost.Count -eq 0) "before: $($beforeUninstall -join ', '); lost: $($lost -join ', ')"
 } finally {
   # ------------------------------------------------------------ test-only leftovers
   Write-Host "`n== cleanup of test-only leftovers"
