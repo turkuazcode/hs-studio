@@ -56,7 +56,7 @@ export function createVideoEnhance(app) {
     ], "tff");
     const fieldRow = field(t("videoEnhance.fieldOrder.label"), fieldSel, t("videoEnhance.fieldOrder.hint"));
     fieldRow.hidden = true;
-    const video = h("video", { id: "vho-venh-preview", class: "vho-venh-preview", controls: true, muted: true, loop: true, playsinline: true, hidden: true });
+    const video = h("video", { id: "vho-venh-video", class: "vho-venh-preview", controls: true, muted: true, loop: true, playsinline: true, hidden: true });
     const caption = h("p", { id: "vho-venh-caption", class: "vho-venh-caption", text: t("videoEnhance.previewCaption"), hidden: true });
     const body = [
       h("p", { class: "vho-venh-recommended", text: t("videoEnhance.recommended") }),
