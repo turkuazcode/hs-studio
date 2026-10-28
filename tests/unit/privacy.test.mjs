@@ -14,6 +14,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const REVIEWED_HOSTS = {
   "huggingface.co": "AI model download (Settings > AI models / first use, user confirms)",
   "cdn.jsdelivr.net": "ONNX Runtime Web download with the AI models",
+  "qaihub-public-assets.s3.us-west-2.amazonaws.com": "DDColor model zip (Qualcomm AI Hub release; A06 colorize, user confirms)",
   "raw.githubusercontent.com": "license files of the AI runtime, downloaded with it",
   "github.com": "source link shown in Settings > AI models (not fetched)",
   "tile.openstreetmap.org": "photo map tiles, only when the user opens the map of a geotagged photo",

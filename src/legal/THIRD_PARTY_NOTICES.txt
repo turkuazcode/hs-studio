@@ -71,6 +71,37 @@ the components can be verified, repaired or removed in Settings > AI models.
     Source Code License, DFDNet under CC BY-NC-SA 4.0). VHO uses neither: v1.4 is the
     "clean" architecture that needs no custom CUDA ops, and DFDNet is not used.
 
+1.5 LaMa (big-lama) inpainting model, "Remove object" (lama_fp32.onnx)
+    Copyright (c) Samsung AI Center Moscow (R. Suvorov et al.). Apache License 2.0
+    (full text in section 5, "Apache License 2.0").
+    Source: https://github.com/advimman/lama
+    ONNX export used: https://huggingface.co/Carve/LaMa-ONNX
+            (commit c3c0c9e468934d62e79c329e35d82dd09ff8c444, file lama_fp32.onnx, Apache-2.0)
+    Changes: none.
+
+1.6 BiRefNet portrait background removal model, "Background" (birefnet_portrait_fp16.onnx)
+    Copyright (c) 2024 ZhengPeng. MIT License (full text in section 4.1).
+    Source: https://github.com/ZhengPeng7/BiRefNet, https://huggingface.co/ZhengPeng7/BiRefNet-portrait
+    ONNX export used: https://huggingface.co/onnx-community/BiRefNet-portrait-ONNX
+            (commit dd7167f6a8b54ff7efc29a4c988938d79866464f, file onnx/model_fp16.onnx)
+    Changes: none (stored as birefnet_portrait_fp16.onnx).
+
+1.7 BiRefNet general background removal model, optional "Objects and products" mode
+    (birefnet_general_fp16.onnx; downloaded only when chosen in Settings > AI models)
+    Copyright (c) 2024 ZhengPeng. MIT License (full text in section 4.1).
+    Source: https://github.com/ZhengPeng7/BiRefNet, https://huggingface.co/ZhengPeng7/BiRefNet
+    ONNX export used: https://huggingface.co/onnx-community/BiRefNet-ONNX
+            (commit 534d3c82d3bb8b2f0867db6dfbc3a525b8e42f67, file onnx/model_fp16.onnx)
+    Changes: none (stored as birefnet_general_fp16.onnx).
+
+1.8 DDColor (paper_tiny) colorization model, "Colorize" (ddcolor.onnx + ddcolor.data)
+    Copyright (c) Xiaoyang Kang et al. (DAMO Academy, Alibaba Group). Apache License 2.0
+    (full text in section 5, "Apache License 2.0").
+    Source: https://github.com/piddnad/DDColor
+    ONNX export used: Qualcomm AI Hub Models v0.65.0 (https://huggingface.co/qualcomm/DDColor, Apache-2.0),
+            https://qaihub-public-assets.s3.us-west-2.amazonaws.com/qai-hub-models/models/ddcolor/releases/v0.65.0/ddcolor-onnx-float.zip
+    Changes: none. Only ddcolor.onnx and its external weights ddcolor.data are taken from the zip.
+
 --------------------------------------------------------------------------
 2. CODE INCLUDED IN VHO
 --------------------------------------------------------------------------
