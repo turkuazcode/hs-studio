@@ -372,7 +372,8 @@ jobs:
           path: tests/.results/*.json
 
   publish:
-    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    # the gated Windows candidate is required; the Linux preview is added when its job succeeded
+    if: ${{ !cancelled() && github.event_name == 'workflow_dispatch' && inputs.publish && needs.gate.result == 'success' }}
     runs-on: ubuntu-24.04
     needs: [gate, linux]
     permissions:
@@ -386,6 +387,7 @@ jobs:
           name: release-windows-x64-${{ env.VERSION_INPUT }}
           path: dist/windows
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        if: needs.linux.result == 'success'
         with:
           name: release-linux-x64-${{ env.VERSION_INPUT }}-preview
           path: dist/linux
@@ -396,7 +398,10 @@ jobs:
           v="${VERSION_INPUT#v}"
           notes="docs/releases/notes/v$v.md"
           [ -f "$notes" ] || { echo "release notes $notes missing"; exit 1; }
+          linux=()
+          if [ -d dist/linux ]; then linux=(dist/linux/*.AppImage dist/linux/*.deb dist/linux/SHA256SUMS-linux.txt)
+          else echo "::warning::Linux preview job did not succeed: the draft has the Windows files only"; fi
           gh release create "v$v" --draft --prerelease --target "$GITHUB_SHA" --title "HS Studio $v" --notes-file "$notes" \
             dist/windows/*-setup.exe dist/windows/*.sha256 dist/windows/SHA256SUMS.txt dist/windows/release-gate.md \
             dist/windows/*.cdx.json dist/windows/THIRD_PARTY_NOTICES.txt dist/windows/SOURCE-OFFER.txt dist/windows/LICENSE.txt dist/windows/NOTICE.txt \
-            dist/linux/*.AppImage dist/linux/*.deb dist/linux/SHA256SUMS-linux.txt
+            "${linux[@]}"
