@@ -100,6 +100,12 @@ line("=".repeat(78));
 header.forEach((h) => line(h));
 line("=".repeat(78));
 
+// A missing binary fails every test at launch; stop here instead of running (and possibly hanging)
+if (exeInfo?.missing) {
+  line(`FAILED: no app binary at ${exeInfo.path} — nothing was run. Run \`npm ci\` and \`npm run build:release\` first, or set VHO_EXE.`);
+  process.exit(2);
+}
+
 if (!files.length) {
   line(`No ${layer.suffix} files in ${layer.dir}: this layer is NOT YET POPULATED (0 tests run, nothing passed).`);
   if (layerName === "quality") line("Planned by Q02 (docs/plans/14-kalite-ve-acik-kaynak-yayin.md); see docs/status/test-map.md.");
@@ -112,7 +118,9 @@ const summaryFile = join(resultsDir, `${layerName}.json`);
 
 const nodeArgs = [];
 if (layer.guard) nodeArgs.push("--import", pathToFileURL(join(ROOT, "tests/lib/no-network.mjs")).href);
-nodeArgs.push("--test");
+// --test-force-exit: a test that leaves a handle open (a server after a failed launch) must not keep
+// the run alive after all tests finished
+nodeArgs.push("--test", "--test-force-exit");
 if (layer.concurrency) nodeArgs.push(`--test-concurrency=${layer.concurrency}`);
 nodeArgs.push(
   "--test-reporter=spec", "--test-reporter-destination=stdout",
