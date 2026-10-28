@@ -6,11 +6,10 @@
 // ==========================================================================
 
 import { t } from "../core/i18n.js";
-import { dialogOpen } from "../core/tauri.js";
+import { dialogOpen, dialogSave } from "../core/tauri.js";
 import { PLAYLIST_EXTENSIONS, playlistFileName, queueToEntries } from "../core/library-api.js";
 import { createMenu } from "../studio/menu.js";
 
-const dialogSave = globalThis.window?.__TAURI__?.dialog?.save ? (opts) => window.__TAURI__.dialog.save(opts) : undefined;
 const FILTERS = () => [{ name: t("library.lists.fileType"), extensions: PLAYLIST_EXTENSIONS }];
 const errText = (e) => String(e?.message ?? e).replace(/^\[[a-z-]+\]\s*/i, "");
 

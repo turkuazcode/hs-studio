@@ -23,8 +23,11 @@ export function listen(event, handler) {
   return tauri?.event?.listen(event, handler);
 }
 
-/** Native file dialog, or undefined when unavailable (caller falls back to <input type=file>). */
-export const dialogOpen = tauri?.dialog?.open ? (opts) => tauri.dialog.open(opts) : undefined;
+// Native file dialogs, shown by the backend (Q04: only paths the user really picked there may
+// later be written, renamed or deleted). Same options and results as the dialog plugin's
+// open / save; undefined in a browser (callers fall back to <input type=file>).
+export const dialogOpen = tauri?.core?.invoke ? (opts) => tauri.core.invoke("dialog_open", { options: opts ?? {} }) : undefined;
+export const dialogSave = tauri?.core?.invoke ? (opts) => tauri.core.invoke("dialog_save", { options: opts ?? {} }) : undefined;
 
 /** Opens a URL in the system browser (tauri-plugin-opener) or a new tab in a browser. */
 export async function openUrl(url) {

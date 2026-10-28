@@ -28,6 +28,8 @@ use std::sync::Mutex;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 
+use crate::grants::{self, Access};
+
 /// Environment switch: OS-level actions are logged instead of performed (tests).
 pub const DISABLE_ENV: &str = "VHO_DISABLE_SYSTEM_CHANGES";
 
@@ -78,8 +80,12 @@ pub(crate) async fn blocking<T: Send + 'static>(f: impl FnOnce() -> Result<T, St
 /// Moves a file to the recycle bin / trash.
 #[tauri::command]
 pub async fn file_trash(app: AppHandle, path: String) -> Result<(), String> {
-    // library operation log (L02): the media row becomes "deleted", a crash is reconciled
-    blocking(move || crate::library::tracked_trash(&app, &path, || files::trash_file(Path::new(&path)))).await
+    blocking(move || {
+        grants::require(&app, Path::new(&path), Access::Entry)?;
+        // library operation log (L02): the media row becomes "deleted", a crash is reconciled
+        crate::library::tracked_trash(&app, &path, || files::trash_file(Path::new(&path)))
+    })
+    .await
 }
 
 /// Renames a file inside its folder. Returns the new full path.
@@ -88,7 +94,13 @@ pub async fn file_trash(app: AppHandle, path: String) -> Result<(), String> {
 pub async fn file_rename(app: AppHandle, path: String, new_name: String) -> Result<String, String> {
     // library operation log (L02): identity, favorite, resume position and bookmarks follow
     let app2 = app.clone();
-    let out = blocking(move || crate::library::tracked_rename(&app2, &path, &new_name, || files::rename(Path::new(&path), &new_name))).await?;
+    let out = blocking(move || {
+        grants::require(&app2, Path::new(&path), Access::Entry)?;
+        crate::library::tracked_rename(&app2, &path, &new_name, || files::rename(Path::new(&path), &new_name))
+    })
+    .await?;
+    // the renamed file stays the user's file
+    grants::grant_picked(&app, &out, grants::Scope::File);
     let _ = app.asset_protocol_scope().allow_file(&out);
     Ok(out.to_string_lossy().into_owned())
 }
@@ -291,6 +303,7 @@ pub async fn media_probe(path: String) -> Result<ffmpeg::MediaInfo, String> {
 pub async fn media_job(app: AppHandle, job: ffmpeg::JobRequest) -> Result<ffmpeg::JobResult, String> {
     let job_id = job.job_id.clone().unwrap_or_else(|| "media-job".into());
     let result = blocking(move || {
+        require_export_target(&app, &job)?;
         let guard = crate::photo::JobGuard::register(&job_id);
         let app2 = app.clone();
         let id2 = job_id.clone();
@@ -306,6 +319,19 @@ pub async fn media_job(app: AppHandle, job: ffmpeg::JobRequest) -> Result<ffmpeg
     Ok(result)
 }
 
+/// Q04: an export writes only where the user chose (exact output from a save dialog, the output
+/// folder, or the source's own folder).
+pub(crate) fn require_export_target(app: &AppHandle, job: &ffmpeg::JobRequest) -> Result<(), String> {
+    match (&job.output, &job.output_dir) {
+        (Some(o), _) => grants::require(app, Path::new(o), Access::Create),
+        (None, Some(d)) => grants::require(app, Path::new(d), Access::IntoFolder),
+        (None, None) => {
+            let dir = Path::new(&job.input).parent().ok_or_else(|| grants::not_granted(Path::new(&job.input)))?;
+            grants::require(app, dir, Access::IntoFolder)
+        }
+    }
+}
+
 #[tauri::command]
 pub fn media_job_cancel(job_id: String) -> bool {
     crate::photo::cancel(&job_id)
@@ -314,8 +340,11 @@ pub fn media_job_cancel(job_id: String) -> bool {
 /// Integrated loudness / true peak (ffmpeg ebur128) -> ReplayGain track gain; `write`: store
 /// it in the file's tags.
 #[tauri::command]
-pub async fn replaygain_analyze(path: String, write: Option<bool>) -> Result<ffmpeg::Loudness, String> {
+pub async fn replaygain_analyze(app: AppHandle, path: String, write: Option<bool>) -> Result<ffmpeg::Loudness, String> {
     blocking(move || {
+        if write.unwrap_or(false) {
+            grants::require(&app, Path::new(&path), Access::Content)?;
+        }
         let l = ffmpeg::loudness(Path::new(&path))?;
         if write.unwrap_or(false) {
             tags::write_replaygain(Path::new(&path), &l)?;
@@ -337,8 +366,9 @@ pub async fn tags_read(path: String) -> Result<tags::TagData, String> {
 /// Writes the given fields (None = unchanged, "" = remove). `cover`: image file to embed as
 /// front cover, `removeCover`: drop all pictures.
 #[tauri::command]
-pub async fn tags_write(path: String, tags: tags::TagUpdate) -> Result<tags::TagData, String> {
+pub async fn tags_write(app: AppHandle, path: String, tags: tags::TagUpdate) -> Result<tags::TagData, String> {
     blocking(move || {
+        grants::require(&app, Path::new(&path), Access::Content)?;
         tags::write(Path::new(&path), &tags)?;
         tags::read(Path::new(&path))
     })
@@ -347,8 +377,14 @@ pub async fn tags_write(path: String, tags: tags::TagUpdate) -> Result<tags::Tag
 
 /// Saves the embedded front cover to `output` (extension follows the picture's format).
 #[tauri::command]
-pub async fn tags_save_cover(path: String, output: String) -> Result<String, String> {
-    blocking(move || tags::save_cover(Path::new(&path), Path::new(&output)).map(|p| p.to_string_lossy().into_owned())).await
+pub async fn tags_save_cover(app: AppHandle, path: String, output: String) -> Result<String, String> {
+    blocking(move || {
+        // the extension may change with the picture's format: the folder is what counts
+        let dir = Path::new(&output).parent().ok_or_else(|| grants::not_granted(Path::new(&output)))?;
+        grants::require(&app, dir, Access::IntoFolder)?;
+        tags::save_cover(Path::new(&path), Path::new(&output)).map(|p| p.to_string_lossy().into_owned())
+    })
+    .await
 }
 
 /// Lyrics: `.lrc` next to the file (same stem) first, then embedded (USLT / LYRICS).
