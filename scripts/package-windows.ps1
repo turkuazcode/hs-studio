@@ -120,7 +120,10 @@ $repl = @{
 }
 foreach ($k in $repl.Keys) { $offer = $offer.Replace($k, [string]$repl[$k]) }
 [IO.File]::WriteAllText((Join-Path $stageLegal 'SOURCE-OFFER.txt'), $offer, (New-Object Text.UTF8Encoding $true))
-# SBOM of exactly this package (written to the staging folder, the repository copy is untouched)
+# SBOM of exactly this package (written to the staging folder, the repository copy is untouched).
+# The generator reads `cargo metadata --offline`: fetch the locked crates first (a fresh runner has none yet).
+& cargo fetch --locked --manifest-path (Join-Path $root 'src-tauri\Cargo.toml') | Out-Host
+if ($LASTEXITCODE -ne 0) { throw 'cargo fetch failed' }
 & node (Join-Path $root 'legal\generate-sbom.mjs') --out (Join-Path $stageLegal 'sbom.cdx.json') | Out-Host
 if ($LASTEXITCODE -ne 0) { throw 'SBOM generation / license policy check failed' }
 }
