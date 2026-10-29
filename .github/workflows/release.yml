@@ -356,7 +356,7 @@ jobs:
           VHO_TEST_NO_SKIP: "1"
       - name: Rust layer (ffmpeg/ffprobe of the LGPL set next to the test binary)
         run: |
-          bash scripts/linux/stage-mpv.sh "$RUNNER_TEMP/mpv/dist" src-tauri/target/release
+          bash scripts/linux/stage-mpv.sh "$RUNNER_TEMP/mpv/dist" release
           npm run test:rust
       - name: Package (AppImage + deb)
         run: bash scripts/linux/package.sh "$RUNNER_TEMP/mpv/dist"

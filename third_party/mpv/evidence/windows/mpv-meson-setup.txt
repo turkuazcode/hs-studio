@@ -9,15 +9,15 @@ C compiler for the host machine: cc (gcc 16.2.0 "cc (Rev6, Built by MSYS2 projec
 C linker for the host machine: cc ld.bfd 2.47.20260726
 Host machine cpu family: x86_64
 Host machine cpu: x86_64
-Program python3 found: YES (C:\msys64\ucrt64\bin/python3.exe)
-Found pkg-config: YES (C:\msys64\ucrt64\bin/pkg-config.exe) 3.0.10
+Program python3 found: YES (D:\a\_temp\msys64\ucrt64\bin/python3.exe)
+Found pkg-config: YES (D:\a\_temp\msys64\ucrt64\bin/pkg-config.exe) 3.0.10
 Run-time dependency libavcodec found: YES 62.28.103
 Run-time dependency libavfilter found: YES 11.14.103
 Run-time dependency libavformat found: YES 62.12.103
 Run-time dependency libavutil found: YES 60.26.103
 Run-time dependency libswresample found: YES 6.3.103
 Run-time dependency libswscale found: YES 9.5.103
-Run-time dependency libplacebo found: YES 7.360.1
+Run-time dependency libplacebo found: YES 7.387.0
 Run-time dependency libass found: YES 0.17.5
 Compiler for C supports arguments -Wdisabled-optimization: YES 
 Compiler for C supports arguments -Wempty-body: YES 
@@ -73,11 +73,11 @@ Header "dev/wscons/wsdisplay_usl_io.h" has symbol "VT_GETMODE" : NO
 Checking for function "fstatfs" : NO 
 Checking for function "fstatfs" : NO 
 Compiler for C supports function attribute vector_size: YES 
-Program <repo>/third_party/mpv/_build/src/mpv/TOOLS/docutils-wrapper.py found: YES (C:/msys64/ucrt64/bin/python.exe <repo>/third_party/mpv/_build/src/mpv/TOOLS/docutils-wrapper.py)
-Program <repo>/third_party/mpv/_build/src/mpv/TOOLS/file2string.py found: YES (C:/msys64/ucrt64/bin/python.exe <repo>/third_party/mpv/_build/src/mpv/TOOLS/file2string.py)
-Program <repo>/third_party/mpv/_build/src/mpv/TOOLS/matroska.py found: YES (C:/msys64/ucrt64/bin/python.exe <repo>/third_party/mpv/_build/src/mpv/TOOLS/matroska.py)
-Program <repo>/third_party/mpv/_build/src/mpv/TOOLS/gen-mpv-desktop.py found: YES (C:/msys64/ucrt64/bin/python.exe <repo>/third_party/mpv/_build/src/mpv/TOOLS/gen-mpv-desktop.py)
-Program git found: YES (C:\msys64\usr\bin/git.exe)
+Program <repo>/third_party/mpv/_build/src/mpv/TOOLS/docutils-wrapper.py found: YES (D:/a/_temp/msys64/ucrt64/bin/python.exe <repo>/third_party/mpv/_build/src/mpv/TOOLS/docutils-wrapper.py)
+Program <repo>/third_party/mpv/_build/src/mpv/TOOLS/file2string.py found: YES (D:/a/_temp/msys64/ucrt64/bin/python.exe <repo>/third_party/mpv/_build/src/mpv/TOOLS/file2string.py)
+Program <repo>/third_party/mpv/_build/src/mpv/TOOLS/matroska.py found: YES (D:/a/_temp/msys64/ucrt64/bin/python.exe <repo>/third_party/mpv/_build/src/mpv/TOOLS/matroska.py)
+Program <repo>/third_party/mpv/_build/src/mpv/TOOLS/gen-mpv-desktop.py found: YES (D:/a/_temp/msys64/ucrt64/bin/python.exe <repo>/third_party/mpv/_build/src/mpv/TOOLS/gen-mpv-desktop.py)
+Program git found: YES (D:\a\_temp\msys64\usr\bin/git.exe)
 Dependency libcdio for host machine skipped: feature cdda disabled
 Dependency libcdio_paranoia for host machine skipped: feature cdda disabled
 Has header "linux/dvb/frontend.h" skipped: feature dvbin disabled
@@ -92,7 +92,7 @@ Library m found: YES
 Library rt found: NO
 Dependency rubberband for host machine skipped: feature rubberband disabled
 sdl2-config found: NO
-Found CMake: C:\msys64\ucrt64\bin/cmake.exe (4.4.4)
+Found CMake: D:\a\_temp\msys64\ucrt64\bin/cmake.exe (4.4.4)
 Run-time dependency sdl2 found: NO  (tried pkg-config, config-tool and cmake)
 Run-time dependency uchardet found: YES 0.0.8
 Dependency vapoursynth for host machine skipped: feature vapoursynth disabled
@@ -167,7 +167,7 @@ Message: List of enabled features: build-date cplugins d3d-hwaccel d3d11 d3d9-hw
 Windows resource compiler: GNU windres (GNU Binutils) 2.47.20260726
 Fetching value of define "MPV_CLIENT_API_VERSION" : (((2) << 16) | (5) | 0UL) 
 Compiler for C supports link arguments -Wl,-Bsymbolic: YES 
-Found pkg-config: YES (C:\msys64\ucrt64\bin/pkg-config.exe) 3.0.10
+Found pkg-config: YES (D:\a\_temp\msys64\ucrt64\bin/pkg-config.exe) 3.0.10
 Build targets in project: 29
 
 mpv 0.41.0
@@ -213,4 +213,4 @@ mpv 0.41.0
     vapoursynth    : disabled
     zimg           : disabled
 
-Found ninja-1.13.2 at C:\msys64\ucrt64\bin/ninja.exe
+Found ninja-1.13.2 at D:\a\_temp\msys64\ucrt64\bin/ninja.exe

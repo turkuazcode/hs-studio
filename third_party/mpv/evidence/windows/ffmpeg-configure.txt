@@ -35,7 +35,7 @@ threading support         w32threads
 safe bitstream reader     yes
 texi2html enabled         no
 perl enabled              yes
-pod2man enabled           yes
+pod2man enabled           no
 makeinfo enabled          no
 makeinfo supports HTML    no
 experimental features     yes

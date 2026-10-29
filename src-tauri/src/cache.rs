@@ -132,6 +132,14 @@ mod tests {
             let p = root.join(rel);
             std::fs::create_dir_all(p.parent().unwrap()).unwrap();
             std::fs::write(&p, vec![7u8; n]).unwrap();
+            // outside Windows a file touched in the last 10 minutes counts as in use: age the fixtures
+            #[cfg(not(windows))]
+            std::fs::File::options()
+                .write(true)
+                .open(&p)
+                .unwrap()
+                .set_modified(std::time::SystemTime::now() - std::time::Duration::from_secs(3600))
+                .unwrap();
             p
         };
         put("photo/thumbs/ab/1.jpg", 100);
