@@ -116,8 +116,9 @@ libc = "0.2"
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 # Second launch with a file opens it in the running window (MIT OR Apache-2.0)
 tauri-plugin-single-instance = "2"
-# Signed self-update (R02 updater card; MIT OR Apache-2.0). Pinned: 2.13.3 released 2026-10-10.
-tauri-plugin-updater = "=2.13.3"
+# Signed self-update (R02 updater card; MIT OR Apache-2.0). Pinned: 2.14.1 released 2026-10-28
+# (zip ^9: zip <= 9.0.4 has the "zip cloaking" arbitrary file overwrite advisory).
+tauri-plugin-updater = "=2.14.1"
 # Known user folders for the identifier migration (MIT OR Apache-2.0; already used by Tauri)
 dirs = "7"
 
