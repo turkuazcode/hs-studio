@@ -2,10 +2,13 @@
 # Output artifact "mpv-windows-x64": dist/*.dll (the redistributable DLL set), prefix/bin/ffmpeg.exe,
 # prefix/bin/ffprobe.exe, evidence/ (license verification outputs).
 #
-# Cached by the build script + the recorded MSYS2 package list. Note: pacman installs the CURRENT
-# MSYS2 packages, so a fresh build can contain newer DLL versions than
-# legal/inventory/native-windows-x64.json. The release workflow then stops (hash/version check in
-# scripts/package-windows.ps1) until the inventory and notices are updated on purpose.
+# The cached build IS the shipped native set: legal/inventory/native-windows-x64.json records its
+# hashes, and third_party/mpv/evidence/windows its build outputs. pacman installs the CURRENT MSYS2
+# packages and the build is not bit-for-bit reproducible, so a rebuild always differs from the
+# inventory and the release workflow stops (scripts/package-windows.ps1) until the inventory,
+# notices, SBOM and evidence are refreshed from the new artifact. That is why the key is fixed
+# rather than derived from files: change it on purpose (e.g. after editing build-windows.sh), then
+# refresh. GitHub evicts a cache unused for 7 days; a miss rebuilds and needs the same refresh.
 name: native-windows
 
 on:
@@ -31,7 +34,7 @@ jobs:
             third_party/mpv/_build/prefix/bin/ffmpeg.exe
             third_party/mpv/_build/prefix/bin/ffprobe.exe
             third_party/mpv/_build/evidence
-          key: mpv-win64-${{ hashFiles('third_party/mpv/build-windows.sh', 'third_party/mpv/evidence/windows/msys2-packages.txt') }}
+          key: mpv-win64-f461dd23ab3936d9fc1544ffec5c444ff609b8ec7ff9f2e2fde9b7ae94c065bd # build of 2026-10-28
       - if: steps.cache.outputs.cache-hit != 'true'
         uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
         with:

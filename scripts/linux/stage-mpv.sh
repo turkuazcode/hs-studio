@@ -6,12 +6,13 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 DIST=${1:-${VHO_MPV_DIST:-$HOME/vho-mpv-build/dist}}
 shift || true
-TARGETS=("$@")
+TARGETS=("$@")   # profile names (release, debug); named ones are created, e.g. before the first cargo test
+EXPLICIT=${#TARGETS[@]}
 [ ${#TARGETS[@]} -gt 0 ] || TARGETS=(release debug)
 [ -f "$DIST/libmpv.so.2" ] || { echo "libmpv.so.2 not found in $DIST (run third_party/mpv/build-linux.sh)"; exit 1; }
 for t in "${TARGETS[@]}"; do
   dest=$ROOT/src-tauri/target/$t
-  [ -d "$dest" ] || continue
+  if [ "$EXPLICIT" -gt 0 ]; then mkdir -p "$dest"; else [ -d "$dest" ] || continue; fi
   cp -f "$DIST"/* "$dest/"
   (cd "$DIST" && ls) > "$dest/mpv-libs.txt"
   echo "staged $(wc -l < "$dest/mpv-libs.txt") files -> $dest"

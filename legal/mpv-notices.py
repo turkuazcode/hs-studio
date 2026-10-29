@@ -37,7 +37,7 @@ DLLS = [
     ("libintl-8.dll", "GNU gettext runtime (libintl)", "gettext-runtime", "LGPL-2.1-or-later", "https://www.gnu.org/software/gettext/", ["gettext-runtime/intl/COPYING.LIB"]),
     ("libiconv-2.dll", "GNU libiconv", "libiconv", "LGPL-2.1-or-later", "https://www.gnu.org/software/libiconv/", ["libiconv/COPYING.LIB"]),
     ("libgraphite2.dll", "Graphite2", "graphite2", "LGPL-2.1-or-later OR MPL-2.0 OR GPL-2.0-or-later OR MIT (used under LGPL-2.1/MPL-2.0)", "https://github.com/silnrsi/graphite", ["graphite2/LICENSE"]),
-    ("libplacebo-360.dll", "libplacebo", "libplacebo", "LGPL-2.1-or-later", "https://code.videolan.org/videolan/libplacebo", ["libplacebo/LICENSE"]),
+    ("libplacebo-387.dll", "libplacebo", "libplacebo", "LGPL-2.1-or-later", "https://code.videolan.org/videolan/libplacebo", ["libplacebo/LICENSE"]),
     ("libdovi.dll", "libdovi (dovi_tool)", "libdovi", "MIT", "https://github.com/quietvoid/dovi_tool", ["libdovi/LICENSE"]),
     ("libdav1d-7.dll", "dav1d", "dav1d", "BSD-2-Clause", "https://code.videolan.org/videolan/dav1d", ["dav1d/COPYING", "dav1d/PATENTS"]),
     ("libshaderc_shared.dll", "shaderc", "shaderc", "Apache-2.0", "https://github.com/google/shaderc", ["shaderc/LICENSE"]),

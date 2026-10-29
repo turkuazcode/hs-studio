@@ -9,7 +9,7 @@
     "toolchain": "MSYS2 UCRT64, mingw-w64-ucrt-x86_64-gcc 16.2.0-6",
     "builtOn": "2026-10-23",
     "reproducible": false,
-    "hashesNote": "sha256/bytes are those of the local reference build of 2026-10-23 (the DLL set used by the E2E tests). The build is not bit-for-bit reproducible: a release build must refresh them (--update-native) and ship exactly the hashed files."
+    "hashesNote": "sha256/bytes are those of the CI build (native-windows.yml) of 2026-10-28 that the release workflow ships and the E2E tests ran against. The build is not bit-for-bit reproducible: a release build must refresh them (--update-native) and ship exactly the hashed files."
   },
   "sources": {
     "ffmpeg": {
@@ -95,8 +95,8 @@
       "files": [
         {
           "name": "libmpv-2.dll",
-          "bytes": 3197183,
-          "sha256": "66c1f6ac1daf9c2948cda7ffa682ecdf6a02e7a1b7238cafe2e72991a60787d7"
+          "bytes": 3197949,
+          "sha256": "9098474321e3f218a72a730f9e31d72674ecd8868cd26b24a8cbe5f3f1665fe7"
         }
       ]
     },
@@ -113,37 +113,37 @@
         {
           "name": "avcodec-62.dll",
           "bytes": 19383808,
-          "sha256": "9158d6e8e67974204452f72f0ee853d89802d0327a8c0a99e81e1a9482e3c3bd"
+          "sha256": "9591d077a3270043290c3851edb08b9600fb621276e2952a0957e982b6359791"
         },
         {
           "name": "avdevice-62.dll",
           "bytes": 150016,
-          "sha256": "ed65d030f5974ecc6caa4ffa04ee2186f82608f77c00ce7f11b4bbebc7de037c"
+          "sha256": "134ae6e7f8eb516fac16f4f1ddb6312cb8888857c3159b1550cd1bcaceefaace"
         },
         {
           "name": "avfilter-11.dll",
           "bytes": 5864960,
-          "sha256": "efb031741d48d7d705a5e782aceb4d020f72d9bb3f4191b9997c29e5c89d5497"
+          "sha256": "d4a3fb1cbda4ec2d438a64ee5bcdc0e9b52ef2c379a04dd6dd55a59dd1b91678"
         },
         {
           "name": "avformat-62.dll",
-          "bytes": 2836992,
-          "sha256": "392913ca7facd066ea90249e58c99a53caeaa62c240a85cf119cb2e60e5e1f15"
+          "bytes": 2836480,
+          "sha256": "73b141069e8bde20bab98282b4b6d3d32c1ca0f9bf9c1c50d4019314c6515406"
         },
         {
           "name": "avutil-60.dll",
           "bytes": 1184768,
-          "sha256": "f445a291a57fd98d8d823084613e4373bf077e163d409be721b527b04c807677"
+          "sha256": "78c67ca261211e5ebc590a57971463656d886708916d8cc3ea2cb2133b10f974"
         },
         {
           "name": "swresample-6.dll",
           "bytes": 175104,
-          "sha256": "4bf877f46f3723d3227d086c8f14121ee03431ae5903b9b79ed772e09074e83c"
+          "sha256": "af18cd7cde6a0a388c29e85f1dd088f29d8b23a437152ee2c1e0868afdcbd885"
         },
         {
           "name": "swscale-9.dll",
           "bytes": 2063872,
-          "sha256": "cdfb4977a31b23579f4625d46ef2dfd35590422dabaa32114dafa89d45f4efa4"
+          "sha256": "18735383f2b4b01d907f41fbde3164bd7dc3a2c900e26b3bbfdf019d453dafe8"
         }
       ]
     },
@@ -159,13 +159,13 @@
       "files": [
         {
           "name": "ffmpeg.exe",
-          "bytes": 464384,
-          "sha256": "a5c8981144ff74a7dce4e42424d89dffc936f467e8d5f08f5c02e9238220c22a"
+          "bytes": 463360,
+          "sha256": "1e67b64623d774a3f3eb21b8a25404fa7569bfd2e1bcde22ec49fe37e79a8e54"
         },
         {
           "name": "ffprobe.exe",
           "bytes": 210432,
-          "sha256": "13158674b260616fea01d8b571335550dded005d32126966a861d15aaa6e3efa"
+          "sha256": "221e51ebab4d94fdeb175a5e3a378f92f0696ab05f146c3e5a7a22d803f659a2"
         }
       ]
     },
@@ -216,11 +216,11 @@
     {
       "id": "harfbuzz",
       "name": "HarfBuzz",
-      "version": "14.6.0-1",
+      "version": "15.0.0-1",
       "origin": "msys2-binary-package",
       "msys2": {
         "package": "mingw-w64-ucrt-x86_64-harfbuzz",
-        "version": "14.6.0-1",
+        "version": "15.0.0-1",
         "pkgbase": "mingw-w64-harfbuzz"
       },
       "license": "MIT",
@@ -229,8 +229,8 @@
       "files": [
         {
           "name": "libharfbuzz-0.dll",
-          "bytes": 1612472,
-          "sha256": "842d73ce2dd9ee506ef68f4d3e9ca29b62c87e34999cd2720505bf3c9d3f575c"
+          "bytes": 1829497,
+          "sha256": "574ef797d2480d73283ecc993e272092bdb1dda45c4db5d36bf72a5a91baeec8"
         }
       ]
     },
@@ -343,11 +343,11 @@
     {
       "id": "libplacebo",
       "name": "libplacebo",
-      "version": "7.360.1-2",
+      "version": "7.387.0-1",
       "origin": "msys2-binary-package",
       "msys2": {
         "package": "mingw-w64-ucrt-x86_64-libplacebo",
-        "version": "7.360.1-2",
+        "version": "7.387.0-1",
         "pkgbase": "mingw-w64-libplacebo"
       },
       "license": "LGPL-2.1-or-later",
@@ -355,9 +355,9 @@
       "upstream": "https://code.videolan.org/videolan/libplacebo",
       "files": [
         {
-          "name": "libplacebo-360.dll",
-          "bytes": 1235613,
-          "sha256": "8eb2c3fe24a124d9dbf0383d60ac7dde6c0dd5607b2451cad0d924271e46d5b8"
+          "name": "libplacebo-387.dll",
+          "bytes": 1328772,
+          "sha256": "ebdc2d898ee396db8f342427f77a0af59b0823f853001eedefc801f05bd791b3"
         }
       ]
     },
@@ -534,11 +534,11 @@
     {
       "id": "libpng",
       "name": "libpng",
-      "version": "1.6.59-1",
+      "version": "1.6.59-2",
       "origin": "msys2-binary-package",
       "msys2": {
         "package": "mingw-w64-ucrt-x86_64-libpng",
-        "version": "1.6.59-1",
+        "version": "1.6.59-2",
         "pkgbase": "mingw-w64-libpng"
       },
       "license": "libpng-2.0",
@@ -548,7 +548,7 @@
         {
           "name": "libpng16-16.dll",
           "bytes": 254777,
-          "sha256": "7f425fd2b41d83869bb31bf761b4fb315f11040d55540661f96e582e1ec79a36"
+          "sha256": "28db7a8c6fcc579ce621729d27f1952324cd3a2b4e24da121611bb586346e732"
         }
       ],
       "acknowledged": "2026-10-25 owner: acknowledged (permissive)"
@@ -556,11 +556,11 @@
     {
       "id": "zlib",
       "name": "zlib",
-      "version": "1.3.2-2",
+      "version": "1.3.2-3",
       "origin": "msys2-binary-package",
       "msys2": {
         "package": "mingw-w64-ucrt-x86_64-zlib",
-        "version": "1.3.2-2",
+        "version": "1.3.2-3",
         "pkgbase": "mingw-w64-zlib"
       },
       "license": "Zlib",
@@ -569,8 +569,8 @@
       "files": [
         {
           "name": "zlib1.dll",
-          "bytes": 127291,
-          "sha256": "11cd91171765cd65f1c3362e3df67e5f5a618a6b88c8cdec899b802eaf1c7b0d"
+          "bytes": 121530,
+          "sha256": "8ae7aeb0467763a1e271cd831ca8e2f7fd101602adb9923100ea26c6be2a559b"
         }
       ]
     },
@@ -621,11 +621,11 @@
     {
       "id": "brotli",
       "name": "Brotli",
-      "version": "1.2.0-1",
+      "version": "1.2.1-1",
       "origin": "msys2-binary-package",
       "msys2": {
         "package": "mingw-w64-ucrt-x86_64-brotli",
-        "version": "1.2.0-1",
+        "version": "1.2.1-1",
         "pkgbase": "mingw-w64-brotli"
       },
       "license": "MIT",
@@ -634,13 +634,13 @@
       "files": [
         {
           "name": "libbrotlicommon.dll",
-          "bytes": 144565,
-          "sha256": "c62c08223e450dfc2fff33c752cc228505ffd9d755201958ba800d5d30481a2c"
+          "bytes": 140697,
+          "sha256": "7b0047dc16dd92a7932124dfd5a6e698d342f533a15d37d61f710def66091436"
         },
         {
           "name": "libbrotlidec.dll",
-          "bytes": 62619,
-          "sha256": "e270b6e576594ee8ee6e33ccc54e34a54304616dd6225652e11e49d6f17ef896"
+          "bytes": 60224,
+          "sha256": "c4c987a01597ddf969d93023f933f999a20f285588b0decb4deeb780c9e9cdf8"
         }
       ]
     },
@@ -732,11 +732,11 @@
     {
       "id": "winpthreads",
       "name": "mingw-w64 winpthreads",
-      "version": "14.0.0.r495.g63ebe6cdb-2",
+      "version": "14.0.0.r569.g34eeafb7d-1",
       "origin": "msys2-binary-package",
       "msys2": {
         "package": "mingw-w64-ucrt-x86_64-libwinpthread",
-        "version": "14.0.0.r495.g63ebe6cdb-2",
+        "version": "14.0.0.r569.g34eeafb7d-1",
         "pkgbase": "mingw-w64-winpthreads"
       },
       "license": "MIT AND ZPL-2.1",
@@ -745,8 +745,8 @@
       "files": [
         {
           "name": "libwinpthread-1.dll",
-          "bytes": 68731,
-          "sha256": "817e5b2636f532666e8f255e225af75e9d0c41b141512fde45264070a65b1c92"
+          "bytes": 73820,
+          "sha256": "ee4f503512b09d7e2668518c41d6c176755a354523ae15aa4d36220c9cb31791"
         }
       ],
       "acknowledged": "2026-10-25 owner: acknowledged (permissive MIT AND ZPL-2.1)"

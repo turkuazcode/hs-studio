@@ -1,7 +1,7 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:f656ca82-18ee-50ec-b6e9-468a11d957ad",
+ "serialNumber": "urn:uuid:fc6a0a95-e1f1-51ed-8f3f-354889d19fe2",
  "version": 1,
  "metadata": {
   "timestamp": "2026-10-28T20:07:38Z",
@@ -18354,7 +18354,7 @@
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "66c1f6ac1daf9c2948cda7ffa682ecdf6a02e7a1b7238cafe2e72991a60787d7"
+     "content": "9098474321e3f218a72a730f9e31d72674ecd8868cd26b24a8cbe5f3f1665fe7"
     }
    ],
    "licenses": [
@@ -18397,7 +18397,7 @@
     },
     {
      "name": "vho:bytes",
-     "value": "3197183"
+     "value": "3197949"
     }
    ]
   },
@@ -18411,7 +18411,7 @@
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "9158d6e8e67974204452f72f0ee853d89802d0327a8c0a99e81e1a9482e3c3bd"
+     "content": "9591d077a3270043290c3851edb08b9600fb621276e2952a0957e982b6359791"
     }
    ],
    "licenses": [
@@ -18468,7 +18468,7 @@
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "ed65d030f5974ecc6caa4ffa04ee2186f82608f77c00ce7f11b4bbebc7de037c"
+     "content": "134ae6e7f8eb516fac16f4f1ddb6312cb8888857c3159b1550cd1bcaceefaace"
     }
    ],
    "licenses": [
@@ -18525,7 +18525,7 @@
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "efb031741d48d7d705a5e782aceb4d020f72d9bb3f4191b9997c29e5c89d5497"
+     "content": "d4a3fb1cbda4ec2d438a64ee5bcdc0e9b52ef2c379a04dd6dd55a59dd1b91678"
     }
    ],
    "licenses": [
@@ -18582,7 +18582,7 @@
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "392913ca7facd066ea90249e58c99a53caeaa62c240a85cf119cb2e60e5e1f15"
+     "content": "73b141069e8bde20bab98282b4b6d3d32c1ca0f9bf9c1c50d4019314c6515406"
     }
    ],
    "licenses": [
@@ -18625,7 +18625,7 @@
     },
     {
      "name": "vho:bytes",
-     "value": "2836992"
+     "value": "2836480"
     }
    ]
   },
@@ -18639,7 +18639,7 @@
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "f445a291a57fd98d8d823084613e4373bf077e163d409be721b527b04c807677"
+     "content": "78c67ca261211e5ebc590a57971463656d886708916d8cc3ea2cb2133b10f974"
     }
    ],
    "licenses": [
@@ -18696,7 +18696,7 @@
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "4bf877f46f3723d3227d086c8f14121ee03431ae5903b9b79ed772e09074e83c"
+     "content": "af18cd7cde6a0a388c29e85f1dd088f29d8b23a437152ee2c1e0868afdcbd885"
     }
    ],
    "licenses": [
@@ -18753,7 +18753,7 @@
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "cdfb4977a31b23579f4625d46ef2dfd35590422dabaa32114dafa89d45f4efa4"
+     "content": "18735383f2b4b01d907f41fbde3164bd7dc3a2c900e26b3bbfdf019d453dafe8"
     }
    ],
    "licenses": [
@@ -18810,7 +18810,7 @@
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "a5c8981144ff74a7dce4e42424d89dffc936f467e8d5f08f5c02e9238220c22a"
+     "content": "1e67b64623d774a3f3eb21b8a25404fa7569bfd2e1bcde22ec49fe37e79a8e54"
     }
    ],
    "licenses": [
@@ -18853,7 +18853,7 @@
     },
     {
      "name": "vho:bytes",
-     "value": "464384"
+     "value": "463360"
     }
    ]
   },
@@ -18867,7 +18867,7 @@
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "13158674b260616fea01d8b571335550dded005d32126966a861d15aaa6e3efa"
+     "content": "221e51ebab4d94fdeb175a5e3a378f92f0696ab05f146c3e5a7a22d803f659a2"
     }
    ],
    "licenses": [
@@ -19044,13 +19044,13 @@
    "type": "library",
    "bom-ref": "native:windows-x86_64:libharfbuzz-0.dll",
    "name": "libharfbuzz-0.dll",
-   "version": "14.6.0-1",
+   "version": "15.0.0-1",
    "group": "HarfBuzz",
    "scope": "required",
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "842d73ce2dd9ee506ef68f4d3e9ca29b62c87e34999cd2720505bf3c9d3f575c"
+     "content": "574ef797d2480d73283ecc993e272092bdb1dda45c4db5d36bf72a5a91baeec8"
     }
    ],
    "licenses": [
@@ -19065,13 +19065,13 @@
     },
     {
      "type": "source-distribution",
-     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-harfbuzz-14.6.0-1.src.tar.zst",
+     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-harfbuzz-15.0.0-1.src.tar.zst",
      "comment": "expected MSYS2 source package (not verified online); archive with the release"
     },
     {
      "type": "build-meta",
      "url": "https://github.com/msys2/MINGW-packages/tree/master/mingw-w64-harfbuzz",
-     "comment": "MSYS2 recipe; pin the commit matching 14.6.0-1"
+     "comment": "MSYS2 recipe; pin the commit matching 15.0.0-1"
     }
    ],
    "properties": [
@@ -19093,11 +19093,11 @@
     },
     {
      "name": "vho:bytes",
-     "value": "1612472"
+     "value": "1829497"
     },
     {
      "name": "vho:msys2-package",
-     "value": "mingw-w64-ucrt-x86_64-harfbuzz 14.6.0-1"
+     "value": "mingw-w64-ucrt-x86_64-harfbuzz 15.0.0-1"
     }
    ]
   },
@@ -19408,15 +19408,15 @@
   },
   {
    "type": "library",
-   "bom-ref": "native:windows-x86_64:libplacebo-360.dll",
-   "name": "libplacebo-360.dll",
-   "version": "7.360.1-2",
+   "bom-ref": "native:windows-x86_64:libplacebo-387.dll",
+   "name": "libplacebo-387.dll",
+   "version": "7.387.0-1",
    "group": "libplacebo",
    "scope": "required",
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "8eb2c3fe24a124d9dbf0383d60ac7dde6c0dd5607b2451cad0d924271e46d5b8"
+     "content": "ebdc2d898ee396db8f342427f77a0af59b0823f853001eedefc801f05bd791b3"
     }
    ],
    "licenses": [
@@ -19431,13 +19431,13 @@
     },
     {
      "type": "source-distribution",
-     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-libplacebo-7.360.1-2.src.tar.zst",
+     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-libplacebo-7.387.0-1.src.tar.zst",
      "comment": "expected MSYS2 source package (not verified online); archive with the release"
     },
     {
      "type": "build-meta",
      "url": "https://github.com/msys2/MINGW-packages/tree/master/mingw-w64-libplacebo",
-     "comment": "MSYS2 recipe; pin the commit matching 7.360.1-2"
+     "comment": "MSYS2 recipe; pin the commit matching 7.387.0-1"
     }
    ],
    "properties": [
@@ -19459,11 +19459,11 @@
     },
     {
      "name": "vho:bytes",
-     "value": "1235613"
+     "value": "1328772"
     },
     {
      "name": "vho:msys2-package",
-     "value": "mingw-w64-ucrt-x86_64-libplacebo 7.360.1-2"
+     "value": "mingw-w64-ucrt-x86_64-libplacebo 7.387.0-1"
     }
    ]
   },
@@ -19963,13 +19963,13 @@
    "type": "library",
    "bom-ref": "native:windows-x86_64:libpng16-16.dll",
    "name": "libpng16-16.dll",
-   "version": "1.6.59-1",
+   "version": "1.6.59-2",
    "group": "libpng",
    "scope": "required",
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "7f425fd2b41d83869bb31bf761b4fb315f11040d55540661f96e582e1ec79a36"
+     "content": "28db7a8c6fcc579ce621729d27f1952324cd3a2b4e24da121611bb586346e732"
     }
    ],
    "licenses": [
@@ -19984,13 +19984,13 @@
     },
     {
      "type": "source-distribution",
-     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-libpng-1.6.59-1.src.tar.zst",
+     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-libpng-1.6.59-2.src.tar.zst",
      "comment": "expected MSYS2 source package (not verified online); archive with the release"
     },
     {
      "type": "build-meta",
      "url": "https://github.com/msys2/MINGW-packages/tree/master/mingw-w64-libpng",
-     "comment": "MSYS2 recipe; pin the commit matching 1.6.59-1"
+     "comment": "MSYS2 recipe; pin the commit matching 1.6.59-2"
     }
    ],
    "properties": [
@@ -20020,7 +20020,7 @@
     },
     {
      "name": "vho:msys2-package",
-     "value": "mingw-w64-ucrt-x86_64-libpng 1.6.59-1"
+     "value": "mingw-w64-ucrt-x86_64-libpng 1.6.59-2"
     }
    ]
   },
@@ -20028,13 +20028,13 @@
    "type": "library",
    "bom-ref": "native:windows-x86_64:zlib1.dll",
    "name": "zlib1.dll",
-   "version": "1.3.2-2",
+   "version": "1.3.2-3",
    "group": "zlib",
    "scope": "required",
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "11cd91171765cd65f1c3362e3df67e5f5a618a6b88c8cdec899b802eaf1c7b0d"
+     "content": "8ae7aeb0467763a1e271cd831ca8e2f7fd101602adb9923100ea26c6be2a559b"
     }
    ],
    "licenses": [
@@ -20049,13 +20049,13 @@
     },
     {
      "type": "source-distribution",
-     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-zlib-1.3.2-2.src.tar.zst",
+     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-zlib-1.3.2-3.src.tar.zst",
      "comment": "expected MSYS2 source package (not verified online); archive with the release"
     },
     {
      "type": "build-meta",
      "url": "https://github.com/msys2/MINGW-packages/tree/master/mingw-w64-zlib",
-     "comment": "MSYS2 recipe; pin the commit matching 1.3.2-2"
+     "comment": "MSYS2 recipe; pin the commit matching 1.3.2-3"
     }
    ],
    "properties": [
@@ -20077,11 +20077,11 @@
     },
     {
      "name": "vho:bytes",
-     "value": "127291"
+     "value": "121530"
     },
     {
      "name": "vho:msys2-package",
-     "value": "mingw-w64-ucrt-x86_64-zlib 1.3.2-2"
+     "value": "mingw-w64-ucrt-x86_64-zlib 1.3.2-3"
     }
    ]
   },
@@ -20219,13 +20219,13 @@
    "type": "library",
    "bom-ref": "native:windows-x86_64:libbrotlicommon.dll",
    "name": "libbrotlicommon.dll",
-   "version": "1.2.0-1",
+   "version": "1.2.1-1",
    "group": "Brotli",
    "scope": "required",
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "c62c08223e450dfc2fff33c752cc228505ffd9d755201958ba800d5d30481a2c"
+     "content": "7b0047dc16dd92a7932124dfd5a6e698d342f533a15d37d61f710def66091436"
     }
    ],
    "licenses": [
@@ -20240,13 +20240,13 @@
     },
     {
      "type": "source-distribution",
-     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-brotli-1.2.0-1.src.tar.zst",
+     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-brotli-1.2.1-1.src.tar.zst",
      "comment": "expected MSYS2 source package (not verified online); archive with the release"
     },
     {
      "type": "build-meta",
      "url": "https://github.com/msys2/MINGW-packages/tree/master/mingw-w64-brotli",
-     "comment": "MSYS2 recipe; pin the commit matching 1.2.0-1"
+     "comment": "MSYS2 recipe; pin the commit matching 1.2.1-1"
     }
    ],
    "properties": [
@@ -20268,11 +20268,11 @@
     },
     {
      "name": "vho:bytes",
-     "value": "144565"
+     "value": "140697"
     },
     {
      "name": "vho:msys2-package",
-     "value": "mingw-w64-ucrt-x86_64-brotli 1.2.0-1"
+     "value": "mingw-w64-ucrt-x86_64-brotli 1.2.1-1"
     }
    ]
   },
@@ -20280,13 +20280,13 @@
    "type": "library",
    "bom-ref": "native:windows-x86_64:libbrotlidec.dll",
    "name": "libbrotlidec.dll",
-   "version": "1.2.0-1",
+   "version": "1.2.1-1",
    "group": "Brotli",
    "scope": "required",
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "e270b6e576594ee8ee6e33ccc54e34a54304616dd6225652e11e49d6f17ef896"
+     "content": "c4c987a01597ddf969d93023f933f999a20f285588b0decb4deeb780c9e9cdf8"
     }
    ],
    "licenses": [
@@ -20301,13 +20301,13 @@
     },
     {
      "type": "source-distribution",
-     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-brotli-1.2.0-1.src.tar.zst",
+     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-brotli-1.2.1-1.src.tar.zst",
      "comment": "expected MSYS2 source package (not verified online); archive with the release"
     },
     {
      "type": "build-meta",
      "url": "https://github.com/msys2/MINGW-packages/tree/master/mingw-w64-brotli",
-     "comment": "MSYS2 recipe; pin the commit matching 1.2.0-1"
+     "comment": "MSYS2 recipe; pin the commit matching 1.2.1-1"
     }
    ],
    "properties": [
@@ -20329,11 +20329,11 @@
     },
     {
      "name": "vho:bytes",
-     "value": "62619"
+     "value": "60224"
     },
     {
      "name": "vho:msys2-package",
-     "value": "mingw-w64-ucrt-x86_64-brotli 1.2.0-1"
+     "value": "mingw-w64-ucrt-x86_64-brotli 1.2.1-1"
     }
    ]
   },
@@ -20589,13 +20589,13 @@
    "type": "library",
    "bom-ref": "native:windows-x86_64:libwinpthread-1.dll",
    "name": "libwinpthread-1.dll",
-   "version": "14.0.0.r495.g63ebe6cdb-2",
+   "version": "14.0.0.r569.g34eeafb7d-1",
    "group": "mingw-w64 winpthreads",
    "scope": "required",
    "hashes": [
     {
      "alg": "SHA-256",
-     "content": "817e5b2636f532666e8f255e225af75e9d0c41b141512fde45264070a65b1c92"
+     "content": "ee4f503512b09d7e2668518c41d6c176755a354523ae15aa4d36220c9cb31791"
     }
    ],
    "licenses": [
@@ -20610,13 +20610,13 @@
     },
     {
      "type": "source-distribution",
-     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-winpthreads-14.0.0.r495.g63ebe6cdb-2.src.tar.zst",
+     "url": "https://repo.msys2.org/mingw/sources/mingw-w64-winpthreads-14.0.0.r569.g34eeafb7d-1.src.tar.zst",
      "comment": "expected MSYS2 source package (not verified online); archive with the release"
     },
     {
      "type": "build-meta",
      "url": "https://github.com/msys2/MINGW-packages/tree/master/mingw-w64-winpthreads",
-     "comment": "MSYS2 recipe; pin the commit matching 14.0.0.r495.g63ebe6cdb-2"
+     "comment": "MSYS2 recipe; pin the commit matching 14.0.0.r569.g34eeafb7d-1"
     }
    ],
    "properties": [
@@ -20642,11 +20642,11 @@
     },
     {
      "name": "vho:bytes",
-     "value": "68731"
+     "value": "73820"
     },
     {
      "name": "vho:msys2-package",
-     "value": "mingw-w64-ucrt-x86_64-libwinpthread 14.0.0.r495.g63ebe6cdb-2"
+     "value": "mingw-w64-ucrt-x86_64-libwinpthread 14.0.0.r569.g34eeafb7d-1"
     }
    ]
   },
@@ -25061,7 +25061,7 @@
     "native:windows-x86_64:libintl-8.dll",
     "native:windows-x86_64:libiconv-2.dll",
     "native:windows-x86_64:libgraphite2.dll",
-    "native:windows-x86_64:libplacebo-360.dll",
+    "native:windows-x86_64:libplacebo-387.dll",
     "native:windows-x86_64:libdovi.dll",
     "native:windows-x86_64:libdav1d-7.dll",
     "native:windows-x86_64:libshaderc_shared.dll",
