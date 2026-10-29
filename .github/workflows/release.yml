@@ -160,6 +160,10 @@ jobs:
         run: npm run test:ai
       - name: Quality layer
         run: npm run test:quality
+        env:
+          # the alpha's profiles; the legacy neural ones (closed in this release, DAT-2 x4 takes over
+          # 30 min per sample on the runner CPU) are a declared exception of the gate
+          VHO_QUALITY_PROFILES: lanczos,classic-x4
 
       # ---------------- bundle the tested exe
       - name: Bundle
@@ -290,6 +294,9 @@ jobs:
           ./scripts/package-windows.ps1 -Variant test -MpvDist mpv-build/dist -MpvBin mpv-build/prefix/bin
           $i = Get-ChildItem 'src-tauri/target/release/bundle/nsis/VHO PackageTest_*-setup.exe' | Select-Object -First 1
           ./scripts/test-installer.ps1 -Installer $i.FullName
+        env:
+          # no audio device on the runner (see the E2E step of the windows job)
+          VHO_MPV_OPTIONS: "ao=null"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

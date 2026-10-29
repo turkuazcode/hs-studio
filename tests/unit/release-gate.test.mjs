@@ -255,6 +255,10 @@ test("quality: only the declared out-of-scope legacy failure is excused; anythin
   const c = checkLayer("quality", legacy, alpha, { head: HEAD, platformKey: "win32-x64", exeSha256: EXE });
   assert.equal(c.result, "ok", c.problems.join());
   assert.deepEqual(c.excepted, ["legacy-photo-ai-out-of-scope"]);
+  // the release run leaves the legacy profiles out: their comparison is a skip, excused the same way
+  const left = layerResult("quality", { skip: 1, skipped: [{ name: LEG, reason: "legacy profiles not selected (VHO_QUALITY_PROFILES)" }] });
+  assert.deepEqual(checkLayer("quality", left, alpha, { head: HEAD, platformKey: "win32-x64", exeSha256: EXE }).excepted, ["legacy-photo-ai-out-of-scope"]);
+  assert.match(problemsOf("quality", layerResult("quality", { skip: 1, skipped: [{ name: "photo metrics within tolerance of the committed baseline; no new red flag" }] })), /skip: photo metrics/);
   const both = layerResult("quality", { fail: 2, exitCode: 1, failed: [{ name: LEG }, { name: "photo metrics within tolerance of the committed baseline; no new red flag" }] });
   assert.match(problemsOf("quality", both), /başarısız: photo metrics within tolerance/);
   assert.match(problemsOf("quality", layerResult("quality", { exitCode: 1 })), /çıkış kodu 1/, "exit 1 without a listed failure");

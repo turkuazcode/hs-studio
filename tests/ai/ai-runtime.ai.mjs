@@ -40,6 +40,19 @@ before(async () => {
   reference = decodePng(readFileSync(REFERENCE_PNG));
   app = await launchApp({ dataDir: DATA_DIR });
   const st = await app.eval(`__TAURI__.core.invoke("ai_status_all", { ids: ["ort-web", "photo-x4"] })`);
+  // this file sorts before photo-x4.ai.mjs: on an empty cache (fresh CI runner) download here,
+  // with the same app downloader; a failed download leaves the tests blocked (skipped, not passed)
+  if (process.env.VHO_AI_OFFLINE !== "1") {
+    for (const s of st.filter((s) => !s.installed)) {
+      try {
+        await app.eval(`__TAURI__.core.invoke("ai_install", { id: ${JSON.stringify(s.id)}, requestId: "ai-runtime-${s.id}" })`, { timeoutMs: 1800000 });
+        s.installed = true;
+        log(`${s.id}: downloaded`);
+      } catch (e) {
+        log(`${s.id}: download failed: ${e.message}`);
+      }
+    }
+  }
   ready = st.every((s) => s.installed);
   if (!ready) log("model cache empty: run photo-x4.ai.mjs first (it downloads once)");
 });
