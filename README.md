@@ -60,7 +60,23 @@ Kurulum dosyaları [Releases](https://github.com/turkuazcode/hs-studio/releases)
 | **Linux x64** | `.AppImage`, `.deb` | **Önizleme, gerçek cihazda test edilmedi.** Sorun bildirimleri çok değerli |
 | **macOS** | — | Henüz yok: macOS video motoru yazılmadı ([plan](docs/status/platform-plan-macos-linux.md)) |
 
-Otomatik güncelleme bu sürümde kapalıdır; yeni sürümler Releases sayfasından indirilir.
+### Nasıl kurulur
+
+**Windows 10/11 x64**
+
+1. [Releases](https://github.com/turkuazcode/hs-studio/releases) sayfasında en yeni sürümü açın ve *Assets* altından `HS Studio_<sürüm>_x64-UNSIGNED-setup.exe` dosyasını indirin.
+2. İsteğe bağlı: dosyanın bozulmadığını doğrulayın. PowerShell'de `Get-FileHash ".\HS Studio_<sürüm>_x64-UNSIGNED-setup.exe"` komutunun verdiği değer `SHA256SUMS.txt` içindekiyle aynı olmalıdır.
+3. Dosyayı çift tıklayın. SmartScreen “Windows bilgisayarınızı korudu” derse **Ek bilgi → Yine de çalıştır**'ı seçin (paket henüz imzalı değil).
+4. Kurulum sihirbazını tamamlayın. Uygulama yalnızca sizin kullanıcı hesabınıza kurulur; yönetici izni istenmez. Başlat menüsünden **HS Studio**'yu açın.
+
+Kaldırmak için: *Ayarlar → Uygulamalar → Yüklü uygulamalar → HS Studio → Kaldır*.
+
+**Linux x64 (önizleme, test edilmedi)**
+
+- AppImage: `chmod +x HS*.AppImage` ve ardından `./HS*.AppImage` (checksum: `SHA256SUMS-linux.txt`)
+- Debian/Ubuntu: `sudo apt install ./HS*-PREVIEW-UNTESTED.deb`
+
+Otomatik güncelleme bu sürümde kapalıdır; yeni sürümler Releases sayfasından indirilir ve eski sürümün üzerine kurulur.
 
 ## Platform durumu
 
@@ -120,7 +136,26 @@ HS Studio hesap istemez, kullanım verisi toplamaz ve reklam içermez. İnternet
 **HS Studio** is an open-source desktop media app: video player (libmpv), photo studio and music player in one, built with Tauri 2 and Rust. Photos and videos can be enhanced **without AI models** — the original is never modified and results are written to a new file. Object removal and colorization use optional models downloaded only with your consent.
 
 - **Status:** alpha. Tested automatically on Windows 11 x64 only. Linux builds are an untested preview; macOS is not available yet (its video engine is not written).
-- **Download:** [Releases](https://github.com/turkuazcode/hs-studio/releases). The Windows installer is not code-signed yet, so SmartScreen may warn.
+- **Download:** [Releases](https://github.com/turkuazcode/hs-studio/releases). Each file's SHA-256 is listed in `SHA256SUMS.txt`.
+
+### How to install
+
+**Windows 10/11 x64**
+
+1. Open the latest release on the [Releases](https://github.com/turkuazcode/hs-studio/releases) page and download `HS Studio_<version>_x64-UNSIGNED-setup.exe` from *Assets*.
+2. Optional: check the file. In PowerShell, `Get-FileHash ".\HS Studio_<version>_x64-UNSIGNED-setup.exe"` must print the value listed in `SHA256SUMS.txt`.
+3. Double-click the file. The installer is not code-signed yet, so if SmartScreen says “Windows protected your PC”, choose **More info → Run anyway**.
+4. Finish the setup wizard. HS Studio is installed for your user account only and needs no administrator rights. Start it from the Start menu.
+
+To uninstall: *Settings → Apps → Installed apps → HS Studio → Uninstall*. Auto-update is off in this version; install a newer release over the old one.
+
+**Linux x64 (untested preview)**
+
+- AppImage: `chmod +x HS*.AppImage`, then `./HS*.AppImage` (checksums: `SHA256SUMS-linux.txt`)
+- Debian/Ubuntu: `sudo apt install ./HS*-PREVIEW-UNTESTED.deb`
+
+### More
+
 - **Build:** Node 24, Rust 1.99.1, `npm ci && npm run tauri dev`; libmpv/FFmpeg (LGPL) are built separately ([third_party/mpv/build-windows.md](third_party/mpv/build-windows.md)).
 - **Privacy:** no account, no telemetry, no ads; network access only for actions you start.
 - **License:** Apache License 2.0, © 2026 TurkuazCode. Keep LICENSE and NOTICE when redistributing. The “HS Studio” name and logo are not licensed ([TRADEMARKS.md](TRADEMARKS.md)).
