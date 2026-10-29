@@ -45,6 +45,8 @@ test("parseCues: BOM, VTT header, cue ids, cue settings, short timestamps", () =
 test("parseCues: strips HTML/VTT tags and ASS override tags", () => {
   const cues = parseCues("1\n00:00:01,000 --> 00:00:02,000\n<i>İtalik</i> <font color=\"#fff\">renk</font> {\\an8}üst {\\b1}kalın{\\b0}\n");
   assert.equal(cues[0].text, "İtalik renk üst kalın");
+  // nested: one pass would leave a new tag behind
+  assert.equal(parseCues("1\n00:00:01,000 --> 00:00:02,000\na {{\\b1}\\an8}b\n")[0].text, "a b");
 });
 
 test("parseCues: drops empty cues, sorts by start", () => {
