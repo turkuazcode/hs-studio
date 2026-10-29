@@ -68,7 +68,9 @@ export const TARGETS = {
       {
         id: "legacy-photo-ai-out-of-scope",
         layer: "quality",
-        kind: "fail",
+        // fail: the legacy profiles ran and missed the baseline; skip: the release run leaves them out
+        // (VHO_QUALITY_PROFILES=lanczos,classic-x4: DAT-2 x4 on the runner CPU takes over 30 min per sample)
+        kind: ["fail", "skip"],
         test: /^legacy experimental photo AI \(vho-x4, vho-x4-faces; out of the Windows alpha\)/,
         reason: "Eski nöral fotoğraf iyileştirme bu sürümde kapalı (giriş noktası yok). Başarısız sonucu kayıtta kalır: p10-alpha PSNR 32,89 dB, taban 36,95 dB. Özellik yeniden açılmadan önce çözülmeli.",
         scope: "Yalnızca eski vho-x4 / vho-x4-faces profillerinin taban karşılaştırması; Lanczos ve klasik (A05) profilleri zorunlu.",
@@ -203,7 +205,7 @@ export function checkLayer(layer, r, target, ctx = {}) {
   if (n("fail") + n("cancelled") !== failed.length) problems.push(`${n("fail")} başarısız sayıldı, ${failed.length} tanesi adıyla listelenmiş`);
   let failuresExcused = n("fail") > 0 && n("cancelled") === 0;
   for (const t of failed) {
-    const ex = (target.exceptions ?? []).find((e) => e.layer === layer && e.kind === "fail" && e.test.test(t.name));
+    const ex = (target.exceptions ?? []).find((e) => e.layer === layer && [e.kind].flat().includes("fail") && e.test.test(t.name));
     if (ex) excepted.add(ex.id);
     else { failuresExcused = false; problems.push(`başarısız: ${t.name}${t.error ? ` — ${t.error}` : ""}`); }
   }
@@ -214,7 +216,7 @@ export function checkLayer(layer, r, target, ctx = {}) {
   for (const [kind, count, list] of [["skip", n("skip"), r.skipped ?? []], ["todo", n("todo"), r.todos ?? []]]) {
     if (count !== list.length) problems.push(`${count} ${kind} sayıldı, ${list.length} tanesi adıyla listelenmiş`);
     for (const t of list) {
-      const ex = (target.exceptions ?? []).find((e) => e.layer === layer && e.kind === kind && e.test.test(t.name));
+      const ex = (target.exceptions ?? []).find((e) => e.layer === layer && [e.kind].flat().includes(kind) && e.test.test(t.name));
       if (ex) excepted.add(ex.id);
       else problems.push(`${kind}: ${t.name}${t.reason ? ` — ${t.reason}` : ""}`);
     }
@@ -350,7 +352,7 @@ export function toMarkdown(report) {
   }
   if (report.exceptions.length) {
     lines.push("**Kullanılan kapsam istisnaları** (geçti sayılmaz; yalnızca bu hedefin kapsamı dışında):", "",
-      ...report.exceptions.map((e) => `- \`${e.id}\` (${e.layer}, ${e.kind}): ${e.reason} Kapsam: ${e.scope}`), "");
+      ...report.exceptions.map((e) => `- \`${e.id}\` (${e.layer}, ${[e.kind].flat().join("/")}): ${e.reason} Kapsam: ${e.scope}`), "");
   }
   if (report.outOfScope.length) {
     lines.push("**Bu hedefin vaat etmediği özellikler:**", "", ...report.outOfScope.map((o) => `- ${o.id}: ${o.reason}`), "");

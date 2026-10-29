@@ -142,8 +142,13 @@ pub fn set_favorite(tx: &Transaction, path: &str, on: bool) -> Result<(), Storag
     let path = clean(path);
     if on {
         let id = ensure(tx, &path)?;
-        // order of favorites = order of favoriting
-        tx.execute("UPDATE folders SET favorite = 1, added_at = CASE WHEN favorite = 1 THEN added_at ELSE ?2 END WHERE id = ?1", params![id, now_ms()])?;
+        // order of favorites = order of favoriting (after every existing one, even within the same
+        // millisecond as an import that stamped now + i)
+        tx.execute(
+            "UPDATE folders SET favorite = 1, added_at = CASE WHEN favorite = 1 THEN added_at \
+             ELSE MAX(?2, (SELECT COALESCE(MAX(added_at), 0) + 1 FROM folders WHERE favorite = 1)) END WHERE id = ?1",
+            params![id, now_ms()],
+        )?;
     } else {
         let norm = normalize_path(&path);
         tx.execute("UPDATE folders SET favorite = 0 WHERE path_norm = ?1", [&norm])?;
