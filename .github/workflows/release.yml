@@ -420,6 +420,6 @@ jobs:
           if [ -d dist/linux ]; then linux=(dist/linux/*.AppImage dist/linux/*.deb dist/linux/SHA256SUMS-linux.txt)
           else echo "::warning::Linux preview job did not succeed: the draft has the Windows files only"; fi
           gh release create "v$v" --draft --prerelease --target "$GITHUB_SHA" --title "HS Studio $v" --notes-file "$notes" \
-            dist/windows/*-setup.exe dist/windows/*.sha256 dist/windows/SHA256SUMS.txt dist/windows/release-gate.md \
+            dist/windows/*-setup.exe dist/windows/*.sha256 dist/windows/SHA256SUMS.txt dist/windows/release-gate.md dist/windows/package-manifest-release-*.json \
             dist/windows/*.cdx.json dist/windows/THIRD_PARTY_NOTICES.txt dist/windows/SOURCE-OFFER.txt dist/windows/LICENSE.txt dist/windows/NOTICE.txt \
             "${linux[@]}"
