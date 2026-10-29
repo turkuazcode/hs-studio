@@ -67,7 +67,7 @@ The installers are on the [Releases](https://github.com/turkuazcode/hs-studio/re
 ### Windows 10/11 x64
 
 1. Open the latest release on the [Releases](https://github.com/turkuazcode/hs-studio/releases) page and download `HS.Studio_<version>_x64-UNSIGNED-setup.exe` from *Assets*.
-2. Optional: check the file. In PowerShell, `Get-FileHash ".\HS Studio_<version>_x64-UNSIGNED-setup.exe"` must print the value listed in `SHA256SUMS.txt` (the list names the file with a space instead of the dot GitHub uses).
+2. Optional: check the file. In PowerShell, `Get-FileHash ".\HS.Studio_<version>_x64-UNSIGNED-setup.exe"` must print the value listed in `SHA256SUMS.txt` (the list names the file with a space instead of the dot GitHub uses).
 3. Double-click the file. The installer is not code-signed yet, so if SmartScreen says “Windows protected your PC”, choose **More info → Run anyway**.
 4. Finish the setup wizard. HS Studio is installed for your user account only and needs no administrator rights. Start it from the Start menu.
 
