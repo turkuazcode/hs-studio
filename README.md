@@ -1,161 +1,134 @@
 <div align="center">
 
-<img src="src-tauri/icons/128x128.png" width="96" alt="HS Studio logosu">
+<img src="src-tauri/icons/128x128.png" width="96" alt="HS Studio logo">
 
 # HS Studio
 
-**Video oynatıcı, fotoğraf stüdyosu ve müzik çalar — tek, açık kaynak masaüstü uygulamasında.**
+**Video player, photo studio and music player in one open-source desktop app.**
 
-[![Lisans: Apache-2.0](https://img.shields.io/badge/Lisans-Apache--2.0-blue.svg)](LICENSE)
-[![Sürüm](https://img.shields.io/github/v/release/turkuazcode/hs-studio?include_prereleases&label=s%C3%BCr%C3%BCm)](https://github.com/turkuazcode/hs-studio/releases)
-[![Windows](https://img.shields.io/badge/Windows%2011%20x64-alfa-2ea44f)](docs/platform-support.md)
-[![Linux](https://img.shields.io/badge/Linux-%C3%B6nizleme%2C%20test%20edilmedi-orange)](docs/status/platform-plan-macos-linux.md)
-[![macOS](https://img.shields.io/badge/macOS-hen%C3%BCz%20yok-lightgrey)](docs/status/platform-plan-macos-linux.md)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/turkuazcode/hs-studio?include_prereleases&label=release)](https://github.com/turkuazcode/hs-studio/releases)
+[![Windows](https://img.shields.io/badge/Windows%2011%20x64-alpha-2ea44f)](docs/platform-support.md)
+[![Linux](https://img.shields.io/badge/Linux-preview%2C%20untested-orange)](docs/status/platform-plan-macos-linux.md)
+[![macOS](https://img.shields.io/badge/macOS-not%20yet-lightgrey)](docs/status/platform-plan-macos-linux.md)
 
-[İndir](https://github.com/turkuazcode/hs-studio/releases) · [Özellikler](#özellikler) · [Platform durumu](#platform-durumu) · [Kaynaktan derleme](#kaynaktan-derleme) · [Lisans](#lisans) · [English](#english)
+[Download](https://github.com/turkuazcode/hs-studio/releases) · [Features](#features) · [How to install](#how-to-install) · [Platform status](#platform-status) · [Building from source](#building-from-source) · [License](#license)
 
 </div>
 
-<p align="center"><img src="docs/screenshots/02-video.png" alt="HS Studio video oynatma ekranı" width="900"></p>
+<p align="center"><img src="docs/screenshots/02-video.png" alt="HS Studio playing a video" width="900"></p>
 
-HS Studio, oynatma motoru olarak **libmpv**'yi (LGPL) ve masaüstü katmanı olarak **Tauri 2 + Rust**'ı kullanır. Videoları, fotoğrafları ve müziği aynı sade arayüzde açar; fotoğraf ve videoları **yapay zekâ kullanmadan**, orijinali hiç değiştirmeden iyileştirebilir.
+HS Studio uses **libmpv** (LGPL) as its playback engine and **Tauri 2 + Rust** as its desktop layer. It opens videos, photos and music in the same simple interface, and it can enhance photos and videos **without AI models**, never changing the original file.
 
-> **Alfa sürümü.** Yalnızca Windows 11 x64'te otomatik testlerle doğrulandı. Temiz bir makinede kurulum, ekran okuyucu ve gerçek kullanıcı denemeleri henüz yapılmadı. Ayrıntı: [sürüm kontrol listesi](docs/releases/0.1.0-alpha-checklist.md).
+> **Alpha release.** Verified by automated tests on Windows 11 x64 only. Installation on a clean machine, screen reader use and real user testing have not been done yet. Details: [release checklist](docs/releases/0.1.0-alpha-checklist.md).
 
-## Ekran görüntüleri
+The app interface is available in Turkish and English.
 
-| | |
-|---|---|
-| <img src="docs/screenshots/01-baslangic.png" alt="Açılış ekranı" width="440"> | <img src="docs/screenshots/04-foto-studyo.png" alt="Fotoğraf stüdyosu" width="440"> |
-| **Açılış** — dosya aç, URL'den aç ya da klasöre göz at | **Fotoğraf stüdyosu** — klasör ızgarası, arama, sıralama, toplu işlemler |
-| <img src="docs/screenshots/03-fotograf-iyilestirme.png" alt="Fotoğraf iyileştirme" width="440"> | <img src="docs/screenshots/05-video-iyilestirme.png" alt="Video iyileştirme" width="440"> |
-| **Fotoğrafı iyileştir** — temizleme, gölge açma, 2× büyütme; yapay zekâ yok | **Videoyu iyileştir** — gürültü/blok azaltma, keskinlik, 10 sn yan yana önizleme |
-
-<sub>Görüntülerdeki fotoğraflar kamu malıdır (NASA; Library of Congress / Dorothea Lange; 1930 öncesi yayınlar). Video, NASA'nın Earthrise fotoğrafından üretildi. Görüntüler `node scripts/screenshots.mjs` ile yeniden üretilebilir.</sub>
-
-## Özellikler
+## Screenshots
 
 | | |
 |---|---|
-| 🎞️ **Oynatma** | libmpv + FFmpeg: ses/altyazı kanalları, bölümler, kare kare, A-B döngü, hız, HDR ton eşleme, donanım çözme. SRT/VTT/ASS altyazı (UTF-8 ve Windows-1254). %200'e kadar ses (sınırlayıcıyla), 10 bant ekolayzır, ses filtreleri, uyku zamanlayıcısı, kaldığın yerden devam |
-| 🖼️ **Fotoğraf** | Görüntüleyici ve stüdyo: ızgara, EXIF ve histogram, kırp/döndür, karşılaştırma, toplu dönüştürme, yıldız ve etiket. HEIC/AVIF Windows codec'leriyle; RAW için gömülü önizleme |
-| ✨ **Fotoğrafı iyileştir** | Klasik, modelsiz zincir: gürültü temizleme, gölge açma, hare oluşturmayan netleştirme, 2× büyütme, isteğe bağlı film greni. Sonuç ayrı dosyaya yazılır; kayıp ayrıntı “uydurulmaz” |
-| 🎬 **Videoyu iyileştir** | Modelsiz FFmpeg zinciri: gerekirse geçmeli görüntüyü düzeltme, blok ve zamansal gürültü azaltma, ölçekleme, hafif keskinlik. 10 sn yan yana önizleme, ilerleme ve iptal; sonuç orijinalin yanında yeni MKV, ses ve altyazılar korunur. HDR girdi engellenir (çıktı SDR 8 bit) |
-| 🪄 **Akıllı düzenleme** | Nesne silme (LaMa) ve siyah-beyaz fotoğrafı renklendirme (DDColor). Modeller ilk kullanımda, onayınızla indirilir ve SHA-256 ile doğrulanır |
-| 🎵 **Müzik ve kütüphane** | Kütüphane taraması ve arama, çalma listeleri (M3U/PLS), boşluksuz çalma, ReplayGain, Windows medya tuşları |
-| 🧰 **Medya eylemleri** | Kes, dönüştür, GIF, sesi çıkar, kareyi kaydet, etiket ve şarkı sözü düzenleme, OCR, paylaş/yazdır |
-| 🌐 **Ağ** | HTTP/HTTPS akışları, HLS, internet radyosu (ICY başlığı), UPnP/DLNA cihaza gönderme. Gerçek TV/hoparlörde henüz denenmedi |
-| 🔒 **Güvenli dosya işlemleri** | Orijinal dosyalar korunur; çıktılar ayrı dosyaya yazılır; yarıda kalan iş yarım dosya bırakmaz. Uygulama yalnızca sizin seçtiğiniz klasörlere yazar |
-| 🌍 **Dil** | Türkçe ve İngilizce arayüz, çevrimdışı çalışır (yazı tipleri dahil) |
+| <img src="docs/screenshots/01-baslangic.png" alt="Start screen" width="440"> | <img src="docs/screenshots/04-foto-studyo.png" alt="Photo studio" width="440"> |
+| **Start screen**: open a file, open a URL or browse a folder | **Photo studio**: folder grid, search, sorting, batch actions |
+| <img src="docs/screenshots/03-fotograf-iyilestirme.png" alt="Photo enhancement" width="440"> | <img src="docs/screenshots/05-video-iyilestirme.png" alt="Video enhancement" width="440"> |
+| **Enhance photo**: denoise, shadow lift, 2× upscale; no AI | **Enhance video**: noise/block reduction, sharpening, 10 s side-by-side preview |
 
-**Bilinçli olarak bu sürümde olmayanlar:** model tabanlı video iyileştirme, uzun videolarda kaldığı segmentten devam, Chromecast, mobil uygulamalar. Arka plan kaldırma deneyseldir ve varsayılan olarak gizlidir. İyileştirmeler için “daha kaliteli” iddiası yapılmaz: [ölçüm raporu](docs/benchmarks/2026-10-28-klasik-zincir.md).
+<sub>The photos in the screenshots are in the public domain (NASA; Library of Congress / Dorothea Lange; publications before 1930). The video was made from NASA's Earthrise photo. The screenshots can be regenerated with `node scripts/screenshots.mjs`. The screenshots show the Turkish interface.</sub>
 
-## İndirme ve kurulum
+## Features
 
-Kurulum dosyaları [Releases](https://github.com/turkuazcode/hs-studio/releases) sayfasındadır; her dosyanın SHA-256 değeri `SHA256SUMS.txt` içinde verilir.
+| | |
+|---|---|
+| 🎞️ **Playback** | libmpv + FFmpeg: audio/subtitle tracks, chapters, frame stepping, A-B loop, speed, HDR tone mapping, hardware decoding. SRT/VTT/ASS subtitles (UTF-8 and Windows-1254). Volume up to 200% (with a limiter), 10-band equalizer, audio filters, sleep timer, resume where you left off |
+| 🖼️ **Photos** | Viewer and studio: grid, EXIF and histogram, crop/rotate, compare, batch convert, stars and tags. HEIC/AVIF through the Windows codecs; embedded previews for RAW |
+| ✨ **Enhance photo** | A classic chain without models: denoise, shadow lift, halo-free sharpening, 2× upscale, optional film grain. The result is written to a separate file; lost detail is not “invented” |
+| 🎬 **Enhance video** | An FFmpeg chain without models: deinterlacing when needed, block and temporal noise reduction, scaling, light sharpening. 10 s side-by-side preview, progress and cancel; the result is a new MKV next to the original, with audio and subtitles kept. HDR input is blocked (the output is 8-bit SDR) |
+| 🪄 **Smart editing** | Object removal (LaMa) and colorizing black-and-white photos (DDColor). The models are downloaded on first use, only with your consent, and verified with SHA-256 |
+| 🎵 **Music and library** | Library scanning and search, playlists (M3U/PLS), gapless playback, ReplayGain, Windows media keys |
+| 🧰 **Media actions** | Trim, convert, GIF, extract audio, save frame, edit tags and lyrics, OCR, share/print |
+| 🌐 **Network** | HTTP/HTTPS streams, HLS, internet radio (ICY titles), cast to UPnP/DLNA devices. Not yet tried on a real TV or speaker |
+| 🔒 **Safe file handling** | Originals are kept; output goes to a separate file; an interrupted job leaves no half-written file. The app writes only to folders you choose |
+| 🌍 **Language** | Turkish and English interface; works offline (fonts included) |
 
-| Platform | Dosya | Durum |
+**Deliberately not in this release:** model-based video enhancement, resuming long videos from the last segment, Chromecast, mobile apps. Background removal is experimental and hidden by default. No “higher quality” claim is made for the enhancements: [measurement report](docs/benchmarks/2026-10-28-klasik-zincir.md).
+
+## Download
+
+The installers are on the [Releases](https://github.com/turkuazcode/hs-studio/releases) page. Each file's SHA-256 is listed in `SHA256SUMS.txt`.
+
+| Platform | File | Status |
 |---|---|---|
-| **Windows 10/11 x64** | `HS Studio_<sürüm>_x64-UNSIGNED-setup.exe` | Alfa. Kullanıcı başına kurulur, yönetici izni gerekmez. Paket henüz imzalı değil: Windows SmartScreen “tanınmayan uygulama” uyarısı gösterebilir (*Ek bilgi → Yine de çalıştır*) |
-| **Linux x64** | `.AppImage`, `.deb` | **Önizleme, gerçek cihazda test edilmedi.** Sorun bildirimleri çok değerli |
-| **macOS** | — | Henüz yok: macOS video motoru yazılmadı ([plan](docs/status/platform-plan-macos-linux.md)) |
+| **Windows 10/11 x64** | `HS Studio_<version>_x64-UNSIGNED-setup.exe` | Alpha. Installs per user, no administrator rights needed. Not code-signed yet, so Windows SmartScreen may show an “unrecognized app” warning |
+| **Linux x64** | `.AppImage`, `.deb` | **Preview, not tested on a real device.** Bug reports are very welcome |
+| **macOS** | — | Not available yet: the macOS video engine is not written ([plan](docs/status/platform-plan-macos-linux.md)) |
 
-### Nasıl kurulur
+## How to install
 
-**Windows 10/11 x64**
-
-1. [Releases](https://github.com/turkuazcode/hs-studio/releases) sayfasında en yeni sürümü açın ve *Assets* altından `HS Studio_<sürüm>_x64-UNSIGNED-setup.exe` dosyasını indirin.
-2. İsteğe bağlı: dosyanın bozulmadığını doğrulayın. PowerShell'de `Get-FileHash ".\HS Studio_<sürüm>_x64-UNSIGNED-setup.exe"` komutunun verdiği değer `SHA256SUMS.txt` içindekiyle aynı olmalıdır.
-3. Dosyayı çift tıklayın. SmartScreen “Windows bilgisayarınızı korudu” derse **Ek bilgi → Yine de çalıştır**'ı seçin (paket henüz imzalı değil).
-4. Kurulum sihirbazını tamamlayın. Uygulama yalnızca sizin kullanıcı hesabınıza kurulur; yönetici izni istenmez. Başlat menüsünden **HS Studio**'yu açın.
-
-Kaldırmak için: *Ayarlar → Uygulamalar → Yüklü uygulamalar → HS Studio → Kaldır*.
-
-**Linux x64 (önizleme, test edilmedi)**
-
-- AppImage: `chmod +x HS*.AppImage` ve ardından `./HS*.AppImage` (checksum: `SHA256SUMS-linux.txt`)
-- Debian/Ubuntu: `sudo apt install ./HS*-PREVIEW-UNTESTED.deb`
-
-Otomatik güncelleme bu sürümde kapalıdır; yeni sürümler Releases sayfasından indirilir ve eski sürümün üzerine kurulur.
-
-## Platform durumu
-
-| | Windows | Linux | macOS |
-|---|---|---|---|
-| Video motoru (libmpv) | ✅ testli | kod hazır, gerçek GPU'da denenmedi | ❌ yazılmadı |
-| Kurulum paketi | ✅ NSIS (imzasız) | AppImage/deb (test edilmedi) | ❌ |
-| Otomatik testler | ✅ birim, Rust, uçtan uca, gerçek AI, kalite | — | — |
-
-Özellik bazında tablo: [docs/platform-support.md](docs/platform-support.md).
-
-## Kaynaktan derleme
-
-Gereksinimler: [Node.js](https://nodejs.org/) 24, [Rust](https://rustup.rs/) 1.99.1, Windows'ta WebView2 (Windows 11'de hazır).
-
-```bash
-git clone https://github.com/turkuazcode/hs-studio.git
-cd hs-studio
-npm ci
-npm test                 # birim testleri (ağsız, saniyeler)
-npm run tauri dev        # geliştirme penceresi
-```
-
-- **libmpv / FFmpeg (LGPL):** Depoda yoktur. Windows'ta [third_party/mpv/build-windows.md](third_party/mpv/build-windows.md) ile derlenir (CI'da `native-windows.yml`), ardından `npm run stage:mpv`. Bu dosyalar olmadan uygulama sınırlı HTML5 oynatma ile açılır.
-- **Release derlemesi ve kurulum paketi:** `npm run build:release`, `npm run package:windows` — ayrıntı: [docs/release/packaging.md](docs/release/packaging.md). Linux: `scripts/linux/`.
-- **Test katmanları:** `npm test`, `npm run test:rust`, `npm run e2e`, `npm run test:ai`, `npm run test:quality` — [docs/status/test-map.md](docs/status/test-map.md). Yayın kapısı: `node scripts/release-gate.mjs` ([kurallar](docs/releases/release-gate.md)).
-
-Mimari: ön yüz çerçevesiz JavaScript ES modülleri (`src/`), çekirdek Rust/Tauri (`src-tauri/src/`), oynatma motoru ayrı LGPL DLL olarak yüklenen libmpv ([docs/engine.md](docs/engine.md)).
-
-## Gizlilik
-
-HS Studio hesap istemez, kullanım verisi toplamaz ve reklam içermez. İnternete yalnızca sizin başlattığınız işlerde çıkar: ağ akışı açmak, yapay zekâ modelini onayınızla indirmek, haritada konum göstermek ya da bir bağlantıyı tarayıcıda açmak.
-
-## Katkı ve destek
-
-- Hata ve öneri: [GitHub Issues](https://github.com/turkuazcode/hs-studio/issues)
-- Katkı rehberi: [CONTRIBUTING.md](CONTRIBUTING.md) — katkılar Apache-2.0 ile gelir, `git commit -s` (DCO)
-- Güvenlik açıkları: **herkese açık issue açmayın**, [SECURITY.md](SECURITY.md)'deki adrese bildirin
-- Davranış kuralları: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
-
-## Lisans
-
-<!-- license-section: the only README place that states the project license (with the badge above) -->
-**HS Studio** — Copyright 2026 **TurkuazCode**.
-
-[Apache License 2.0](LICENSE) ile lisanslanmış açık kaynak yazılımdır: kullanabilir, inceleyebilir, değiştirebilir ve dağıtabilirsiniz. Dağıtırken [LICENSE](LICENSE) ve [NOTICE](NOTICE) dosyalarını korumanız gerekir. Yazılım “olduğu gibi”, hiçbir garanti olmadan sunulur.
-
-**Ad ve logo:** “HS Studio” adı ve logosu Apache lisansının kapsamında değildir (lisansın 6. maddesi). Değiştirilmiş sürümler farklı bir ad ve logo kullanmalıdır: [TRADEMARKS.md](TRADEMARKS.md).
-<!-- /license-section -->
-
-**Üçüncü taraf bileşenler:** Yalnızca açık kaynak lisanslı bileşenler kullanılır; libmpv ve FFmpeg LGPL lisanslıdır ve ayrı DLL olarak gelir (kaynak teklifi pakette `legal/SOURCE-OFFER.txt`). Tam liste uygulamada *Ayarlar → Hakkında / Lisanslar* altında ve [src/legal/THIRD_PARTY_NOTICES.txt](src/legal/THIRD_PARTY_NOTICES.txt) dosyasındadır; envanter ve SBOM: [legal/INVENTORY.md](legal/INVENTORY.md). Yapay zekâ modelleri uygulamayla gelmez; ilk kullanımda onayla, kendi lisans dosyalarıyla birlikte indirilir.
-
----
-
-## English
-
-**HS Studio** is an open-source desktop media app: video player (libmpv), photo studio and music player in one, built with Tauri 2 and Rust. Photos and videos can be enhanced **without AI models** — the original is never modified and results are written to a new file. Object removal and colorization use optional models downloaded only with your consent.
-
-- **Status:** alpha. Tested automatically on Windows 11 x64 only. Linux builds are an untested preview; macOS is not available yet (its video engine is not written).
-- **Download:** [Releases](https://github.com/turkuazcode/hs-studio/releases). Each file's SHA-256 is listed in `SHA256SUMS.txt`.
-
-### How to install
-
-**Windows 10/11 x64**
+### Windows 10/11 x64
 
 1. Open the latest release on the [Releases](https://github.com/turkuazcode/hs-studio/releases) page and download `HS Studio_<version>_x64-UNSIGNED-setup.exe` from *Assets*.
 2. Optional: check the file. In PowerShell, `Get-FileHash ".\HS Studio_<version>_x64-UNSIGNED-setup.exe"` must print the value listed in `SHA256SUMS.txt`.
 3. Double-click the file. The installer is not code-signed yet, so if SmartScreen says “Windows protected your PC”, choose **More info → Run anyway**.
 4. Finish the setup wizard. HS Studio is installed for your user account only and needs no administrator rights. Start it from the Start menu.
 
-To uninstall: *Settings → Apps → Installed apps → HS Studio → Uninstall*. Auto-update is off in this version; install a newer release over the old one.
+To uninstall: *Settings → Apps → Installed apps → HS Studio → Uninstall*.
 
-**Linux x64 (untested preview)**
+Auto-update is off in this release. To update, download the newer release and install it over the old one.
 
-- AppImage: `chmod +x HS*.AppImage`, then `./HS*.AppImage` (checksums: `SHA256SUMS-linux.txt`)
+### Linux x64 (untested preview)
+
+- AppImage: `chmod +x HS*.AppImage`, then `./HS*.AppImage`
 - Debian/Ubuntu: `sudo apt install ./HS*-PREVIEW-UNTESTED.deb`
 
-### More
+Checksums are in `SHA256SUMS-linux.txt`.
 
-- **Build:** Node 24, Rust 1.99.1, `npm ci && npm run tauri dev`; libmpv/FFmpeg (LGPL) are built separately ([third_party/mpv/build-windows.md](third_party/mpv/build-windows.md)).
-- **Privacy:** no account, no telemetry, no ads; network access only for actions you start.
-- **License:** Apache License 2.0, © 2026 TurkuazCode. Keep LICENSE and NOTICE when redistributing. The “HS Studio” name and logo are not licensed ([TRADEMARKS.md](TRADEMARKS.md)).
+## Platform status
+
+| | Windows | Linux | macOS |
+|---|---|---|---|
+| Video engine (libmpv) | ✅ tested | code ready, not tried on a real GPU | ❌ not written |
+| Installer | ✅ NSIS (unsigned) | AppImage/deb (untested) | ❌ |
+| Automated tests | ✅ unit, Rust, end-to-end, real AI, quality | — | — |
+
+Per-feature table: [docs/platform-support.md](docs/platform-support.md).
+
+## Building from source
+
+Requirements: [Node.js](https://nodejs.org/) 24, [Rust](https://rustup.rs/) 1.99.1, and WebView2 on Windows (built into Windows 11).
+
+```bash
+git clone https://github.com/turkuazcode/hs-studio.git
+cd hs-studio
+npm ci
+npm test                 # unit tests (no network, a few seconds)
+npm run tauri dev        # development window
+```
+
+- **libmpv / FFmpeg (LGPL):** not in the repository. On Windows they are built with [third_party/mpv/build-windows.md](third_party/mpv/build-windows.md) (in CI: `native-windows.yml`), then `npm run stage:mpv`. Without them the app opens with limited HTML5 playback.
+- **Release build and installer:** `npm run build:release`, `npm run package:windows`; details in [docs/release/packaging.md](docs/release/packaging.md). Linux: `scripts/linux/`.
+- **Test layers:** `npm test`, `npm run test:rust`, `npm run e2e`, `npm run test:ai`, `npm run test:quality`; see [docs/status/test-map.md](docs/status/test-map.md). Release gate: `node scripts/release-gate.mjs` ([rules](docs/releases/release-gate.md)).
+
+Architecture: the front end is framework-free JavaScript ES modules (`src/`), the core is Rust/Tauri (`src-tauri/src/`), and the playback engine is libmpv, loaded as a separate LGPL DLL ([docs/engine.md](docs/engine.md)).
+
+## Privacy
+
+HS Studio asks for no account, collects no usage data and shows no ads. It goes online only for things you start: opening a network stream, downloading an AI model with your consent, showing a location on a map, or opening a link in your browser.
+
+## Contributing and support
+
+- Bugs and suggestions: [GitHub Issues](https://github.com/turkuazcode/hs-studio/issues)
+- Contribution guide: [CONTRIBUTING.md](CONTRIBUTING.md). Contributions are made under Apache-2.0, signed off with `git commit -s` (DCO)
+- Security vulnerabilities: **do not open a public issue**; report them to the address in [SECURITY.md](SECURITY.md)
+- Code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+
+## License
+
+<!-- license-section: the only README place that states the project license (with the badge above) -->
+**HS Studio**, Copyright 2026 **TurkuazCode**.
+
+Open-source software licensed under the [Apache License 2.0](LICENSE): you may use, study, change and redistribute it. When you redistribute it, keep the [LICENSE](LICENSE) and [NOTICE](NOTICE) files. The software is provided “as is”, without any warranty.
+
+**Name and logo:** the “HS Studio” name and logo are not covered by the Apache license (section 6 of the license). Modified versions must use a different name and logo: [TRADEMARKS.md](TRADEMARKS.md).
+<!-- /license-section -->
+
+**Third-party components:** only open-source components are used. libmpv and FFmpeg are LGPL-licensed and ship as separate DLLs (the source offer is in the package at `legal/SOURCE-OFFER.txt`). The full list is in the app under *Settings → About / Licenses* and in [src/legal/THIRD_PARTY_NOTICES.txt](src/legal/THIRD_PARTY_NOTICES.txt); inventory and SBOM: [legal/INVENTORY.md](legal/INVENTORY.md). AI models do not ship with the app; they are downloaded on first use, with your consent, together with their own license files.
