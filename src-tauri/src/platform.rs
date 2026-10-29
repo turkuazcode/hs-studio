@@ -22,7 +22,7 @@ pub fn data_dir_override() -> Option<PathBuf> {
 /// Test instances only (VHO_DATA_DIR): the WebView2 arguments the E2E harness sets in
 /// WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS (--remote-debugging-port). The runtime may ignore that
 /// variable once the app passes its own additional_browser_args (WebView2 155 on the GitHub
-/// Windows runner: no debug port, diag-webview2.yml), so the app appends them itself.
+/// Windows runner: no debug port), so the app appends them itself.
 pub fn test_browser_args() -> Option<String> {
     data_dir_override()?;
     std::env::var("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS").ok().filter(|a| !a.trim().is_empty())
