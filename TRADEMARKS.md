@@ -22,6 +22,7 @@ modified versions — not to restrict what you do with the code.
 - the name **"HS Studio"** and the former working name **"VHO"** when used for this software;
 - the HS Studio / VHO logo and application icon (the files in `src-tauri/icons/`,
   `src/assets/favicon.png`, `src/assets/icon-192.png`, and their later replacements).
+- the company name **"TurkuazCode"** and its logo (the files in `docs/brand/`).
 
 Owner: TurkuazCode.
 
