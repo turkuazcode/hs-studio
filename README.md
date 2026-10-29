@@ -133,3 +133,16 @@ Open-source software licensed under the [Apache License 2.0](LICENSE): you may u
 <!-- /license-section -->
 
 **Third-party components:** only open-source components are used. libmpv and FFmpeg are LGPL-licensed and ship as separate DLLs (the source offer is in the package at `legal/SOURCE-OFFER.txt`). The full list is in the app under *Settings → About / Licenses* and in [src/legal/THIRD_PARTY_NOTICES.txt](src/legal/THIRD_PARTY_NOTICES.txt); inventory and SBOM: [legal/INVENTORY.md](legal/INVENTORY.md). AI models do not ship with the app; they are downloaded on first use, with your consent, together with their own license files.
+
+---
+
+<p align="center">
+  <a href="https://github.com/turkuazcode">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/brand/turkuazcode-dark.svg">
+      <img src="docs/brand/turkuazcode-light.svg" alt="TurkuazCode" height="36">
+    </picture>
+  </a>
+  <br>
+  <sub>Made by TurkuazCode in Türkiye</sub>
+</p>
