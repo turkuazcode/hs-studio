@@ -265,6 +265,7 @@ jobs:
         with:
           name: results-windows
           path: tests/.results/*.json
+          include-hidden-files: true # tests/.results is a dot folder: skipped by default
 
   # Installer layer: a test-identity package ("VHO PackageTest", no file associations) of the
   # same commit, installed / upgraded / uninstalled on this runner (scripts/test-installer.ps1).
@@ -386,6 +387,7 @@ jobs:
         with:
           name: results-linux
           path: tests/.results/*.json
+          include-hidden-files: true # tests/.results is a dot folder: skipped by default
 
   publish:
     # the gated Windows candidate is required; the Linux preview is added when its job succeeded
