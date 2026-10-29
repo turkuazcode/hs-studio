@@ -6,19 +6,21 @@
 
 ## Supported versions
 
-HS Studio has not had a public release yet. Until it does, only the latest commit of the default branch
-receives fixes. This table will list supported release lines once releases exist.
+HS Studio is in alpha. Fixes go to the default branch and ship in the next 0.1.x release; older
+releases do not receive fixes.
 
 | Version | Supported |
 |---|---|
-| unreleased (default branch) | yes |
+| latest 0.1.x release | yes |
+| default branch | yes |
+| older releases | no |
 
 ## Reporting a vulnerability
 
 **Please do not open a public issue, pull request or discussion for a security problem.**
 
 Report privately by e-mail to **turkuazcode@gmail.com**, with a subject starting with
-`SECURITY:`. Once the repository is published, GitHub private vulnerability reporting
+`SECURITY:`. GitHub private vulnerability reporting
 ("Security" tab → "Report a vulnerability") may be enabled as a second channel.
 
 Please include:
