@@ -28,7 +28,13 @@ export function parseCues(text) {
   const cues = [];
   const src = text.replace(/^﻿/, "").replace(/\r\n?/g, "\n");
   for (const m of src.matchAll(re)) {
-    const body = m[3].replace(/<[^>]+>/g, "").replace(/\{\\[^}]*\}/g, "").trim();
+    // until nothing changes: removing "{\b1}" from "{{\b1}\an8}" leaves a new tag "{\an8}"
+    let body = m[3], prev;
+    do {
+      prev = body;
+      body = body.replace(/<[^>]+>/g, "").replace(/\{\\[^}]*\}/g, "");
+    } while (body !== prev);
+    body = body.trim();
     if (body) cues.push({ start: timestampToSeconds(m[1]), end: timestampToSeconds(m[2]), text: body });
   }
   return cues.sort((a, b) => a.start - b.start);
