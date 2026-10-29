@@ -31,7 +31,7 @@ fn tmp(tag: &str) -> PathBuf {
 }
 
 fn run_ffmpeg(args: &[&str]) {
-    let out = Command::new(staged("ffmpeg.exe"))
+    let out = Command::new(staged(&format!("ffmpeg{}", std::env::consts::EXE_SUFFIX)))
         .args(["-hide_banner", "-loglevel", "error", "-y"])
         .args(args)
         .output()
@@ -51,7 +51,7 @@ fn sine_part(out: &Path, offset: u32, codec: &[&str]) {
 
 /// Plays `files` back to back into a float WAV and returns the samples.
 fn play_to_pcm(files: &[PathBuf], out: &Path, gapless: &str) -> Vec<f32> {
-    let dll = staged("libmpv-2.dll");
+    let dll = staged(crate::engine::LIBMPV);
     assert!(dll.is_file(), "libmpv not staged next to the test binary (npm run stage:mpv)");
     let o = out.to_string_lossy().into_owned();
     let m = Mpv::new(
