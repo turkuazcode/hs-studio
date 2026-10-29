@@ -20,8 +20,8 @@ releases do not receive fixes.
 **Please do not open a public issue, pull request or discussion for a security problem.**
 
 Report privately by e-mail to **turkuazcode@gmail.com**, with a subject starting with
-`SECURITY:`. GitHub private vulnerability reporting
-("Security" tab → "Report a vulnerability") may be enabled as a second channel.
+`SECURITY:`, or use GitHub private vulnerability reporting
+([Security tab → Report a vulnerability](https://github.com/turkuazcode/hs-studio/security/advisories/new)).
 
 Please include:
 
