@@ -58,7 +58,7 @@ The installers are on the [Releases](https://github.com/turkuazcode/hs-studio/re
 
 | Platform | File | Status |
 |---|---|---|
-| **Windows 10/11 x64** | `HS.Studio_<version>_x64-UNSIGNED-setup.exe` | Alpha. Installs per user, no administrator rights needed. Not code-signed yet, so Windows SmartScreen may show an “unrecognized app” warning |
+| **Windows 10/11 x64** | `HS.Studio_<version>_x64-UNSIGNED-setup.exe` | Alpha. Installs per user, no administrator rights needed. Not code-signed yet ([code signing policy](CODE_SIGNING.md)), so Windows SmartScreen may show an “unrecognized app” warning |
 | **Linux x64** | `.AppImage`, `.deb` | **Preview, not tested on a real device.** Bug reports are very welcome |
 | **macOS** | — | Not available yet: the macOS video engine is not written ([plan](docs/status/platform-plan-macos-linux.md)) |
 
@@ -120,6 +120,7 @@ HS Studio asks for no account, collects no usage data and shows no ads. It goes 
 - Contribution guide: [CONTRIBUTING.md](CONTRIBUTING.md). Contributions are made under Apache-2.0, signed off with `git commit -s` (DCO)
 - Security vulnerabilities: **do not open a public issue**; report them to the address in [SECURITY.md](SECURITY.md)
 - Code of conduct: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- Code signing policy: [CODE_SIGNING.md](CODE_SIGNING.md)
 
 ## License
 
