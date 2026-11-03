@@ -1,6 +1,6 @@
 [package]
 name = "vho"
-version = "0.1.0"
+version = "0.1.1"
 description = "HS Studio: video & fotoğraf medya stüdyosu"
 authors = ["TurkuazCode"]
 repository = "https://github.com/turkuazcode/hs-studio"

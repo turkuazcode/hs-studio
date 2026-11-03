@@ -10,6 +10,10 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] — alpha (Windows; Linux preview)
+
+Usability fixes for music, photo and the playlist. Same platforms and test scope as 0.1.0.
+
 ### Fixed
 
 - **Music:** the whole window no longer shifts right and down when a song opens (the music view's
@@ -80,5 +84,6 @@ preview**; there is no macOS build (its video engine is not written yet).
   Lanczos scaling ([report](docs/benchmarks/2026-10-28-klasik-zincir.md)); no blind human review yet.
 - No segment resume for long video jobs; no model-based video enhancement; no Chromecast.
 
-[Unreleased]: https://github.com/turkuazcode/hs-studio/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/turkuazcode/hs-studio/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/turkuazcode/hs-studio/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/turkuazcode/hs-studio/releases/tag/v0.1.0
