@@ -54,8 +54,8 @@ export function defaultActions(app) {
 
     // Photo
     { id: "slideshow", scope: "photo", keys: ["Space"], run: () => app.photo.toggleSlideshow() },
-    { id: "photoPrev", scope: "photo", keys: ["ArrowLeft"], run: () => { app.playlist.navigate(-1); poke(); } },
-    { id: "photoNext", scope: "photo", keys: ["ArrowRight"], run: () => { app.playlist.navigate(1); poke(); } },
+    { id: "photoPrev", scope: "photo", keys: ["ArrowLeft"], run: () => { app.playlist.navigatePhotos(-1); poke(); } },
+    { id: "photoNext", scope: "photo", keys: ["ArrowRight"], run: () => { app.playlist.navigatePhotos(1); poke(); } },
     { id: "rotateRight", scope: "photo", keys: ["KeyR"], run: () => dom.btnPhotoRotateRight?.click() },
     { id: "rotateLeft", scope: "photo", keys: ["Shift+KeyR"], run: () => dom.btnPhotoRotateLeft?.click() },
     { id: "photoInfo", scope: "photo", keys: ["KeyI"], run: () => dom.btnPhotoInfo?.click() },

@@ -1,7 +1,8 @@
 import "./i18n-setup.mjs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { wrapIndex, hasNextItem, itemMetaText } from "../../src/ui/playlist.js";
+import { wrapIndex, wrapIndexWhere, photoPosition, hasNextItem, itemMetaText } from "../../src/ui/playlist.js";
+import { isMusicName } from "../../src/media/classify.js";
 import { partitionEntries, toPlaylistItem } from "../../src/media/loader.js";
 
 test("wrapIndex: forward / backward inside the list", () => {
@@ -51,4 +52,31 @@ test("toPlaylistItem: backend entries keep path and size", () => {
     { path: "/p/b.PNG", name: "b.PNG", size: 1, isImage: true });
   const file = { name: "c.webp", size: 7 };
   assert.deepEqual(toPlaylistItem(file, true), { file, name: "c.webp", isImage: true });
+});
+
+// mixed list: video, photo, music, photo
+const MIXED = [{ name: "a.mp4", isImage: false }, { name: "b.jpg", isImage: true }, { name: "c.mp3", isImage: false }, { name: "d.png", isImage: true }];
+const isPhoto = (i) => i.isImage;
+
+test("wrapIndexWhere: photo navigation skips videos and music, wrapping", () => {
+  assert.equal(wrapIndexWhere(1, 1, MIXED, isPhoto), 3);
+  assert.equal(wrapIndexWhere(3, 1, MIXED, isPhoto), 1);
+  assert.equal(wrapIndexWhere(1, -1, MIXED, isPhoto), 3);
+  assert.equal(wrapIndexWhere(0, 1, [MIXED[1]], isPhoto), 0); // the only photo: stays
+  assert.equal(wrapIndexWhere(0, 1, [MIXED[0]], isPhoto), -1);
+  assert.equal(wrapIndexWhere(-1, 1, [], isPhoto), -1);
+});
+
+test("photoPosition: the titlebar counter counts photos only", () => {
+  assert.deepEqual(photoPosition(MIXED, 3), { n: 2, total: 2 });
+  assert.deepEqual(photoPosition(MIXED, 1), { n: 1, total: 2 });
+  assert.deepEqual(photoPosition(MIXED, 0), { n: 0, total: 2 });
+  assert.deepEqual(photoPosition([], -1), { n: 0, total: 0 });
+});
+
+test("isMusicName: audio files (wma too) get the music badge, videos / photos do not", () => {
+  assert.equal(isMusicName({ name: "01 Parça.MP3" }), true);
+  assert.equal(isMusicName({ path: "C:\\m\\x.wma" }), true);
+  assert.equal(isMusicName({ name: "a.mp4" }), false);
+  assert.equal(isMusicName({ name: "b.jpg" }), false);
 });

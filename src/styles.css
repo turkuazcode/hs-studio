@@ -1871,6 +1871,7 @@ body.is-dragging .drop-zone .drop-card {
 }
 .type-badge.is-photo { background: rgba(225, 29, 72, 0.25); color: var(--accent-ruby-bright); }
 .type-badge.is-video { background: rgba(0, 242, 254, 0.2); color: #00f2fe; }
+.type-badge.is-music { background: rgba(167, 139, 250, 0.22); color: #c4b5fd; }
 
 /* Legacy codec conversion overlay */
 .transcode-overlay {

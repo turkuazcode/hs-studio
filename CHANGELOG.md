@@ -10,6 +10,28 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] — alpha (Windows; Linux preview)
+
+Usability fixes for music, photo and the playlist. Same platforms and test scope as 0.1.0.
+
+### Fixed
+
+- **Music:** the whole window no longer shifts right and down when a song opens (the music view's
+  position and padding also applied to the page root), which pushed the play / next / repeat bar
+  off screen and the window buttons past the edge.
+- **Music:** opening several songs no longer slides the playlist drawer over the player bar; the
+  music screen's own "Up next" list shows the queue.
+- **Playlist:** audio files carry a "MUSIC" badge instead of "VIDEO".
+- **Photo:** the titlebar counter, ‹ › / ← → and the slideshow count and visit photos only in a
+  mixed list (was "5 / 6" with two photos, and the arrows stepped into videos).
+- **Video / photo:** with the playlist drawer open, the player bar moves left of it instead of
+  hiding its right-hand buttons (Filters, full screen, ⋯) underneath.
+
+### Changed
+
+- **Open replaces the list:** "Open file" (Ctrl+O), double-click / "Open with", recent files and
+  "Open URL" start a new playlist. "Add media", "Add to playlist" and drag-and-drop still append.
+
 ## [0.1.0] — alpha (Windows; Linux preview)
 
 First public release. Tested automatically on **Windows 11 x64** only (unit, Rust, end-to-end,
@@ -62,5 +84,6 @@ preview**; there is no macOS build (its video engine is not written yet).
   Lanczos scaling ([report](docs/benchmarks/2026-10-28-klasik-zincir.md)); no blind human review yet.
 - No segment resume for long video jobs; no model-based video enhancement; no Chromecast.
 
-[Unreleased]: https://github.com/turkuazcode/hs-studio/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/turkuazcode/hs-studio/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/turkuazcode/hs-studio/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/turkuazcode/hs-studio/releases/tag/v0.1.0

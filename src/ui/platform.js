@@ -59,7 +59,7 @@ export async function initPlatform(app) {
   app.menus = initMenus(app);
 
   // Files from a second "vho.exe file" launch / macOS Finder while running
-  listen("open-files", (e) => app.loader.openPaths(e.payload))?.catch?.((err) => console.warn("open-files", err));
+  listen("open-files", (e) => app.loader.openPaths(e.payload, { replace: true }))?.catch?.((err) => console.warn("open-files", err));
 
   // Write pending changes when the window goes away
   window.addEventListener("pagehide", () => {

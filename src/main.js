@@ -203,7 +203,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       app.jobsPanel?.init();
       app.aiJobs.start().catch((e) => console.error("[ai-jobs]", e));
       invoke?.("initial_files")
-        .then((paths) => app.loader.openPaths(paths))
+        .then((paths) => app.loader.openPaths(paths, { replace: true }))
         .catch((e) => console.warn("initial_files", e));
     });
 
