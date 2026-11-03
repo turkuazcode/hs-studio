@@ -1,6 +1,6 @@
 # Kalite ve performans ölçümleri (Q02)
 
-Kart: [14/Q02](../plans/14-kalite-ve-acik-kaynak-yayin.md) · Katman haritası: [test-map.md](../status/test-map.md) · Son sonuçlar: [2026-10-28-klasik-zincir.md](2026-10-28-klasik-zincir.md) (modelsiz A05/V03 zinciri), [2026-10-25-baslangic.md](2026-10-25-baslangic.md) (eski neural yol)
+Kart: 14/Q02 · Katman haritası: [test-map.md](../status/test-map.md) · Son sonuçlar: [2026-10-28-klasik-zincir.md](2026-10-28-klasik-zincir.md) (modelsiz A05/V03 zinciri), [2026-10-25-baslangic.md](2026-10-25-baslangic.md) (eski neural yol)
 
 ## Veri kümesi (`tests/quality/manifest.json`)
 

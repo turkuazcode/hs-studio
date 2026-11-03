@@ -1,4 +1,4 @@
-// R03 / audit D01: the release gate reads plan 08 statuses honestly and refuses every kind of
+// R03 / audit D01: the release gate reads the feature-status table honestly and refuses every kind of
 // incomplete evidence (failed exit code, todo, stale binary, zero tests, missing commit, partial
 // run, wrong suite / platform / artifact), while declared out-of-scope exceptions stay visible.
 import { test } from "node:test";
@@ -206,8 +206,8 @@ test("rust runner: cargo test output -> counts; ignored tests are skips, not pas
   assert.equal(s.resultLines, 1);
 });
 
-test("the real plan 08: every card row parses; V03 is the model-free row, V04-V06 are separate", () => {
-  const s = parseStatus(readFileSync(new URL("../../docs/plans/08-uygulama-sirasi-ve-durum.md", import.meta.url), "utf8"));
+test("the real feature-status table: every card row parses; V03 is the model-free row, V04-V06 are separate", () => {
+  const s = parseStatus(readFileSync(new URL("../../docs/releases/feature-status.md", import.meta.url), "utf8"));
   assert.deepEqual(s.unparsed, []);
   assert.match(s.get("V03").status, /^doğrulandı \(Windows; modelsiz/);
   assert.match(s.get("V04").status, /^kısmen kod hazır/);

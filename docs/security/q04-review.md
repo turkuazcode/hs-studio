@@ -1,6 +1,6 @@
 # Q04 — Medya, IPC ve mahremiyet incelemesi
 
-**Tarih:** 2026-10-27 · Kart: [14/Q04](../plans/14-kalite-ve-acik-kaynak-yayin.md) · Dal: `wave3/e6-q03` (E6)
+**Tarih:** 2026-10-27 · Kart: 14/Q04 · Dal: `wave3/e6-q03` (E6)
 
 > **English summary:** One review pass over the Tauri IPC surface, media parsing and privacy.
 > Fixed: the generic mpv bridge (could start processes via mpv `run`/`subprocess`, load scripts,

@@ -1,7 +1,7 @@
 # ADR 0001 — Oynatma motoru: libmpv (LGPL) + Windows'ta "sahipli açılır pencere" gömme
 
 - **Durum:** Önerildi (Dalga 1 / Ajan A2 denemesi, 2026-10-23) — ana oturumun onayını bekliyor
-- **İlgili:** [Plan 02](../plans/02-oynatma-motoru.md) §1, [Yol haritası](../plans/00-YOL-HARITASI.md) (lisans politikası)
+- **İlgili:** Plan 02 §1, Yol haritası (lisans politikası)
 - **Kanıtlar:** [`experiments/mpv-spike/`](../../experiments/mpv-spike/) (deneme uygulaması, ölçüm günlükleri,
   ekran görüntüleri), [`third_party/mpv/`](../../third_party/mpv/) (derleme betiği, tarifler, lisans kanıtları)
 

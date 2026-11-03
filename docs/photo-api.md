@@ -1,4 +1,4 @@
-# Plan 04 — Fotoğraf arka ucu: ön yüz API notu
+# Photo backend: front-end API
 
 > Frontend integration note for the photo backend (`src-tauri/src/photo/`, agent A3).
 > Audience: B3 (photo UI). All commands are invoked with `window.__TAURI__.core.invoke`;

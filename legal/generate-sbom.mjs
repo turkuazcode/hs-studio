@@ -1,5 +1,5 @@
 // Generates the VHO SBOM (CycloneDX 1.6 JSON) and checks every entry against the license policy
-// (docs/plans/00-YOL-HARITASI.md). One file covers:
+// (legal/POLICY.md). One file covers:
 //   - Rust crates compiled into VHO.exe   (cargo metadata for the target + Cargo.lock checksums)
 //   - npm packages                        (package-lock.json; all are dev/build tools, not shipped)
 //   - native binaries next to VHO.exe     (legal/inventory/native-windows-x64.json; Windows x64 only)
@@ -30,7 +30,7 @@ import { fileURLToPath } from "node:url";
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 // ----------------------------------------------------------------------------- license policy
-/** Accepted everywhere (docs/plans/00-YOL-HARITASI.md + public-domain equivalents). */
+/** Accepted everywhere (legal/POLICY.md + public-domain equivalents). */
 export const ACCEPTED = new Set([
   "MIT", "MIT-0", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "ISC", "Zlib", "BSL-1.0", "MPL-2.0",
   "Unicode-3.0", "Unicode-DFS-2016", "CC0-1.0", "CC-BY-4.0", "Unlicense", "blessing",
@@ -411,7 +411,7 @@ function main() {
         { name: "vho:target", value: target },
         { name: "vho:source-commit", value: commit || "unknown" },
         { name: "vho:native-binaries", value: windowsX64 ? "included (legal/inventory/native-windows-x64.json)" : "not inventoried for this target" },
-        { name: "vho:policy", value: "docs/plans/00-YOL-HARITASI.md; vho:policy per component = ok | review | reject; vho:acknowledged = owner decision on a review item" },
+        { name: "vho:policy", value: "legal/POLICY.md; vho:policy per component = ok | review | reject; vho:acknowledged = owner decision on a review item" },
       ],
     },
     components,

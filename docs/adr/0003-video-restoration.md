@@ -1,7 +1,7 @@
 # ADR 0003 — Video restorasyonu: model ve çıkarım yolu (TASLAK)
 
 - **Durum:** Taslak — **karar kapısı: bekliyor (A03/Q02)**. Bu belge V02'nin hazırlığıdır; karar değildir.
-- **İlgili:** [Plan 12 / V02](../plans/12-video-restorasyonu.md), [Plan 08](../plans/08-uygulama-sirasi-ve-durum.md), lisans politikası [00](../plans/00-YOL-HARITASI.md)
+- **İlgili:** Plan 12 / V02, [Plan 08](../releases/feature-status.md), lisans politikası 00
 - **Ön koşul durumu (2026-10-25):** V01 kod hazır (`src-tauri/src/restoration/`). A03 (kaynak yönetimi: bellek/GPU bütçesi, iptal) ve Q02 (kalite ölçüm veri kümesi) **yok** → kalite/sadakat ölçümü ve hedef cihazda bellek sınırı kanıtı yapılamaz; karar verilemez.
 - **Hazırlayan:** E7 (wave3/e7-video). Kaynaklar 2026-10-25 tarihinde resmi depolardan okundu; dosyalar indirilmedi/çalıştırılmadı (ağırlık indirme ve ONNX dışa aktarma V02 kapısında yapılacak).
 

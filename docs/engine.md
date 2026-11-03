@@ -1,6 +1,6 @@
 # Oynatma motoru (libmpv + HTML5 yedeği)
 
-Karar: [ADR 0001](adr/0001-oynatma-motoru.md) · Plan: [02 §2–§4](plans/02-oynatma-motoru.md)
+Karar: [ADR 0001](adr/0001-oynatma-motoru.md) · Plan: 02 §2–§4
 
 ## Mimari
 ```

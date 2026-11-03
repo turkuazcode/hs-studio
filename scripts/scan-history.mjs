@@ -1,5 +1,5 @@
 // Read-only scan of the WHOLE git history (every ref: all branches, tags, worktree HEADs) for
-// things that must not be published with the repository (R01, docs/plans/14):
+// things that must not be published with the repository (R01):
 //   - secrets: private keys, cloud/API tokens, signing keys, credential assignments
 //   - private media / binaries: images, video, audio, model weights, archives, executables
 //   - large blobs (default >= 1 MiB)

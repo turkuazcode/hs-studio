@@ -137,7 +137,7 @@ test("video enhance: field-order question, HDR refused, killed mid-run leaves no
   ff(["-f", "lavfi", "-i", "testsrc2=size=320x120:rate=50,weave=first_field=top,setfield=prog", "-t", "4", "-c:v", "mpeg4", "-q:v", "3", lying]);
   // HDR10-tagged (PQ, BT.2020). MPEG-4 8-bit: the transfer tag alone must block it. (FFV1 is not
   // used here: opening any FFV1 MKV currently freezes the page, a separate open issue —
-  // docs/status/2026-10-28-windows-alfa-durumu.md.) The 10-bit PQ case is covered in Rust.
+  // the 2026-10-28 Windows alpha status note.) The 10-bit PQ case is covered in Rust.
   const hdr = join(dir, "hdr.mkv");
   ff(["-f", "lavfi", "-i", "testsrc2=size=640x480:rate=25,scale=320:240,setparams=color_primaries=bt2020:color_trc=smpte2084:colorspace=bt2020nc:range=tv",
     "-t", "3", "-c:v", "mpeg4", "-q:v", "3", "-color_primaries", "bt2020", "-color_trc", "smpte2084", "-colorspace", "bt2020nc", hdr]);

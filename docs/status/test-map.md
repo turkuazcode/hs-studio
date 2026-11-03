@@ -1,6 +1,6 @@
 # Test haritası (Q01)
 
-**Tarih:** 2026-10-25 · Kart: [14/Q01](../plans/14-kalite-ve-acik-kaynak-yayin.md) · Son çalıştırma sonuçları: [test-baseline.md](test-baseline.md)
+**Tarih:** 2026-10-25 · Kart: 14/Q01 · Son çalıştırma sonuçları: [test-baseline.md](test-baseline.md)
 
 Bu belge her desteklenen özelliğin hangi test katmanında kanıtlandığını gösterir. Kanıtı olmayan satırlar açıkça `—` / `kanıt yok` olarak bırakıldı. Bir katmanda `skip` sonucu **geçti sayılmaz**.
 

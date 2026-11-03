@@ -10,7 +10,7 @@
 #   third_party/mpv/_build/dist/        -> redistributable DLL set (libmpv + all non-system deps)
 #   third_party/mpv/_build/evidence/    -> license verification outputs
 #
-# License policy (docs/plans/00-YOL-HARITASI.md): FFmpeg WITHOUT --enable-gpl/--enable-nonfree,
+# License policy (legal/POLICY.md): FFmpeg WITHOUT --enable-gpl/--enable-nonfree,
 # mpv with -Dgpl=false, no GPL libraries installed (x264, x265, rubberband, libdvdnav, libcdio...).
 set -euo pipefail
 

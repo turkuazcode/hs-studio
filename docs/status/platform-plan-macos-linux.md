@@ -1,6 +1,6 @@
 # macOS ve Linux — uygulanabilir görev listesi (denetim D05 + D06)
 
-Tarih: 2026-10-28 · Taban: `c09a661` + `wave5/windows-alfa`. Bu belge Windows alfadan **ayrı** takip edilir; Windows alfa bu işleri beklemez. Kart durumları [plan 08](../plans/08-uygulama-sirasi-ve-durum.md) P02/P03'te; kapı `node scripts/release-gate.mjs --target desktop-beta` (Windows kanıtı macOS/Linux yerine geçmez).
+Tarih: 2026-10-28 · Taban: `c09a661` + `wave5/windows-alfa`. Bu belge Windows alfadan **ayrı** takip edilir; Windows alfa bu işleri beklemez. Kart durumları [plan 08](../releases/feature-status.md) P02/P03'te; kapı `node scripts/release-gate.mjs --target desktop-beta` (Windows kanıtı macOS/Linux yerine geçmez).
 
 Her satırda **tür**: `kod` = yazılması gereken kod/paketleme var · `cihaz` = kod var, yalnızca gerçek donanım/OS'te doğrulama eksik · `hesap` = hesap, sertifika ya da anahtar gerekir (kullanıcı kararı/izni).
 

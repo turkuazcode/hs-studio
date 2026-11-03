@@ -1,86 +1,17 @@
-Plan 08 — Güncel durum, eksiklerin eşlenmesi ve uygulama sırası
+# Özellik doğrulama kaydı
 
-Tarih: 25 Ekim 2026. Referans `main=a2092b9`, D1 dalı `wave25/d1-eylemler=9ca04e3`. Bu tarih itibarıyla kaynak/dal incelemesi yenilendi. 24 Ekim testleri referanstır, 25 Ekim'de yeniden çalıştırılmış sayılmaz. Uygulayıcı: Claude; başlangıç [devir talimatı](CLAUDE-DEVIR.md).
+> **English summary:** one row per work card (S = foundation, P = platform, A/V = AI and video,
+> L = library/music/network, Q/R = quality and release, F = future). The release gate
+> (`scripts/release-gate.mjs`, [rules](release-gate.md)) reads the *status* and *evidence* columns of this
+> table; only "doğrulandı" (verified) counts, per platform.
 
-Amaç: mevcut 01–07 planlarını tekrar üretmeden eksik ürün, mühendislik ve doğrulama işlerini tamamlamak. İlk hedef güvenilir masaüstü medya uygulaması ve aslına sadık fotoğraf restorasyonu; yüksek kaliteli video restorasyonu ayrı deneysel aşama, mobil sonraki aşamadır. “Tüm sistemler/her format” ifadesinin yerine test edilen sürüm/mimari/codec matrisi konur.
-
-**Mevcut planlara göre durum**
-
-| Özgün plan | Bugünkü kanıt | Kalan iş / yeni plan |
-|---|---|---|
-| [01 — Temel](01-temel-mimari-ve-test.md) | Modüler JS, Node birim testleri ve Windows E2E düzeneği ana dalda | Baştan refactor yok; regresyon tabanı 09, test katmanları 14. Eski satır sayısı hedefi tek başına dosya bölme gerekçesi olmaz. |
-| [02 — Motor](02-oynatma-motoru.md) | LGPL Windows libmpv, motor cephesi ve oynatma özellikleri ana dalda | macOS/Linux gömme ve gerçek platform testi eksik: 10/P01–P04. |
-| [03 — Platform](03-platform-ve-ayarlar.md) §1–§4 | Ayar/son açılanlar/kısayol/tema/i18n temeli var | Tüm metinlerin taşınması, erişilebilirlik ve işletim sistemi davranışları: 09/S05, 10/P04, 14/Q03. |
-| Plan 03 §5 | Kurulum/CI/imza/güncelleme zaten planlı; ana dalda CI workflow görülmedi | Yeniden bağımsız özellik sayılmaz; paketleme ayrıntısı 10/P05, yayın kapısı 14/R01–R03. |
-| [04 — Fotoğraf](04-fotograf-studyosu.md) | Rust fotoğraf altyapısı ve stüdyo ana dalda | AVIF teşhisi 09/S03; metadata/alpha/AI çıktı bağlantısı 11/A04; eksik kütüphane yıldız/etiket bağlantısı 13/L02. |
-| [05 — Kütüphane/müzik/ağ](05-kutuphane-muzik-ag.md) | Ayrıntılı hedefler var; ana dalda tam SQLite kütüphane yok | Planın kendisi uygulanacak; veri göçü, kimlik, test ve ağ sınırları 13'te eklenir. |
-| [06 — Medya eylemleri](06-medya-eylemleri.md) | D1 dalında ana dalda olmayan 7 commit; Windows odaklı uygulama ve test dosyaları mevcut | İlk iş 09/S02 entegrasyon. Dalın belgelerinde paylaşım/OCR/encoder platform sınırları var; hepsi tamamlandı sayılmaz. |
-| [07 — Akıllı düzenleme](07-akilli-duzenleme.md) | LaMa/BiRefNet/DDColor tasarımı ve önceki deney notları mevcut; ana uygulamada entegrasyonu görülmedi | Algoritma tarifi yeniden yazılmaz; model/iş yönetimi ve entegrasyon sırası 11/A01–A03, A06. |
-| Mevcut fotoğraf AI | DAT-2/GFPGAN/YuNet, Worker, WebGPU→WASM, tiled inference kodu var | Kalite/çıktı/model yaşam döngüsü eksikleri: 11. |
-| Mevcut video “AI” | libmpv'de kontrast/doygunluk; HTML5'te WebGL filtreleri | Doğru adlandırma 09/S04; gerçek video AI 12. |
-
-**Analizdeki yeni öneriler nereye gitti?**
-
-| İhtiyaç | Yeni mi? | Görev |
-|---|---|---|
-| README iddiaları/özellik yetenek matrisi | Eksik ayrıntı | S04, P01 |
-| AVIF çalışabilir codec kontrolü | Mevcut kapsamda hata | S03 |
-| Model doğrulama/onarım/iptal/sürüm | Yeni sağlamlaştırma | A01 |
-| Kalıcı iş kuyruğu ve çökmeden dönüş | Yeni ortak altyapı | A02; kalıcı depolama L01 |
-| Orijinal/EXIF/renk/alpha/işlem geçmişi | Fotoğraf planında kısmen var, AI yolunda eksik | A04 |
-| Sadakat/önizleme/ölçek seçimi | Yeni ürün ayrıntısı | A05 |
-| LaMa/BiRefNet/DDColor | Zaten Plan 07'de | A06 entegrasyonu |
-| Video AI, zamansal tutarlılık, kesit önizlemesi | Yeni | V01–V06 |
-| Müzik/SQLite/DLNA/Chromecast | Zaten Plan 05'te | L01–L04 ayrıntıları |
-| Kalite karşılaştırması ve gerçek model testleri | Yeni | Q01–Q02 |
-| Çevrimdışı fontlar, kaynak sınırları, güvenlik | Eksik ayrıntı | S05, Q03–Q04 |
-| Açık kaynak belgeleri/imzalı yayın | Zaten kısmen Plan 03'te | R01–R03 |
-| Mobil, semantik arama, konuşma dökümü | Sonraki faz | F01–F03; 13 |
-| Tam RAW/16 bit/HDR restorasyonu | Sonraki faz | F04; 13 |
-| Kullanıcı araştırması/sürdürülebilirlik | Yeni ürün çalışması | R04; 14 |
-
-**İş paketleri**
-
-| Paket | Belge | Somut sonuç |
-|---|---|---|
-| S | [09 — Entegrasyon ve doğruluk](09-entegrasyon-ve-dogruluk.md) | Mevcut işler birleşmiş, test tabanı ve doğru ürün anlatımı |
-| P | [10 — Çoklu platform ve paketleme](10-platform-ve-paketleme.md) | Test edilebilir platform adaptörleri ve temiz kurulum |
-| A | [11 — AI altyapısı ve fotoğraf](11-ai-altyapisi-ve-fotograf.md) | Doğrulanmış modeller, kalıcı işler, güvenli ve karşılaştırılabilir fotoğraf sonucu |
-| V | [12 — Video restorasyonu](12-video-restorasyonu.md) | Kanıtlanmış model seçimi, kısa kesit önizlemesi, tutarlı dışa aktarma |
-| L/F | [13 — Kütüphane ve mevcut planların devamı](13-kutuphane-muzik-ag-ve-sonraki-faz.md) | Plan 05'in veri göçü ve entegrasyon ayrıntıları; sonraki faz sınırları |
-| Q/R | [14 — Kalite ve açık kaynak yayın](14-kalite-ve-acik-kaynak-yayin.md) | Gerçek model/medya testleri, kaynak ve lisans paketi, beta çıkış kapıları |
-
-**Uygulama sırası**
-
-Bu sıra tek geliştiriciyle de yürütülebilir. Bir ortam eksik olduğunda bağımsız görevler sürdürülür; tamamlanma durumu uydurulmaz.
-
-1. S01 güncel envanter → S02 D1 entegrasyonu → S03 baseline/AVIF → S04 doğru özellik adları.
-2. S05 metin/çevrimdışı temeli; P01 yetenek sözleşmesi ve Q01 test düzeni. P02/P03 için küçük platform denemelerini erken yap; taşınabilirlik belirsizliğini en sona bırakma.
-3. L01 kalıcı depolama çekirdeği → A01 model yönetimi → A02 iş kuyruğu → A03 kaynak yönetimi → A04 güvenli çıktı → A05 fotoğraf deneyimi. Q02 ölçüm veri kümesini bu sırada hazırla.
-4. A06 Plan 07 entegrasyonu. L02 kütüphane → L03 müzik. P02/P03/P04 uygulama ve doğrulaması, P05 paketleme.
-5. V01 kaynak inceleme ve V02 model fizibilitesi → karar kapısı → V03 işlem hattı → V04 önizleme → V05 devam/iptal → V06 regresyon. Fizibilite başarısızsa deneysel kalır; masaüstü beta bundan dolayı durmaz.
-6. Q03 erişilebilirlik, Q04 güvenlik/mahremiyet, R01 topluluk/lisans dosyaları, R02 CI/yayın, R03 beta kapıları. Bunların hazırlığı önceki adımlarda başlamalı, sonunda yalnızca doğrulama kalmalı.
-7. L04 ağ/yayın, R04 kullanıcı geri bildirimi. F01–F04 sonraki sürüm görevleridir; ilk beta bağımlılığı değildir.
-
-Önemli bağımlılıklar: S02→A06/L03/V03; L01→A02/L02; A01+A02+A03+A04→A05; A01+A03+A04→A06; V01+V02+A02+S02→V03; V03→V04/V05→V06. P05 temel kurulum S03+P01 ile Windows'ta başlayabilir; macOS/Linux yayımları P02/P03/P04'ün gerçek testlerini bekler. R03, yayımlanacak platformun P05 ve Q/R koşullarını bekler.
-
-**Sürüm kapsamları ve çıkış koşulları**
-
-| Hedef | Zorunlu işler | Zorunlu olmayanlar |
-|---|---|---|
-| Geliştirici tabanı | S01–S04, yeni binary ile temel testler | Bulut/mobil |
-| Windows alfa (`release-gate --target windows-alpha`; 2026-10-28 güncellendi: önceki “Windows fotoğraf alfa”) | S05, A01–A06 (A06: nesne silme + renklendirme), V01, V03, L01–L03, Windows P01/P04/P05, Q01–Q04, R01, yerel R02, R03; birim + Rust + E2E + AI + kalite + kurulum katmanları aynı commit ve paketle; elle doğrulama kayıtları ([evidence](../releases/evidence/windows-alpha.json)) | Model tabanlı video (V02, V04–V06), BiRefNet arka plan kaldırma (deneysel, gizli), L04 ağ/DLNA vaadi, Chromecast, macOS/Linux |
-| Masaüstü beta | Üç platformun P02–P05 kanıtları, L01–L03, R01–R03 | Video AI ancak V06 geçerse deneysel açılır; ağ ve Plan 07 özellikleri tamamlandıkları ölçüde etiketlenir |
-| Video restorasyon önizlemesi | V01–V06, seçilen cihaz/modelde kalite ve devam testleri | Gerçek zamanlı çalışma iddiası, mobil |
-| Sonraki sürümler | L04, A06'nın kalanları, F01–F04 | İlk beta için bekleme gerekçesi olmaz |
-
-Takvim bu belgede taahhüt edilmez. S01 sonrası Claude her kart için S (tek odaklı değişiklik), M (birkaç alt değişiklik), L (ayrı teslimlere bölünecek) tahmini ve dış ortam ihtiyacı yazar. Özellikle platform yüzeyi ve video AI fizibilitesine ölçüm yapılmadan gün/saat tahmini verilmez.
-
-**Canlı durum kaydı — başlangıçta hiçbir yeni görev tamamlandı sayılmaz**
+Bu tablo yayın kapısının girdisidir. Her satır bir iş kartıdır. Durum sütunu **yalnızca gerçek çalıştırma
+kanıtıyla** "doğrulandı" olur; platform belirtilmemişse kanıt Windows'tandır. Kartların ayrıntılı planları
+herkese açık depoda değildir (iç notlar); kimlikler kod yorumlarındaki "Plan 13/L03" gibi etiketlerle aynıdır.
 
 | Kimlikler | Başlangıç durumu | Kanıt/not |
 |---|---|---|
-| S01 | doğrulandı | [docs/status/implementation-status.md](../status/implementation-status.md) (2026-10-25) |
+| S01 | doğrulandı | docs/status/implementation-status.md (iç not) (2026-10-25) |
 | S02 | doğrulandı | D1 `main`'e birleşti (`35de786`); yeni binary ile birim 121/121, Rust 60/60 (+2 ignored), E2E 129/129; kaynak hash kontrolü eklendi |
 | S03 | doğrulandı | [docs/status/test-baseline.md](../status/test-baseline.md); AVIF `0x88982F8B` = codec kurulu ama başlatılamadı → `[codec-failed]` + gerçek çözme yoklaması |
 | S04 | doğrulandı | `main`e birleşti (`301dfdd`), ana dalda yeniden test: birim 145/145, Rust 114/114 (+2 ignored), E2E 161/161, release uyarısız (2026-10-25); macOS/Linux test edilmedi. Ayrıntı: `wave3/e1-dogruluk` `37ae286` (+ düzeltme `8f04bc5`). Canlı filtreler “Görüntü filtreleri / Ses filtreleri (sinir ağı değil)”, fotoğrafta “Fotoğrafı AI ile iyileştir”, video restorasyonu “hazır değil”; video/fotoğraf düzeni ayrı; A/B libmpv'de veya WebGL2 yokken devre dışı + neden (`video.compare`); libmpv'de %100 üstü ses `volume`+`alimiter` (mpv'nin kübik %200=8× kırpması kaldırıldı), HTML5'te kompresör + yumuşak kırpma güvenlik katmanı; README ölçümsüz iddialar düzeltildi. Test: `tests/unit/capabilities.test.mjs`, `tests/e2e/audio-limiter.e2e.mjs`, video/photo/engine E2E. Sonuçlar: E1 raporu. Kalan: — |
@@ -108,7 +39,7 @@ Takvim bu belgede taahhüt edilmez. S01 sonrası Claude her kart için S (tek od
 | L04 | kod hazır; ortam bekliyor (gerçek TV/hoparlör) | `main`e birleşti (`6ba40f1`); ana dalda yeniden test (`6ba40f1`, 2026-10-28): birim 215/215, Rust 220/220 (+2 ignored), E2E 247/247 (+2 todo: HLS, L04), test:ai 17/17, release uyarısız. Ayrıntı: Dal `wave3/e5-kutuphane` (E5). Ağ akışları: http/https izin listesi, sınırlı yeniden bağlanma (MP4 kopmasında Range ile devam), ICY başlığı, parola/belirteç günlükte `***`, son açılanlara yazılmaz. UPnP/DLNA cihaza yayın: kullanıcı eylemiyle SSDP, sınırlı XML (DOCTYPE yok), cihaza bakan IP'de tek dosya + 128 bit belirteçli kısa ömürlü sunucu, AVTransport oynat/duraklat/durdur/sar, biçim denetimi; `quick-xml` =0.42.0 (MIT). Test: Rust `net::`, `cast::` (sahte renderer), birim `net-logic.test`, E2E `network.e2e`. Belge: [network.md](../network.md). Kalan: **HLS libmpv'de ilk segmentten sonra takılıyor** (açık sorun, 2 E2E todo, destekli sayılmıyor), Chromecast ve yt-dlp yok, gerçek cihaz testi yok, yalnızca Windows 2026-10-28 (`wave5/windows-alfa`, D02): **HLS düzeltildi** — kök neden `reconnect_streamed`’in chunked segment sonunu kopma sayması; `.m3u8`/`.m3u` için verilmiyor ([network.md](../network.md)); iki HLS E2E testi `todo`’dan normal teste çevrildi ve geçti (Windows, yerel sunucu). Gerçek TV/hoparlör ve gerçek CDN/canlı HLS hâlâ denenmedi. |
 | Q01 | doğrulandı | `main`e birleşti (`bd53427`), ana dalda yeniden test: birim 151/151, Rust 114/114 (+2 ignored), E2E 161/161, test:ai 6/6, release uyarısız (2026-10-25). Ayrıntı: Dal `wave3/e6-test-katmanlari` (E6). Katmanlar: birim (`npm test`, ağ koruması `tests/lib/no-network.mjs`), Rust (`npm run test:rust`), E2E (`npm run e2e`), gerçek AI (`npm run test:ai`), kalite/perf (`test:quality`, `bench:media` — **henüz doldurulmadı**, Q02). `scripts/run-tests.mjs`: binary yolu/derleme zamanı/eskilik uyarısı + pass/fail/skip/todo/cancelled ayrı, `tests/.results/<katman>.json`, `VHO_TEST_NO_SKIP=1`. Gerçek AI smoke: photo-x4 (DAT-2) + ORT Web 1.30.0 uygulamanın kendi indiricisiyle bir kez (76 MB, ~10 s) test önbelleğine (`tests/.cache/ai-smoke`, kullanıcı önbelleği değil), 44×28 sentetik fixture, boyut/sonlu/sabit değil/kanal/alpha/bilinear PSNR/referans (`tests/ai/fixtures/photo-x4-ref.png`); WASM 0/0/0, WebGPU maks 1 fark. Sonuçlar (2026-10-25, yeni binary): birim 151/151, Rust 114/114 (+2 ignored), E2E 161/161, AI 6/6, 0 skip. Harita: [test-map.md](../status/test-map.md). CI taslağı `.github/workflows/ci.yml` (itilmedi). Kalan: GFPGAN smoke, macOS/Linux sürücüsü, CI'da libmpv artifact'ı (P05) |
 | Q02 | doğrulandı | `main`e birleşti (`8af0a5d` + düzeltme `9e89d66`: video örnekleri bit-exact), ana dalda yeniden test: birim 194/194, Rust 191/191 (+2 ignored), E2E 200/200, test:ai 15/15, test:quality 8/8, release uyarısız (2026-10-27). Ayrıntı: Dal `wave3/e6-test-katmanlari` (E6). Başlangıç kümesi `tests/quality/manifest.json`: 15 fotoğraf (11 kontrollü/sentetik, 4 gerçek eski tarama 1863–1936) + 6 klip + 3 yapısal (TFF, VFR, A/V senkron); kaynaklar yalnızca Commons **kamu malı** (URL+SHA-256+yazar+lisans, bir kez `tests/.cache/quality`ya), örnekler LGPL ffmpeg ile deterministik, `set-lock.json` hash kilidi; dev/eval ayrımı. Ölçütler bağımlılıksız (PSNR/SSIM/GMSD, yüz/yazı bölgeleri, keskinlik/gürültü/renklilik, zamansal hata). `npm run test:quality` (8/8): eşit çözünürlükte lanczos / photo-x4 / +GFPGAN, video lanczos / nlmeans; kırmızı bayraklar; `docs/benchmarks/quality-baseline.json`'a göre gerileme kapısı; V02 aday klasörü. `npm run bench:media`: süreç ağacı RAM/CPU/GPU örnekleyici, açılış 668 ms, ilk kare 140/223 ms (HTML5/libmpv), 5.000 dosya ilk ızgara 36 ms (ağaç 531 MB), 1080p oynatma ~640 MB ağaç, photo-x4 128 px WebGPU 25,9 s soğuk / 11,4 s sıcak, WASM ~90 s; bütçeler `tests/quality/budgets.json` (medyan ×1,5). Kör A/B aracı `npm run quality:ab`. Bulgular (A05/A04/A03): gri fotoğrafa renk ekleniyor, GFPGAN yüz bölgesi sadakat bayrakları, alpha kaybı, 1 GB iGPU'da 2,2 GB ağaç RAM ve bir kez yeniden üretilemeyen WebView kopması. Rapor: [docs/benchmarks/2026-10-25-baslangic.md](../benchmarks/2026-10-25-baslangic.md). Kalan: kör A/B değerlendirmesi (değerlendirici yok), ~100 fotoğraf/20 klip yayın kümesi, gerçek eski video klibi, UI p95 ≤200 ms ölçümü, ticari karşılaştırma yok |
-| R01 | doğrulandı | `main`e birleşti (`0001238`, ek `1f9c1d4`), ana dalda yeniden test: birim 164/164, Rust 135/135 (+2 ignored), E2E 170/170, test:ai 6/6, release uyarısız (2026-10-26); lisans 2026-10-26'da Apache-2.0'a çevriliyor (E8). Ayrıntı: Dal `wave3/e8-yayin` (E8). **Proje lisansı GPL-3.0-only** (2026-10-25 kullanıcı kararı; LICENSE gnu.org metni, Cargo/package lisans alanları, Hakkında metni, bildirim başlığı + tam metin), `TRADEMARKS.md` (HS Studio adı/logo, tescil iddiası yok), taslak `CLA.md` (Harmony HA-CLA-I v1, CC BY 3.0, Option Five; **avukat incelemesi bekliyor**), `CONTRIBUTING.md` (temiz klon → `npm ci` + `npm test`, katmanlar, mimari, i18n/lisans, CLA + DCO, ilk görevler), `SECURITY.md` (özel kanal **yer tutucu**), `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `CHANGELOG.md`, issue/PR şablonları. Envanter: `legal/inventory/` (38 DLL + ffmpeg/ffprobe: sürüm/commit/bayrak/sha256/kaynak; AI: ağırlık ≠ kod lisansı, eğitim verisi; font/ikon/vendored/fixture), `legal/INVENTORY.md` (GPL-3.0 uyumluluk tablosu — uyumsuz yok; LGPL kaynak yükümlülüğü; açık kararlar). SBOM: CycloneDX 1.6, `npm run sbom` (`legal/generate-sbom.mjs`, ek araç yok) → 394 crate, 52 npm (geliştirme), 40 yerel, 8 AI, 10 varlık; red 0, inceleme 12. `tests/unit/legal-inventory.test.mjs` envanter/bildirim/SBOM tutarlılığı. Geçmiş taraması `npm run scan:history` → [history-scan.md](../status/history-scan.md): sır yok, özel medya yok; ~70 MB derleme çıktısı geçmişte, yerel kullanıcı yolu, commit e-postası. Temiz klon (geçici klasör) `npm ci` + `npm test` 157/157, SBOM aynı. Bulunan/düzeltilen: GFPGAN dosya adı ve Material Icons atfı bildirimde eksikti, Google Fonts satırı eskiydi, kullanılmayan şablon SVG'leri silindi. Kalan (kullanıcı): güvenlik kanalı, CLA/marka avukat incelemesi + imza yöntemi + yargı yeri, logo hakları, depo URL'si, DLL kaynak arşivi, eğitim verisi kararı (YuNet/GFPGAN), commit kimliği/geçmiş temizliği **Ek 2026-10-26:** iletişim turkuazcode@gmail.com (SECURITY/CoC/TRADEMARKS/şablonlar); 11/12 inceleme maddesi sahip onaylı (GFPGAN/YuNet kabul edilen risk), açık kalan: logo; hukuki ön araştırma [docs/legal/on-arastirma.md](../legal/on-arastirma.md); geçmiş temizliği aracı `scripts/prepare-public-history.ps1` + [history-cleanup.md](../release/history-cleanup.md) (varsayılan kuru çalıştırma, yalnızca geçici ayna; ayna üzerinde denendi: kullanıcı yolu 726→0, paket 28→2,4 MiB) — **ilk push'tan hemen önce çalıştırılacak, geçmiş henüz yazılmadı**; nötr derleme yolu [build-path.md](../release/build-path.md) **Ek (`bfc3757`):** lisans Apache-2.0 + NOTICE, CLA kaldırıldı, DCO. |
+| R01 | doğrulandı | `main`e birleşti (`0001238`, ek `1f9c1d4`), ana dalda yeniden test: birim 164/164, Rust 135/135 (+2 ignored), E2E 170/170, test:ai 6/6, release uyarısız (2026-10-26). Lisans Apache-2.0 + NOTICE, DCO (CLA yok); `TRADEMARKS.md`, `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`, issue/PR şablonları. Envanter `legal/inventory/` ve `legal/INVENTORY.md`; SBOM CycloneDX 1.6 (`npm run sbom`); `tests/unit/legal-inventory.test.mjs` envanter/bildirim/SBOM tutarlılığı. Geçmiş taraması `npm run scan:history` → [history-scan.md](../status/history-scan.md): sır yok, özel medya yok. Geçmiş temizliği aracı `scripts/prepare-public-history.ps1` + [history-cleanup.md](../release/history-cleanup.md); nötr derleme yolu [build-path.md](../release/build-path.md). |
 | R02 | kod hazır (yerel); ortam bekliyor (uzak çalıştırma, SignPath kabulü, güncelleme sunucusu/gerçek anahtar) | Dal `wave3/e8-yayin` (E8). `.github/workflows/`: `ci.yml` (unit/rust/e2e + isteğe bağlı gerçek AI), `native-windows.yml` (LGPL libmpv/FFmpeg MSYS2 derlemesi, GPL koruması, önbellek), `release.yml` (nötr runner yolu, test + `package-windows.ps1`, SBOM/bildirim/NOTICE/kaynak teklifi/`SHA256SUMS.txt`, yayımlama yok, imzasız çıktı `-UNSIGNED`); tüm action'lar commit SHA'sına sabit, `contents: read`, `persist-credentials: false`. İmzalama: SignPath (2026-10-26 kararı) adımları `vars.SIGNPATH_ENABLED` ile kapalı; `package-windows.ps1 -Phase build|bundle` imzalı exe ile paketleme. Updater: `src-tauri/packaging/updater.conf.json` şablonu + anahtar talimatı (anahtar üretilmedi); **Updater (2026-10-27):** `tauri-plugin-updater` =2.13.3 (MIT OR Apache-2.0) Rust komutlarıyla (`updater_check`/`updater_install`, `src-tauri/src/updater.rs`), `requireSignedVersion`, Ayarlar > Genel "Güncellemeleri otomatik denetle" (varsayılan kapalı) + durum satırı (TR/EN); uç nokta ve açık anahtar boş (depo açılınca); `tests/e2e/updater.e2e.mjs` test anında üretilen atılacak anahtarla 10/10: geçerli imza indirme+doğrulama (kurulum kuru), başka anahtar, bozuk dosya, eski paketin yeni sürüm diye sunulması, sürüm düşürme, çevrimdışı sessiz, varsayılan kapalı; Rust `updater::tests` 2/2; smoke+platform E2E ile toplam 38/38. Updater'ın gerçek NSIS kurulumu uçtan uca denenmedi (imzalı updater artifact'ı gerekir). Belge: [signing-and-updates.md](../release/signing-and-updates.md). Test: `tests/unit/ci-workflows.test.mjs` (SHA sabitleme, izinler, SignPath kapısı). Workflow'lar hiç çalıştırılmadı |
 | R03 | doğrulandı | `main`e birleşti (`bc54c21`), ana dalda yeniden test: birim 194/194, Rust 191/191 (+2 ignored), E2E 200/200, test:ai 15/15, test:quality 8/8, release uyarısız (2026-10-27). Ayrıntı: Dal `wave3/e8-yayin` (E8). Şablon [docs/releases/TEMPLATE-checklist.md](../releases/TEMPLATE-checklist.md), doldurulmuş [0.1.0-alpha (Windows)](../releases/0.1.0-alpha-checklist.md) — **kapı karşılanmadı** (A03 kod hazır, A04/A05, P04 doğrulaması, Q02–Q04 eksik; yayın adımları yapılmadı). Kapı betiği `scripts/release-gate.mjs` (plan 08 durumları + `tests/.results`, `--plan-ref main`, hedefler: Windows fotoğraf alfa, masaüstü beta) + birim testi 2026-10-28 (D01): kapı yeniden yazıldı — başarısız çıkış kodu, eski binary, eksik/kısmi/yanlış katman, sıfır test, commit/platform/paket uyuşmazlığı ve istisnasız skip/todo reddediliyor; Rust katmanı (`tests/.results/rust.json`), paket manifesti ve elle doğrulama kanıt dosyası bağlı; hedef `windows-alpha`; kurallar [release-gate.md](../releases/release-gate.md). Kapı aracının doğrulanması yayın onayı değildir. |
 | Ad değişikliği (VHO → HS Studio) | doğrulandı (Windows); ortam bekliyor (temiz VM'de gerçek veri taşıması, Linux paketi) | 2026-10-28 uygulandı (`rename/hs-studio`, `main`e birleşti). Kimlik `com.turkuazcode.hsstudio`, kurulan exe `HS Studio.exe` (Linux `hs-studio`); eski `com.vho.app` verisi ilk açılışta kopyalanır (`identity.rs`), kurulum kancası eski VHO kurulumunu kaldırır (eski uygulama kapanmıyorsa yeniden dener, TR/EN sorar, iki ürün yan yana kalmaz). Test: tam kontrol birim 225/225, Rust 223/223 (+2 ignored), E2E 256/256 (+2 todo), test:ai 23 + 3 ortam atlaması, release uyarısız; kurulum testi 28/28; ad değişikliği provası 3×28/28. Ayrıntı: [rename-hs-studio.md §5](../release/rename-hs-studio.md) |
@@ -119,14 +50,3 @@ Takvim bu belgede taahhüt edilmez. S01 sonrası Claude her kart için S (tek od
 | F01–F04 | ertelendi | Masaüstü sonrası |
 
 İlk kart çalışmaya başladığında aralık satırını tekil kart satırlarına ayır; kimlik, durum, commit, test sonucu, ortam ve kalan iş sütunlarını tut. Bu planın hazırlanmasını uygulama ilerlemesi olarak işaretleme.
-
-24 Ekim referans testleri: `npm test`: 111/111; `cargo test --release --lib --offline`: 37 geçti, 1 AVIF başarısız, 2 ignored. E2E ve diğer platformlar bu analizde çalıştırılmadı. Ayrıntı [analiz raporu](../2026-10-24-proje-ve-rekabet-analizi.md).
-
-**Bütün paketlerde bitirme tanımı**
-
-- Kullanıcı akışı çalışır; hata/iptal/yeniden deneme davranışı tanımlı ve ilgili testlerle kanıtlıdır.
-- Test sonuçları gerçek çalıştırmadan gelir; `skip` sonuçları `pass` sayılmaz. Platform/codec eksikliği ve ürün hatası ayrı kaydedilir.
-- Yeni uzun iş ana UI'ı bloke etmez; orijinal dosya varsayılan olarak korunur; kaynak ve çıktı yolları çakışmaz.
-- Yeni kullanıcı metni TR/EN'dir; ana ekran mevcut sadelik ilkesini korur.
-- Bağımlılık ve modellerin lisans/provenans kaydı tamamdır; kabul edilen lisans politikası sessizce değiştirilmez.
-- Uygulanmış modüller ve doküman güncellemeleriyle ilgili testler geçer. İlgisiz görsel/metin değişimi için yapay test yazılmaz; veri kaybı, IPC ve medya dönüşümü gibi davranışlar anlamlı test ister.

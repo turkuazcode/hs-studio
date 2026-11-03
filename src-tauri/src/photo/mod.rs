@@ -1,7 +1,7 @@
 //! Photo studio backend: folder scanning, thumbnails, EXIF, decoding of formats the
 //! webview cannot show (HEIC, RAW, TIFF), and batch edit/convert jobs.
 //!
-//! Frontend contract: docs/plans/04-fotograf-studyosu-api.md
+//! Frontend contract: docs/photo-api.md
 //!
 //! Layout
 //! - `decode`  - format detection + decoding to an upright `DynamicImage`

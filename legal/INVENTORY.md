@@ -12,7 +12,7 @@ Project license: **Apache-2.0** with a root [NOTICE](../NOTICE) file ([LICENSE](
 `src-tauri/Cargo.toml` and `package.json`; owner decision 2026-10-26 — history: MIT → GPL-3.0-only
 (2026-10-25, never released) → Apache-2.0). Name and logo: [TRADEMARKS.md](../TRADEMARKS.md).
 Dependency policy (unchanged):
-[docs/plans/00-YOL-HARITASI.md](../docs/plans/00-YOL-HARITASI.md) — accepted MIT, Apache-2.0,
+[POLICY.md](POLICY.md) — accepted MIT, Apache-2.0,
 BSD-2/3, ISC, Zlib, BSL-1.0, MPL-2.0, Unicode, CC0, public domain, CC-BY-4.0, OFL-1.1 (fonts
 only); LGPL only as a separate DLL/process; no GPL/AGPL/non-commercial dependencies.
 
@@ -69,7 +69,7 @@ files, 8 AI files, 10 asset groups. **0 rejected.** 12 `review` items; **11 ackn
 | libgcc_s_seh-1.dll, libstdc++-6.dll | GPL-3.0-or-later WITH GCC-exception-3.1 | GCC Runtime Library Exception (permits use with any license); acknowledge | acknowledged |
 | YuNet, GFPGAN weights | MIT, Apache-2.0 | weights fine; **training data** (WIDER FACE / FFHQ) has non-commercial terms | **accepted risk, owner decision 2026-10-25** ("kaliteyi önceliyoruz"): models stay; lawyer review later; re-verify training data before each release |
 | LaMa, BiRefNet (portrait/general), DDColor weights (A06) | Apache-2.0, MIT, MIT, Apache-2.0 | weights fine; **training data** (Places365 / P3M-10k, TR-humans / DIS5K / ImageNet) has research-only terms | **accepted risk, owner decision 2026-10-28**: models stay; lawyer review later; re-verify training data before each release |
-| App logo/icons | not yet stated | owner must confirm authorship/rights | **open** (see [docs/legal/on-arastirma.md](../docs/legal/on-arastirma.md)) |
+| App logo/icons | not yet stated | owner must confirm authorship/rights | **open** (owner decision pending) |
 
 ## Compatibility with distributing HS Studio under Apache-2.0 (since 2026-10-26)
 

@@ -1,6 +1,6 @@
 # AI sonucu: orijinal, renk, yön, metadata ve alpha bütünlüğü (Plan 11/A04)
 
-Plan: [11-ai-altyapisi-ve-fotograf.md](plans/11-ai-altyapisi-ve-fotograf.md) (A04) · Çalışma zamanı: [ai-runtime.md](ai-runtime.md) (A03) · Kuyruk: [jobs-api.md](jobs-api.md)
+Plan: 11-ai-altyapisi-ve-fotograf.md (A04) · Çalışma zamanı: [ai-runtime.md](ai-runtime.md) (A03) · Kuyruk: [jobs-api.md](jobs-api.md)
 
 Kod: `src-tauri/src/jobs/external.rs` (`encode_output`, `write_output`), `src-tauri/src/jobs/scheduler.rs` (`complete_item_with`, `copy_output`), `src-tauri/src/photo/ops.rs` (`embed_exif`, `png_with_text`), `src/media/alpha.js`, `src/media/ai-worker.js`, `src/media/ai-jobs.js` (`loadPixels`), `src/media/photo-ai.js`.
 Testler: Rust `jobs::tests::ai_output_*`, `tests/unit/alpha.test.mjs`, `tests/e2e/ai-output.e2e.mjs`, `tests/ai/ai-runtime.ai.mjs` (A04 testi), `tests/ai/photo-x4.ai.mjs` (alpha beklentileri).
