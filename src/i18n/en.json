@@ -748,9 +748,10 @@
       "stream": "Network stream",
       "count": "{n} items",
       "empty": "Your list is empty.",
-      "emptyHint": "Drag video or photo files here.",
+      "emptyHint": "Drag video, music or photo files here.",
       "badgePhoto": "PHOTO",
-      "badgeVideo": "VIDEO"
+      "badgeVideo": "VIDEO",
+      "badgeMusic": "MUSIC"
     },
     "effects": {
       "title": "Picture settings & effects",

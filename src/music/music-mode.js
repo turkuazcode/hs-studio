@@ -12,7 +12,7 @@
 import { i18n, t } from "../core/i18n.js";
 import { invoke, listen } from "../core/tauri.js";
 import { h } from "../ui/action-dialogs.js";
-import { isAudioOnlyName } from "../media/classify.js";
+import { isMusicName } from "../media/classify.js";
 import {
   REPEAT_MODES, REPLAYGAIN_MODES, deviceRemoved, mpvReplayGainOptions, nextIndex, nowPlayingText, parseGain,
   replayGainFactor, shuffleOrder, upNext,
@@ -50,11 +50,7 @@ export function registerMusicSettings(settings) {
   ]);
 }
 
-const isMusicItem = (item) => {
-  const name = item?.name || item?.path || item?.url || "";
-  // wma: audio-only too, kept out of isAudioOnlyName (Chromium cannot play it)
-  return !!item && !item.isImage && (isAudioOnlyName(name) || /\.wma$/i.test(name));
-};
+const isMusicItem = (item) => !!item && !item.isImage && isMusicName(item);
 
 /**
  * app: { dom, state, bus, engine, engines, playlist, video, settings, toast, capabilities } (lazy)

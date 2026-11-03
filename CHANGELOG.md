@@ -10,6 +10,24 @@ project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Music:** the whole window no longer shifts right and down when a song opens (the music view's
+  position and padding also applied to the page root), which pushed the play / next / repeat bar
+  off screen and the window buttons past the edge.
+- **Music:** opening several songs no longer slides the playlist drawer over the player bar; the
+  music screen's own "Up next" list shows the queue.
+- **Playlist:** audio files carry a "MUSIC" badge instead of "VIDEO".
+- **Photo:** the titlebar counter, ‹ › / ← → and the slideshow count and visit photos only in a
+  mixed list (was "5 / 6" with two photos, and the arrows stepped into videos).
+- **Video / photo:** with the playlist drawer open, the player bar moves left of it instead of
+  hiding its right-hand buttons (Filters, full screen, ⋯) underneath.
+
+### Changed
+
+- **Open replaces the list:** "Open file" (Ctrl+O), double-click / "Open with", recent files and
+  "Open URL" start a new playlist. "Add media", "Add to playlist" and drag-and-drop still append.
+
 ## [0.1.0] — alpha (Windows; Linux preview)
 
 First public release. Tested automatically on **Windows 11 x64** only (unit, Rust, end-to-end,

@@ -748,9 +748,10 @@
       "stream": "Ağ Akışı",
       "count": "{n} Medya",
       "empty": "Listeniz boş.",
-      "emptyHint": "Video veya fotoğraf dosyalarını buraya sürükleyin.",
+      "emptyHint": "Video, müzik veya fotoğraf dosyalarını buraya sürükleyin.",
       "badgePhoto": "FOTO",
-      "badgeVideo": "VİDEO"
+      "badgeVideo": "VİDEO",
+      "badgeMusic": "MÜZİK"
     },
     "effects": {
       "title": "Görüntü Ayarları & Efektler",

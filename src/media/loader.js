@@ -5,7 +5,7 @@
 // ==========================================================================
 
 import { appWindow, convertFileSrc, dialogOpen, invoke } from "../core/tauri.js";
-import { classify, DIALOG_FILTERS } from "./classify.js";
+import { classify, DIALOG_FILTERS, isMusicName } from "./classify.js";
 import { t } from "../core/i18n.js";
 
 /**
@@ -70,16 +70,20 @@ export function createLoader(app) {
   /**
    * All entry points (dialog, drop, file input, playlist add) go through here.
    * entries: File objects (browser) or { path, name, size } from the backend.
+   * replace: "open" (dialog, file association, recent files) starts a new list; drop and
+   * "Medya Ekle" append to the current one.
    */
-  async function openEntries(entries, { playFirstNew = true } = {}) {
+  async function openEntries(entries, { playFirstNew = true, replace = false } = {}) {
     const { media, subs, rejected } = partitionEntries(entries);
     if (rejected > 0) app.toast(t("ui.loader.skipped", { n: rejected }));
 
     if (media.length) {
+      if (replace) app.playlist.clear();
       const firstNewIndex = app.playlist.append(media.map((f) => toPlaylistItem(f)));
       if (playFirstNew || state.get("currentPlaylistIndex") === -1) app.playlist.play(firstNewIndex);
       else app.playlist.render();
-      if (media.length > 1) playlistDrawer.classList.add("open");
+      // music has its own "Sıradakiler" queue: the drawer would only cover the music HUD
+      if (media.length > 1 && !media.every(isMusicName)) playlistDrawer.classList.add("open");
     }
     // Apply the subtitle AFTER the media load reset subtitles (guaranteed order)
     if (subs.length) await app.subtitles.load(subs[0].path ?? subs[0]);
@@ -116,6 +120,7 @@ export function createLoader(app) {
 
   /** Network URL from the URL modal: added to the playlist so index/auto-advance stay consistent. */
   function openUrlItem(item) {
+    app.playlist.clear();
     const index = app.playlist.append([item]);
     app.playlist.play(index);
   }
@@ -157,9 +162,9 @@ export function createLoader(app) {
   }).catch?.((err) => console.warn("onDragDropEvent", err));
 
   // File browse
-  btnBrowse.addEventListener("click", () => pickFiles(fileInput));
+  btnBrowse.addEventListener("click", () => pickFiles(fileInput, { replace: true }));
   fileInput.addEventListener("change", (e) => {
-    openFiles(e.target.files);
+    openFiles(e.target.files, { replace: true });
     e.target.value = "";
   });
 
