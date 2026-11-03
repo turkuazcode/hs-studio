@@ -1,5 +1,5 @@
 // ==========================================================================
-// Minimal video HUD (UI principles, docs/plans/00-YOL-HARITASI.md "Arayüz ilkeleri"):
+// Minimal video HUD (UI principles, CONTRIBUTING.md):
 // the HUD keeps play/pause, seek, volume, CC (+ compact track menu), "⋯" and
 // fullscreen. Everything rarely used lives in the "⋯" popup menu built here:
 // audio tracks, chapters, bookmarks, speed, aspect, picture (rotate / flip / zoom),

@@ -1,6 +1,6 @@
 # Kalıcı iş kuyruğu ve kurtarma (Plan 11/A02)
 
-Plan: [11-ai-altyapisi-ve-fotograf.md](plans/11-ai-altyapisi-ve-fotograf.md) (A02) · Depolama: [storage-schema.md](storage-schema.md) (L01) · Dışa aktarma: [media-actions.md](media-actions.md)
+Plan: 11-ai-altyapisi-ve-fotograf.md (A02) · Depolama: [storage-schema.md](storage-schema.md) (L01) · Dışa aktarma: [media-actions.md](media-actions.md)
 
 Kod: `src-tauri/src/jobs/{mod,store,scheduler,adapters}.rs`, `src/core/jobs.js`, `src/ui/jobs-panel.js`.
 Testler: `cargo test --release --lib jobs`, `tests/unit/jobs.test.mjs`, `tests/e2e/jobs.e2e.mjs`.

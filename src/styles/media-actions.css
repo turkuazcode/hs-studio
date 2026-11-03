@@ -1,7 +1,7 @@
 /* ==========================================================================
    Media actions (Plan 06): titlebar action toolbar, action dialogs, print preview,
    OCR text layer, lyrics panel, mini player. Functional and sparse; the detailed visual
-   design comes later (docs/plans/00-YOL-HARITASI.md, "Arayüz ilkeleri" 4).
+   design comes later (CONTRIBUTING.md, "UI principles" 4).
    ========================================================================== */
 
 /* ---- Toolbar (titlebar, next to the file name) ---- */

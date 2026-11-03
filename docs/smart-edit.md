@@ -1,6 +1,6 @@
 # Akıllı düzenleme: nesne silme, arka plan, renklendirme (Plan 07 / Plan 11 A06)
 
-Plan: [07-akilli-duzenleme.md](plans/07-akilli-duzenleme.md) (tarifler) · [11 A06](plans/11-ai-altyapisi-ve-fotograf.md) · Altyapı: [ai-runtime.md](ai-runtime.md) (A03), [ai-output.md](ai-output.md) (A04), [jobs-api.md](jobs-api.md) (A02)
+Plan: 07-akilli-duzenleme.md (tarifler) · 11 A06 · Altyapı: [ai-runtime.md](ai-runtime.md) (A03), [ai-output.md](ai-output.md) (A04), [jobs-api.md](jobs-api.md) (A02)
 
 Kod: `src/studio/smart-tools.js` (düzenleyicideki "✨ Akıllı" bölümü), `src/studio/editor.js` (taban görüntü + geçmiş), `src/media/smart-edit.js` (ön/son işleme), `src/media/ai-worker.js` (`runSmart`), `src/media/ai-engine.js` (`SMART_MODELS`, `smartEdit`), `src/media/ai-jobs.js` (`smartEditRequest`, iş türleri), `src-tauri/src/ai/manifest.rs` (bileşenler), `src-tauri/src/jobs/external.rs` (`AI_KINDS`).
 

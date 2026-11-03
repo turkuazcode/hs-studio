@@ -1,7 +1,7 @@
 {
  "bomFormat": "CycloneDX",
  "specVersion": "1.6",
- "serialNumber": "urn:uuid:26f7a7ef-374f-515f-b832-6f4a3239de4a",
+ "serialNumber": "urn:uuid:2b016759-6f74-50b0-8216-9eb8a69a40e4",
  "version": 1,
  "metadata": {
   "timestamp": "2026-11-03T17:19:42Z",
@@ -46,7 +46,7 @@
    },
    {
     "name": "vho:policy",
-    "value": "docs/plans/00-YOL-HARITASI.md; vho:policy per component = ok | review | reject; vho:acknowledged = owner decision on a review item"
+    "value": "legal/POLICY.md; vho:policy per component = ok | review | reject; vho:acknowledged = owner decision on a review item"
    }
   ]
  },

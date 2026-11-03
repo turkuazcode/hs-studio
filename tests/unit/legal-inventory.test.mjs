@@ -21,7 +21,7 @@ const version = json("src-tauri/tauri.conf.json").version;
 const SBOM_PATH = `legal/sbom/vho-${version}-x86_64-pc-windows-msvc.cdx.json`;
 const notices = read("legal/NOTICES_HEADER.txt");
 
-test("license policy evaluator follows docs/plans/00 (OR = best, AND = worst, LGPL only dynamic)", () => {
+test("license policy evaluator follows legal/POLICY.md (OR = best, AND = worst, LGPL only dynamic)", () => {
   assert.equal(normalizeExpression("MIT/Apache-2.0"), "MIT OR Apache-2.0");
   assert.equal(evaluateLicense("MIT OR Apache-2.0", { linking: "static" }), "ok");
   assert.equal(evaluateLicense("(MIT OR Apache-2.0) AND Unicode-3.0", { linking: "static" }), "ok");

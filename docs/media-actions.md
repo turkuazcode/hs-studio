@@ -1,6 +1,6 @@
 # Medya eylemleri (Plan 06)
 
-Plan: [06-medya-eylemleri.md](plans/06-medya-eylemleri.md) · Arayüz ilkeleri: [00-YOL-HARITASI.md](plans/00-YOL-HARITASI.md)
+Plan: 06-medya-eylemleri.md · Arayüz ilkeleri: 00-YOL-HARITASI
 
 ## Arayüz (sade, medya türüne göre ayrı)
 Başlık çubuğunda dosya adının yanında ince bir araç çubuğu (`#media-actions`, yalnızca yerel dosyalarda):

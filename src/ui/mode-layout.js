@@ -1,5 +1,5 @@
 // ==========================================================================
-// Per-media layout (approved mockup 2026-10-28; docs/plans/00 "Arayüz ilkeleri"):
+// Per-media layout (approved mockup 2026-10-28; CONTRIBUTING.md "UI principles"):
 //   empty: logo/menu · "HS Studio" ............ Kütüphane · ⚙         (no player bar)
 //   video: logo/menu · file name .............. Liste · ⋯             HUD: … CC▾ · Filtreler · ⛶
 //   photo: logo/menu · file name ‹ n / N › .... Düzenle · ⋯           HUD: − % + · ⤢ ⟲ ⟳ · İyileştir

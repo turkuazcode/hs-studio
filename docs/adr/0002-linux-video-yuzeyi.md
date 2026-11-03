@@ -1,7 +1,7 @@
 # ADR 0002 — Linux video yüzeyi: libmpv render API (OpenGL) + GtkGLArea, WebKitGTK altında
 
 - **Durum:** Kabul edildi (P03, 2026-10-27) — WSLg (sanal, yazılım GL) ortamında denendi (aşağıdaki kayıt); gerçek GPU'lu Linux masaüstünde Wayland + X11 doğrulaması **ortam bekliyor**.
-- **İlgili:** [ADR 0001](0001-oynatma-motoru.md) (Windows: sahipli açılır pencere, `wid`), [Plan 10 / P03](../plans/10-platform-ve-paketleme.md), [platform-support](../platform-support.md), [build-linux.md](../../third_party/mpv/build-linux.md)
+- **İlgili:** [ADR 0001](0001-oynatma-motoru.md) (Windows: sahipli açılır pencere, `wid`), Plan 10 / P03, [platform-support](../platform-support.md), [build-linux.md](../../third_party/mpv/build-linux.md)
 - **Kod:** `src-tauri/src/engine/linux.rs` (yüzey), `engine/mpv.rs` → `render` modülü (render API bağlaması), `engine/mod.rs` (`surface_options`, `locate`), `engine/smoke.rs` (uygulama içi senaryo), `scripts/linux/*`, `third_party/mpv/build-linux.sh`
 
 ## Bağlam

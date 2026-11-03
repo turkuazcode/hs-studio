@@ -1,5 +1,5 @@
 // Release gate (plan 14/R03, audit D01): compares a release target with the live status table of
-// docs/plans/08-uygulama-sirasi-ve-durum.md, the test-layer results (tests/.results/*.json), the
+// docs/releases/feature-status.md, the test-layer results (tests/.results/*.json), the
 // release package and the manual (device / human) evidence file.
 //
 //   node scripts/release-gate.mjs                          # default target: windows-alpha
@@ -12,7 +12,7 @@
 //                                       evidence only; manual checks listed as pending, not required
 //
 // Rules (docs/releases/release-gate.md):
-// - A card counts only when plan 08 says "doğrulandı" for every platform of the target. A plain
+// - A card counts only when docs/releases/feature-status.md says "doğrulandı" for every platform of the target. A plain
 //   "doğrulandı" is Windows evidence (every test of this project so far ran on Windows); it never
 //   stands in for macOS or Linux unless the target declares the card platform-neutral.
 // - A layer result counts only when it is the whole layer (no file list / name filter), ran on the
@@ -46,7 +46,7 @@ const RUST_MANUAL_TOOLS = {
   scope: "Yalnızca adı geçen altı test.",
 };
 
-/** Release targets of plan 08 ("Sürüm kapsamları ve çıkış koşulları"). */
+/** Release targets (from the internal plan 08, "Sürüm kapsamları ve çıkış koşulları"). */
 export const TARGETS = {
   "windows-alpha": {
     title: "Windows alfa",
@@ -120,7 +120,7 @@ export function expandIds(cell) {
 }
 
 /**
- * Status rows of plan 08: Map(id -> { status, evidence }). A single-card row beats a range row.
+ * Status rows of docs/releases/feature-status.md: Map(id -> { status, evidence }). A single-card row beats a range row.
  * Rows whose first cell starts like a card id but is not one ("V03 (scope)") are collected in
  * `map.unparsed`: the gate fails on them instead of silently reading an older range row.
  */
@@ -341,7 +341,7 @@ export function toMarkdown(report) {
   if (report.plan.unparsed.length) {
     lines.push(`❌ Plan 08'de okunamayan kart satırı: ${report.plan.unparsed.map((u) => `\`${cell(u)}\``).join(", ")} (kimlik hücresinde yalnızca kart kimliği olmalı)`, "");
   }
-  lines.push("| Kart | Durum (plan 08) | Sonuç |", "|---|---|---|",
+  lines.push("| Kart | Durum (feature-status) | Sonuç |", "|---|---|---|",
     ...report.cards.map((c) => `| ${c.id} | ${cell(c.status).slice(0, 120)} | ${icon[c.result]} ${c.result} |`), "",
     "| Platform | Test katmanı | Sorunlar | Sonuç |", "|---|---|---|---|",
     ...report.layers.map((l) => `| ${l.platform} | ${l.layer} | ${cell(l.problems.join("; ") || "—").slice(0, 300)}${l.excepted.length ? ` (istisna: ${l.excepted.join(", ")})` : ""} | ${icon[l.result]} ${l.result} |`), "",
@@ -375,7 +375,7 @@ function main() {
   const all = (n) => args.flatMap((a, i) => (a === n ? [args[i + 1]] : []));
   const targetName = opt("--target", "windows-alpha");
   const planRef = opt("--plan-ref", null);
-  const planPath = "docs/plans/08-uygulama-sirasi-ve-durum.md";
+  const planPath = "docs/releases/feature-status.md";
   const plan = planRef
     ? execFileSync("git", ["show", `${planRef}:${planPath}`], { cwd: ROOT, encoding: "utf8" })
     : readFileSync(join(ROOT, planPath), "utf8");

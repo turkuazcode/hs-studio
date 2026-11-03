@@ -85,11 +85,19 @@ certificates.
 | Media actions | [docs/media-actions.md](docs/media-actions.md) | |
 | Storage schema | [docs/storage-schema.md](docs/storage-schema.md) | |
 | Platform matrix | [docs/platform-support.md](docs/platform-support.md) | only Windows 11 x64 is verified on a real device |
-| Plans and status | [docs/plans/00-YOL-HARITASI.md](docs/plans/00-YOL-HARITASI.md), [docs/plans/08-uygulama-sirasi-ve-durum.md](docs/plans/08-uygulama-sirasi-ve-durum.md), [docs/status/implementation-status.md](docs/status/implementation-status.md) | mostly Turkish |
+| Feature status | [docs/releases/feature-status.md](docs/releases/feature-status.md) (what is verified, per card), [docs/status/test-map.md](docs/status/test-map.md) | mostly Turkish. Card ids in code comments ("Plan 13/L03") refer to internal planning notes that are not in this repository |
 | Licenses | `legal/`, [legal/INVENTORY.md](legal/INVENTORY.md) | notices, inventories, SBOM |
 
-Product principles (keep them): a minimal UI; rarely used options go to Settings; video, photo and
-music each keep their own layout; original files are never modified in place.
+Product principles (keep them), also called "UI principles" in code comments:
+
+1. **Minimal:** the main screen shows only frequently used controls.
+2. **Hidden but reachable:** rarely used actions go to the "⋯" / right-click menus, options to Settings
+   (`app.settings.register`). A new feature goes to Settings first.
+3. **One layout per media type:** video, photo and music each keep their own controls; one type's
+   controls never show in another.
+4. **Function before decoration:** visual design is refined later with the owner.
+
+Original files are never modified in place.
 
 ## 4. What a change must include
 
@@ -97,7 +105,7 @@ music each keep their own layout; original files are never modified in place.
 - **Both languages**: new UI text as keys in `tr.json` **and** `en.json`; no hard-coded strings.
 - **Honest platform claims**: if you could only test on Windows, say so; do not mark macOS/Linux
   as working.
-- **Licenses** (policy in [docs/plans/00-YOL-HARITASI.md](docs/plans/00-YOL-HARITASI.md)):
+- **Licenses** (policy in [legal/POLICY.md](legal/POLICY.md)):
   - accepted: MIT, Apache-2.0, BSD-2/3-Clause, ISC, Zlib, BSL-1.0, MPL-2.0, Unicode, CC0,
     public domain, CC-BY-4.0 (model weights), OFL-1.1 (fonts only);
   - LGPL only as a separate, replaceable library or process (never compiled into `vho.exe`);

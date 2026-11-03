@@ -1,6 +1,6 @@
 # Ortak depolama: library.db (Plan 13/L01)
 
-Plan: [13-kutuphane-muzik-ag-ve-sonraki-faz.md](plans/13-kutuphane-muzik-ag-ve-sonraki-faz.md) (L01) · Özgün plan: [05-kutuphane-muzik-ag.md](plans/05-kutuphane-muzik-ag.md)
+Plan: 13-kutuphane-muzik-ag-ve-sonraki-faz.md (L01) · Özgün plan: 05-kutuphane-muzik-ag.md
 
 Kod: `src-tauri/src/storage/{mod,migrations,library,identity}.rs`, `src/core/library.js`, `src/core/library-db.js`.
 Testler: `cargo test --release --lib storage`, `tests/unit/library-db.test.mjs`, `tests/e2e/storage.e2e.mjs`.

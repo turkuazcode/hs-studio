@@ -4,7 +4,7 @@
 //   Music: Tags · Lyrics · Share · ⋯
 // Everything else lives in the "⋯" menu and the right-click menu (ui/menus.js asks
 // contextItems()); options are in the Settings window (registerSettings); shortcuts go
-// into the central table (ACTION_SHORTCUTS). UI principles: docs/plans/00-YOL-HARITASI.md.
+// into the central table (ACTION_SHORTCUTS). UI principles: CONTRIBUTING.md.
 //
 // Common: delete (recycle bin, confirm), rename (F2, conflict check), show in folder, open
 // with, copy file / path, share, properties, favorite, add to playlist.

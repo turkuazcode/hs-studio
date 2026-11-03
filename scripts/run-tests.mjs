@@ -116,7 +116,7 @@ if (exeInfo?.missing) {
 
 if (!files.length) {
   line(`No ${layer.suffix} files in ${layer.dir}: this layer is NOT YET POPULATED (0 tests run, nothing passed).`);
-  if (layerName === "quality") line("Planned by Q02 (docs/plans/14-kalite-ve-acik-kaynak-yayin.md); see docs/status/test-map.md.");
+  if (layerName === "quality") line("Planned by Q02; see docs/status/test-map.md.");
   process.exit(0);
 }
 

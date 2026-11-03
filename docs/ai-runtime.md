@@ -1,6 +1,6 @@
 # AI çalışma zamanı: kaynak bütçesi, backend seçimi, inference adapter'ı (Plan 11/A03)
 
-Plan: [11-ai-altyapisi-ve-fotograf.md](plans/11-ai-altyapisi-ve-fotograf.md) (A03) · Kuyruk: [jobs-api.md](jobs-api.md) (A02) · Model yönetimi: A01 (`src-tauri/src/ai`)
+Plan: 11-ai-altyapisi-ve-fotograf.md (A03) · Kuyruk: [jobs-api.md](jobs-api.md) (A02) · Model yönetimi: A01 (`src-tauri/src/ai`)
 
 Kod: `src/media/ai-engine.js` (adapter + backend + tanı), `src/media/ai-policy.js` (saf kurallar), `src/media/onnx-tiny.js` (yoklama modeli), `src/media/ai-worker.js` (Web Worker, ONNX Runtime Web), `src/media/ai-jobs.js` (kuyruk koşucusu), `src-tauri/src/jobs/external.rs` (kuyrukta webview'de çalışan iş türü).
 Testler: `tests/unit/ai-policy.test.mjs`, Rust `jobs::tests::ai_*`, gerçek model katmanı `tests/ai/ai-runtime.ai.mjs` (`npm run test:ai`).

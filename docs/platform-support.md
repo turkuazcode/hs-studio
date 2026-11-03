@@ -1,6 +1,6 @@
 # Platform desteği ve yetenek matrisi (P01)
 
-**Tarih:** 2026-10-26 · **Plan:** [10 — Platform ve paketleme](plans/10-platform-ve-paketleme.md) / P01, P04 · **Doğruluk kuralları:** [09 — S04](plans/09-entegrasyon-ve-dogruluk.md)
+**Tarih:** 2026-10-26 · **Plan:** 10 — Platform ve paketleme / P01, P04 · **Doğruluk kuralları:** 09 — S04
 
 Bu belge VHO'nun hangi platformda neyi **gerçekten** yapabildiğini tek bir sözleşmeyle anlatır. Windows'taki test sonucu macOS/Linux için kanıt sayılmaz.
 

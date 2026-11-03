@@ -26,7 +26,7 @@ export const KEEP = [
   "Environment variables VHO_* (VHO_DATA_DIR, VHO_EXE, VHO_MPV_DLL, …): developer/test switches, not user-visible; renaming them would break scripts, CI and other branches.",
   "Crate/package names (vho, vho_lib, package.json \"vho\"), the built file target/release/vho.exe and file names like vho-*.cdx.json: code identifiers; the installed exe can be renamed with --exe-name.",
   "Test identities \"VHO PackageTest\" / com.vho.app.packagetest and synthetic test data (\"VHO Test\" EXIF make, OCR sample text): not user-visible.",
-  "Git history, CHANGELOG entries of earlier changes, docs/plans/*, docs/status/*, docs/adr/*: historical records (a new CHANGELOG line documents the rename).",
+  "Git history, CHANGELOG entries of earlier changes, docs/status/*, docs/adr/*: historical records (a new CHANGELOG line documents the rename).",
   "\"formerly VHO\" / \"eski adı VHO\" mentions in NOTICE, TRADEMARKS, README, notices: they name the old product on purpose.",
   "Code comments and log prefixes ([VHO] …): not shown to users; can be cleaned up later without risk.",
   "Legacy names used for migration: com.vho.app in identity.rs and the NSIS hook's previous product name \"VHO\" (package-windows.ps1).",

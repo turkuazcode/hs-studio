@@ -1,6 +1,6 @@
 # Git geçmişi temizliği — ilk herkese açık push'tan hemen önce
 
-**Karar:** 2026-10-25, kullanıcı onayı ([00-YOL-HARITASI](../plans/00-YOL-HARITASI.md), "Yayın öncesi kararlar").
+**Karar:** 2026-10-25, kullanıcı onayı.
 **Zamanlama:** Tüm ajan dalları `main`'e birleştikten sonra, GitHub deposu açılmadan **hemen önce, bir kez**.
 Daha önce çalıştırma: geçmiş yeniden yazılınca commit kimlikleri değişir. O andan sonra eski yerel dallardan
 yapılan her iş yeni geçmişle uyuşmaz.
