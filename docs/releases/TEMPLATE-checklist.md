@@ -28,7 +28,7 @@ Durum değerleri: ✅ geçti (kanıtlı) · 🟡 kısmi / kanıt eksik · ⏳ or
 | 9 | Lisans / dağıtım | Notices, NOTICE, SBOM, kaynak/build bilgisi, checksum, imzalama durumu | | |
 | 10 | Kullanılabilirlik | Klavye, ölçek ve dil temel akışları çalışır; çökme veya boş ekran gibi kritik sorun yok | | |
 | 11 | Kurulum / güncelleme | Kurulum, yükseltme ve kaldırma; veri korunur; bozuk veya yanlış imzalı güncelleme reddedilir | | |
-| 12 | Yayın adımları | Geçmiş temizliği (yalnızca ilk push), depo, imza, sürüm notu (CHANGELOG), checksum yayını | | |
+| 12 | Yayın adımları | Geçmiş temizliği (yalnızca ilk push), depo, imza, sürüm notu (CHANGELOG + `docs/releases/notes/v<sürüm>.md`), checksum yayını. Sürüm notunda dosya adı GitHub'daki gibi noktalı (`HS.Studio_<sürüm>_…`; GitHub boşluğu noktaya çevirir) ve sonda "Code signing policy" bağlantısı (SignPath şartı) | | |
 
 **Bilinen sınırlar (sürüm notuna girer):**
 
