@@ -1,6 +1,8 @@
 # VHO Yol Haritası — Çok Platformlu Video & Fotoğraf Stüdyosu
 
 > **25 Ekim 2026 — Claude uygulama devri:** Önce [CLAUDE-DEVIR.md](CLAUDE-DEVIR.md), ardından [08 — Güncel durum ve uygulama sırası](08-uygulama-sirasi-ve-durum.md) okunmalı. 01–07 planları korunur; 08–14 mevcut işleri eşler, eksikleri ve kabul ölçütlerini ekler. Aşağıdaki genel “AI kapsam dışı” ifadesi önceki dalgaya aittir; yeni AI işleri 11–12'de ayrı kapsam olarak planlandı. Plan 07'deki kullanıcının geliştirdiği “Otomatik iyileştir” algoritmasının sahipliği korunur; ayrıntı Plan 11'dedir. Bu ek yalnızca planlamadır, uygulama/tamamlanma kanıtı değildir.
+>
+> **3 Kasım 2026:** VLC deposundan çıkarılan özellik fikirleri ve ilk üç iş (arşiv içinden açma, ağ klasörü/NAS, GPU ile büyütme): [15 — VLC'den esinlenen özellikler](15-vlc-esinli-ozellikler.md). Kural: hepsi sıfırdan yazılır, VLC kodu kopyalanmaz. Fikir havuzu henüz değerlendirilmedi.
 
 **Hedef:** Windows, macOS ve Linux'ta her video/fotoğraf formatını açan, modern arayüzlü, video + fotoğraf + müzik bir arada medya stüdyosu.
 **Rakip analizi:** VLC (format/platform), mpv (görüntü kalitesi), PotPlayer (özellik zenginliği), IINA (macOS), XnView MP / IrfanView / FastStone (fotoğraf), Windows Medya Oynatıcı (kütüphane/müzik).
