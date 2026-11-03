@@ -128,20 +128,29 @@
 :root[data-media-mode="music"] .cc-split { display: none !important; }
 :root[data-media-mode="music"] .controls-row .btn-play { border-radius: 50%; }
 
+/* open playlist drawer (340 px): the video / photo bars move left of it instead of under it
+   (narrow windows keep the full-width bar: the drawer covers most of them anyway) */
+@media (min-width: 900px) {
+  :root[data-media-mode="video"]:has(#playlist-drawer.open) .controls-hud {
+    left: calc((100% - 340px) / 2); width: calc(100% - 340px - 48px);
+  }
+  :root[data-media-mode="photo"]:has(#playlist-drawer.open) .photo-hud { left: calc((100% - 340px) / 2); }
+}
+
 /* ---------------------------------------------------------------- music view */
 /* its own opaque ground: readable in every theme, whatever the engine draws behind the page */
-.music-mode {
+section.music-mode {
   inset: 48px 0 0 0; padding: 24px 0 128px 48px; gap: 40px;
   grid-template-columns: minmax(0, 1fr) 320px; align-items: stretch;
   background: var(--bg-canvas); color: var(--text-pure);
 }
-:root[data-theme="light"] .music-mode { background: #eef0f5; }
+:root[data-theme="light"] section.music-mode { background: #eef0f5; }
 .music-now { align-self: center; justify-content: center; }
 .music-title { color: var(--text-pure); }
 .music-queue {
   border-left: 1px solid var(--border-subtle); padding: 0 16px; overflow-y: auto; min-height: 0;
 }
-:root.music-queue-hidden .music-mode { grid-template-columns: minmax(0, 1fr); padding-right: 48px; }
+:root.music-queue-hidden section.music-mode { grid-template-columns: minmax(0, 1fr); padding-right: 48px; }
 :root.music-queue-hidden .music-queue { display: none; }
 :root[data-media-mode="music"] .controls-hud { left: calc(50% - 160px); width: calc(100% - 400px); }
 :root.music-queue-hidden[data-media-mode="music"] .controls-hud { left: 50%; width: calc(100% - 48px); }

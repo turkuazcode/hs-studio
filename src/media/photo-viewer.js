@@ -6,6 +6,7 @@ import { extOf, isRemoteUrl, itemSize, needsDecode } from "./classify.js";
 import { formatFileSize, aspectRatioText } from "../core/format.js";
 import { convertFileSrc, invoke } from "../core/tauri.js";
 import { t } from "../core/i18n.js";
+import { photoPosition } from "../ui/playlist.js";
 
 export const SLIDESHOW_INTERVAL_MS = 3500;
 export const MIN_ZOOM = 0.1;
@@ -110,13 +111,13 @@ export function createPhotoViewer(app) {
   // Slideshow: a setTimeout chain that only counts once the current image has loaded
   function scheduleNextSlide() {
     clearTimeout(slideshowTimer);
-    if (!state.get("isSlideshowActive") || state.get("playlist").length < 2) return;
-    slideshowTimer = setTimeout(() => app.playlist.navigate(1), SLIDESHOW_INTERVAL_MS);
+    if (!state.get("isSlideshowActive") || photoCount() < 2) return;
+    slideshowTimer = setTimeout(() => app.playlist.navigatePhotos(1), SLIDESHOW_INTERVAL_MS);
   }
 
   function toggleSlideshow(forceState, { silent = false } = {}) {
     const next = typeof forceState === "boolean" ? forceState : !state.get("isSlideshowActive");
-    if (next && state.get("playlist").length < 2) {
+    if (next && photoCount() < 2) {
       if (!silent) app.toast(t("ui.photo.slideshowNeedsTwo"));
       return;
     }
@@ -133,13 +134,15 @@ export function createPhotoViewer(app) {
     }
   }
 
+  const photoCount = () => photoPosition(state.get("playlist"), -1).total;
+
+  // counts photos only: videos / music in the same list are skipped by ‹ › and the slideshow
   function updatePhotoCounter() {
     if (!photoCounterBadge) return;
-    const playlist = state.get("playlist");
-    const index = state.get("currentPlaylistIndex");
-    const showNav = state.get("currentMediaType") === "image" && playlist.length > 1;
-    if (playlist.length > 0 && index >= 0) {
-      photoCounterBadge.textContent = `${index + 1} / ${playlist.length}`;
+    const { n, total } = photoPosition(state.get("playlist"), state.get("currentPlaylistIndex"));
+    const showNav = state.get("currentMediaType") === "image" && total > 1;
+    if (n > 0) {
+      photoCounterBadge.textContent = `${n} / ${total}`;
     } else {
       photoCounterBadge.textContent = "1 / 1";
     }
@@ -254,10 +257,10 @@ export function createPhotoViewer(app) {
   });
 
   btnPhotoSlideshow?.addEventListener("click", () => toggleSlideshow());
-  btnPhotoPrev?.addEventListener("click", () => app.playlist.navigate(-1));
-  btnPhotoNext?.addEventListener("click", () => app.playlist.navigate(1));
-  btnFloatingPrev?.addEventListener("click", () => app.playlist.navigate(-1));
-  btnFloatingNext?.addEventListener("click", () => app.playlist.navigate(1));
+  btnPhotoPrev?.addEventListener("click", () => app.playlist.navigatePhotos(-1));
+  btnPhotoNext?.addEventListener("click", () => app.playlist.navigatePhotos(1));
+  btnFloatingPrev?.addEventListener("click", () => app.playlist.navigatePhotos(-1));
+  btnFloatingNext?.addEventListener("click", () => app.playlist.navigatePhotos(1));
 
   // Keep rotated photos fitted when the window is resized
   window.addEventListener("resize", () => {

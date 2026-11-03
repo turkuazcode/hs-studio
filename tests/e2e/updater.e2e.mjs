@@ -14,6 +14,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { REPO_ROOT, launchApp, makeDataDir, removeDir } from "./lib/app.mjs";
 
+const APP_VERSION = JSON.parse(readFileSync(join(REPO_ROOT, "src-tauri", "tauri.conf.json"), "utf8")).version;
+
 const TAURI_CLI = join(REPO_ROOT, "node_modules", "@tauri-apps", "cli", "tauri.js");
 const PASSWORD = "throwaway-test-key";
 const WIN_TARGETS = ["windows-x86_64", "windows-x86_64-nsis"];
@@ -109,7 +111,7 @@ test("updater: signed updates, rejection of bad ones, quiet offline, default off
       const r = await check(app);
       assert.equal(r.status, "available");
       assert.equal(r.version, "9.9.9");
-      assert.equal(r.currentVersion, "0.1.0");
+      assert.equal(r.currentVersion, APP_VERSION);
       assert.deepEqual(await install(app), { ok: "verified" });
     });
 
@@ -137,7 +139,7 @@ test("updater: signed updates, rejection of bad ones, quiet offline, default off
     await t.test("downgrade / same version: not offered", async () => {
       server.setManifest(release(server.base, "0.0.9", "good.exe", sigOld));
       assert.equal((await check(app)).status, "none");
-      server.setManifest(release(server.base, "0.1.0", "good.exe", sigGood));
+      server.setManifest(release(server.base, APP_VERSION, "good.exe", sigGood));
       assert.equal((await check(app)).status, "none");
       const r = await install(app);
       assert.match(r.err ?? "", /^none:/, "nothing pending after a 'none' check");

@@ -145,7 +145,7 @@ export function createRecentFiles(app) {
       library.recent.remove(entry.id);
       return;
     }
-    app.loader.openEntries(entries);
+    app.loader.openEntries(entries, { replace: true });
   }
 
   function remove(entry) {

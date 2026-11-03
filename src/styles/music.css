@@ -1,13 +1,15 @@
 /* ==========================================================================
    Music mode (Plan 13/L03): its own layout while audio plays. Video / photo controls are
    hidden; the HUD keeps play/pause, seek, volume, speed and the playlist.
+   The view rules name the <section>: <html> carries the same "music-mode" class as a flag
+   and must not pick up the view's absolute position and padding (it pushed the HUD off screen).
    ========================================================================== */
 
-.music-mode[hidden] {
+section.music-mode[hidden] {
   display: none !important;
 }
 
-.music-mode {
+section.music-mode {
   position: absolute;
   inset: 48px 0 110px 0;
   display: grid;
@@ -19,7 +21,7 @@
   pointer-events: none;
 }
 
-.music-mode > * {
+section.music-mode > * {
   pointer-events: auto;
 }
 
@@ -135,7 +137,7 @@ html.music-mode #btn-toggle-split-view {
 }
 
 @media (max-width: 760px) {
-  .music-mode {
+  section.music-mode {
     grid-template-columns: 1fr;
     padding: 16px;
   }

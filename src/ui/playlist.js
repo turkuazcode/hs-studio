@@ -5,7 +5,7 @@
 // ==========================================================================
 
 import { i18n, t } from "../core/i18n.js";
-import { itemSize } from "../media/classify.js";
+import { isMusicName, itemSize } from "../media/classify.js";
 
 /** Index after moving by step, wrapping at both ends; -1 for an empty list. */
 export function wrapIndex(current, step, length) {
@@ -14,6 +14,27 @@ export function wrapIndex(current, step, length) {
   if (next < 0) next = length - 1;
   if (next >= length) next = 0;
   return next;
+}
+
+/** Next index whose item matches `match`, moving by step and wrapping; -1 when none matches. */
+export function wrapIndexWhere(current, step, list, match) {
+  const n = list.length;
+  for (let i = 1; i <= n; i++) {
+    const idx = (((current + step * i) % n) + n) % n;
+    if (match(list[idx])) return idx;
+  }
+  return -1;
+}
+
+/** Position of `index` among the photos of the list: { n, total } (n is 1-based, 0 when not a photo). */
+export function photoPosition(list, index) {
+  let n = 0, total = 0;
+  for (let i = 0; i < list.length; i++) {
+    if (!list[i].isImage) continue;
+    total++;
+    if (i === index) n = total;
+  }
+  return { n, total };
 }
 
 /** Auto-advance at the end of a video: only when a later item exists. */
@@ -71,9 +92,9 @@ export function createPlaylist(app) {
       li.dataset.idx = idx;
 
       const badge = document.createElement("span");
-      badge.className = `type-badge ${item.isImage ? "is-photo" : "is-video"}`;
-      badge.textContent = t(item.isImage ? "ui.playlist.badgePhoto" : "ui.playlist.badgeVideo");
-
+      const kind = item.isImage ? "Photo" : isMusicName(item) ? "Music" : "Video";
+      badge.className = `type-badge is-${kind.toLowerCase()}`;
+      badge.textContent = t(`ui.playlist.badge${kind}`);
 
       const name = document.createElement("div");
       name.className = "item-name";
@@ -140,12 +161,20 @@ export function createPlaylist(app) {
     app.loader.pickFiles(playlistFileInput, { playFirstNew: false });
   });
 
-  btnPlaylistClear.addEventListener("click", () => {
+  function clearPlaylist() {
     app.photo.toggleSlideshow(false, { silent: true });
     state.set("playlist", []);
     state.set("currentPlaylistIndex", -1);
     renderPlaylist();
-  });
+  }
+
+  /** Photo mode: previous / next photo, skipping videos and music in a mixed list. */
+  function navigatePhotos(step) {
+    const index = wrapIndexWhere(state.get("currentPlaylistIndex"), step, items(), (item) => item.isImage);
+    if (index >= 0 && index !== state.get("currentPlaylistIndex")) playPlaylistItem(index);
+  }
+
+  btnPlaylistClear.addEventListener("click", clearPlaylist);
 
   playlistItemsList.addEventListener("click", (e) => {
     const li = e.target.closest("li[data-idx]");
@@ -159,7 +188,9 @@ export function createPlaylist(app) {
 
     play: playPlaylistItem,
     navigate: navigatePlaylist,
+    navigatePhotos,
     append,
+    clear: clearPlaylist,
     /** Called when a video ends; returns true if the next item started. */
     playNextOnEnd() {
       const index = state.get("currentPlaylistIndex");

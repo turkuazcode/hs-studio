@@ -39,6 +39,12 @@ export const needsDecode = (name) => DECODE_IMAGE_EXT.has(extOf(name));
 /** Audio-only formats never produce a picture (no "video not decoded" warning). */
 export const isAudioOnlyName = (name) => AUDIO_EXT.has(extOf(name));
 
+/** Audio-only entry or playlist item (wma too: kept out of isAudioOnlyName, Chromium cannot play it; libmpv can). */
+export const isMusicName = (f) => {
+  const name = f?.name || f?.path || f?.url || "";
+  return isAudioOnlyName(name) || /\.wma$/i.test(name);
+};
+
 /** http(s) URL served by another origin (needs CORS for Web Audio / WebGL / snapshots). */
 export const isRemoteUrl = (src, origin = globalThis.location?.origin) =>
   /^https?:/i.test(src) && !src.startsWith(origin);
